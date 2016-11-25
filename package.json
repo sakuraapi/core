@@ -1,0 +1,25 @@
+{
+  "name": "sakuraapi",
+  "version": "0.0.0",
+  "description": "A NodeJS API Experiment",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sakuraapi/api.git"
+  },
+  "keywords": [
+    "REST",
+    "JSON",
+    "api",
+    "server"
+  ],
+  "author": "Jean-Pierre E. Poveda",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sakuraapi/api/issues"
+  },
+  "homepage": "https://github.com/sakuraapi/api#readme"
+}
