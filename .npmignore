@@ -1,0 +1,5 @@
+*.ts
+*.spec.js
+*.spec.d.ts
+.idea
+tsconfig.json

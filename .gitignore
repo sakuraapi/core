@@ -13,3 +13,5 @@
 node_modules
 dist
 *xunit.xml
+*.js
+*.d.ts
