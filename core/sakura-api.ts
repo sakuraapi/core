@@ -1,6 +1,7 @@
-import * as colors from 'colors';
-import * as express from 'express';
-import * as http from 'http';
+import {SakuraApiConfig} from '../boot/config';
+import * as colors       from 'colors';
+import * as express      from 'express';
+import * as http         from 'http';
 
 export class ServerConfig {
   constructor(public address?: string,
@@ -17,6 +18,8 @@ export class SakuraApi {
   private _app: express.Express;
   private _port: number = 3000;
   private _server: http.Server;
+
+  config: any;
 
   static get instance(): SakuraApi {
     if (!this._instance) {
@@ -45,8 +48,13 @@ export class SakuraApi {
     if (!app) {
       throw new Error('cannot instantiate a new SakuraApi without providing an Express object');
     }
+
     this._app = app;
     this._server = http.createServer(this.app);
+
+    this.config = new SakuraApiConfig().load() || {};
+    this._address = (this.config.server || {}).address || this._address;
+    this._port = (this.config.server || {}).port || this._port;
   }
 
   listen(listenProperties?: ServerConfig): Promise<null> {

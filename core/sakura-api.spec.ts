@@ -37,6 +37,10 @@ describe('SakuraApi', () => {
     expect(typeof sapi.app).toBe('function');
   });
 
+  it('config is loaded properly', () => {
+    expect(sapi.config.SAKURA_API_CONFIG_TEST).toBe('found');
+  });
+
   describe('listen(...)', () => {
     it('bootstraps Express with defaulting settings when no parameters are provided', (done) => {
       sapi
