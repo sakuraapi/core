@@ -1,44 +1,51 @@
-import {SakuraApi} from './sakura-api';
+import {
+  SakuraApi,
+  ServerConfig
+}                   from './sakura-api';
 import * as request from 'supertest';
-import * as express from 'express';
+import * as http    from 'http';
 
 describe('SakuraApi', () => {
 
-  let app;
+  let config = new ServerConfig();
+  let sapi: SakuraApi;
   beforeEach(() => {
-    app = express();
-    spyOn(app, 'listen').and.callFake((port, cb) => {
-      cb();
-    });
+    config.port = 9000;
+    config.address = '127.0.0.1';
 
+    sapi = SakuraApi.instance;
+
+    spyOn(sapi.server, 'listen').and.callThrough();
     spyOn(console, 'log');
   });
 
+  afterEach((done) => {
+    sapi
+      .close()
+      .then(done)
+      .catch(done.fail);
+  });
+
   it('port property defaults to a valid integer > 1000', () => {
-    let sapi = new SakuraApi(app);
     expect(sapi.port).toBeDefined();
     expect(typeof  sapi.port).toBe('number');
     expect(sapi.port).toBeGreaterThanOrEqual(1000);
   });
 
   it('app property exposes the Express app object used for construction', () => {
-    let sapi = new SakuraApi(app);
     expect(sapi.app).toBeDefined();
-    expect(sapi.app).toEqual(app);
+    expect(typeof sapi.app).toBe('function');
   });
 
   describe('listen(...)', () => {
     it('bootstraps Express with defaulting settings when no parameters are provided', (done) => {
-      let sapi = new SakuraApi(app);
-
       sapi
         .listen()
         .then(() => {
-          expect(app.listen).toHaveBeenCalledTimes(1);
+          expect(sapi.server.listen).toHaveBeenCalledTimes(1);
           expect(console.log).toHaveBeenCalledTimes(1);
-          expect(sapi.port).toBeDefined();
-          expect(typeof sapi.port).toEqual('number');
           expect(sapi.port).toBeGreaterThanOrEqual(1000);
+          expect(sapi.address).toEqual('127.0.0.1');
           done();
         })
         .catch((err) => {
@@ -47,44 +54,74 @@ describe('SakuraApi', () => {
         });
     });
 
-    it('sets the express app port, when provided', (done) => {
-      let sapi = new SakuraApi(app);
+    it('sets the port, when provided', (done) => {
+      config.port = 7777;
+
       sapi
-        .listen(9000)
+        .listen(config)
         .then(() => {
-          expect(sapi.port).toEqual(9000);
+          expect(sapi.port).toEqual(config.port);
+          expect(sapi.server.listening).toEqual(true);
+          expect(sapi.server.address().port).toEqual(config.port);
           done();
         })
         .catch(done.fail);
     });
 
-    it('calls the provided next function parameter when provided', (done) => {
-      let sapi = new SakuraApi(app);
-
-      let next = () => {
-        return Promise.resolve();
-      };
-      next = jasmine.createSpy('testSpy', next).and.callThrough();
+    it('sets the address, when provided', (done) => {
+      config.address = 'localhost';
 
       sapi
-        .listen(9000, next)
+        .listen(config)
         .then(() => {
-          expect(next).toHaveBeenCalledTimes(1);
-          expect(console.log).toHaveBeenCalledTimes(0);
-          done()
+          expect(sapi.port).toEqual(config.port);
+          expect(sapi.server.listening).toEqual(true);
+          expect(sapi.server.address().address).toEqual('127.0.0.1');
+          done();
         })
-        .catch(done.fail)
+        .catch(done.fail);
     });
 
-    it('uses the provided next string parameter when provided to notify the server is listening', (done) => {
-      let sapi = new SakuraApi(app);
-
+    it('responds to a route setup in middleware', (done) => {
       sapi
-        .listen(9000, 'custom boot message')
+        .listen(config)
         .then(() => {
-          expect(app.listen).toHaveBeenCalledTimes(1);
-          expect(console.log).toHaveBeenCalledTimes(1);
-          done();
+          sapi
+            .app
+            .get('/test', function (req, res) {
+              res.status(200).json({isTest: true});
+            });
+
+          request(sapi.app)
+            .get('/test')
+            .expect('Content-Type', /json/)
+            .expect('Content-Length', '15')
+            .expect('{"isTest":true}')
+            .expect(200)
+            .end(function (err, res) {
+              if (err) {
+                return done.fail(err);
+              }
+              done();
+            });
+        })
+        .catch(done.fail);
+    });
+  });
+
+  describe('close(...)', () => {
+    it('closes the port when told to', (done) => {
+      sapi
+        .listen()
+        .then(() => {
+          expect(sapi.server.listening).toBe(true);
+          sapi
+            .close()
+            .then(() => {
+              expect(sapi.server.listening).toBe(false);
+              done();
+            })
+            .catch(done.fail);
         })
         .catch(done.fail);
     });
