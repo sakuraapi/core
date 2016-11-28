@@ -3,8 +3,17 @@
   "version": "0.0.0",
   "description": "A NodeJS API Experiment",
   "main": "index.js",
+  "typings": "index.d.ts",
+  "files": [
+    "**/!(*.spec).js",
+    "**/!(*.spec).d.ts"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "jasmine": "jasmine",
+    "prepublish": "npm run build",
+    "test": "npm run build && npm run jasmine",
+    "tsc": "tsc"
   },
   "repository": {
     "type": "git",
@@ -21,5 +30,24 @@
   "bugs": {
     "url": "https://github.com/sakuraapi/api/issues"
   },
-  "homepage": "https://github.com/sakuraapi/api#readme"
+  "homepage": "https://github.com/sakuraapi/api#readme",
+  "devDependencies": {
+    "@types/express": "^4.0.34",
+    "@types/jasmine": "^2.5.38",
+    "@types/lodash": "^4.14.40",
+    "@types/node": "^6.0.51",
+    "@types/supertest": "^1.1.32",
+    "install": "^0.8.2",
+    "jasmine": "^2.5.2",
+    "nodemon": "^1.11.0",
+    "npm": "^4.0.2",
+    "supertest": "^2.0.1",
+    "typescript": "^2.0.10"
+  },
+  "dependencies": {
+    "colors": "^1.1.2",
+    "express": "^4.14.0",
+    "lodash": "^4.17.2",
+    "reflect-metadata": "^0.1.8"
+  }
 }
