@@ -2,6 +2,7 @@ import {SakuraApiConfig} from '../boot/config';
 import * as colors       from 'colors';
 import * as express      from 'express';
 import * as http         from 'http';
+import forEach = require("lodash/forEach");
 
 export class ServerConfig {
   constructor(public address?: string,
@@ -57,6 +58,19 @@ export class SakuraApi {
     this._port = (this.config.server || {}).port || this._port;
   }
 
+  close() {
+    return new Promise((resolve, reject) => {
+      this
+        .server
+        .close((err) => {
+          if (err && err.message !== 'Not running') {
+            return reject(err);
+          }
+          resolve();
+        });
+    });
+  }
+
   listen(listenProperties?: ServerConfig): Promise<null> {
     listenProperties = listenProperties || {};
 
@@ -77,16 +91,15 @@ export class SakuraApi {
     });
   }
 
-  close() {
-    return new Promise((resolve, reject) => {
-      this
-        .server
-        .close((err) => {
-          if (err && err.message !== 'Not running') {
-            return reject(err);
-          }
-          resolve();
-        });
-    });
+  route(target: any) {
+    if (!target.sakuraApiClassRoutes) {
+      return;
+    }
+
+    target
+      .sakuraApiClassRoutes
+      .forEach((route) => {
+        this.app[route.method](route.path, route.f);
+      });
   }
 }

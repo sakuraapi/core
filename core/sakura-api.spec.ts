@@ -5,7 +5,7 @@ import {
 import * as request from 'supertest';
 import * as http    from 'http';
 
-describe('SakuraApi', () => {
+describe('core/SakuraApi', () => {
 
   let config = new ServerConfig();
   let sapi: SakuraApi;
