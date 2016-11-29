@@ -95,11 +95,11 @@ export class SakuraApi {
     if (!target.sakuraApiClassRoutes) {
       return;
     }
-
+    
     target
       .sakuraApiClassRoutes
       .forEach((route) => {
-        this.app[route.method](route.path, route.f);
+        this.app[route.httpMethod](route.path, route.f);
       });
   }
 }

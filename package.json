@@ -1,6 +1,6 @@
 {
   "name": "sakuraapi",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A NodeJS API Experiment",
   "main": "index.js",
   "typings": "index.d.ts",
@@ -31,6 +31,9 @@
     "url": "https://github.com/sakuraapi/api/issues"
   },
   "homepage": "https://github.com/sakuraapi/api#readme",
+  "engines": {
+    "node": ">=7.0.0"
+  },
   "devDependencies": {
     "@types/express": "^4.0.34",
     "@types/jasmine": "^2.5.38",

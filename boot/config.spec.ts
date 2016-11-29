@@ -42,7 +42,7 @@ describe('config', () => {
           new SakuraApiConfig().load(path);
           fail('should have thrown error');
         } catch (err) {
-          expect(err.message).toBe('Unexpected end of input');
+          expect(err.message).toBe('Unexpected end of JSON input');
           expect(err.code).toBe('INVALID_JSON_EMPTY');
           expect(err.path).toBe(path);
         }

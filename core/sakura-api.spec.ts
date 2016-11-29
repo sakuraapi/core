@@ -2,8 +2,11 @@ import {
   SakuraApi,
   ServerConfig
 }                   from './sakura-api';
+import {
+  Routable,
+  Route
+}                   from './routable';
 import * as request from 'supertest';
-import * as http    from 'http';
 
 describe('core/SakuraApi', () => {
 
@@ -130,4 +133,47 @@ describe('core/SakuraApi', () => {
         .catch(done.fail);
     });
   });
+
+  describe('route(...)', () => {
+    it('takes a @Routable class and adds the proper routes to express', (done) => {
+      let test = new RoutableTest();
+      sapi
+        .listen(config)
+        .then(() => {
+          sapi.route(test);
+
+          request(sapi.app)
+            .get('/testRouterGet')
+            .expect('Content-Type', /json/)
+            .expect('Content-Length', '40')
+            .expect('{"testRouterGet":"testRouterGet worked"}')
+            .expect(200)
+            .end(function (err, res) {
+              if (err) {
+                return done.fail(err);
+              }
+              done();
+            });
+        })
+        .catch(done.fail);
+
+    });
+  });
+
 });
+
+@Routable()
+class RoutableTest {
+  constructor() {
+  }
+
+  @Route({
+    path: 'testRouterGet',
+    method: 'get'
+  })
+  testRouterGet(req, res) {
+    res.status(200).json({
+      testRouterGet: 'testRouterGet worked'
+    });
+  }
+}
