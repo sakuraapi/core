@@ -77,7 +77,7 @@ export class SakuraApiConfig {
       } else if (err.message.startsWith('Cannot find module')) {
         // NOOP: a ts config file wasn't found
         return;
-      } else if (err.message === 'Unexpected end of input') {
+      } else if (err.message === 'Unexpected end of JSON input') {
         let e = new Error(err.message);
         e['code'] = 'INVALID_JSON_EMPTY';
         e['path'] = path;

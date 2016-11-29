@@ -15,6 +15,8 @@ How to interact with others on this project:
 * TypeScript >= 2.0
 * NodeJS >= 7.0
 
+(among other things)
+
 Why NodeJS 7+? Because it has ECMAScript 2015 features we wanted, and SakuraApi is about emerging standards, not past ones.
 
 ## Standards & Process
@@ -27,6 +29,15 @@ Why NodeJS 7+? Because it has ECMAScript 2015 features we wanted, and SakuraApi 
 ## What's with the name?
 
 J.P. (https://github.com/etsuo) is half Japanese and he has fond memories of cherry blossoms in Japan... and he likes sakura mochi. No, he doesn't speak Japanese, much to his mother's disappointment.
+
+# Working with the SakuraApi codebase
+
+```
+npm install
+npm test
+```
+
+It's a framework / library, so there isn't an `npm start`.
 
 # Who should use this?
 
@@ -68,6 +79,8 @@ There are some properties in the environmental config that are used by the syste
 ```
 
 # Using SakuraAPI
+
+See: https://github.com/sakuraapi/starter
 
 Setup a basic project:
 
@@ -114,7 +127,7 @@ Your `{project}/package.json` should look something like this:
   "dependencies": {
     "colors": "^1.1.2",
     "express": "^4.14.0",
-    "sakuraapi": "^0.0.0"
+    "sakuraapi": "^0.1.0"
   },
   "devDependencies": {
     "@types/colors": "^0.6.33",
@@ -156,16 +169,39 @@ Your `{project}/tsconfig.json` should look something like this:
 Once you've done that, your basic `{project}/index.ts` file should look something like this:
 
 ```
-import {SakuraApi}  from 'sakuraapi';
+import {
+  Routable,
+  Route,
+  SakuraApi
+}                   from 'sakuraapi';
 import * as colors  from 'colors';
+import * as express from 'express';
 
+@Routable({
+  baseUrl: 'api'
+})
+class Hello {
+
+  @Route({
+    path: 'greeting',
+    method: 'get'
+  })
+  getGreeting(req: express.Request, res: express.Response) {
+    res.status(200).json({
+      greeting: 'Hello World'
+    });
+  }
+}
 
 (function boot() {
-  SakuraApi
-    .instance
+  let sapi = SakuraApi.instance;
+
+  sapi.route(new Hello());
+
+  sapi
     .listen()
     .catch((err) => {
-      console.log(colors.red(`Error: ${err}`));
+      console.log(`Error: ${err}`.red);
     });
 })();
 ```

@@ -12,7 +12,14 @@ export class RoutableMethod {
   blackList?: boolean;
 }
 
-export function routable(options?: RoutableClassOptions): any {
+export class SakuraApiClassRoutes {
+  path: string;       // the class's baseUrl (if any) + the route's path
+  f: (any) => any;    // the function that handles the route in Express.use
+  httpMethod: string; // the http verb (e.g., GET, PUT, POST, DELETE)
+  method: string;     // the classes's method name that handles the route (the name of f)
+}
+
+export function Routable(options?: RoutableClassOptions): any {
   options = options || {};
   options.blackList = options.blackList || [];
   options.baseUrl = options.baseUrl || '';
@@ -23,7 +30,7 @@ export function routable(options?: RoutableClassOptions): any {
 
     // the new constructor behaviour
     let newConstructor: any = function (...args) {
-      let metaData = [];
+      let metaData: SakuraApiClassRoutes[] = [];
 
       Object.getOwnPropertyNames(Object.getPrototypeOf(this))
         .forEach((methodKey) => {
@@ -35,11 +42,18 @@ export function routable(options?: RoutableClassOptions): any {
             return;
           }
 
-          let data = {
-            path: path.join(options.baseUrl, Reflect.getMetadata(`path.${methodKey}`, this)).replace(/\/$/, ""),
+          let endPoint = path.join(options.baseUrl, Reflect.getMetadata(`path.${methodKey}`, this)).replace(/\/$/, "");
+          if (!endPoint.startsWith('/')) {
+            endPoint = '/' + endPoint;
+          }
+
+          let data: SakuraApiClassRoutes = {
+            path: endPoint,
             f: Reflect.getMetadata(`function.${methodKey}`, this),
-            method: Reflect.getMetadata(`method.${methodKey}`, this)
+            httpMethod: Reflect.getMetadata(`httpMethod.${methodKey}`, this),
+            method: methodKey
           };
+
           metaData.push(data);
         });
 
@@ -66,7 +80,7 @@ export function routable(options?: RoutableClassOptions): any {
   }
 }
 
-export function route(options?: RoutableMethod) {
+export function Route(options?: RoutableMethod) {
   options = options || {};
   options.path = options.path || '';
   options.method = options.method || 'get';
@@ -88,7 +102,7 @@ export function route(options?: RoutableMethod) {
       Reflect.defineMetadata(`hasRoute.${key}`, true, target);
       Reflect.defineMetadata(`path.${key}`, options.path, target);
       Reflect.defineMetadata(`function.${key}`, f, target);
-      Reflect.defineMetadata(`method.${key}`, options.method.toLowerCase(), target);
+      Reflect.defineMetadata(`httpMethod.${key}`, options.method.toLowerCase(), target);
     }
 
     return {
