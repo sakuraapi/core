@@ -1,3 +1,4 @@
+import {SakuraApi} from './sakura-api';
 import 'reflect-metadata';
 import * as path from 'path';
 
@@ -30,6 +31,8 @@ export function Routable(options?: RoutableClassOptions): any {
 
     // the new constructor behaviour
     let newConstructor: any = function (...args) {
+      let c = construct(original, args);
+
       let metaData: SakuraApiClassRoutes[] = [];
 
       Object.getOwnPropertyNames(Object.getPrototypeOf(this))
@@ -49,7 +52,7 @@ export function Routable(options?: RoutableClassOptions): any {
 
           let data: SakuraApiClassRoutes = {
             path: endPoint,
-            f: Reflect.getMetadata(`function.${methodKey}`, this),
+            f: Reflect.getMetadata(`function.${methodKey}`, this).bind(c),
             httpMethod: Reflect.getMetadata(`httpMethod.${methodKey}`, this),
             method: methodKey
           };
@@ -57,13 +60,19 @@ export function Routable(options?: RoutableClassOptions): any {
           metaData.push(data);
         });
 
-      let c = construct(original, args);
+
       c.sakuraApiClassRoutes = metaData;
+
+      SakuraApi.instance.route(c);
       return c;
     };
 
     // copy prototype so intanceof operator still works
     newConstructor.prototype = original.prototype;
+
+    // instantiate an instance of the @Routable class to cause it to envoke SakuraApi.instance.route(...)
+    // on itself so its routes are attached.
+    new newConstructor();
 
     // return new constructor (will override original)
     return newConstructor;
@@ -75,6 +84,7 @@ export function Routable(options?: RoutableClassOptions): any {
         return new constructor(...args);
       };
       c.prototype = constructor.prototype;
+
       return new c();
     }
   }
@@ -89,6 +99,7 @@ export function Route(options?: RoutableMethod) {
   const methods = ['get', 'post', 'put', 'delete', 'head'];
 
   return function (target: any, key: string | symbol, value: TypedPropertyDescriptor<any>) {
+
     if (methods.indexOf(options.method) < 0) {
       throw new Error(`@route(...)${(target.constructor || {}).name}.${key} had its 'method' `
         + `property set to '${options.method}', which is invalid. Valid options are: ${methods.join(', ')}`);
@@ -97,6 +108,10 @@ export function Route(options?: RoutableMethod) {
     let f = function (...args: any[]) {
       return value.value.apply(this, args);
     };
+
+    if (options.path === '') {
+      options.path = <any>key;
+    }
 
     if (!options.blackList) {
       Reflect.defineMetadata(`hasRoute.${key}`, true, target);

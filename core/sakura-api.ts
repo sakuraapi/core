@@ -95,7 +95,7 @@ export class SakuraApi {
     if (!target.sakuraApiClassRoutes) {
       return;
     }
-    
+
     target
       .sakuraApiClassRoutes
       .forEach((route) => {

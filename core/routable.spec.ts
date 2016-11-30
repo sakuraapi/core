@@ -3,6 +3,7 @@ import {SakuraApi}       from './sakura-api';
 import * as express      from 'express';
 import method = require("lodash/method");
 import before = require("lodash/before");
+import * as request from 'supertest';
 
 describe('core/Routable', () => {
 
@@ -11,6 +12,8 @@ describe('core/Routable', () => {
   beforeEach(() => {
     t = new Test(777);
     sakuraApiClassRoutes = t['sakuraApiClassRoutes'];
+
+    spyOn(console, 'log');
   });
 
   describe('Routable(...)', () => {
@@ -62,15 +65,44 @@ describe('core/Routable', () => {
     it('maintains the prototype chain', () => {
       expect(t instanceof Test).toBe(true);
     });
+
+    it('property binds the instantiated class as the context of this for each route method', () => {
+      let c = new Test4();
+
+      expect(c.someMethodTest4()).toBe(c.someProperty);
+      expect(c['sakuraApiClassRoutes'][0].f()).toBe(c.someProperty);
+    });
+
+    it('automatically instantiates its class and adds it to SakuraApi.instance.route(...)', (done) => {
+      SakuraApi
+        .instance
+        .listen()
+        .then(() => {
+          request(SakuraApi.instance.app)
+            .get('/someMethodTest5')
+            .expect('Content-Type', /json/)
+            .expect('Content-Length', '42')
+            .expect('{"someMethodTest5":"testRouterGet worked"}')
+            .expect(200)
+            .end(function (err, res) {
+              if (err) {
+                return done.fail(err);
+              }
+              done();
+            });
+        })
+        .catch(done.fail);
+    });
+
   });
 
   describe('route(...)', () => {
 
-    it('gracefully handles an empty @Route(...)', () => {
+    it('gracefully handles an empty @Route(...), defaults path to method name', () => {
       // if these expectations pass, the blackList was properly defaulted to false since
       // the route wouldn't be in sakuraApiClassRoutes if blackList had been true.
       expect(sakuraApiClassRoutes.length).toBe(4);
-      expect(sakuraApiClassRoutes[3].path).toBe('/test');
+      expect(sakuraApiClassRoutes[3].path).toBe('/test/emptyRouteDecorator');
       expect(sakuraApiClassRoutes[3].httpMethod).toBe('get');
       expect(sakuraApiClassRoutes[3].method).toBe('emptyRouteDecorator');
     });
@@ -175,4 +207,23 @@ class Test3 {
   blackListedMethod() {
 
   }
+}
+@Routable()
+class Test4 {
+  someProperty = 'instance';
+
+  @Route()
+  someMethodTest4() {
+    return this.someProperty;
+  }
+}
+
+@Routable()
+class Test5 {
+
+  @Route()
+  someMethodTest5(req, res) {
+    res.status(200).json({someMethodTest5: "testRouterGet worked"})
+  }
+
 }

@@ -95,12 +95,12 @@ describe('core/SakuraApi', () => {
         .then(() => {
           sapi
             .app
-            .get('/test', function (req, res) {
+            .get('/middleWareTest', function (req, res) {
               res.status(200).json({isTest: true});
             });
 
           request(sapi.app)
-            .get('/test')
+            .get('/middleWareTest')
             .expect('Content-Type', /json/)
             .expect('Content-Length', '15')
             .expect('{"isTest":true}')
@@ -136,12 +136,11 @@ describe('core/SakuraApi', () => {
 
   describe('route(...)', () => {
     it('takes a @Routable class and adds the proper routes to express', (done) => {
-      let test = new RoutableTest();
+      // note: the @Routable decorator logic called the route(...) method and passed its Class instance
+      // that it instantiated, which caused .route(...) to be called (magic)
       sapi
         .listen(config)
         .then(() => {
-          sapi.route(test);
-
           request(sapi.app)
             .get('/testRouterGet')
             .expect('Content-Type', /json/)
@@ -156,7 +155,6 @@ describe('core/SakuraApi', () => {
             });
         })
         .catch(done.fail);
-
     });
   });
 
@@ -164,6 +162,8 @@ describe('core/SakuraApi', () => {
 
 @Routable()
 class RoutableTest {
+  response = 'testRouterGet worked';
+
   constructor() {
   }
 
@@ -173,7 +173,7 @@ class RoutableTest {
   })
   testRouterGet(req, res) {
     res.status(200).json({
-      testRouterGet: 'testRouterGet worked'
+      testRouterGet: this.response
     });
   }
 }

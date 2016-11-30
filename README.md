@@ -195,9 +195,6 @@ class Hello {
 
 (function boot() {
   let sapi = SakuraApi.instance;
-
-  sapi.route(new Hello());
-
   sapi
     .listen()
     .catch((err) => {
