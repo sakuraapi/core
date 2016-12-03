@@ -137,11 +137,11 @@ describe('core/Routable', () => {
 
   describe('route(...)', () => {
 
-    it('gracefully handles an empty @Route(...), defaults path to method name', () => {
+    it('gracefully handles an empty @Route(...), defaults path to baseUri/', () => {
       // if these expectations pass, the blackList was properly defaulted to false since
       // the route wouldn't be in sakuraApiClassRoutes if blackList had been true.
       expect(sakuraApiClassRoutes.length).toBe(4);
-      expect(sakuraApiClassRoutes[3].path).toBe('/test/emptyRouteDecorator');
+      expect(sakuraApiClassRoutes[3].path).toBe('/test');
       expect(sakuraApiClassRoutes[3].httpMethod).toBe('get');
       expect(sakuraApiClassRoutes[3].method).toBe('emptyRouteDecorator');
     });
@@ -315,7 +315,9 @@ class Test4 {
 @Routable()
 class Test5 {
 
-  @Route()
+  @Route({
+    path: 'someMethodTest5'
+  })
   someMethodTest5(req, res) {
     res.status(200).json({someMethodTest5: "testRouterGet worked"})
   }

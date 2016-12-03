@@ -113,11 +113,7 @@ export function Route(options?: RoutableMethodOptions) {
     let f = function (...args: any[]) {
       return value.value.apply(this, args);
     };
-
-    if (options.path === '') {
-      options.path = <any>key;
-    }
-
+    
     if (!options.blackList) {
       Reflect.defineMetadata(`hasRoute.${key}`, true, target);
       Reflect.defineMetadata(`path.${key}`, options.path, target);
