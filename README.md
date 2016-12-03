@@ -182,41 +182,73 @@ Your `{project}/tsconfig.json` should look something like this:
 }
 ```
 
-Once you've done that, your basic `{project}/index.ts` file should look something like this:
-
+You can create a route handler in `{project}/model/user.ts`:
 ```
 import {
   Routable,
-  Route,
-  SakuraApi
+  Route
 }                   from 'sakuraapi';
-import * as colors  from 'colors';
 import * as express from 'express';
 
 @Routable({
   baseUrl: 'api'
 })
-class Hello {
+class User {
+  presidents = [{
+    firstName: 'George',
+    lastName: 'Washington'
+  }, {
+    firstName: 'John',
+    lastName: 'Adams'
+  }];
+
+  constructor() {
+  }
 
   @Route({
-    path: 'greeting',
+    path: 'user',
     method: 'get'
   })
-  getGreeting(req: express.Request, res: express.Response) {
-    res.status(200).json({
-      greeting: 'Hello World'
-    });
+  getUsers(req: express.Request, res: express.Response) {
+    res.status(200).json(this.presidents);
+  }
+
+  @Route({
+    path: 'user/:id',
+    method: 'get'
+  })
+  getUser(req: express.Request, res: express.Response) {
+    let id = Number(req.params.id);
+
+    if (id && id - 1 < this.presidents.length && id > 0) {
+      res.status(200).json(this.presidents[id - 1]);
+    } else {
+      res.sendStatus(404);
+    }
   }
 }
+```
+
+Once you've done that, your basic `{project}/index.ts` file should look something like this:
+
+```
+import {SakuraApi}       from 'sakuraapi';
+import                   './model/user';
+import                   'colors';
+import * as bodyParser   from 'body-parser'
 
 (function boot() {
   let sapi = SakuraApi.instance;
+
+  sapi.addMiddleware(bodyParser.json());
+
   sapi
     .listen()
     .catch((err) => {
       console.log(`Error: ${err}`.red);
     });
 })();
+
 ```
 
 

@@ -1,6 +1,6 @@
-import {SakuraApi} from './sakura-api';
 import 'reflect-metadata';
-import * as path from 'path';
+import {SakuraApi} from './sakura-api';
+import * as path   from 'path';
 
 export class RoutableClassOptions {
   blackList?: string[];

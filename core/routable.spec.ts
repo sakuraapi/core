@@ -1,8 +1,10 @@
 import {Routable, Route} from './routable';
 import {SakuraApi}       from './sakura-api';
-import * as express      from 'express';
+
 import method = require("lodash/method");
 import before = require("lodash/before");
+
+import * as express      from 'express';
 import * as request from 'supertest';
 
 describe('core/Routable', () => {

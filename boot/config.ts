@@ -1,7 +1,6 @@
 import * as _  from 'lodash';
 import * as fs from 'fs';
 
-
 export class SakuraApiConfig {
 
   constructor() {

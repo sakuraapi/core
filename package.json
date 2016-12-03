@@ -6,7 +6,8 @@
   "typings": "index.d.ts",
   "files": [
     "**/!(*.spec).js",
-    "**/!(*.spec).d.ts"
+    "**/!(*.spec).d.ts",
+    "!spec/**/*"
   ],
   "scripts": {
     "build": "tsc",

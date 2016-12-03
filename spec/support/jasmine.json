@@ -2,6 +2,7 @@
   "spec_dir": "",
   "spec_files": [
     "!node_modules/*[sS]pec.js",
+    "spec/bootstrap-tests/**/*.spec.js",
     "**/*.spec.js"
   ],
   "helpers": [
