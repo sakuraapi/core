@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc",
     "jasmine": "jasmine",
-    "prepublish": "npm run build",
+    "prepublish": "npm test && npm run build",
     "test": "npm run build && npm run jasmine",
     "tsc": "tsc"
   },

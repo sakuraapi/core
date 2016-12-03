@@ -36,25 +36,25 @@ export function Routable(options?: RoutableClassOptions): any {
       let metaData: SakuraApiClassRoutes[] = [];
 
       Object.getOwnPropertyNames(Object.getPrototypeOf(this))
-        .forEach((methodKey) => {
-          if (!Reflect.getMetadata(`hasRoute.${methodKey}`, this)) {
+        .forEach((methodName) => {
+          if (!Reflect.getMetadata(`hasRoute.${methodName}`, this)) {
             return;
           }
 
-          if (options.blackList.indexOf(methodKey) > -1) {
+          if (options.blackList.indexOf(methodName) > -1) {
             return;
           }
 
-          let endPoint = path.join(options.baseUrl, Reflect.getMetadata(`path.${methodKey}`, this)).replace(/\/$/, "");
+          let endPoint = path.join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, this)).replace(/\/$/, "");
           if (!endPoint.startsWith('/')) {
             endPoint = '/' + endPoint;
           }
 
           let data: SakuraApiClassRoutes = {
             path: endPoint,
-            f: Reflect.getMetadata(`function.${methodKey}`, this).bind(c),
-            httpMethod: Reflect.getMetadata(`httpMethod.${methodKey}`, this),
-            method: methodKey
+            f: Reflect.getMetadata(`function.${methodName}`, this).bind(c),
+            httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, this),
+            method: methodName
           };
 
           metaData.push(data);

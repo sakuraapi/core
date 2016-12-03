@@ -132,6 +132,60 @@ describe('core/Routable', () => {
       expect(t3['sakuraApiClassRoutes'].length).toBe(0);
     });
 
+    describe('handles route parameters', () => {
+
+      afterEach((done) => {
+        SakuraApi
+          .instance
+          .close()
+          .then(() => {
+            done();
+          })
+          .catch((err) => {
+            done.fail(err);
+          });
+      });
+
+      it('at the end of the path', (done) => {
+        SakuraApi
+          .instance
+          .listen()
+          .then(() => {
+            request(SakuraApi.instance.app)
+              .get('/route/parameter/777')
+              .expect('Content-Type', /json/)
+              .expect('Content-Length', '16')
+              .expect('{"result":"777"}')
+              .expect(200)
+              .end(function (err, res) {
+                if (err) {
+                  return done.fail(err);
+                }
+                done();
+              })
+          });
+      });
+
+      it('at the end of the path', (done) => {
+        SakuraApi
+          .instance
+          .listen()
+          .then(() => {
+            request(SakuraApi.instance.app)
+              .get('/route2/888/test')
+              .expect('Content-Type', /json/)
+              .expect('Content-Length', '16')
+              .expect('{"result":"888"}')
+              .expect(200)
+              .end(function (err, res) {
+                if (err) {
+                  return done.fail(err);
+                }
+                done();
+              })
+          });
+      });
+    });
   });
 });
 
@@ -208,6 +262,7 @@ class Test3 {
 
   }
 }
+
 @Routable()
 class Test4 {
   someProperty = 'instance';
@@ -224,6 +279,24 @@ class Test5 {
   @Route()
   someMethodTest5(req, res) {
     res.status(200).json({someMethodTest5: "testRouterGet worked"})
+  }
+
+  @Route({
+    path: 'route/parameter/:test'
+  })
+  routeParameterTest(req: express.Request, res: express.Response) {
+    let test = req.params.test;
+
+    res.status(200).json({result: test});
+  }
+
+  @Route({
+    path: 'route2/:parameter/test'
+  })
+  routeParameterTest2(req: express.Request, res: express.Response) {
+    let test = req.params.parameter;
+
+    res.status(200).json({result: test});
   }
 
 }
