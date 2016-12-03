@@ -5,9 +5,10 @@ import * as path from 'path';
 export class RoutableClassOptions {
   blackList?: string[];
   baseUrl?: string;
+  autoRoute?: boolean;
 }
 
-export class RoutableMethod {
+export class RoutableMethodOptions {
   path?: string;
   method?: string;
   blackList?: boolean;
@@ -24,6 +25,8 @@ export function Routable(options?: RoutableClassOptions): any {
   options = options || {};
   options.blackList = options.blackList || [];
   options.baseUrl = options.baseUrl || '';
+
+  options.autoRoute = (typeof options.autoRoute === 'boolean') ? options.autoRoute : true;
 
   return function (target: any) {
     // save a reference to the original constructor
@@ -63,7 +66,9 @@ export function Routable(options?: RoutableClassOptions): any {
 
       c.sakuraApiClassRoutes = metaData;
 
-      SakuraApi.instance.route(c);
+      if (options.autoRoute) {
+        SakuraApi.instance.route(c);
+      }
       return c;
     };
 
@@ -90,7 +95,7 @@ export function Routable(options?: RoutableClassOptions): any {
   }
 }
 
-export function Route(options?: RoutableMethod) {
+export function Route(options?: RoutableMethodOptions) {
   options = options || {};
   options.path = options.path || '';
   options.method = options.method || 'get';
