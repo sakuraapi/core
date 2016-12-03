@@ -17,14 +17,61 @@ describe('core/Routable', () => {
   });
 
   describe('Routable(...)', () => {
-    it('adds a baseUrl to the path of an @Route, if provided', () => {
-      expect(sakuraApiClassRoutes[0].path).toBe('/test');
-    });
 
-    it('handles the lack of a baseUrl gracefully', () => {
-      let t2 = new Test2();
-      expect(t2['sakuraApiClassRoutes'][0].path).toBe('/');
-      expect(t2['sakuraApiClassRoutes'][1].path).toBe('/someOtherMethodTest2');
+    describe('options', () => {
+      it('add a baseUrl to the path of an @Route, if provided', () => {
+        expect(sakuraApiClassRoutes[0].path).toBe('/test');
+      });
+
+      it('ignore @Route methods that are listed in the @Routable(blacklist)', () => {
+        expect(sakuraApiClassRoutes).toBeDefined();
+        expect(sakuraApiClassRoutes.length).toBe(4);
+        let found = false;
+        sakuraApiClassRoutes.forEach((route) => {
+          found = route.method === 'someBlacklistedMethod';
+        });
+        expect(found).toBe(false);
+      });
+
+      it('handle the lack of a baseUrl gracefully', () => {
+        let t2 = new Test2();
+        expect(t2['sakuraApiClassRoutes'][0].path).toBe('/');
+        expect(t2['sakuraApiClassRoutes'][1].path).toBe('/someOtherMethodTest2');
+      });
+
+      it('suppress autoRouting if options.autoRoute = false', (done) => {
+
+        @Routable({
+          autoRoute: false
+        })
+        class test {
+          @Route({
+            path: 'autoRoutingFalseTest'
+          })
+          handle(req, res) {
+            res.status(200);
+          }
+        }
+
+        SakuraApi
+          .instance
+          .listen()
+          .then(() => {
+            request(SakuraApi.instance.app)
+              .get('/autoRoutingFalseTest')
+              .expect(404)
+              .end(function (err, res) {
+                if (err) {
+                  return done.fail(err);
+                }
+                SakuraApi
+                  .instance
+                  .close()
+                  .then(done)
+                  .catch(done.fail);
+              })
+          });
+      });
     });
 
     it('drops the traling / on a path', () => {
@@ -46,16 +93,6 @@ describe('core/Routable', () => {
       expect(typeof sakuraApiClassRoutes[1].f).toBe('function');
       expect(sakuraApiClassRoutes[1].httpMethod).toBe('post');
       expect(sakuraApiClassRoutes[1].method).toBe('someOtherMethod');
-    });
-
-    it('ignores @Route methods that are listed in the @Routable(blacklist)', () => {
-      expect(sakuraApiClassRoutes).toBeDefined();
-      expect(sakuraApiClassRoutes.length).toBe(4);
-      let found = false;
-      sakuraApiClassRoutes.forEach((route) => {
-        found = route.method === 'someBlacklistedMethod';
-      });
-      expect(found).toBe(false);
     });
 
     it('properly passes the constructor parameters', () => {

@@ -203,6 +203,53 @@ class Hello {
 })();
 ```
 
+
+# @Routable and @Route
+
+You define a class decordated with `@Routable()` to define your routes for SakuraApi. For example:
+
+## @Routable
+
+```
+@Routable()
+class RelatedRouteHandlers() {
+}
+```
+
+`@Routable()` takes an `RoutableClassOptions` object for its configuration.
+
+Options:
+
+* `autoRoute` (true | false) [default: true]: a value of false tells `@Routable` to not automatically add the classes
+   routes to `SakuraApi`'s ExpressJS router.
+* `blackList` (string[]) [default: []]: an array of method names to black list. A black listed method with an `@Route` decorator will
+   be ignored when `@Routable` is adding its `@Route` methods to the router.
+* `baseUrl` (string) [default: '']: sets the base url shared by all `@Route` methods defined by this class.
+
+## @Route
+
+```
+@Routable({
+  baseUrl: 'users/'
+})
+class UserRoutes() {
+
+  @Route()
+  getUser(req: express.Request, res: express.Response) {
+    res.status(200).json({userId: 123});
+  }
+}
+```
+
+`@Route()` takes an `RoutableMethodOptions` object for its configuration.
+
+Options:
+
+* `path` (string) [default: '']: the path after the `BaseUri` optionally defined in `@Routable` that routes to this handler method.
+* `method` (string) [default: 'get']: the HTTP method for this path that routes to this handler method.
+* `blackList` (boolean) [default: false]: whether or not this route should be excluded from the router.
+
+
 # About the SakuraApi class
 
 * It's a singleton.
