@@ -1,17 +1,18 @@
 {
   "name": "sakuraapi",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A NodeJS API Experiment",
   "main": "index.js",
   "typings": "index.d.ts",
   "files": [
     "**/!(*.spec).js",
-    "**/!(*.spec).d.ts"
+    "**/!(*.spec).d.ts",
+    "!spec/**/*"
   ],
   "scripts": {
     "build": "tsc",
     "jasmine": "jasmine",
-    "prepublish": "npm run build",
+    "prepublish": "npm test && npm run build",
     "test": "npm run build && npm run jasmine",
     "tsc": "tsc"
   },

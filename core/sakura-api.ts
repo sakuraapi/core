@@ -2,7 +2,6 @@ import {SakuraApiConfig} from '../boot/config';
 import * as colors       from 'colors';
 import * as express      from 'express';
 import * as http         from 'http';
-import forEach = require("lodash/forEach");
 
 export class ServerConfig {
   constructor(public address?: string,
@@ -19,7 +18,9 @@ export class SakuraApi {
   private _app: express.Express;
   private _port: number = 3000;
   private _server: http.Server;
+  private routes = [];
 
+  baseUri = '/';
   config: any;
 
   static get instance(): SakuraApi {
@@ -58,6 +59,14 @@ export class SakuraApi {
     this._port = (this.config.server || {}).port || this._port;
   }
 
+  static addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction)=>void) {
+    SakuraApi.instance.app.use(fn);
+  }
+
+  addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction)=>void) {
+    SakuraApi.addMiddleware(fn);
+  }
+
   close() {
     return new Promise((resolve, reject) => {
       this
@@ -78,6 +87,15 @@ export class SakuraApi {
       this._address = listenProperties.address || this._address;
       this._port = listenProperties.port || this._port;
 
+      let router = express.Router();
+      this
+        .routes
+        .forEach((route) => {
+          router[route.httpMethod](route.path, route.f);
+        });
+
+      this.app.use(this.baseUri, router);
+
       this
         .server
         .listen(this.port, this.address, (err) => {
@@ -95,11 +113,12 @@ export class SakuraApi {
     if (!target.sakuraApiClassRoutes) {
       return;
     }
-    
+
     target
       .sakuraApiClassRoutes
       .forEach((route) => {
-        this.app[route.httpMethod](route.path, route.f);
+        //this.app[route.httpMethod](route.path, route.f);
+        this.routes.push(route);
       });
   }
 }
