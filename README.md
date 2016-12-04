@@ -297,6 +297,8 @@ class UserRoutes() {
 * `method` (string) [default: 'get']: the HTTP method for this path that routes to this handler method.
 * `blackList` (boolean) [default: false]: whether or not this route should be excluded from the router.
 
+# Setting a base path
+`SakuraApi.instance.baseUri = '/api/v0';`
 
 # About the SakuraApi class
 

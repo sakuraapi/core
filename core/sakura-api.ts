@@ -20,6 +20,7 @@ export class SakuraApi {
   private _server: http.Server;
   private routes = [];
 
+  baseUri = '/';
   config: any;
 
   static get instance(): SakuraApi {
@@ -86,11 +87,14 @@ export class SakuraApi {
       this._address = listenProperties.address || this._address;
       this._port = listenProperties.port || this._port;
 
+      let router = express.Router();
       this
         .routes
         .forEach((route) => {
-          this.app[route.httpMethod](route.path, route.f);
+          router[route.httpMethod](route.path, route.f);
         });
+
+      this.app.use(this.baseUri, router);
 
       this
         .server

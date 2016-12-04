@@ -6,28 +6,32 @@ import {SakuraApi}  from '../../core/sakura-api';
 
 import * as request from 'supertest';
 
-describe('SakuraApi.instance.middleware', () => {
+describe('SakuraApi.instance.middleware', function () {
 
-  afterEach((done) => {
-    SakuraApi
-      .instance
-      .close()
-      .then(done)
-      .catch(done.fail)
+  beforeEach(function () {
+    spyOn(console, 'log');
   });
 
-  it('injects middleware before @Routable classes', (done) => {
-    SakuraApi.addMiddleware((req, res, next) => {
+  afterEach(function (done) {
+    this
+      .sapi
+      .close()
+      .then(done)
+      .catch(done.fail);
+  });
+
+  it('injects middleware before @Routable classes', function (done) {
+    this.sapi.addMiddleware((req, res, next) => {
       (<any>req).bootStrapTest = 778;
       next();
     });
 
-    SakuraApi
-      .instance
+    this
+      .sapi
       .listen()
       .then(() => {
         request(SakuraApi.instance.app)
-          .get('/middleware/test')
+          .get(this.uri('/middleware/test'))
           .expect('Content-Type', /json/)
           .expect('Content-Length', '14')
           .expect('{"result":778}')
