@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import {construct} from './construct';
 import {SakuraApi} from './sakura-api';
 import * as path   from 'path';
 
@@ -29,12 +30,10 @@ export function Routable(options?: RoutableClassOptions): any {
   options.autoRoute = (typeof options.autoRoute === 'boolean') ? options.autoRoute : true;
 
   return function (target: any) {
-    // save a reference to the original constructor
-    let original = target;
 
     // the new constructor behaviour
     let newConstructor: any = function (...args) {
-      let c = construct(original, args);
+      let c = construct(target, args);
 
       let metaData: SakuraApiClassRoutes[] = [];
 
@@ -73,7 +72,7 @@ export function Routable(options?: RoutableClassOptions): any {
     };
 
     // copy prototype so intanceof operator still works
-    newConstructor.prototype = original.prototype;
+    newConstructor.prototype = target.prototype;
 
     // instantiate an instance of the @Routable class to cause it to envoke SakuraApi.instance.route(...)
     // on itself so its routes are attached.
@@ -81,17 +80,6 @@ export function Routable(options?: RoutableClassOptions): any {
 
     // return new constructor (will override original)
     return newConstructor;
-
-    //////////
-    // a utility function to generate instances of a class
-    function construct(constructor, args) {
-      let c: any = function () {
-        return new constructor(...args);
-      };
-      c.prototype = constructor.prototype;
-
-      return new c();
-    }
   }
 }
 
@@ -113,7 +101,7 @@ export function Route(options?: RoutableMethodOptions) {
     let f = function (...args: any[]) {
       return value.value.apply(this, args);
     };
-    
+
     if (!options.blackList) {
       Reflect.defineMetadata(`hasRoute.${key}`, true, target);
       Reflect.defineMetadata(`path.${key}`, options.path, target);
