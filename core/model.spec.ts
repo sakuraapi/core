@@ -1,16 +1,27 @@
 import {
-  Model
-}         from './model';
+  Model,
+  modelSymbols
+}               from './model';
 
 describe('core/Model', function () {
 
-  describe('construction', function () {
+  @Model()
+  class Test {
+    testProperty = true;
 
-    @Model()
-    class Test {
-      constructor(public n: number) {
-      }
+    static getById() {
+      return 'getById';
     }
+
+    constructor(public n: number) {
+    }
+
+    save() {
+      return 'override';
+    }
+  }
+
+  describe('construction', function () {
 
     beforeEach(function () {
       this.t = new Test(777);
@@ -24,14 +35,23 @@ describe('core/Model', function () {
       expect(this.t instanceof Test).toBe(true);
     });
 
-    it('decorates itself with this.sakuraApiModel = true', function () {
-      expect(this.t.sakuraApiModel).toBe(true);
+    it(`decorates itself with Symbol('sakuraApiModel') = true`, function () {
+      expect(this.t[modelSymbols.sakuraApiModel]).toBe(true);
     });
 
-    it('sets its this.sakuraApiModel property to readonly', function () {
-      expect(() => this.t.sakuraApiModel = false)
-        .toThrow(new Error(`Cannot assign to read only property 'sakuraApiModel' of object '#<Test>'`));
+    it('proxies various CRUD methods so that a @model has basic CRUD out of the box', function () {
+
+      // static
+      expect((<any>Test).get('get_inserted')).toBe('get_inserted');
+      expect(Test.getById()).toBe('getById');
+
+      // instance
+      expect(this.t.save()).toBe('override');
+      expect(this.t.deleteById('delete_By_Id_Called')).toBe('delete_By_Id_Called');
+      expect(() => this.t.failTest()).toThrow();
+
     });
+
   });
 });
 

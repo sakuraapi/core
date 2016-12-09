@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import {construct} from './construct';
+import {applyClassProperties} from './helpers/applyClassProperties';
 import {SakuraApi} from './sakura-api';
 import * as path   from 'path';
 
@@ -33,7 +33,7 @@ export function Routable(options?: RoutableClassOptions): any {
 
     // the new constructor behaviour
     let newConstructor: any = function (...args) {
-      let c = construct(target, args);
+      let c = Reflect.construct(target, args);
 
       let metaData: SakuraApiClassRoutes[] = [];
 
@@ -71,8 +71,7 @@ export function Routable(options?: RoutableClassOptions): any {
       return c;
     };
 
-    // copy prototype so intanceof operator still works
-    newConstructor.prototype = target.prototype;
+    applyClassProperties(newConstructor, target);
 
     // instantiate an instance of the @Routable class to cause it to envoke SakuraApi.instance.route(...)
     // on itself so its routes are attached.
