@@ -1,7 +1,6 @@
 import 'reflect-metadata';
-import {applyClassProperties} from './helpers/applyClassProperties';
-import {SakuraApi} from './sakura-api';
-import * as path   from 'path';
+import {SakuraApi}            from './sakura-api';
+import * as path              from 'path';
 
 export class RoutableClassOptions {
   blackList?: string[];
@@ -22,6 +21,10 @@ export class SakuraApiClassRoutes {
   method: string;     // the classes's method name that handles the route (the name of f)
 }
 
+export const routableSymbols = {
+  sakuraApiClassRoutes: Symbol('sakuraApiClassRoutes')
+};
+
 export function Routable(options?: RoutableClassOptions): any {
   options = options || {};
   options.blackList = options.blackList || [];
@@ -31,53 +34,53 @@ export function Routable(options?: RoutableClassOptions): any {
 
   return function (target: any) {
 
-    // the new constructor behaviour
-    let newConstructor: any = function (...args) {
-      let c = Reflect.construct(target, args);
+    let newConstructor = new Proxy(target, {
+      construct: function (t, args, nt) {
+        let c = Reflect.construct(t, args, nt);
 
-      let metaData: SakuraApiClassRoutes[] = [];
+        let metaData: SakuraApiClassRoutes[] = [];
 
-      Object.getOwnPropertyNames(Object.getPrototypeOf(this))
-        .forEach((methodName) => {
-          if (!Reflect.getMetadata(`hasRoute.${methodName}`, this)) {
-            return;
-          }
+        Object
+          .getOwnPropertyNames(Object.getPrototypeOf(c))
+          .forEach(function (methodName) {
 
-          if (options.blackList.indexOf(methodName) > -1) {
-            return;
-          }
+            if (!Reflect.getMetadata(`hasRoute.${methodName}`, c)) {
+              return;
+            }
 
-          let endPoint = path.join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, this)).replace(/\/$/, "");
-          if (!endPoint.startsWith('/')) {
-            endPoint = '/' + endPoint;
-          }
+            if (options.blackList.indexOf(methodName) > -1) {
+              return;
+            }
 
-          let data: SakuraApiClassRoutes = {
-            path: endPoint,
-            f: Reflect.getMetadata(`function.${methodName}`, this).bind(c),
-            httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, this),
-            method: methodName
-          };
+            let endPoint = path.join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, c)).replace(/\/$/, "");
+            if (!endPoint.startsWith('/')) {
+              endPoint = '/' + endPoint;
+            }
 
-          metaData.push(data);
-        });
+            let data: SakuraApiClassRoutes = {
+              path: endPoint,
+              f: Reflect.getMetadata(`function.${methodName}`, c).bind(c),
+              httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, c),
+              method: methodName
+            };
 
+            metaData.push(data);
+          });
 
-      c.sakuraApiClassRoutes = metaData;
+        c[routableSymbols.sakuraApiClassRoutes] = metaData;
 
-      if (options.autoRoute) {
-        SakuraApi.instance.route(c);
+        if (options.autoRoute) {
+          SakuraApi.instance.route(c);
+        }
+
+        return c;
       }
-      return c;
-    };
+    });
 
-    applyClassProperties(newConstructor, target);
+    if (options.autoRoute) {
+      new newConstructor();
+    }
 
-    // instantiate an instance of the @Routable class to cause it to envoke SakuraApi.instance.route(...)
-    // on itself so its routes are attached.
-    new newConstructor();
-
-    // return new constructor (will override original)
     return newConstructor;
   }
 }

@@ -1,3 +1,4 @@
+import {routableSymbols} from './routable';
 import {SakuraApiConfig} from '../boot/config';
 import * as colors       from 'colors';
 import * as express      from 'express';
@@ -110,14 +111,13 @@ export class SakuraApi {
   }
 
   route(target: any) {
-    if (!target.sakuraApiClassRoutes) {
+    if (!target[routableSymbols.sakuraApiClassRoutes]) {
       return;
     }
 
     target
-      .sakuraApiClassRoutes
+      [routableSymbols.sakuraApiClassRoutes]
       .forEach((route) => {
-        //this.app[route.httpMethod](route.path, route.f);
         this.routes.push(route);
       });
   }

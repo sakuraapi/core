@@ -36,10 +36,9 @@ describe('core/Model', function () {
     });
 
     it(`decorates itself with Symbol('sakuraApiModel') = true`, function () {
-
       expect(this.t[modelSymbols.sakuraApiModel]).toBe(true);
       expect(() => this.t[modelSymbols.sakuraApiModel] = false)
-        .toThrowError(`Cannot assign to read only property 'Symbol(sakuraApiModel)' of object '[object Object]'`);
+        .toThrowError(`Cannot assign to read only property 'Symbol(sakuraApiModel)' of object '#<Test>'`);
     });
 
     it('proxies various CRUD methods so that a @model has basic CRUD out of the box', function () {
