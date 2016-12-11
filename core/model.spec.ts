@@ -1,4 +1,5 @@
 import {
+  Json,
   IModel,
   Model,
   modelSymbols
@@ -39,9 +40,9 @@ describe('core/Model', function () {
     });
 
     it(`decorates itself with Symbol('sakuraApiModel') = true`, function () {
-      expect(this.t[modelSymbols.sakuraApiModel]).toBe(true);
-      expect(() => this.t[modelSymbols.sakuraApiModel] = false)
-        .toThrowError(`Cannot assign to read only property 'Symbol(sakuraApiModel)' of object '#<Test>'`);
+      expect(this.t[modelSymbols.isSakuraApiModel]).toBe(true);
+      expect(() => this.t[modelSymbols.isSakuraApiModel] = false)
+        .toThrowError(`Cannot assign to read only property 'Symbol(isSakuraApiModel)' of object '#<Test>'`);
     });
 
     describe('injects default CRUD method', function () {
@@ -110,6 +111,68 @@ describe('core/Model', function () {
         });
       })
     });
+  });
+
+});
+
+describe('core/Model:Json & core/Mode.toJson[String]', function () {
+
+  @Model()
+  class Test {
+
+    @Json('ap')
+    aProperty: string = 'test';
+
+    @Json('anp')
+    anotherProperty: string;
+
+    aThirdProperty: number = 777;
+
+    aFunction() {
+
+    }
+  }
+
+  @Model()
+  class Test2 {
+    aProperty: string = 'test';
+    anotherProperty: string;
+    aThirdProperty: number = 777;
+
+    aFunction() {
+    }
+  }
+
+  beforeEach(function () {
+    this.t = new Test();
+    this.t2 = new Test2();
+  });
+
+  it('transforms a defined property to the designated fieldName in the output of toJson', function () {
+    expect(this.t.toJson().ap).toBe('test');
+    expect(this.t.toJson().anp).toBeUndefined();
+    expect(this.t.toJson().aThirdProperty).toBe(777);
+    expect(this.t.toJson().aFunction).toBeUndefined();
+
+    expect(this.t.aProperty).toBe('test');
+    expect(this.t.anotherProperty).toBeUndefined();
+    expect(this.t.aThirdProperty).toBe(777);
+  });
+
+
+  it('transforms a defined property to the designated fieldName in the output of toJsonString', function () {
+    let result = JSON.parse(this.t.toJsonString())
+
+    expect(result.ap).toBe('test');
+    expect(result.anp).toBeUndefined();
+    expect(result.aThirdProperty).toBe(777);
+  });
+
+  it('works like a normal object when not decorated with @Json properties', function () {
+    expect(this.t2.toJson().aProperty).toBe('test');
+    expect(this.t2.toJson().anotherProperty).toBeUndefined();
+    expect(this.t2.toJson().aThirdProperty).toBe(777);
+    expect(this.t2.toJson().aFunction).toBeUndefined();
   });
 });
 

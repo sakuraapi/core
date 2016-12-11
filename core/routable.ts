@@ -93,7 +93,7 @@ export function Route(options?: RoutableMethodOptions) {
 
   const methods = ['get', 'post', 'put', 'delete', 'head'];
 
-  return function (target: any, key: string | symbol, value: TypedPropertyDescriptor<any>) {
+  return function (target: any, key: string, value: TypedPropertyDescriptor<any>) {
 
     if (methods.indexOf(options.method) < 0) {
       throw new Error(`@route(...)${(target.constructor || {}).name}.${key} had its 'method' `

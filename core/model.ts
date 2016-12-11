@@ -2,7 +2,10 @@ import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods
 } from './helpers/defaultMethodHelpers';
+import property = require("lodash/property");
 
+// @Model
+/**********************************************************************************************************************/
 export interface IModel {
   create?: (any) => any;
   delete?: (any) => any;
@@ -14,7 +17,7 @@ export class ModelOptions {
 }
 
 export const modelSymbols = {
-  sakuraApiModel: Symbol('sakuraApiModel')
+  isSakuraApiModel: Symbol('isSakuraApiModel')
 };
 
 export function Model(options?: ModelOptions): any {
@@ -32,11 +35,12 @@ export function Model(options?: ModelOptions): any {
       construct: function (t, args, nt) {
         let c = Reflect.construct(t, args, nt);
 
-        Reflect.defineProperty(c, modelSymbols.sakuraApiModel, {
+        // isSakuraApiModel
+        Reflect.defineProperty(c, modelSymbols.isSakuraApiModel, {
           value: true,
           writable: false
         });
-        
+
         return c;
       }
     });
@@ -45,9 +49,46 @@ export function Model(options?: ModelOptions): any {
     addDefaultInstanceMethods(newConstructor, 'save', stub, options);
     addDefaultInstanceMethods(newConstructor, 'delete', stub, options);
 
+    newConstructor.prototype.toJson = toJson;
+    newConstructor.prototype.toJsonString = toJsonString;
+
     return newConstructor;
+  };
+
+  //////////
+  function toJson() {
+    let jsonFieldNames: Map<string, string> = Reflect.getMetadata(`sakuraApiJsonFieldNames`, this);
+    jsonFieldNames = jsonFieldNames || new Map<string,string>();
+
+    let obj = {};
+    for (let prop of Object.getOwnPropertyNames(this)) {
+      if (typeof this[prop] !== 'function') {
+        obj[jsonFieldNames.get(prop) || prop] = this[prop];
+      }
+    }
+    return obj;
+  }
+
+  function toJsonString(replacer?: (any) => any, space?: string | number) {
+    return JSON.stringify(this.toJson(), replacer, space);
   }
 }
+
+// @Json
+/**********************************************************************************************************************/
+export function Json(fieldName: string) {
+
+  return function (target: any, key: string) {
+
+    let metaDataMap: Map<string, string> = Reflect.getMetadata(`sakuraApiJsonFieldNames`, target);
+    if (!metaDataMap) {
+      metaDataMap = new Map<string ,string>();
+      Reflect.defineMetadata(`sakuraApiJsonFieldNames`, metaDataMap, target);
+    }
+    metaDataMap.set(key, fieldName);
+  }
+}
+
 
 //////////
 function stub(msg) {
