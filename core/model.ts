@@ -3,8 +3,14 @@ import {
   addDefaultStaticMethods
 } from './helpers/defaultMethodHelpers';
 
-export class ModelOptions {
+export interface IModel {
+  create?: (any) => any;
+  delete?: (any) => any;
+  save?: (any) => any;
+}
 
+export class ModelOptions {
+  suppressInjection?: string[]
 }
 
 export const modelSymbols = {
@@ -17,7 +23,9 @@ export function Model(options?: ModelOptions): any {
   return function (target: any) {
 
     // add default static methods
-    addDefaultStaticMethods(target, 'get', stub);
+    addDefaultStaticMethods(target, 'get', stub, options);
+    addDefaultStaticMethods(target, 'getById', stub, options);
+    addDefaultStaticMethods(target, 'delete', stub, options);
 
     // decorate the constructor
     let newConstructor = new Proxy(target, {
@@ -28,13 +36,14 @@ export function Model(options?: ModelOptions): any {
           value: true,
           writable: false
         });
-
-        addDefaultInstanceMethods(c, 'save', stub);
-        addDefaultInstanceMethods(c, 'deleteById', stub);
-
+        
         return c;
       }
     });
+
+    addDefaultInstanceMethods(newConstructor, 'create', stub, options);
+    addDefaultInstanceMethods(newConstructor, 'save', stub, options);
+    addDefaultInstanceMethods(newConstructor, 'delete', stub, options);
 
     return newConstructor;
   }
