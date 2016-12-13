@@ -4,8 +4,8 @@ import {
 } from './helpers/defaultMethodHelpers';
 import property = require("lodash/property");
 
-const FIELD_NAMES_PROPERTY_FIELD = 'sakuraApiJsonPropertyToFieldNames';
-const FIELD_NAMES_FIELD_PROPERTY = 'sakuraApiJsonFieldToPropertyNames';
+const FIELD_NAMES_PROPERTY_FIELD = Symbol('sakuraApiJsonPropertyToFieldNames');
+const FIELD_NAMES_FIELD_PROPERTY = Symbol('sakuraApiJsonFieldToPropertyNames');
 
 // @Model
 /**********************************************************************************************************************/
@@ -23,6 +23,7 @@ export class ModelOptions {
 
 export const modelSymbols = {
   fromJson: Symbol('fromJson'),
+  fromJsonArray: Symbol('fromJsonArray'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
   toJson: Symbol('toJson'),
   toJsonString: Symbol('toJsonString')
@@ -42,7 +43,10 @@ export function Model(options?: ModelOptions): any {
     // breaking the internal functionality
     target.fromJson = fromJson;
     target[modelSymbols.fromJson] = fromJson;
-    
+
+    target.fromJsonArray = fromJsonArray;
+    target[modelSymbols.fromJsonArray] = fromJsonArray;
+
     // decorate the constructor
     let newConstructor = new Proxy(target, {
       construct: function (t, args, nt) {
@@ -70,7 +74,7 @@ export function Model(options?: ModelOptions): any {
     newConstructor.prototype[modelSymbols.toJsonString] = toJsonString;
 
     /////
-    function fromJson<T>(json: any, ...constructorArgs): T {
+    function fromJson<T>(json: any, ...constructorArgs: any[]): T {
       if (!json || typeof json !== 'object') {
         return null;
       }
@@ -90,6 +94,18 @@ export function Model(options?: ModelOptions): any {
       }
 
       return obj;
+    }
+
+    function fromJsonArray<T>(json: any, ...constructorArgs: any[]): T[] {
+      let result = [];
+
+      if (Array.isArray(json)) {
+        for (let item of json) {
+          result.push(target[modelSymbols.fromJson](item, ...constructorArgs));
+        }
+      }
+
+      return result;
     }
 
     function toJson() {

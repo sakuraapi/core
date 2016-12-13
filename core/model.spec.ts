@@ -118,7 +118,12 @@ describe('core/Model', function () {
 describe('core/Model json functionality ', function () {
   @Model()
   class Test {
-    static fromJson: (any) => Test;
+    static fromJson: (...any) => Test;
+    static fromJsonArray: (...any) => Test[];
+
+    constructor(public constructedProperty?, public constructedProperty2?) {
+
+    }
 
     @Json('ap')
     aProperty: string = 'test';
@@ -234,7 +239,20 @@ describe('core/Model json functionality ', function () {
       expect(obj.aProperty).toBe(1);
     });
 
+    it('maintains proper instanceOf', function () {
+      let obj = Test.fromJson({});
+
+      expect(obj instanceof Test).toBe(true);
+    });
+
     describe('behaves such that it', function () {
+
+      it('passes on constructor arguments to the @Model target being returned', function () {
+        let obj = Test.fromJson({}, 888, 999);
+
+        expect(obj.constructedProperty).toBe(888);
+        expect(obj.constructedProperty2).toBe(999);
+      });
 
       it('maps an @Json fieldname to an @Model property', function () {
         let obj = Test.fromJson({
@@ -298,6 +316,60 @@ describe('core/Model json functionality ', function () {
         expect(Test.fromJson(null)).toBe(null);
         expect(Test.fromJson(undefined)).toBe(null);
       });
+    });
+  });
+
+  describe('fromJsonArray', function () {
+    it('is injected into the model as a static member by default', function () {
+      expect(Test.fromJsonArray).toBeDefined()
+    });
+
+    it('allows the injected functions to be overridden without breaking the internal dependencies', function () {
+      @Model()
+      class SymbolTest {
+        static fromJsonArray: (...any) => SymbolTest;
+
+        @Json('ap')
+        aProperty: number;
+      }
+
+      SymbolTest.fromJsonArray = () => {
+        throw new Error('fromJsonArray failed');
+      };
+
+      let obj = SymbolTest[modelSymbols.fromJsonArray]([{
+        ap: 1
+      }, {
+        ap: 2
+      }]);
+
+      expect(obj[0].aProperty).toBe(1);
+      expect(obj[1].aProperty).toBe(2);
+    });
+
+    it('maintains proper instanceOf', function () {
+      let obj = Test.fromJsonArray([{}]);
+
+      expect(obj[0] instanceof Test).toBe(true);
+    });
+
+    it('passes on constructor arguments to the @Model target being returned', function () {
+      let obj = Test.fromJsonArray([{}], 888, 999);
+
+      expect(obj[0].constructedProperty).toBe(888);
+      expect(obj[0].constructedProperty2).toBe(999);
+    });
+
+    it('gracefully takes a non array', function () {
+      let obj1 = Test.fromJsonArray(null);
+      let obj2 = Test.fromJsonArray({});
+      let obj3 = Test.fromJsonArray(undefined);
+      let obj4 = Test.fromJsonArray();
+
+      expect(Array.isArray(obj1)).toBeTruthy();
+      expect(Array.isArray(obj2)).toBeTruthy();
+      expect(Array.isArray(obj3)).toBeTruthy();
+      expect(Array.isArray(obj4)).toBeTruthy();
     });
   });
 });
