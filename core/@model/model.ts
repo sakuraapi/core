@@ -2,10 +2,11 @@ import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods
 } from '../helpers/defaultMethodHelpers';
-import property = require("lodash/property");
 
-const FIELD_NAMES_PROPERTY_FIELD = Symbol('sakuraApiJsonPropertyToFieldNames');
-const FIELD_NAMES_FIELD_PROPERTY = Symbol('sakuraApiJsonFieldToPropertyNames');
+import {
+  Json,
+  jsonSymbols
+} from './json';
 
 // @Model
 /**********************************************************************************************************************/
@@ -81,7 +82,7 @@ export function Model(options?: ModelOptions): any {
 
       let obj = new newConstructor(...constructorArgs);
 
-      let propertyNamesByJsonFieldName: Map<string, string> = Reflect.getMetadata(FIELD_NAMES_FIELD_PROPERTY, obj);
+      let propertyNamesByJsonFieldName: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiJsonFieldToPropertyNames, obj);
       propertyNamesByJsonFieldName = propertyNamesByJsonFieldName || new Map<string, string>();
 
       for (let field of Object.getOwnPropertyNames(json)) {
@@ -109,7 +110,7 @@ export function Model(options?: ModelOptions): any {
     }
 
     function toJson() {
-      let jsonFieldNamesByProperty: Map<string, string> = Reflect.getMetadata(FIELD_NAMES_PROPERTY_FIELD, this);
+      let jsonFieldNamesByProperty: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiJsonPropertyToFieldNames, this);
       jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string,string>();
 
       let obj = {};
@@ -131,25 +132,7 @@ export function Model(options?: ModelOptions): any {
 
 // @Json
 /**********************************************************************************************************************/
-export function Json(fieldName: string) {
 
-  return function (target: any, key: string) {
-
-    let metaPropertyFieldMap: Map<string, string> = Reflect.getMetadata(FIELD_NAMES_PROPERTY_FIELD, target);
-    if (!metaPropertyFieldMap) {
-      metaPropertyFieldMap = new Map<string ,string>();
-      Reflect.defineMetadata(FIELD_NAMES_PROPERTY_FIELD, metaPropertyFieldMap, target);
-    }
-    metaPropertyFieldMap.set(key, fieldName);
-
-    let metaFieldPropertyMap: Map<string, string> = Reflect.getMetadata(FIELD_NAMES_FIELD_PROPERTY, target);
-    if (!metaFieldPropertyMap) {
-      metaFieldPropertyMap = new Map<string ,string>();
-      Reflect.defineMetadata(FIELD_NAMES_FIELD_PROPERTY, metaFieldPropertyMap, target);
-    }
-    metaFieldPropertyMap.set(fieldName, key);
-  }
-}
 
 
 //////////
