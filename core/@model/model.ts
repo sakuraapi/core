@@ -1,7 +1,7 @@
 import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods
-} from './helpers/defaultMethodHelpers';
+} from '../helpers/defaultMethodHelpers';
 import property = require("lodash/property");
 
 const FIELD_NAMES_PROPERTY_FIELD = Symbol('sakuraApiJsonPropertyToFieldNames');

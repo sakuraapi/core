@@ -3,7 +3,7 @@ import {
   routableSymbols,
   Route
 }                   from './routable';
-import {SakuraApi}  from './sakura-api';
+import {SakuraApi}  from '../sakura-api';
 
 import method = require("lodash/method");
 import before = require("lodash/before");

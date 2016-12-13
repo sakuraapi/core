@@ -1,4 +1,4 @@
-import {routableSymbols} from './routable';
+import {routableSymbols} from './@routable/routable';
 import {SakuraApiConfig} from '../boot/config';
 import * as colors       from 'colors';
 import * as express      from 'express';

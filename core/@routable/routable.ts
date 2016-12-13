@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import {SakuraApi}            from './sakura-api';
+import {SakuraApi}            from '../sakura-api';
 import * as path              from 'path';
 
 export class RoutableClassOptions {

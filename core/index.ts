@@ -1,4 +1,4 @@
-export * from './model';
-export * from './routable';
+export * from './@model/model';
+export * from './@routable/routable';
 export * from './sakura-api';
 

@@ -5,7 +5,7 @@ import {
 import {
   Routable,
   Route
-}                   from './routable';
+}                   from './@routable/routable';
 import * as request from 'supertest';
 
 describe('core/SakuraApi', function () {
