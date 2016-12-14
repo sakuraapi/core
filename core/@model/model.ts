@@ -1,15 +1,10 @@
 import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods
-} from '../helpers/defaultMethodHelpers';
+}                            from '../helpers/defaultMethodHelpers';
+import {jsonSymbols}         from './json';
+import {privateSymbols}      from './private';
 
-import {
-  Json,
-  jsonSymbols
-} from './json';
-
-// @Model
-/**********************************************************************************************************************/
 export interface IModel {
   create?: (any) => any;
   delete?: (any) => any;
@@ -83,14 +78,13 @@ export function Model(options?: ModelOptions): any {
       let obj = new newConstructor(...constructorArgs);
 
       let propertyNamesByJsonFieldName: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiJsonFieldToPropertyNames, obj);
-      propertyNamesByJsonFieldName = propertyNamesByJsonFieldName || new Map<string, string>();
 
       for (let field of Object.getOwnPropertyNames(json)) {
-        let prop = propertyNamesByJsonFieldName.get(field);
+        let prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
         if (prop) {
-          obj[prop] = json[field];
+          obj[prop] = json[field]; // an @Json alias field
         } else if (Reflect.has(obj, field)) {
-          obj[field] = json[field];
+          obj[field] = json[field]; // a none @Json alias field
         }
       }
 
@@ -113,12 +107,22 @@ export function Model(options?: ModelOptions): any {
       let jsonFieldNamesByProperty: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiJsonPropertyToFieldNames, this);
       jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string,string>();
 
+      let privateFields: Map<string, string> = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
+
       let obj = {};
       for (let prop of Object.getOwnPropertyNames(this)) {
         if (typeof this[prop] !== 'function') {
+
+          let override = (privateFields) ? privateFields.get(prop) : null;
+          if (override && typeof this[override] === 'function' && !this[override]()) {
+            continue;
+          } else if (override && !this[override]) {
+            continue;
+          }
           obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
         }
       }
+
       return obj;
     }
 
@@ -129,11 +133,6 @@ export function Model(options?: ModelOptions): any {
     return newConstructor;
   };
 }
-
-// @Json
-/**********************************************************************************************************************/
-
-
 
 //////////
 function stub(msg) {

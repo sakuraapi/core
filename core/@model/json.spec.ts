@@ -146,6 +146,17 @@ describe('@Json', function () {
         expect(obj.constructedProperty2).toBe(999);
       });
 
+      it('does not throw if there are no @Json decorators', function () {
+        @Model()
+        class C {
+          static fromJson: (...any) => C;
+          someProperty = 777;
+        }
+
+        expect(() => C.fromJson({someProperty: 888})).not.toThrow();
+        expect(C.fromJson({someProperty: 888}).someProperty).toBe(888);
+      });
+
       it('maps an @Json fieldname to an @Model property', function () {
         let obj = Test.fromJson({
           ap: 1
