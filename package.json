@@ -1,13 +1,14 @@
 {
   "name": "sakuraapi",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A NodeJS API Experiment",
   "main": "index.js",
   "typings": "index.d.ts",
   "files": [
     "**/!(*.spec).js",
     "**/!(*.spec).d.ts",
-    "!spec/**/*"
+    "!spec/**/*",
+    "!docs/**/*"
   ],
   "scripts": {
     "build": "tsc && npm run doc:generate",

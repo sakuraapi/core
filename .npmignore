@@ -2,4 +2,5 @@
 *.spec.js
 *.spec.d.ts
 .idea
+docs
 tsconfig.json
