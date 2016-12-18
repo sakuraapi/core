@@ -1,17 +1,16 @@
 import {
-  SakuraApi,
   ServerConfig
 }                   from './sakura-api';
 import {
   Routable,
   Route
-}                   from './routable';
+}                   from './@routable/routable';
 import * as request from 'supertest';
 
 describe('core/SakuraApi', function () {
 
   beforeEach(function () {
-    this.config = new ServerConfig();
+    this.config = {} as ServerConfig;
     this.config.port = 9000;
     this.config.address = '127.0.0.1';
 

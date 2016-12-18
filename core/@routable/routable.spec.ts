@@ -1,5 +1,9 @@
-import {Routable, Route} from './routable';
-import {SakuraApi}       from './sakura-api';
+import {
+  Routable,
+  routableSymbols,
+  Route
+}                   from './routable';
+import {SakuraApi}  from '../sakura-api';
 
 import method = require("lodash/method");
 import before = require("lodash/before");
@@ -11,7 +15,7 @@ describe('core/Routable', function () {
 
   beforeEach(function () {
     this.t = new Test(777);
-    this.sakuraApiClassRoutes = this.t['sakuraApiClassRoutes'];
+    this.sakuraApiClassRoutes = this.t[routableSymbols.sakuraApiClassRoutes];
 
     spyOn(console, 'log');
   });
@@ -35,8 +39,8 @@ describe('core/Routable', function () {
 
       it('handle the lack of a baseUrl gracefully', function () {
         let t2 = new Test2();
-        expect(t2['sakuraApiClassRoutes'][0].path).toBe('/');
-        expect(t2['sakuraApiClassRoutes'][1].path).toBe('/someOtherMethodTest2');
+        expect(t2[routableSymbols.sakuraApiClassRoutes][0].path).toBe('/');
+        expect(t2[routableSymbols.sakuraApiClassRoutes][1].path).toBe('/someOtherMethodTest2');
       });
 
       it('suppress autoRouting if options.autoRoute = false', function (done) {
@@ -107,7 +111,7 @@ describe('core/Routable', function () {
       let c = new Test4();
 
       expect(c.someMethodTest4()).toBe(c.someProperty);
-      expect(c['sakuraApiClassRoutes'][0].f()).toBe(c.someProperty);
+      expect(c[routableSymbols.sakuraApiClassRoutes][0].f()).toBe(c.someProperty);
     });
 
     it('automatically instantiates its class and adds it to SakuraApi.instance.route(...)', function (done) {
@@ -166,7 +170,7 @@ describe('core/Routable', function () {
 
     it('excludes a method level blacklisted @Route', function () {
       let t3 = new Test3();
-      expect(t3['sakuraApiClassRoutes'].length).toBe(0);
+      expect(t3[routableSymbols.sakuraApiClassRoutes].length).toBe(0);
     });
 
     describe('handles route parameters', function () {

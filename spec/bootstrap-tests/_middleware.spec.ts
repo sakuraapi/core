@@ -1,7 +1,7 @@
 import {
   Route,
   Routable
-}                   from '../../core/routable';
+}                   from '../../core/@routable/routable';
 import {SakuraApi}  from '../../core/sakura-api';
 
 import * as request from 'supertest';

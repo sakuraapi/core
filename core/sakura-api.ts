@@ -1,28 +1,75 @@
+import {routableSymbols} from './@routable/routable';
 import {SakuraApiConfig} from '../boot/config';
 import * as colors       from 'colors';
 import * as express      from 'express';
 import * as http         from 'http';
 
-export class ServerConfig {
-  constructor(public address?: string,
-              public port?: number,
-              public bootMessage?: string) {
-  }
+/**
+ * A set of properties defining the configuration of the server.
+ */
+export interface ServerConfig {
+  /**
+   * An Express compatible address for the server to bind to.
+   */
+  address?: string;
+  /**
+   * An Express compatible port for the server to bind to.
+   */
+  port?: number;
+  /**
+   * A message that you'd like printed to the screen when the server is started.
+   */
+  bootMessage?: string;
 }
 
+/**
+ * SakuraApi is responsible for:
+ * 1. Instantiating Express.js.
+ * 2. Loading the server's configuration via [[SakuraApiConfig]]
+ * 3. Taking routes from `@Routable` decorated classes ([[Routable]]) and binding those routes to Express.
+ * 4. Starting and stopping the server.
+ *
+ * SakuraApi is a singleton, so all you have to do is use [[SakuraApi.instance]] to get access to the server's instance.
+ * This is important, but the `@Routable` classes and be auto binding their routes to Express and you'll want a way to get
+ * a reference to the same instance of SakuraApi that they used.
+ *
+ * ### Example
+ * <pre>
+ * import {SakuraApi}       from 'sakuraapi';
+ * import                   './model/user';
+ * import                   'colors';
+ * import * as bodyParser   from 'body-parser'
+ *
+ * (function boot() {
+ *    let sapi = SakuraApi.instance;
+ *
+ *    sapi.addMiddleware(bodyParser.json());
+ *
+ *    sapi
+ *     .listen()
+ *     .catch((err) => {
+ *       console.log(`Error: ${err}`.red);
+ *     });
+ * })();
+ * </pre>
+ *
+ * This example assumes you have a class called `User` that is decorated with [[Routable]]. You import that module
+ * even though you're not going to use it do that it kicks off the `@Routable` bootstrapping.
+ */
 export class SakuraApi {
 
   private static _instance: SakuraApi;
 
   private _address: string = '127.0.0.1';
   private _app: express.Express;
+  private _config: any;
   private _port: number = 3000;
   private _server: http.Server;
   private routes = [];
 
-  baseUri = '/';
-  config: any;
-
+  /**
+   * SakuraApi is a singleton. You get a reference to the instance with [[SakuraApi.instance]].
+   */
   static get instance(): SakuraApi {
     if (!this._instance) {
       this._instance = new SakuraApi(express());
@@ -30,18 +77,54 @@ export class SakuraApi {
     return this._instance;
   }
 
+  /**
+   * Sets the baseUri for the entire application.
+   *
+   * ### Example
+   * <pre>
+   * SakuraApi.instance.baseUri = 'api';
+   * </pre>
+   *
+   * This will cause SakuraApi to expect all routes to have `api` at their base (e.g., `http://localhost:8080/api/user`).
+   */
+  baseUri = '/';
+
+  /**
+   * Returns the address of the server as a string.
+   */
   get address(): string {
     return this._address;
   }
 
+  /**
+   * Returns an reference to SakuraApi's instance of Express.
+   */
   get app(): express.Express {
     return this._app;
   }
 
+  /**
+   * Returns an instance of the Config that was automatically loaded during SakuraApi's instantiation using [[SakuraApiConfig.load]].
+   * You can also set the instance, but keep in mind that you should probably do this before calling [[SakuraApi.listen]].
+   */
+  get config(): any {
+    return this._config;
+  }
+
+  set config(config: any) {
+    this._config = config;
+  }
+
+  /**
+   * Returns the port the server is listening on.
+   */
   get port(): number {
     return this._port;
   }
 
+  /**
+   * Returns a reference to the `http.Server` that SakuraApi is using.
+   */
   get server(): http.Server {
     return this._server;
   }
@@ -59,15 +142,31 @@ export class SakuraApi {
     this._port = (this.config.server || {}).port || this._port;
   }
 
-  static addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction)=>void) {
+  /**
+   * A static helper method to make it easier to add middleware. See [[SakuraApi]] for an example of its use. You could also
+   * use [[SakuraApi.app]] to get a reference to Express then add your middleware with that reference directly.
+   *
+   * This uses `express.use(...)` internally.
+   */
+  static addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
     SakuraApi.instance.app.use(fn);
   }
 
-  addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction)=>void) {
+  /**
+   * A helper method to make it easier to add middleware. See [[SakuraApi]] for an example of its use. You could also
+   * use [[SakuraApi.app]] to get a reference to Express then add your middleware with that reference directly.
+   *
+   * This uses `express.use(...)` internally.
+   */
+  addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
     SakuraApi.addMiddleware(fn);
   }
 
-  close() {
+  /**
+   * Gracefully shuts down the server. It will not reject if the server is not running. It will, however, reject
+   * with any error other than `Not running` that's returned from the `http.Server` instance.
+   */
+  close(): Promise<void> {
     return new Promise((resolve, reject) => {
       this
         .server
@@ -80,6 +179,9 @@ export class SakuraApi {
     });
   }
 
+  /**
+   * Starts the server. You can override the settings loaded by [[SakuraApiConfig]] by passing in an object that implements [[ServerConfig]].
+   */
   listen(listenProperties?: ServerConfig): Promise<null> {
     listenProperties = listenProperties || {};
 
@@ -109,15 +211,19 @@ export class SakuraApi {
     });
   }
 
+  /**
+   * Primarily used internally by [[Routable]] during bootstrapping. However, if an `@Routable` class has [[RoutableClassOptions.autoRoute]]
+   * set to false, the integrator will have to pass that `@Routable` class in to this method manually if he wants to routes to be
+   * bound.
+   */
   route(target: any) {
-    if (!target.sakuraApiClassRoutes) {
+    if (!target[routableSymbols.sakuraApiClassRoutes]) {
       return;
     }
 
     target
-      .sakuraApiClassRoutes
+      [routableSymbols.sakuraApiClassRoutes]
       .forEach((route) => {
-        //this.app[route.httpMethod](route.path, route.f);
         this.routes.push(route);
       });
   }
