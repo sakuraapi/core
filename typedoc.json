@@ -1,0 +1,11 @@
+{
+  "name": "SakuraApi",
+  "readme": "README.md",
+  "out": "docs",
+  "excludePrivate": true,
+  "excludeExternals": false,
+  "exclude": "!(**/*+(e2e|spec|index).ts | **/node_modules)",
+  "includeDeclarations": false,
+  "mode": "file",
+  "theme": "minimal"
+}

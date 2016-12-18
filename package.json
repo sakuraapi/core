@@ -10,11 +10,13 @@
     "!spec/**/*"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run doc:generate",
+    "doc:generate": "typedoc --options typedoc.json index.ts",
     "jasmine": "jasmine",
-    "prepublish": "npm test && npm run build",
+    "prepublish": "npm test",
     "test": "npm run build && npm run jasmine",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "typedoc": "typedoc"
   },
   "repository": {
     "type": "git",
@@ -46,6 +48,7 @@
     "nodemon": "^1.11.0",
     "npm": "^4.0.2",
     "supertest": "^2.0.1",
+    "typedoc": "^0.5.1",
     "typescript": "^2.0.10"
   },
   "dependencies": {

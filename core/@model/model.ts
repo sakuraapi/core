@@ -5,6 +5,11 @@ import {
 import {jsonSymbols}         from './json';
 import {privateSymbols}      from './private';
 
+/**
+ * Interface used by classes that are decorated with `@Model` ([[Model]]) to prevent
+ * TypeScript type errors since TypeScript isn't aware that these methods were injected
+ * by `@Model()`.
+ */
 export interface IModel {
   create?: (any) => any;
   delete?: (any) => any;
@@ -13,10 +18,19 @@ export interface IModel {
   toJsonString?: (any) => string;
 }
 
-export class ModelOptions {
+/**
+ * Interface defining the valid properties for the `@Model({})` decorator ([[Model]]).
+ */
+export interface ModelOptions {
+  /**
+   * Prevents the injection of CRUD functions (see [[Model]] function).
+   */
   suppressInjection?: string[]
 }
 
+/**
+ * A collection of symbols used internally by [[Model]].
+ */
 export const modelSymbols = {
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
@@ -25,6 +39,51 @@ export const modelSymbols = {
   toJsonString: Symbol('toJsonString')
 };
 
+/**
+ * Decorator applied to classes that represent models for SakuraApi.
+ *
+ * ### Example
+ * <pre>
+ * <span>@</span>Model()
+ * class User {
+ *    firstName: string = '';
+ *    lastName: string = '';
+ * }
+ * </pre>
+ *
+ * ### Injection
+ * #### Metadata
+ * `@Model` injects metadata for the class being decorated that's used by
+ * SakuraApi to support its functionality.
+ *
+ * #### CRUD Functions
+ * `@Model` injects functions that are used by SakuraApi, but can also be used by the
+ * integrator. Injected functions include:
+ * * *static*:
+ *   * get
+ *   * getById
+ *   * delete
+ * * *instance*:
+ *   * create
+ *   * save
+ *   * delete
+ *
+ * #### Utility Functions
+ * * *static*:
+ *   * **`fromJson<T>(json: any, ...constructorArgs: any[]): T`** - takes a json object and returns an instantiated object
+ * of the proper type. It also takes a variadic array of parameters that are passed on to the object's constructor.
+ *   * *static*: **`fromJsonArray<T>(json: any, ...constructorArgs: any[]): T[]`** - takes an array of json objects and returns an
+ * array of instantiated objects of the property type. It also takes a variadic array of parameters that are passed onto the
+ * object's constructor.
+ * * *instance*:
+ *   * **`toJson()`** - returns the current object as json, respecting the various decorators like [[Private]]
+ * and [[Json]].
+ *   * **`toJsonString`** - works just like the aforementioned `toJson` but returns a string instead of a json object.
+ *
+ * These utility functions can be changed to point to a custom function references without breaking SakuraApi. They're
+ * mapped for the integrators convenience. If the integrator wants to actually change the underlying behavior that
+ * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
+ */
 export function Model(options?: ModelOptions): any {
   options = options || {};
 
@@ -135,6 +194,10 @@ export function Model(options?: ModelOptions): any {
 }
 
 //////////
+
+/**
+ * This is here to stub out the CRUD functionality since SakuraApi doesn't actually have DB integration yet.
+ */
 function stub(msg) {
   return msg;
 }
