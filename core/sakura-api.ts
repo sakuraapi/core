@@ -166,7 +166,7 @@ export class SakuraApi {
    * Gracefully shuts down the server. It will not reject if the server is not running. It will, however, reject
    * with any error other than `Not running` that's returned from the `http.Server` instance.
    */
-  close(): Promise<void> {
+  close(): Promise<null> {
     return new Promise((resolve, reject) => {
       this
         .server
