@@ -1,3 +1,10 @@
+
+|Branch     |Status     |
+|-----------|-----------|
+| Develop   |[![Build Status](https://travis-ci.org/sakuraapi/api.svg?branch=develop)](https://travis-ci.org/sakuraapi/api)| 
+| Master    |[![Build Status](https://travis-ci.org/sakuraapi/api.svg?branch=master)](https://travis-ci.org/sakuraapi/api)|
+
+
 # SakuraApi
 SakuraAPI is a collaborative effort to develop an appropriately opinionated NodeJS API framework utilizing modern technologies like TypeScript and emerging ECMAscript standards.
 

@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "build": "tsc && npm run doc:generate",
-    "doc:generate": "typedoc --options typedoc.json index.ts",
+    "doc:generate": "rm -rf docs && typedoc --options typedoc.json index.ts",
     "jasmine": "jasmine",
     "prepublish": "npm test",
     "test": "npm run build && npm run jasmine",
