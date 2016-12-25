@@ -1,3 +1,4 @@
+import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
 import * as _  from 'lodash';
 import * as fs from 'fs';
 
@@ -5,6 +6,8 @@ import * as fs from 'fs';
  * Class representing a configuration composed of cascading configuration files.
  */
 export class SakuraApiConfig {
+
+  config: any;
 
   /**
    * Instantiate a SakuraApiConfig.
@@ -87,6 +90,7 @@ export class SakuraApiConfig {
     }
 
     _.merge(config, baseConfig, baseTsConfig, envConfig, envTsConfig, process.env);
+    this.config = config;
     return config;
 
     //////////
@@ -120,5 +124,54 @@ export class SakuraApiConfig {
         throw err;
       }
     }
+  }
+
+  /**
+   * Looks for a `dbConnections` property in the root of config. If one is found, it expects the
+   * following:
+   * <pre>
+   * {
+   *     "dbConnections": [
+   *         {
+   *           "name": "someDb1",
+   *           "url": "mongodb://localhost:1234/somedb1",
+   *           "mongoClientOptions: {}
+   *         },
+   *         {
+   *           "name": "someDb2",
+   *           "url": "mongodb://localhost:1234/somedb2",
+   *           "mongoClientOptions: {}
+   *         }
+   *     ]
+   * }
+   * </pre>
+   * Where `someDb1` is the name of the connection that you can use for retrieving the connection with
+   * [[SakuraMongoDbConnection.getDb]]('someDb1').
+   */
+  dataSources(config: any = this.config): SakuraMongoDbConnection {
+    return SakuraApiConfig.dataSources(config);
+  }
+
+
+  /**
+   * Same as the instance method, but static, and it won't try to use the last loaded config since that
+   * requires an instance.
+   */
+  static dataSources(config: {dbConnections: any[]}): SakuraMongoDbConnection {
+    if (!config || !config.dbConnections) {
+      return null;
+    }
+
+    if (!Array.isArray(config.dbConnections)) {
+      throw new Error('Invalid dbConnections array. The "dbConnections" object should be an array');
+    }
+
+    let dbConns = new SakuraMongoDbConnection();
+
+    for (let conn of config.dbConnections) {
+      dbConns.addConnection(conn.name, conn.url, conn.mongoClientOptions);
+    }
+
+    return dbConns;
   }
 }

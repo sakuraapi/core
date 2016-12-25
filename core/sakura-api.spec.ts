@@ -1,11 +1,16 @@
 import {
   ServerConfig
-}                   from './sakura-api';
+}                        from './sakura-api';
 import {
   Routable,
   Route
-}                   from './@routable/routable';
-import * as request from 'supertest';
+}                        from './@routable/routable';
+import {MongoClient}     from 'mongodb';
+import {SakuraApi}       from "./sakura-api";
+import {SakuraApiConfig} from '../boot/sakura-api-config';
+
+import * as request      from 'supertest';
+import Spy = jasmine.Spy;
 
 describe('core/SakuraApi', function () {
 
@@ -38,6 +43,14 @@ describe('core/SakuraApi', function () {
 
   it('config is loaded properly', function () {
     expect(this.sapi.config.SAKURA_API_CONFIG_TEST).toBe('found');
+  });
+
+  describe('instantiate(...)', function () {
+    it('throws if already SakuraApi is already instatiated', function () {
+      expect(() => {
+        SakuraApi.instantiate()
+      }).toThrowError('ALREADY_INSTANTIATED');
+    });
   });
 
   describe('listen(...)', function () {
@@ -106,6 +119,57 @@ describe('core/SakuraApi', function () {
                 return done.fail(err);
               }
               done();
+            });
+        })
+        .catch(done.fail);
+    });
+
+    it('connects to databases', function (done) {
+      spyOn(MongoClient, 'connect').and.callThrough();
+
+      this.sapi['_dbConnections'] = SakuraApiConfig.dataSources({
+        dbConnections: [
+          {
+            name: 'testDb',
+            url: `${this.mongoDbBaseUri}/testDb`
+          }
+        ]
+      });
+
+      this
+        .sapi
+        .listen()
+        .then(() => {
+          this
+            .sapi
+            .app
+            .get('/middleWareTest', function (req, res) {
+              res.status(200).json({isTest: true});
+            });
+
+          request(this.sapi.app)
+            .get('/middleWareTest')
+            .expect('Content-Type', /json/)
+            .expect('Content-Length', '15')
+            .expect('{"isTest":true}')
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done.fail(err);
+              }
+
+              expect(MongoClient.connect).toHaveBeenCalledTimes(1);
+              this
+                .sapi
+                .dbConnections
+                .getDb('testDb')
+                .collection('testCollection')
+                .insertOne({someValue: 777})
+                .then((results) => {
+                  expect(results.insertedCount).toBe(1);
+                  done();
+                })
+                .catch(done.fail);
             });
         })
         .catch(done.fail);

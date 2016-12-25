@@ -11,11 +11,12 @@
     "!docs/**/*"
   ],
   "scripts": {
-    "build": "tsc && npm run doc:generate",
+    "build": "tsc",
     "doc:generate": "rm -rf docs && typedoc --options typedoc.json index.ts",
+    "docker:compose-test": "docker-compose up -d --remove-orphans",
     "jasmine": "jasmine",
-    "prepublish": "npm test",
-    "test": "npm run build && npm run jasmine",
+    "prepublish": "npm test && npm run doc:generate",
+    "test": "npm run docker:compose-test && npm run build && npm run jasmine && docker-compose down",
     "tsc": "tsc",
     "typedoc": "typedoc"
   },
@@ -43,6 +44,7 @@
     "@types/express": "^4.0.34",
     "@types/jasmine": "^2.5.38",
     "@types/lodash": "^4.14.40",
+    "@types/mongodb": "^2.1.36",
     "@types/node": "^6.0.51",
     "@types/supertest": "^1.1.32",
     "install": "^0.8.2",
@@ -54,9 +56,12 @@
     "typescript": "^2.0.10"
   },
   "dependencies": {
+    "bson-ext": "^1.0.1",
+    "co": "^4.6.0",
     "colors": "^1.1.2",
     "express": "^4.14.0",
     "lodash": "^4.17.2",
+    "mongodb": "^2.2.16",
     "reflect-metadata": "^0.1.8"
   }
 }

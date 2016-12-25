@@ -1,8 +1,9 @@
-import {routableSymbols} from './@routable/routable';
-import {SakuraApiConfig} from '../boot/config';
-import * as colors       from 'colors';
-import * as express      from 'express';
-import * as http         from 'http';
+import {routableSymbols}         from './@routable/routable';
+import {SakuraApiConfig}         from '../boot/sakura-api-config';
+import {SakuraMongoDbConnection} from "./sakura-mongo-db-connection";
+import * as colors               from 'colors';
+import * as express              from 'express';
+import * as http                 from 'http';
 
 /**
  * A set of properties defining the configuration of the server.
@@ -65,6 +66,7 @@ export class SakuraApi {
   private _config: any;
   private _port: number = 3000;
   private _server: http.Server;
+  private _dbConnections: SakuraMongoDbConnection;
   private routes = [];
 
   /**
@@ -72,7 +74,7 @@ export class SakuraApi {
    */
   static get instance(): SakuraApi {
     if (!this._instance) {
-      this._instance = new SakuraApi(express());
+      this._instance = new SakuraApi();
     }
     return this._instance;
   }
@@ -116,6 +118,16 @@ export class SakuraApi {
   }
 
   /**
+   * The [[SakuraMongoDbConnection]] instance that was created when [[SakuraApi]] instantiated if
+   * the "dbConnections" property was found in the config with the proper configuration options set, or
+   * if [[SakuraApi.instantiate]] was used to instantiate the [[SakuraApi]] singleton and the
+   * [[SakuraMongoDbConnection]] was manually provided.
+   */
+  get dbConnections(): SakuraMongoDbConnection {
+    return this._dbConnections;
+  }
+
+  /**
    * Returns the port the server is listening on.
    */
   get port(): number {
@@ -129,15 +141,23 @@ export class SakuraApi {
     return this._server;
   }
 
-  private constructor(app: express.Express) {
+  private constructor(app?: express.Express, config?: any, dbConfig?: SakuraMongoDbConnection) {
     if (!app) {
-      throw new Error('cannot instantiate a new SakuraApi without providing an Express object');
+      app = express();
+    }
+
+    if (!config) {
+      config = new SakuraApiConfig().load() || {};
+    }
+
+    if (!dbConfig) {
+      this._dbConnections = SakuraApiConfig.dataSources(config);
     }
 
     this._app = app;
     this._server = http.createServer(this.app);
 
-    this.config = new SakuraApiConfig().load() || {};
+    this.config = config;
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
   }
@@ -180,7 +200,28 @@ export class SakuraApi {
   }
 
   /**
-   * Starts the server. You can override the settings loaded by [[SakuraApiConfig]] by passing in an object that implements [[ServerConfig]].
+   * Manually instantiate the [[SakuraApi]] singleton with your own `express.Express` and [[SakuraApiConfig]].
+   * If either parameter is null or undefined, then the defaults are used as if you can called
+   * [[SakuraApi.instance]]. Note that you can only call this if the [[SakuraApi]] singleton has not already been
+   * instantiated. Otherwise, it will throw `new Error('ALREADY_INSTANTIATED')`.
+   */
+  static instantiate(app?: express.Express, config?: SakuraApiConfig, dbConfig?: SakuraMongoDbConnection): SakuraApi {
+    if (this._instance) {
+      throw new Error('ALREADY_INSTANTIATED');
+    }
+    this._instance = new SakuraApi(app, config);
+    return this.instance;
+  }
+
+  /**
+   * Starts the server. You can override the settings loaded by [[SakuraApiConfig]] by passing in
+   * an object that implements [[ServerConfig]].
+   *
+   * Connects to all the DB connections (if any) defined in [[SakuraApi.dbConnections]]. These are loaded
+   * by [[SakuraApiConfig.dataSources]]. If you do not provide a "dbConnections" property in your config, or if you
+   * did not instantiate SakuraApi manually with [[SakuraApi.instiate]] with a [[SakuraMongoDbConnection]] that
+   * you constructed elsewhere, then no DB connections will be opened. You can also user [[SakuraMongoDbConnection.connect]]
+   * to manually define Db connections.
    */
   listen(listenProperties?: ServerConfig): Promise<null> {
     listenProperties = listenProperties || {};
@@ -189,6 +230,7 @@ export class SakuraApi {
       this._address = listenProperties.address || this._address;
       this._port = listenProperties.port || this._port;
 
+      // Bind the routes
       let router = express.Router();
       this
         .routes
@@ -198,16 +240,36 @@ export class SakuraApi {
 
       this.app.use(this.baseUri, router);
 
-      this
-        .server
-        .listen(this.port, this.address, (err) => {
-          if (err) {
+      // Open the connections
+      if (this.dbConnections) {
+        this
+          .dbConnections
+          .connectAll()
+          .then(() => {
+            listen.bind(this)();
+          })
+          .catch((err) => {
             return reject(err);
-          }
-          let msg = listenProperties.bootMessage || `SakuraAPI started on: ${this.address}:${this.port}`;
-          console.log(colors.green(msg));
-          resolve();
-        });
+          })
+      } else {
+        listen.bind(this)();
+      }
+
+      // Start the server
+      function listen() {
+        this
+          .server
+          .listen(this.port, this.address, (err) => {
+            if (err) {
+              return reject(err);
+            }
+            let msg = listenProperties.bootMessage || `SakuraAPI started on: ${this.address}:${this.port}`;
+            console.log(colors.green(msg));
+            return resolve();
+          });
+      }
+
+      // Release the Kraken.
     });
   }
 

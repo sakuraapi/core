@@ -8,5 +8,6 @@ beforeEach(function () {
   this.uri = (endpoint: string) => {
     return path.join(this.baseUri, endpoint);
   };
-  
+
+  this.mongoDbBaseUri = `mongodb://localhost:${SakuraApi.instance.config.TEST_MONGO_DB_PORT}`;
 });
