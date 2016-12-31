@@ -1,3 +1,4 @@
+import {Db}                  from 'mongodb';
 import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods
@@ -23,9 +24,25 @@ export interface IModel {
  */
 export interface ModelOptions {
   /**
+   * The database to which this @Model object is bound
+   */
+  dbConfig?: {
+    /**
+     * The name of the database for this model which is used to retrieve the `MongoDB` `Db` object from
+     * [[SakuraMongoDbConnection]]. I.e, whatever name you used in your congifuration of [[SakuraMongoDbConnection]]
+     * for the database connection for this model, use that name here.
+     */
+    db?: string;
+
+    /**
+     * The name of the collection in the database referenced in `db` that represents this model.
+     */
+    collection?: string;
+  }
+  /**
    * Prevents the injection of CRUD functions (see [[Model]] function).
    */
-  suppressInjection?: string[]
+  suppressInjection?: string[];
 }
 
 /**
@@ -85,12 +102,12 @@ export const modelSymbols = {
  * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
  */
 export function Model(options?: ModelOptions): any {
-  options = options || {};
+  options = options || <ModelOptions>{};
 
   return function (target: any) {
     // add default static methods
-    addDefaultStaticMethods(target, 'get', stub, options);
-    addDefaultStaticMethods(target, 'getById', stub, options);
+    addDefaultStaticMethods(target, 'get', crudGet, options);
+    addDefaultStaticMethods(target, 'getById', crudGetById, options);
     addDefaultStaticMethods(target, 'delete', stub, options);
 
     // Various internal methods are exposed to the integrator,
@@ -113,14 +130,17 @@ export function Model(options?: ModelOptions): any {
           writable: false
         });
 
+        c.db = ((options || <any>{}).dbConfig || <any>{}).db || null;
+        c.collection = ((options || <any>{}).dbConfig || <any>{}).collection || null;
+
         return c;
       }
     });
 
     // Inject default instance methods for CRUD if not already defined by integrator
-    addDefaultInstanceMethods(newConstructor, 'create', stub, options);
-    addDefaultInstanceMethods(newConstructor, 'save', stub, options);
-    addDefaultInstanceMethods(newConstructor, 'delete', stub, options);
+    addDefaultInstanceMethods(newConstructor, 'create', crudCreate, options);
+    addDefaultInstanceMethods(newConstructor, 'save', crudSave, options);
+    addDefaultInstanceMethods(newConstructor, 'delete', crudDelete, options);
 
     newConstructor.prototype.toJson = toJson;
     newConstructor.prototype[modelSymbols.toJson] = toJson;
@@ -128,7 +148,35 @@ export function Model(options?: ModelOptions): any {
     newConstructor.prototype.toJsonString = toJsonString;
     newConstructor.prototype[modelSymbols.toJsonString] = toJsonString;
 
+    return newConstructor;
+
     /////
+    function crudCreate(msg) {
+      return msg;
+    }
+
+    function crudSave(set: any) {
+      return new Promise((resolve, reject) => {
+        (this.db as Db)
+          .collection(this.collection)
+          .updateOne(this.id, {$set: set || this})
+          .then(resolve)
+          .catch(reject);
+      });
+    }
+
+    function crudDelete(msg) {
+      return msg;
+    }
+
+    function crudGet(msg) {
+      return msg
+    }
+
+    function crudGetById(msg) {
+      return msg
+    }
+
     function fromJson<T>(json: any, ...constructorArgs: any[]): T {
       if (!json || typeof json !== 'object') {
         return null;
@@ -181,15 +229,12 @@ export function Model(options?: ModelOptions): any {
           obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
         }
       }
-
       return obj;
     }
 
     function toJsonString(replacer?: (any) => any, space?: string | number) {
       return JSON.stringify(this[modelSymbols.toJson](), replacer, space);
     }
-
-    return newConstructor;
   };
 }
 
