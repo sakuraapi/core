@@ -1,10 +1,10 @@
-import {Db}                  from 'mongodb';
+import {Db} from 'mongodb';
 import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods
-}                            from '../helpers/defaultMethodHelpers';
-import {jsonSymbols}         from './json';
-import {privateSymbols}      from './private';
+} from '../helpers/defaultMethodHelpers';
+import {jsonSymbols} from './json';
+import {privateSymbols} from './private';
 
 /**
  * Interface used by classes that are decorated with `@Model` ([[Model]]) to prevent

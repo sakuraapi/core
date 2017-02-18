@@ -1,5 +1,4 @@
-import {MongoClient}             from 'mongodb';
-import {SakuraApi}               from './sakura-api';
+import {MongoClient} from 'mongodb';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 
 describe('core/sakura-mongo-db', function () {
@@ -20,8 +19,10 @@ describe('core/sakura-mongo-db', function () {
   describe('addConnection', function () {
     it('records a connection, but doesn\'t open the connection', function () {
       this.sapiDb.addConnection('test', this.dbUrl);
-      expect(this.sapiDb.getDb('test')).toBeUndefined();
-      expect(this.sapiDb.getConnection('test')).toBeDefined();
+      expect(this.sapiDb.getDb('test'))
+        .toBeUndefined();
+      expect(this.sapiDb.getConnection('test'))
+        .toBeDefined();
     })
   });
 
@@ -31,7 +32,8 @@ describe('core/sakura-mongo-db', function () {
         .sapiDb
         .connect('test', this.dbUrl)
         .then((db) => {
-          expect(db).toBeDefined();
+          expect(db)
+            .toBeDefined();
           done();
         })
         .catch(done.fail);
@@ -42,7 +44,8 @@ describe('core/sakura-mongo-db', function () {
         .sapiDb
         .connect('test', this.dbUrl)
         .then(() => {
-          expect(this.sapiDb.getConnection('test')).toBeDefined();
+          expect(this.sapiDb.getConnection('test'))
+            .toBeDefined();
           done();
         })
         .catch(done.fail);
@@ -50,7 +53,9 @@ describe('core/sakura-mongo-db', function () {
 
     describe('does not reconnect to a Db that is already connected', function () {
       it('serial scenario', function (done) {
-        spyOn(MongoClient, 'connect').and.callThrough();
+        spyOn(MongoClient, 'connect')
+          .and
+          .callThrough();
 
         this
           .sapiDb
@@ -60,7 +65,8 @@ describe('core/sakura-mongo-db', function () {
               .sapiDb
               .connect('test', this.dbUrl)
               .then(() => {
-                expect(MongoClient.connect).toHaveBeenCalledTimes(1);
+                expect(MongoClient.connect)
+                  .toHaveBeenCalledTimes(1);
                 done();
               })
               .catch(done.fail);
@@ -69,7 +75,9 @@ describe('core/sakura-mongo-db', function () {
       });
 
       it('parallel, possible race condition', function (done) {
-        spyOn(MongoClient, 'connect').and.callThrough();
+        spyOn(MongoClient, 'connect')
+          .and
+          .callThrough();
         let wait = [];
         wait.push(this.sapiDb.connect('test', this.dbUrl));
         wait.push(this.sapiDb.connect('test', this.dbUrl));
@@ -77,14 +85,14 @@ describe('core/sakura-mongo-db', function () {
         Promise
           .all(wait)
           .then(() => {
-            expect(MongoClient.connect).toHaveBeenCalledTimes(1);
+            expect(MongoClient.connect)
+              .toHaveBeenCalledTimes(1);
             done();
           })
           .catch(done.fail);
       });
     });
   });
-
 
   describe('close', function () {
     it('closes a single db connection', function (done) {
@@ -134,7 +142,8 @@ describe('core/sakura-mongo-db', function () {
             .sapiDb
             .closeAll()
             .then(() => {
-              expect(closeCount).toBe(2);
+              expect(closeCount)
+                .toBe(2);
               done();
             })
             .catch(done.fail);
@@ -149,7 +158,8 @@ describe('core/sakura-mongo-db', function () {
         .sapiDb
         .connect('test', this.dbUrl)
         .then((db) => {
-          expect(this.sapiDb.getDb('test')).toEqual(db);
+          expect(this.sapiDb.getDb('test'))
+            .toEqual(db);
           done();
         })
         .catch(done.fail);
@@ -162,7 +172,8 @@ describe('core/sakura-mongo-db', function () {
         .sapiDb
         .addConnection('test', this.dbUrl);
 
-      expect(this.sapiDb.getConnection('test')).toBeDefined();
+      expect(this.sapiDb.getConnection('test'))
+        .toBeDefined();
     });
   });
 });

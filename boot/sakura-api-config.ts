@@ -1,5 +1,5 @@
 import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
-import * as _  from 'lodash';
+import * as _ from 'lodash';
 import * as fs from 'fs';
 
 /**
@@ -151,7 +151,6 @@ export class SakuraApiConfig {
   dataSources(config: any = this.config): SakuraMongoDbConnection {
     return SakuraApiConfig.dataSources(config);
   }
-
 
   /**
    * Same as the instance method, but static, and it won't try to use the last loaded config since that

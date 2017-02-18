@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import {SakuraApi} from '../sakura-api';
-import * as path   from 'path';
+import * as path from 'path';
 
 /**
  * Interface defining the valid properties for the `@Routable({})` decorator ([[Routable]]).
@@ -149,14 +149,16 @@ export function Routable(options?: RoutableClassOptions): any {
               return;
             }
 
-            let endPoint = path.join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, c)).replace(/\/$/, "");
+            let endPoint = path.join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, c))
+                               .replace(/\/$/, "");
             if (!endPoint.startsWith('/')) {
               endPoint = '/' + endPoint;
             }
 
             let data: SakuraApiClassRoutes = {
               path: endPoint,
-              f: Reflect.getMetadata(`function.${methodName}`, c).bind(c),
+              f: Reflect.getMetadata(`function.${methodName}`, c)
+                        .bind(c),
               httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, c),
               method: methodName
             };

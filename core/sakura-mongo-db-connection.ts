@@ -2,7 +2,7 @@ import {
   Db,
   MongoClient,
   MongoClientOptions
-}                  from 'mongodb';
+} from 'mongodb';
 
 export class SakuraMongoDbConnection {
 

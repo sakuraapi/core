@@ -1,6 +1,6 @@
 {
-  "name": "sakuraapi",
-  "version": "0.3.0",
+  "name": "@sakuraapi/api",
+  "version": "0.4.0",
   "description": "A NodeJS API Experiment",
   "main": "index.js",
   "typings": "index.d.ts",
@@ -15,7 +15,7 @@
     "doc:generate": "rm -rf docs && typedoc --options typedoc.json index.ts",
     "docker:compose-test": "docker-compose up -d --remove-orphans",
     "jasmine": "jasmine",
-    "prepublish": "npm test && npm run doc:generate",
+    "prepublish": "npm test",
     "test": "npm run docker:compose-test && npm run build && npm run jasmine && docker-compose down",
     "tsc": "tsc",
     "typedoc": "typedoc"
