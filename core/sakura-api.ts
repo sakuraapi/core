@@ -5,6 +5,8 @@ import * as colors from 'colors';
 import * as express from 'express';
 import * as http from 'http';
 
+const debug = require('debug')('sapi:SakuraApi');
+
 /**
  * A set of properties defining the configuration of the server.
  */
@@ -142,6 +144,8 @@ export class SakuraApi {
   }
 
   private constructor(app?: express.Express, config?: any, dbConfig?: SakuraMongoDbConnection) {
+    debug('.constructor started');
+
     if (!app) {
       app = express();
     }
@@ -160,6 +164,8 @@ export class SakuraApi {
     this.config = config;
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
+
+    debug('.constructor done');
   }
 
   /**
@@ -169,6 +175,7 @@ export class SakuraApi {
    * This uses `express.use(...)` internally.
    */
   static addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
+    debug('.addMiddleware called');
     SakuraApi.instance.app.use(fn);
   }
 
@@ -187,13 +194,19 @@ export class SakuraApi {
    * with any error other than `Not running` that's returned from the `http.Server` instance.
    */
   close(): Promise<null> {
+    debug('.close called');
+
     return new Promise((resolve, reject) => {
       this
         .server
         .close((err) => {
           if (err && err.message !== 'Not running') {
+            debug('.close error', err);
+
             return reject(err);
           }
+          debug('.close done');
+
           resolve();
         });
     });
@@ -206,10 +219,13 @@ export class SakuraApi {
    * instantiated. Otherwise, it will throw `new Error('ALREADY_INSTANTIATED')`.
    */
   static instantiate(app?: express.Express, config?: SakuraApiConfig, dbConfig?: SakuraMongoDbConnection): SakuraApi {
+    debug(`.instantiate called`);
+
     if (this._instance) {
       throw new Error('ALREADY_INSTANTIATED');
     }
-    this._instance = new SakuraApi(app, config);
+
+    this._instance = new SakuraApi(app, config, dbConfig);
     return this.instance;
   }
 
@@ -225,6 +241,8 @@ export class SakuraApi {
    */
   listen(listenProperties?: ServerConfig): Promise<null> {
     listenProperties = listenProperties || {};
+
+    debug(`.listen called with serverConfig:`, listenProperties);
 
     return new Promise((resolve, reject) => {
       this._address = listenProperties.address || this._address;
@@ -261,10 +279,12 @@ export class SakuraApi {
           .server
           .listen(this.port, this.address, (err) => {
             if (err) {
+              debug('.listen error', err);
               return reject(err);
             }
             let msg = listenProperties.bootMessage || `SakuraAPI started on: ${this.address}:${this.port}`;
             console.log(colors.green(msg));
+            debug(`.listen server started '%s'`, msg);
             return resolve();
           });
       }
@@ -279,7 +299,10 @@ export class SakuraApi {
    * bound.
    */
   route(target: any) {
+    debug(`.route called: '%o'`, target);
+
     if (!target[routableSymbols.sakuraApiClassRoutes]) {
+      debug(`.route '%o' is not a routable class`);
       return;
     }
 

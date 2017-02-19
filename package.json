@@ -17,6 +17,9 @@
     "jasmine": "jasmine",
     "prepublish": "npm test",
     "test": "npm run docker:compose-test && npm run build && npm run jasmine && docker-compose down",
+    "test:debug": "DEBUG=sapi:*,-sapi:*:verbose npm test",
+    "test:verbose": "DEBUG=sapi:* npm test",
+    "test:vverbose": "DEBUG=* npm test",
     "tsc": "tsc",
     "typedoc": "typedoc"
   },
@@ -59,6 +62,7 @@
     "bson-ext": "^1.0.1",
     "co": "^4.6.0",
     "colors": "^1.1.2",
+    "debug": "^2.6.1",
     "express": "^4.14.0",
     "lodash": "^4.17.2",
     "mongodb": "^2.2.16",

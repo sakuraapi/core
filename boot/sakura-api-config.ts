@@ -2,6 +2,9 @@ import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
 import * as _ from 'lodash';
 import * as fs from 'fs';
 
+const debug = require('debug')('sapi:SakuraApiConfig');
+const debugVerbose = require('debug')('sapi:SakuraApiConfig:verbose');
+
 /**
  * Class representing a configuration composed of cascading configuration files.
  */
@@ -13,6 +16,7 @@ export class SakuraApiConfig {
    * Instantiate a SakuraApiConfig.
    */
   constructor() {
+    debug('.constructor');
   }
 
   /**
@@ -41,6 +45,7 @@ export class SakuraApiConfig {
    */
   load(path?: string): any {
     path = path || 'config/environment.json';
+    debug(`.load path: '${path}'`);
 
     let config = {};
     let baseConfig = {};
@@ -91,6 +96,8 @@ export class SakuraApiConfig {
 
     _.merge(config, baseConfig, baseTsConfig, envConfig, envTsConfig, process.env);
     this.config = config;
+
+    debugVerbose('.load %O', config);
     return config;
 
     //////////
@@ -106,21 +113,26 @@ export class SakuraApiConfig {
     function handleLoadError(err: Error, path: string, noDefault: boolean) {
       if (err['code'] === 'ENOENT') {
         // NOOP: the config file is empty, just default to {}
+        debug(`.load config file empty, defaulting to {} for path: '${path}'`);
         return;
       } else if (err.message.startsWith('Cannot find module')) {
         // NOOP: a ts config file wasn't found
+        debug(`.load config file wasn't found, defaulting to {} for path: '${path}'`);
         return;
       } else if (err.message === 'Unexpected end of JSON input') {
         let e = new Error(err.message);
         e['code'] = 'INVALID_JSON_EMPTY';
         e['path'] = path;
+        debug(`.load path: '${path}', error:`, err);
         throw e;
       } else if (err.message.startsWith('Unexpected token')) {
         let e = new Error(err.message);
         e['code'] = 'INVALID_JSON_INVALID';
         e['path'] = path;
+        debug(`.load path: '${path}', error:`, err);
         throw e;
       } else {
+        debug(`.load path: '${path}', error:`, err);
         throw err;
       }
     }
