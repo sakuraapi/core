@@ -1,12 +1,30 @@
 import {
   Route,
   Routable
-}                   from '../../core/@routable/routable';
-import {SakuraApi}  from '../../core/sakura-api';
-
+} from '../../core/@routable/routable';
+import {SakuraApi} from '../../core/sakura-api';
 import * as request from 'supertest';
 
+// These tests have to happen before anything else happens
 describe('SakuraApi.instance.middleware', function () {
+  @Routable({
+    baseUrl: 'middleware'
+  })
+  class MiddleWareTest {
+
+    constructor() {
+    }
+
+    @Route({
+      path: 'test',
+      method: 'get'
+    })
+    test(req, res) {
+      res
+        .status(200)
+        .json({result: req.bootStrapTest});
+    }
+  }
 
   beforeEach(function () {
     spyOn(console, 'log');
@@ -47,21 +65,4 @@ describe('SakuraApi.instance.middleware', function () {
   });
 });
 
-@Routable({
-  baseUrl: 'middleware'
-})
-class MiddleWareTest {
 
-  constructor() {
-  }
-
-  @Route({
-    path: 'test',
-    method: 'get'
-  })
-  test(req, res) {
-    res
-      .status(200)
-      .json({result: req.bootStrapTest});
-  }
-}

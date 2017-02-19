@@ -1,10 +1,18 @@
-import {Db} from 'mongodb';
 import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods
 } from '../helpers/defaultMethodHelpers';
 import {jsonSymbols} from './json';
 import {privateSymbols} from './private';
+import {SakuraApi} from '../sakura-api';
+import {
+  Db,
+  Collection,
+  InsertOneWriteOpResult,
+  ObjectID
+} from '@types/mongodb';
+
+const debug = require('debug')('sapi:Model');
 
 /**
  * Interface used by classes that are decorated with `@Model` ([[Model]]) to prevent
@@ -49,6 +57,8 @@ export interface ModelOptions {
  * A collection of symbols used internally by [[Model]].
  */
 export const modelSymbols = {
+  dbName: Symbol('dbName'),
+  dbCollection: Symbol('dbCollection'),
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
@@ -130,8 +140,24 @@ export function Model(options?: ModelOptions): any {
           writable: false
         });
 
-        c.db = ((options || <any>{}).dbConfig || <any>{}).db || null;
-        c.collection = ((options || <any>{}).dbConfig || <any>{}).collection || null;
+        // map _id to id
+        c._id = null;
+        Reflect.defineProperty(c, 'id', {
+          get: () => c._id,
+          set: (v) => c._id = v
+        });
+
+        // configure Db
+        if (options.dbConfig) {
+          c[modelSymbols.dbName] = options.dbConfig.db || null;
+          if (!c[modelSymbols.dbName]) {
+            throw new Error(`If you define a dbConfig for a model, you must define a db. target: ${target}`);
+          }
+          c[modelSymbols.dbCollection] = options.dbConfig.collection || null;
+          if (!c[modelSymbols.dbCollection]) {
+            throw new Error(`If you define a dbConfig for a model, you must define a collection. target: ${target}`);
+          }
+        }
 
         return c;
       }
@@ -141,6 +167,8 @@ export function Model(options?: ModelOptions): any {
     addDefaultInstanceMethods(newConstructor, 'create', crudCreate, options);
     addDefaultInstanceMethods(newConstructor, 'save', crudSave, options);
     addDefaultInstanceMethods(newConstructor, 'delete', crudDelete, options);
+    addDefaultInstanceMethods(newConstructor, 'getDb', getDb, options);
+    addDefaultInstanceMethods(newConstructor, 'getCollection', getCollection, options);
 
     newConstructor.prototype.toJson = toJson;
     newConstructor.prototype[modelSymbols.toJson] = toJson;
@@ -151,14 +179,36 @@ export function Model(options?: ModelOptions): any {
     return newConstructor;
 
     /////
-    function crudCreate(msg) {
-      return msg;
+    function crudCreate(): Promise<InsertOneWriteOpResult> {
+      let db = SakuraApi.instance.dbConnections.getDb(this[modelSymbols.dbName]);
+
+      debug(`.crudCreate started, dbName: '${this[modelSymbols.dbName]}', found?: ${!!db}, set: %O`, this);
+
+      if (!db) {
+        throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
+      }
+
+      return new Promise((resolve, reject) => {
+        db
+          .collection(this[modelSymbols.dbCollection])
+          .insertOne(this)
+          .then(resolve)
+          .catch(reject);
+      });
     }
 
-    function crudSave(set: any) {
+    function crudSave(id: ObjectID, set: {[key: string]: any}): Promise<any> {
+      let db = SakuraApi.instance.dbConnections.getDb(this[modelSymbols.dbName]);
+
+      debug(`.crudSave started, dbName: '${this[modelSymbols.dbName]}', found?: ${!!db}, set: %O`, set);
+
+      if (!db) {
+        throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
+      }
+
       return new Promise((resolve, reject) => {
-        (this.db as Db)
-          .collection(this.collection)
+        db
+          .collection(this[modelSymbols.dbCollection])
           .updateOne(this.id, {$set: set || this})
           .then(resolve)
           .catch(reject);
@@ -208,6 +258,28 @@ export function Model(options?: ModelOptions): any {
       }
 
       return result;
+    }
+
+    function getDb(): Db {
+      let db = SakuraApi.instance.dbConnections.getDb(this[modelSymbols.dbName]);
+
+      debug(`.getDb started, dbName: '${this[modelSymbols.dbName]}', found?: ${!!db}`);
+
+      return db;
+    }
+
+    function getCollection(): Collection {
+      let db = this.getDb();
+
+      if (!db) {
+        return null;
+      }
+
+      let col = db.collection(this[modelSymbols.dbCollection]);
+
+      debug(`.getCollection started, dbName: '${this[modelSymbols.dbName]}, collection: ${this[modelSymbols.dbCollection]}', found?: ${!!col}`);
+
+      return col;
     }
 
     function toJson() {
