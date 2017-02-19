@@ -20,8 +20,8 @@ export class SakuraApiConfig {
   }
 
   /**
-   * loads the config file specified by path. If no path is provided, the default is to
-   *  load `config/environment.json` from the root of the project.
+   * loads the config file specified by path. If no path is provided, load the path/filename defined in environmental variable SAKURA_API_CONFIG,
+   *  otherwise load `config/environment.json` from the root of the project.
    *
    *  SakuraApi looks for a config/ folder in the root of your api project.
    * It cascades the values found in the following order (the last taking precedence over the former):
@@ -44,7 +44,7 @@ export class SakuraApiConfig {
    * @returns {{}}
    */
   load(path?: string): any {
-    path = path || 'config/environment.json';
+    path = path || process.env.SAKURA_API_CONFIG || 'config/environment.json';
     debug(`.load path: '${path}'`);
 
     let config = {};
