@@ -8,9 +8,12 @@ import {SakuraApi} from '../sakura-api';
 import {
   Db,
   Collection,
+  DeleteWriteOpResultObject,
   InsertOneWriteOpResult,
-  ObjectID
-} from '@types/mongodb';
+  ObjectID,
+  UpdateWriteOpResult
+} from 'mongodb';
+import {SapiMissingIdErr} from './errors';
 
 const debug = require('debug')('sapi:Model');
 
@@ -20,9 +23,9 @@ const debug = require('debug')('sapi:Model');
  * by `@Model()`.
  */
 export interface IModel {
-  create?: (any) => any;
-  delete?: (any) => any;
-  save?: (any) => any;
+  create?: () => Promise<InsertOneWriteOpResult>;
+  delete?: (any) => Promise<DeleteWriteOpResultObject>;
+  save?: (any) => Promise<UpdateWriteOpResult>;
   toJson?: (any) => any;
   toJsonString?: (any) => string;
 }
@@ -116,9 +119,12 @@ export function Model(options?: ModelOptions): any {
 
   return function (target: any) {
     // add default static methods
-    addDefaultStaticMethods(target, 'get', crudGet, options);
-    addDefaultStaticMethods(target, 'getById', crudGetById, options);
-    addDefaultStaticMethods(target, 'delete', stub, options);
+    addDefaultStaticMethods(target, 'delete', crudDeleteStatic, options);
+    addDefaultStaticMethods(target, 'deleteById', crudDeleteByIdStatic, options);
+    addDefaultStaticMethods(target, 'get', crudGetStatic, options);
+    addDefaultStaticMethods(target, 'getById', crudGetByIdStatic, options);
+    addDefaultStaticMethods(target, 'getCollection', getCollection, options);
+    addDefaultStaticMethods(target, 'getDb', getDb, options);
 
     // Various internal methods are exposed to the integrator,
     // but allow the integrator to replace this functionality without
@@ -149,12 +155,13 @@ export function Model(options?: ModelOptions): any {
 
         // configure Db
         if (options.dbConfig) {
-          c[modelSymbols.dbName] = options.dbConfig.db || null;
-          if (!c[modelSymbols.dbName]) {
+          target[modelSymbols.dbName] = options.dbConfig.db || null;
+          if (!target[modelSymbols.dbName]) {
             throw new Error(`If you define a dbConfig for a model, you must define a db. target: ${target}`);
           }
-          c[modelSymbols.dbCollection] = options.dbConfig.collection || null;
-          if (!c[modelSymbols.dbCollection]) {
+
+          target[modelSymbols.dbCollection] = options.dbConfig.collection || null;
+          if (!target[modelSymbols.dbCollection]) {
             throw new Error(`If you define a dbConfig for a model, you must define a collection. target: ${target}`);
           }
         }
@@ -167,8 +174,9 @@ export function Model(options?: ModelOptions): any {
     addDefaultInstanceMethods(newConstructor, 'create', crudCreate, options);
     addDefaultInstanceMethods(newConstructor, 'save', crudSave, options);
     addDefaultInstanceMethods(newConstructor, 'delete', crudDelete, options);
-    addDefaultInstanceMethods(newConstructor, 'getDb', getDb, options);
     addDefaultInstanceMethods(newConstructor, 'getCollection', getCollection, options);
+    addDefaultInstanceMethods(newConstructor, 'getDb', getDb, options);
+    addDefaultInstanceMethods(newConstructor, 'getNewId', getNewId, options);
 
     newConstructor.prototype.toJson = toJson;
     newConstructor.prototype[modelSymbols.toJson] = toJson;
@@ -180,50 +188,87 @@ export function Model(options?: ModelOptions): any {
 
     /////
     function crudCreate(): Promise<InsertOneWriteOpResult> {
-      let db = SakuraApi.instance.dbConnections.getDb(this[modelSymbols.dbName]);
+      let col = target.getCollection();
+      debug(`.crudCreate started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, this);
 
-      debug(`.crudCreate started, dbName: '${this[modelSymbols.dbName]}', found?: ${!!db}, set: %O`, this);
+      if (!col) {
+        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
+      }
 
-      if (!db) {
-        throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
+      if (!this.id) {
+        this.id = this.getNewId();
+      }
+
+      return col.insertOne(this);
+    }
+
+    function crudSave(set: {[key: string]: any} | null): Promise<UpdateWriteOpResult> {
+      let col = target.getCollection();
+      debug(`.crudSave started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, set);
+
+      if (!col) {
+        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
+      }
+
+      if (!this.id) {
+        return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
       }
 
       return new Promise((resolve, reject) => {
-        db
-          .collection(this[modelSymbols.dbCollection])
-          .insertOne(this)
-          .then(resolve)
+        col
+          .updateOne({_id: this.id}, {$set: set || this})
+          .then((result) => {
+            if (set) {
+              for (let prop of Object.getOwnPropertyNames(set)) {
+                this[prop] = set[prop];
+              }
+            }
+            return resolve(result);
+          })
           .catch(reject);
       });
     }
 
-    function crudSave(id: ObjectID, set: {[key: string]: any}): Promise<any> {
-      let db = SakuraApi.instance.dbConnections.getDb(this[modelSymbols.dbName]);
-
-      debug(`.crudSave started, dbName: '${this[modelSymbols.dbName]}', found?: ${!!db}, set: %O`, set);
-
-      if (!db) {
-        throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
+    function crudDelete(filter: any | null): Promise<DeleteWriteOpResultObject> {
+      if (!filter) {
+        debug(`.crudDelete started without filter, calling .deleteById, id: %O`, this.id);
+        return target.deleteById(this.id, this);
       }
 
-      return new Promise((resolve, reject) => {
-        db
-          .collection(this[modelSymbols.dbCollection])
-          .updateOne(this.id, {$set: set || this})
-          .then(resolve)
-          .catch(reject);
-      });
+      return target.delete(filter);
     }
 
-    function crudDelete(msg) {
-      return msg;
+    function crudDeleteByIdStatic(id: ObjectID, t: any): Promise<DeleteWriteOpResultObject> {
+      let col = target.getCollection();
+      debug(`.crudDeleteById started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
+
+      if (!col) {
+        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
+      }
+
+      if (!id) {
+        return Promise.reject(new SapiMissingIdErr('Call to delete without Id, cannot proceed', t));
+      }
+
+      return col.deleteOne({_id: id});
     }
 
-    function crudGet(msg) {
+    function crudDeleteStatic(filter: any): Promise<DeleteWriteOpResultObject> {
+      let col = target.getCollection();
+      debug(`.crudDelete started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
+
+      if (!col) {
+        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
+      }
+
+      return col.deleteMany(filter);
+    }
+
+    function crudGetStatic(msg) {
       return msg
     }
 
-    function crudGetById(msg) {
+    function crudGetByIdStatic(msg) {
       return msg
     }
 
@@ -260,26 +305,30 @@ export function Model(options?: ModelOptions): any {
       return result;
     }
 
-    function getDb(): Db {
-      let db = SakuraApi.instance.dbConnections.getDb(this[modelSymbols.dbName]);
-
-      debug(`.getDb started, dbName: '${this[modelSymbols.dbName]}', found?: ${!!db}`);
-
-      return db;
-    }
-
     function getCollection(): Collection {
-      let db = this.getDb();
+      let db = target.getDb();
 
       if (!db) {
         return null;
       }
 
-      let col = db.collection(this[modelSymbols.dbCollection]);
+      let col = db.collection(target[modelSymbols.dbCollection]);
 
-      debug(`.getCollection started, dbName: '${this[modelSymbols.dbName]}, collection: ${this[modelSymbols.dbCollection]}', found?: ${!!col}`);
+      debug(`.getCollection started, dbName: '${target[modelSymbols.dbName]}, collection: ${target[modelSymbols.dbCollection]}', found?: ${!!col}`);
 
       return col;
+    }
+
+    function getDb(): Db {
+      let db = SakuraApi.instance.dbConnections.getDb(target[modelSymbols.dbName]);
+
+      debug(`.getDb started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);
+
+      return db;
+    }
+
+    function getNewId(): ObjectID {
+      return new ObjectID();
     }
 
     function toJson() {

@@ -3,7 +3,11 @@ import {
   Model,
   modelSymbols
 } from './model';
-import {ObjectID} from 'mongodb';
+import {
+  ObjectID,
+  UpdateWriteOpResult
+} from 'mongodb';
+import {SapiMissingIdErr} from './errors';
 
 describe('@Model', function () {
 
@@ -20,8 +24,14 @@ describe('@Model', function () {
     constructor(public n: number) {
     }
 
-    save() {
-      return 'custom';
+    save(): Promise<UpdateWriteOpResult> {
+      return Promise.resolve({
+        result: {
+          ok: 1,
+          n: -1,
+          nModified: -1
+        }
+      } as UpdateWriteOpResult);
     }
   }
 
@@ -90,6 +100,7 @@ describe('@Model', function () {
       })
       class TestDefaultMethods implements IModel {
         static delete: (any) => any;
+        static deleteById: (ObjectID) => any;
         static get: (any) => any;
         static getById: (any) => any;
 
@@ -99,9 +110,10 @@ describe('@Model', function () {
 
       beforeEach(function () {
         this.tdm = new TestDefaultMethods();
+        this.tdm2 = new TestDefaultMethods();
       });
 
-      describe('when none provided by integrator', function () {
+      describe('when CRUD not provided by integrator', function () {
 
         beforeEach(function (done) {
           this
@@ -112,72 +124,302 @@ describe('@Model', function () {
             .catch(done.fail);
         });
 
-        describe('static', function () {
-          xit('getById', function () {
-            expect(TestDefaultMethods.delete('echo')).toBe('echo');
-          });
+        describe('static method', function () {
 
-          xit('get', function () {
-            expect(TestDefaultMethods.get('echo')).toBe('echo');
-          });
-
-          xit('getById', function () {
-            expect(TestDefaultMethods.getById('echo')).toBe('echo');
-          });
-        });
-
-        describe('instance', function () {
-          it('create', function (done) {
-            let id = new ObjectID();
-            this.tdm.id = id;
+          it('delete', function (done) {
+            expect(this.tdm.id).toBeNull();
 
             this
               .tdm
               .create()
-              .then((result) => {
-                expect(result.insertedCount).toBe(1);
+              .then((createResult) => {
+                expect(createResult.insertedCount).toBe(1);
+
                 this
-                  .tdm
-                  .getCollection()
-                  .find({_id: id})
-                  .limit(1)
-                  .next()
-                  .then((result) => {
-                    expect(result._id).toEqual(this.tdm.id);
-                    expect(result.fName).toBe(this.tdm.fName);
-                    expect(result.lName).toBe(this.tdm.lName);
-                    done();
+                  .tdm2
+                  .create()
+                  .then((createResult) => {
+                    expect(createResult.insertedCount).toBe(1);
+
+                    TestDefaultMethods
+                      .delete({
+                        $or: [{_id: this.tdm.id}, {_id: this.tdm2.id}]
+                      })
+                      .then((deleteResults) => {
+                        expect(deleteResults.deletedCount).toBe(2);
+                        done();
+                      })
+                      .catch(done.fail);
+
                   })
                   .catch(done.fail);
               })
-              .catch((err) => {
-                done.fail(err);
-              });
+              .catch(done.fail);
           });
 
-          xit('save', function (done) {
+          it('deleteById', function (done) {
+            expect(this.tdm.id).toBeNull();
+
             this
               .tdm
-              .save({})
-              .then((result) => {
-                console.log(result);
-                done();
-              });
+              .create()
+              .then((createResult) => {
+                expect(createResult.insertedCount).toBe(1);
+
+                this
+                  .tdm2
+                  .create()
+                  .then((createResult) => {
+                    expect(createResult.insertedCount).toBe(1);
+
+                    TestDefaultMethods
+                      .deleteById(this.tdm.id)
+                      .then((deleteResults) => {
+                        expect(deleteResults.deletedCount).toBe(1);
+                        done();
+                      })
+                      .catch(done.fail);
+                  })
+                  .catch(done.fail);
+              })
+              .catch(done.fail);
           });
 
-          xit('delete', function () {
-            expect(this.tdm.save('echo')).toBe('echo');
+          xit('getById', function (done) {
+            done.fail('not implemented');
+          });
+
+          xit('get', function (done) {
+            done.fail('not implemented');
+          });
+
+          xit('getById', function (done) {
+            done.fail('not implemented');
+          });
+        });
+
+        describe('instance method', function () {
+          describe('create', function () {
+            it('inserts model into db', function (done) {
+              this.tdm.id = new ObjectID();
+              this
+                .tdm
+                .create()
+                .then((result) => {
+                  expect(result.insertedCount).toBe(1);
+                  this
+                    .tdm
+                    .getCollection()
+                    .find({_id: this.tdm.id})
+                    .limit(1)
+                    .next()
+                    .then((result) => {
+                      expect(result._id).toEqual(this.tdm.id);
+                      expect(result.fName).toBe(this.tdm.fName);
+                      expect(result.lName).toBe(this.tdm.lName);
+                      done();
+                    })
+                    .catch(done.fail);
+                })
+                .catch((err) => {
+                  done.fail(err);
+                });
+            });
+
+            it('sets the models Id before writing if Id is not set', function (done) {
+              expect(this.tdm.id).toBeNull();
+              this
+                .tdm
+                .create()
+                .then((result) => {
+                  expect(result.insertedCount).toBe(1);
+                  this
+                    .tdm
+                    .getCollection()
+                    .find({_id: this.tdm.id})
+                    .limit(1)
+                    .next()
+                    .then((result) => {
+                      expect(result._id).toEqual(this.tdm.id);
+                      expect(result.fName).toBe(this.tdm.fName);
+                      expect(result.lName).toBe(this.tdm.lName);
+                      done();
+                    })
+                    .catch(done.fail);
+                });
+            });
+          });
+
+          describe('save', function () {
+            it('rejects if missing id', function (done) {
+              this
+                .tdm
+                .save()
+                .then(() => {
+                  done.fail(new Error('Expected exception'))
+                })
+                .catch((err) => {
+                  expect(err).toEqual(jasmine.any(SapiMissingIdErr));
+                  expect(err.target).toEqual(this.tdm);
+                  done();
+                });
+            });
+
+            it('updates specific fields if set parameter is passed', function (done) {
+              expect(this.tdm.id).toBeNull();
+              this
+                .tdm
+                .create()
+                .then((createResult) => {
+                  expect(createResult.insertedCount).toBe(1);
+                  expect(this.tdm.id).toBeTruthy();
+
+                  let updateSet = {
+                    firstName: 'updated'
+                  };
+
+                  this
+                    .tdm
+                    .save(updateSet)
+                    .then((result: UpdateWriteOpResult) => {
+                      expect(result.modifiedCount).toBe(1);
+                      expect(this.tdm.firstName).toBe(updateSet.firstName);
+
+                      this
+                        .tdm
+                        .getCollection()
+                        .find({_id: this.tdm.id})
+                        .limit(1)
+                        .next()
+                        .then((updated) => {
+                          expect(updated.firstName).toBe(updateSet.firstName);
+                          done();
+                        })
+                        .catch(done.fail);
+                    })
+                    .catch(done.fail);
+                });
+            });
+
+            it('updates entire model if no set parameter is passed', function (done) {
+              expect(this.tdm.id).toBeNull();
+              this
+                .tdm
+                .create()
+                .then((createResult) => {
+                  expect(createResult.insertedCount).toBe(1);
+                  expect(this.tdm.id).toBeTruthy();
+
+                  let changes = {
+                    firstName: 'updatedFirstName',
+                    lastName: 'updatedLastName'
+                  };
+
+                  this.tdm.firstName = changes.firstName;
+                  this.tdm.lastName = changes.lastName;
+
+                  this
+                    .tdm
+                    .save()
+                    .then((result: UpdateWriteOpResult) => {
+                      expect(result.modifiedCount).toBe(1);
+
+                      this
+                        .tdm
+                        .getCollection()
+                        .find({_id: this.tdm.id})
+                        .limit(1)
+                        .next()
+                        .then((updated) => {
+                          expect(updated.firstName).toBe(changes.firstName);
+                          expect(updated.lastName).toBe(changes.lastName);
+                          done();
+                        })
+                        .catch(done.fail);
+                    })
+                    .catch(done.fail);
+                });
+            });
+          });
+
+          describe('delete', function () {
+            it('without filter', function (done) {
+              expect(this.tdm.id).toBeNull();
+
+              this
+                .tdm
+                .create()
+                .then((createResult) => {
+                  expect(createResult.insertedCount).toBe(1);
+
+                  this
+                    .tdm2
+                    .create()
+                    .then((createResult) => {
+                      expect(createResult.insertedCount).toBe(1);
+                      this
+                        .tdm
+                        .delete()
+                        .then((deleteResults) => {
+                          expect(deleteResults.deletedCount).toBe(1);
+                          done();
+                        })
+                        .catch(done.fail);
+                    })
+                    .catch(done.fail);
+                })
+                .catch(done.fail);
+            });
+
+            it('with filter', function (done) {
+              expect(this.tdm.id).toBeNull();
+
+              this
+                .tdm
+                .create()
+                .then((createResult) => {
+                  expect(createResult.insertedCount).toBe(1);
+
+                  this
+                    .tdm2
+                    .create()
+                    .then((createResult) => {
+                      expect(createResult.insertedCount).toBe(1);
+
+                      this
+                        .tdm
+                        .delete({
+                          $or: [{_id: this.tdm.id}, {_id: this.tdm2.id}]
+                        })
+                        .then((deleteResults) => {
+                          expect(deleteResults.deletedCount).toBe(2);
+                          done();
+                        })
+                        .catch(done.fail);
+
+                    })
+                    .catch(done.fail);
+                })
+                .catch(done.fail);
+            });
           });
         });
       });
 
       describe('but does not overwrite custom methods added by integrator', function () {
-        it('static methods', function () {
+        it('static methods getById', function () {
           expect(Test.getById()).toBe('custom');
         });
 
-        it('static methods', function () {
-          expect(this.t.save()).toBe('custom');
+        it('static methods save', function (done) {
+          this
+            .t
+            .save()
+            .then((op) => {
+              expect(op.result.nModified).toBe(-1);
+              done();
+            })
+            .catch(done.fail);
         });
       });
 
