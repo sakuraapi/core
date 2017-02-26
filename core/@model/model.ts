@@ -8,10 +8,13 @@ import {SakuraApi} from '../sakura-api';
 import {
   Db,
   Collection,
+  CollectionOptions,
+  CollectionInsertOneOptions,
   Cursor,
   DeleteWriteOpResultObject,
   InsertOneWriteOpResult,
   ObjectID,
+  ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
 import {SapiMissingIdErr} from './errors';
@@ -188,22 +191,27 @@ export function Model(options?: ModelOptions): any {
     return newConstructor;
 
     /////
-    function crudCreate(): Promise<InsertOneWriteOpResult> {
-      let col = target.getCollection();
-      debug(`.crudCreate started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, this);
+    function crudCreate(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
+      return new Promise((resolve, reject) => {
+        let col = target.getCollection();
+        debug(`.crudCreate started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, this);
 
-      if (!col) {
-        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
-      }
+        if (!col) {
+          throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
+        }
 
-      if (!this.id) {
-        this.id = this.getNewId();
-      }
-
-      return col.insertOne(this);
+        col
+          .insertOne(this, options)
+          .then((result) => {
+            this.id = result.insertedId;
+            return resolve(result);
+          })
+          .catch(reject);
+      });
     }
 
-    function crudSave(set: {[key: string]: any} | null): Promise<UpdateWriteOpResult> {
+    function crudSave(set?: {[key: string]: any} | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
+
       let col = target.getCollection();
       debug(`.crudSave started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, set);
 
@@ -217,7 +225,7 @@ export function Model(options?: ModelOptions): any {
 
       return new Promise((resolve, reject) => {
         col
-          .updateOne({_id: this.id}, {$set: set || this})
+          .updateOne({_id: this.id}, {$set: set || this}, options)
           .then((result) => {
             if (set) {
               for (let prop of Object.getOwnPropertyNames(set)) {
@@ -230,16 +238,16 @@ export function Model(options?: ModelOptions): any {
       });
     }
 
-    function crudDelete(filter: any | null): Promise<DeleteWriteOpResultObject> {
+    function crudDelete(filter: any | null, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
       if (!filter) {
         debug(`.crudDelete started without filter, calling .deleteById, id: %O`, this.id);
-        return target.deleteById(this.id, this);
+        return target.deleteById(this.id, options);
       }
 
-      return target.delete(filter);
+      return target.delete(filter, options);
     }
 
-    function crudDeleteByIdStatic(id: ObjectID, t: any): Promise<DeleteWriteOpResultObject> {
+    function crudDeleteByIdStatic(id: ObjectID, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
       let col = target.getCollection();
       debug(`.crudDeleteById started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
 
@@ -248,13 +256,13 @@ export function Model(options?: ModelOptions): any {
       }
 
       if (!id) {
-        return Promise.reject(new SapiMissingIdErr('Call to delete without Id, cannot proceed', t));
+        return Promise.reject(new SapiMissingIdErr('Call to delete without Id, cannot proceed', target));
       }
 
-      return col.deleteOne({_id: id});
+      return col.deleteOne({_id: id}, options);
     }
 
-    function crudDeleteStatic(filter: any): Promise<DeleteWriteOpResultObject> {
+    function crudDeleteStatic(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
       let col = target.getCollection();
       debug(`.crudDelete started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
 
@@ -262,7 +270,7 @@ export function Model(options?: ModelOptions): any {
         throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
       }
 
-      return col.deleteMany(filter);
+      return col.deleteMany(filter, options);
     }
 
     function crudGetStatic(filter: any): Cursor<any> {

@@ -243,6 +243,7 @@ describe('@Model', function () {
         });
 
         describe('instance method', function () {
+
           describe('create', function () {
             it('inserts model into db', function (done) {
               this.tdm.id = new ObjectID();
@@ -292,6 +293,7 @@ describe('@Model', function () {
                     .catch(done.fail);
                 });
             });
+            
           });
 
           describe('save', function () {
