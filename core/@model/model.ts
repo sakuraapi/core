@@ -265,7 +265,7 @@ export function Model(options?: ModelOptions): any {
       return col.deleteMany(filter);
     }
 
-    function crudGetStatic(filter: any): Cursor {
+    function crudGetStatic(filter: any): Cursor<any> {
       let col = target.getCollection();
       debug(`.crudGetStatic started, dbName '${target[modelSymbols.dbName]}', found?: ${!!col}`);
 

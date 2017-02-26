@@ -205,7 +205,7 @@ describe('@Model', function () {
                   .toArray()
                   .then((results) => {
                     expect(results.length).toBe(1);
-                    expect(results[0]._id).toEqual(this.tdm.id);
+                    expect(results[0]._id.toString()).toBe(this.tdm.id.toString());
                     expect(results[0].firstName).toBe(this.tdm.firstName);
                     expect(results[0].lastName).toBe(this.tdm.lastName);
                     done();
@@ -229,7 +229,7 @@ describe('@Model', function () {
                   .getById(this.tdm.id)
                   .next()
                   .then((result) => {
-                    expect(result._id).toEqual(this.tdm.id);
+                    expect(result._id.toString()).toBe(this.tdm.id.toString());
                     expect(result.firstName).toBe(this.tdm.firstName);
                     expect(result.lastName).toBe(this.tdm.lastName);
                     done();
@@ -258,7 +258,7 @@ describe('@Model', function () {
                     .limit(1)
                     .next()
                     .then((result) => {
-                      expect(result._id).toEqual(this.tdm.id);
+                      expect(result._id.toString()).toBe(this.tdm.id.toString());
                       expect(result.fName).toBe(this.tdm.fName);
                       expect(result.lName).toBe(this.tdm.lName);
                       done();
@@ -284,7 +284,7 @@ describe('@Model', function () {
                     .limit(1)
                     .next()
                     .then((result) => {
-                      expect(result._id).toEqual(this.tdm.id);
+                      expect(result._id.toString()).toBe(this.tdm.id.toString());
                       expect(result.fName).toBe(this.tdm.fName);
                       expect(result.lName).toBe(this.tdm.lName);
                       done();
