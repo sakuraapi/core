@@ -8,6 +8,7 @@ import {SakuraApi} from '../sakura-api';
 import {
   Db,
   Collection,
+  Cursor,
   DeleteWriteOpResultObject,
   InsertOneWriteOpResult,
   ObjectID,
@@ -43,12 +44,12 @@ export interface ModelOptions {
      * [[SakuraMongoDbConnection]]. I.e, whatever name you used in your congifuration of [[SakuraMongoDbConnection]]
      * for the database connection for this model, use that name here.
      */
-    db?: string;
+    db: string;
 
     /**
      * The name of the collection in the database referenced in `db` that represents this model.
      */
-    collection?: string;
+    collection: string;
   }
   /**
    * Prevents the injection of CRUD functions (see [[Model]] function).
@@ -264,12 +265,19 @@ export function Model(options?: ModelOptions): any {
       return col.deleteMany(filter);
     }
 
-    function crudGetStatic(msg) {
-      return msg
+    function crudGetStatic(filter: any): Cursor {
+      let col = target.getCollection();
+      debug(`.crudGetStatic started, dbName '${target[modelSymbols.dbName]}', found?: ${!!col}`);
+
+      if (!col) {
+        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
+      }
+
+      return col.find(filter);
     }
 
-    function crudGetByIdStatic(msg) {
-      return msg
+    function crudGetByIdStatic(id) {
+      return target.get({_id: id}).limit(1);
     }
 
     function fromJson<T>(json: any, ...constructorArgs: any[]): T {
@@ -358,13 +366,3 @@ export function Model(options?: ModelOptions): any {
     }
   };
 }
-
-//////////
-
-/**
- * This is here to stub out the CRUD functionality since SakuraApi doesn't actually have DB integration yet.
- */
-function stub(msg) {
-  return msg;
-}
-

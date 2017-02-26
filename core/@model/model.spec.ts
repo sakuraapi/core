@@ -67,7 +67,12 @@ describe('@Model', function () {
 
     describe('ModelOptions.dbConfig', function () {
       it('throws when dbConfig.db is missing', function () {
-        @Model({dbConfig: {}})
+        @Model({
+          dbConfig: {
+            db: '',
+            collection: ''
+          }
+        })
         class TestDbConfig {
         }
 
@@ -79,7 +84,8 @@ describe('@Model', function () {
       it('throws when dbConfig.collection is missing', function () {
         @Model({
           dbConfig: {
-            db: 'test'
+            db: 'test',
+            collection: ''
           }
         })
         class TestDbConfig {
@@ -132,8 +138,8 @@ describe('@Model', function () {
             this
               .tdm
               .create()
-              .then((createResult) => {
-                expect(createResult.insertedCount).toBe(1);
+              .then((createdResult) => {
+                expect(createdResult.insertedCount).toBe(1);
 
                 this
                   .tdm2
@@ -185,16 +191,54 @@ describe('@Model', function () {
               .catch(done.fail);
           });
 
-          xit('getById', function (done) {
-            done.fail('not implemented');
+          it('get', function (done) {
+            expect(this.tdm.id).toBeNull();
+
+            this
+              .tdm
+              .create()
+              .then((createdResult) => {
+                expect(createdResult.insertedCount).toBe(1);
+
+                TestDefaultMethods
+                  .get({_id: this.tdm.id})
+                  .toArray()
+                  .then((results) => {
+                    expect(results.length).toBe(1);
+                    expect(results[0]._id).toEqual(this.tdm.id);
+                    expect(results[0].firstName).toBe(this.tdm.firstName);
+                    expect(results[0].lastName).toBe(this.tdm.lastName);
+                    done();
+                  })
+                  .catch(done.fail);
+
+              })
+              .catch(done.fail)
           });
 
-          xit('get', function (done) {
-            done.fail('not implemented');
-          });
+          it('getById', function (done) {
+            expect(this.tdm.id).toBeNull();
 
-          xit('getById', function (done) {
-            done.fail('not implemented');
+            this
+              .tdm
+              .create()
+              .then((createdResult) => {
+                expect(createdResult.insertedCount).toBe(1);
+
+                TestDefaultMethods
+                  .getById(this.tdm.id)
+                  .next()
+                  .then((result) => {
+                    expect(result._id).toEqual(this.tdm.id);
+                    expect(result.firstName).toBe(this.tdm.firstName);
+                    expect(result.lastName).toBe(this.tdm.lastName);
+                    done();
+                  })
+                  .catch(done.fail);
+
+              })
+              .catch(done.fail);
+
           });
         });
 
