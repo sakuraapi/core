@@ -5,7 +5,8 @@ import {
 } from './model';
 import {
   ObjectID,
-  UpdateWriteOpResult
+  UpdateWriteOpResult,
+  InsertOneWriteOpResult
 } from 'mongodb';
 import {SapiMissingIdErr} from './errors';
 
@@ -107,8 +108,8 @@ describe('@Model', function () {
       class TestDefaultMethods implements IModel {
         static delete: (any) => any;
         static deleteById: (ObjectID) => any;
-        static get: (any) => any;
-        static getById: (any) => any;
+        static get: (...any) => any;
+        static getById: (...any) => any;
 
         firstName = 'fName';
         lastName = 'lName';
@@ -216,6 +217,28 @@ describe('@Model', function () {
               .catch(done.fail)
           });
 
+          fit('get supports projection', function (done) {
+            expect(this.tdm.id).toBeNull();
+
+            this
+              .tdm
+              .create()
+              .then((createResults: InsertOneWriteOpResult) => {
+                expect(createResults.insertedCount).toBe(1);
+
+                TestDefaultMethods
+                  .getById(this.tdm.id, {_id: 1})
+                  .next()
+                  .then((result) => {
+                    expect(result.firstName).toBeUndefined();
+                    expect(result.lastName).toBeUndefined();
+                    expect(result._id.toString()).toBe(this.tdm.id.toString());
+                    done();
+                  });
+              })
+              .catch(done.fail);
+          });
+
           it('getById', function (done) {
             expect(this.tdm.id).toBeNull();
 
@@ -293,7 +316,7 @@ describe('@Model', function () {
                     .catch(done.fail);
                 });
             });
-            
+
           });
 
           describe('save', function () {

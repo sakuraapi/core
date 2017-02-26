@@ -273,7 +273,7 @@ export function Model(options?: ModelOptions): any {
       return col.deleteMany(filter, options);
     }
 
-    function crudGetStatic(filter: any): Cursor<any> {
+    function crudGetStatic(filter: any, project?: any): Cursor<any> {
       let col = target.getCollection();
       debug(`.crudGetStatic started, dbName '${target[modelSymbols.dbName]}', found?: ${!!col}`);
 
@@ -281,11 +281,13 @@ export function Model(options?: ModelOptions): any {
         throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
       }
 
-      return col.find(filter);
+      return (project)
+        ? col.find(filter).project(project)
+        : col.find(filter);
     }
 
-    function crudGetByIdStatic(id) {
-      return target.get({_id: id}).limit(1);
+    function crudGetByIdStatic(id, project?: any) {
+      return target.get({_id: id}, project).limit(1);
     }
 
     function fromJson<T>(json: any, ...constructorArgs: any[]): T {
