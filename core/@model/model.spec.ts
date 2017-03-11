@@ -217,7 +217,7 @@ describe('@Model', function () {
               .catch(done.fail)
           });
 
-          fit('get supports projection', function (done) {
+          it('get supports projection', function (done) {
             expect(this.tdm.id).toBeNull();
 
             this

@@ -18,6 +18,10 @@ import {
   UpdateWriteOpResult
 } from 'mongodb';
 import {SapiMissingIdErr} from './errors';
+import {
+  DbOptions,
+  dbSymbols
+} from './db';
 
 const debug = require('debug')('sapi:Model');
 
@@ -53,6 +57,11 @@ export interface ModelOptions {
      * The name of the collection in the database referenced in `db` that represents this model.
      */
     collection: string;
+
+    /**
+     * If true, fields without an Explicit @Db will still be written to the Db and used to rehydrate objects `fromDb`.
+     */
+    promiscuous?: boolean;
   }
   /**
    * Prevents the injection of CRUD functions (see [[Model]] function).
@@ -66,6 +75,7 @@ export interface ModelOptions {
 export const modelSymbols = {
   dbName: Symbol('dbName'),
   dbCollection: Symbol('dbCollection'),
+  fromDb: Symbol('fromDb'),
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
@@ -133,6 +143,9 @@ export function Model(options?: ModelOptions): any {
     // Various internal methods are exposed to the integrator,
     // but allow the integrator to replace this functionality without
     // breaking the internal functionality
+    target.fromDb = fromDb;
+    target[modelSymbols.fromDb] = fromDb;
+
     target.fromJson = fromJson;
     target[modelSymbols.fromJson] = fromJson;
 
@@ -290,6 +303,31 @@ export function Model(options?: ModelOptions): any {
       return target.get({_id: id}, project).limit(1);
     }
 
+    function fromDb<T>(json: any, ...constructorArgs: any[]): T {
+
+      if (!json || typeof json !== 'object') {
+        return null;
+      }
+
+      let obj = new newConstructor(...constructorArgs);
+
+      let dbOptionsByFieldName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, obj);
+
+      for (let fieldName of Object.getOwnPropertyNames(json)) {
+        let dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
+
+        if (dbFieldOptions) {
+          obj[dbFieldOptions[dbSymbols.optionsPropertyName]] = json[fieldName];
+        } else {
+          if ((options.dbConfig || <any>{}).promiscuous) {
+            obj[fieldName] = json[fieldName];
+          }
+        }
+      }
+
+      return obj;
+    }
+
     function fromJson<T>(json: any, ...constructorArgs: any[]): T {
       if (!json || typeof json !== 'object') {
         return null;
@@ -297,10 +335,11 @@ export function Model(options?: ModelOptions): any {
 
       let obj = new newConstructor(...constructorArgs);
 
-      let propertyNamesByJsonFieldName: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiJsonFieldToPropertyNames, obj);
+      let propertyNamesByJsonFieldName: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, obj);
 
       for (let field of Object.getOwnPropertyNames(json)) {
         let prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
+
         if (prop) {
           obj[prop] = json[field]; // an @Json alias field
         } else if (Reflect.has(obj, field)) {
@@ -350,7 +389,7 @@ export function Model(options?: ModelOptions): any {
     }
 
     function toJson() {
-      let jsonFieldNamesByProperty: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiJsonPropertyToFieldNames, this);
+      let jsonFieldNamesByProperty: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
       jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string,string>();
 
       let privateFields: Map<string, string> = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
