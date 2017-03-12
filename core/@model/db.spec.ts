@@ -101,17 +101,70 @@ describe('@Db', function () {
         })
         class Test {
           static fromDb;
+
+          @Db({field: 'ph'})
+          phone: string;
         }
 
         let input = {
           firstName: 'George',
-          lastName: 'Washington'
+          lastName: 'Washington',
+          ph: '123'
         };
         let result = Test.fromDb(input);
 
         expect(result.firstName).toBe(input.firstName);
         expect(result.lastName).toBe(input.lastName);
+        expect(result.phone).toBe(input.ph);
       });
+    });
+  });
+
+  describe('fromDbArray', function () {
+    @Model()
+    class Test {
+      static fromDbArray;
+
+      @Db({
+        field: 'fn',
+      })
+      firstName: string;
+      @Db({
+        field: 'ln'
+      })
+      lastName: string;
+
+      constructor(public x) {
+      }
+    }
+
+    it('takes an array of json and returns an array of Model objects', function () {
+      let input = [
+        {
+          fn: 'George',
+          ln: 'Washington'
+        },
+        {
+          fn: 'John',
+          ln: 'Adams'
+        }
+      ];
+
+      let results = Test.fromDbArray(input, 777);
+      expect(results.length).toBe(2);
+      expect(results[0].firstName).toBe(input[0].fn);
+      expect(results[0].lastName).toBe(input[0].ln);
+
+      expect(results[1].firstName).toBe(input[1].fn);
+      expect(results[1].lastName).toBe(input[1].ln);
+    });
+
+    it('returns an empty array if an invalid json input is passed in', function () {
+      let input = void(0);
+
+      let result = Test.fromDbArray(input);
+      expect(Array.isArray(result)).toBeTruthy();
+      expect(result.length).toBe(0);
     });
   });
 });

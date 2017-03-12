@@ -76,6 +76,7 @@ export const modelSymbols = {
   dbName: Symbol('dbName'),
   dbCollection: Symbol('dbCollection'),
   fromDb: Symbol('fromDb'),
+  fromDbArray: Symbol('fromDbArray'),
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
@@ -145,6 +146,9 @@ export function Model(options?: ModelOptions): any {
     // breaking the internal functionality
     target.fromDb = fromDb;
     target[modelSymbols.fromDb] = fromDb;
+
+    target.fromDbArray = fromDbArray;
+    target[modelSymbols.fromDbArray] = fromDbArray;
 
     target.fromJson = fromJson;
     target[modelSymbols.fromJson] = fromJson;
@@ -326,6 +330,22 @@ export function Model(options?: ModelOptions): any {
       }
 
       return obj;
+    }
+
+    function fromDbArray<T>(jsons: any[], ...constructorArgs): T[] {
+      if (!jsons || !Array.isArray(jsons)) {
+        return [];
+      }
+
+      let results = [];
+      for (let json of jsons) {
+        let obj = target.fromDb(json, constructorArgs);
+        if (obj) {
+          results.push(obj);
+        }
+      }
+
+      return results;
     }
 
     function fromJson<T>(json: any, ...constructorArgs: any[]): T {
