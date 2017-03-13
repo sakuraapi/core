@@ -1,5 +1,6 @@
 import {Model} from './model';
 import {Db} from './db';
+import {ObjectID} from 'mongodb';
 
 describe('@Db', function () {
 
@@ -165,6 +166,83 @@ describe('@Db', function () {
       let result = Test.fromDbArray(input);
       expect(Array.isArray(result)).toBeTruthy();
       expect(result.length).toBe(0);
+    });
+  });
+
+  describe('toDb', function () {
+    @Model({
+      dbConfig: {
+        db: 'userDb',
+        collection: 'users',
+        promiscuous: false // default
+      }
+    })
+    class ChasteModelTest {
+      static toDb: (any) => any;
+
+      @Db({
+        field: 'fn'
+      })
+      firstName = 'George';
+      @Db()
+      lastName = 'Washington';
+      phone = '555-123-1234';
+
+    }
+
+    @Model({
+      dbConfig: {
+        db: 'userDb',
+        collection: 'users',
+        promiscuous: true
+      }
+    })
+    class PromiscuousModelTest {
+      static toDb: (any) => any;
+
+      @Db({
+        field: 'fn'
+      })
+      firstName = 'George';
+      @Db()
+      lastName = 'Washington';
+      phone = '555-123-1234';
+    }
+
+    beforeEach(function () {
+      this.promiscuousModel = new PromiscuousModelTest();
+      this.promiscuousModel.id = new ObjectID();
+
+      this.chasteModel = new ChasteModelTest();
+      this.chasteModel.id = new ObjectID();
+    });
+
+    describe('Chaste Mode', function () {
+      it('returns a db object with only explicit @Db fields, and does not include non-enumerable properties', function () {
+
+        let result = ChasteModelTest.toDb.call(this.chasteModel);
+
+        expect(result._id).toBe(this.chasteModel.id);
+        expect(result.fn).toBe(this.chasteModel.firstName);
+        expect(result.lastName).toBe(this.chasteModel.lastName);
+        expect(result.phone).toBeUndefined();
+        expect(result.id).toBeUndefined();
+
+      });
+    });
+
+    describe('Promiscuous Mode (hey baby)', function () {
+      it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', function () {
+
+        let result = PromiscuousModelTest.toDb.call(this.promiscuousModel);
+
+        expect(result._id).toBe(this.promiscuousModel.id);
+        expect(result.fn).toBe(this.promiscuousModel.firstName);
+        expect(result.lastName).toBe(this.promiscuousModel.lastName);
+        expect(result.phone).toBe(this.promiscuousModel.phone);
+        expect(result.id).toBeUndefined();
+
+      });
     });
   });
 });

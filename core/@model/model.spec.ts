@@ -152,6 +152,11 @@ describe('@Model', function () {
 
         describe('static method', function () {
 
+          /**
+           * See json.spec.ts for toJson and fromJson tests.
+           * See db.spec.ts for toDb and fromDb tests.
+           */
+
           it('delete', function (done) {
             expect(this.tdm.id).toBeNull();
 
@@ -335,78 +340,6 @@ describe('@Model', function () {
                     .catch(done.fail);
                 });
             });
-
-            it('does not write non-enumerable properties to the db without @Db, like id', function (done) {
-              this.tdm.id = new ObjectID();
-              this
-                .tdm
-                .create()
-                .then((result) => {
-                  expect(result.insertedCount).toBe(1);
-                  expect(this.tdm.id).toBeDefined();
-                  this
-                    .tdm
-                    .getCollection()
-                    .find({_id: this.tdm.id})
-                    .limit(1)
-                    .next()
-                    .then((result) => {
-                      expect(result._id.toString()).toBe(this.tdm.id.toString());
-                      expect(result.id).toBeUndefined();
-
-                      done();
-                    })
-                    .catch(done.fail);
-                })
-                .catch((err) => {
-                  done.fail(err);
-                });
-            });
-
-            describe('properly respects @Db', function () {
-              it('saves the proper field name for a property in the Db', function (done) {
-                expect(this.tdm.id).toBeNull();
-                this
-                  .tdm
-                  .create()
-                  .then((result) => {
-                    expect(result.insertedCount).toBe(1);
-                    this
-                      .tdm
-                      .getCollection()
-                      .find({_id: this.tdm.id})
-                      .limit(1)
-                      .next()
-                      .then((result) => {
-                        expect(result.fn).toBe(this.tdm.firstName);
-                        done();
-                      });
-                  })
-                  .catch(done.fail);
-              });
-
-              it('acts chastely when not in promiscuous mode', function (done) {
-
-                this
-                  .ct
-                  .create()
-                  .then((result) => {
-                    expect(result.insertedCount).toBe(1);
-                    this
-                      .ct
-                      .getCollection()
-                      .find({_id: this.ct.id})
-                      .limit(1)
-                      .next()
-                      .then((result) => {
-                        expect(result.fn).toBe(this.ct.firstName);
-                        expect(result.lastName).toBeUndefined();
-                        done();
-                      })
-                      .catch(done.fail);
-                  });
-              });
-            });
           });
 
           describe('save', function () {
@@ -500,87 +433,6 @@ describe('@Model', function () {
                 });
             });
 
-            it('does not update non-enumerable properties without @Db like id', function (done) {
-              expect(this.tdm.id).toBeNull();
-              this
-                .tdm
-                .create()
-                .then((createResult) => {
-                  expect(createResult.insertedCount).toBe(1);
-                  expect(this.tdm.id).toBeTruthy();
-
-                  let changes = {
-                    firstName: 'updatedFirstName',
-                    lastName: 'updatedLastName'
-                  };
-
-                  this.tdm.firstName = changes.firstName;
-                  this.tdm.lastName = changes.lastName;
-
-                  expect(this.tdm.id).toBeDefined();
-
-                  this
-                    .tdm
-                    .save()
-                    .then((result: UpdateWriteOpResult) => {
-                      expect(result.modifiedCount).toBe(1);
-                      this
-                        .tdm
-                        .getCollection()
-                        .find({_id: this.tdm.id})
-                        .limit(1)
-                        .next()
-                        .then((updated) => {
-                          expect(updated.id).toBeUndefined();
-                          done();
-                        })
-                        .catch(done.fail);
-                    })
-                    .catch(done.fail);
-                });
-            });
-
-            describe('properly respects @Db', function () {
-              it('acts chastely when not in promiscuous mode', function (done) {
-
-                this
-                  .ct
-                  .create()
-                  .then((createResult) => {
-                    expect(createResult.insertedCount).toBe(1);
-                    expect(this.ct.id).toBeTruthy();
-
-                    let changes = {
-                      firstName: 'updatedFirstName',
-                      lastName: 'updatedLastName'
-                    };
-
-                    this.ct.firstName = changes.firstName;
-                    this.ct.lastName = changes.lastName;
-
-                    this
-                      .ct
-                      .save()
-                      .then((result: UpdateWriteOpResult) => {
-                        expect(result.modifiedCount).toBe(1);
-
-                        this
-                          .ct
-                          .getCollection()
-                          .find({_id: this.ct.id})
-                          .limit(1)
-                          .next()
-                          .then((updated) => {
-                            expect(updated.fn).toBe(changes.firstName);
-                            expect(updated.lastName).toBeUndefined();
-                            done();
-                          })
-                          .catch(done.fail);
-                      })
-                      .catch(done.fail);
-                  });
-              });
-            });
           });
 
           describe('delete', function () {

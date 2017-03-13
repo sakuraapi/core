@@ -80,6 +80,7 @@ export const modelSymbols = {
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
+  toDb: Symbol('toDb'),
   toJson: Symbol('toJson'),
   toJsonString: Symbol('toJsonString')
 };
@@ -156,6 +157,9 @@ export function Model(modelOptions?: ModelOptions): any {
     target.fromJsonArray = fromJsonArray;
     target[modelSymbols.fromJsonArray] = fromJsonArray;
 
+    target.toDb = toDb;
+    target[modelSymbols.toDb] = toDb;
+
     // decorate the constructor
     let newConstructor = new Proxy(target, {
       construct: function (t, args, nt) {
@@ -218,25 +222,7 @@ export function Model(modelOptions?: ModelOptions): any {
           throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
         }
 
-        let dbOptionByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
-
-        let dbObj = {
-          _id: this._id
-        };
-
-        for (let propertyName of Object.getOwnPropertyNames(this)) {
-
-          let propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
-
-          if (propertyOptions && propertyOptions.field) {
-            dbObj[propertyOptions.field] = this[propertyName];
-          } else if ((modelOptions.dbConfig || <any>{}).promiscuous) {
-            if (!this.propertyIsEnumerable(propertyName)) {
-              continue;
-            }
-            dbObj[propertyName] = this[propertyName];
-          }
-        }
+        let dbObj = target.toDb.call(this);
 
         col
           .insertOne(dbObj, options)
@@ -261,26 +247,8 @@ export function Model(modelOptions?: ModelOptions): any {
         return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
       }
 
-      let dbOptionByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
-
-      let dbObj = {
-        _id: this._id
-      };
-
       let changeSet = set || this;
-
-      for (let propertyName of Object.getOwnPropertyNames(changeSet)) {
-        let propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
-
-        if (propertyOptions && propertyOptions.field) {
-          dbObj[propertyOptions.field] = changeSet[propertyName];
-        } else if ((modelOptions.dbConfig || <any>{}).promiscuous) {
-          if (!changeSet.propertyIsEnumerable(propertyName)) {
-            continue;
-          }
-          dbObj[propertyName] = changeSet[propertyName];
-        }
-      }
+      let dbObj = target.toDb.call(this, changeSet);
 
       return new Promise((resolve, reject) => {
         col
@@ -472,8 +440,38 @@ export function Model(modelOptions?: ModelOptions): any {
       return obj;
     }
 
-    function toJsonString(replacer?: (any) => any, space?: string | number) {
-      return JSON.stringify(this[modelSymbols.toJson](), replacer, space);
+    /**
+     * Expects to be called with a this context: toDb.call(this, ...);
+     */
+    function toDb(changeSet: any): any {
+      changeSet = changeSet || this;
+
+      let dbOptionByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
+
+      let dbObj = {
+        _id: this._id
+      };
+
+      for (let propertyName of Object.getOwnPropertyNames(changeSet)) {
+        let propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
+
+        if (propertyOptions && propertyOptions.field) {
+          dbObj[propertyOptions.field] = changeSet[propertyName];
+        } else if (propertyOptions) {
+          dbObj[propertyName] = changeSet[propertyName];
+        } else if ((modelOptions.dbConfig || <any>{}).promiscuous) {
+          if (!changeSet.propertyIsEnumerable(propertyName)) {
+            continue;
+          }
+          dbObj[propertyName] = changeSet[propertyName];
+        }
+      }
+
+      return dbObj;
     }
   };
+
+  function toJsonString(replacer?: (any) => any, space?: string | number) {
+    return JSON.stringify(this[modelSymbols.toJson](), replacer, space);
+  }
 }
