@@ -129,17 +129,17 @@ export const modelSymbols = {
  * mapped for the integrators convenience. If the integrator wants to actually change the underlying behavior that
  * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
  */
-export function Model(options?: ModelOptions): any {
-  options = options || <ModelOptions>{};
+export function Model(modelOptions?: ModelOptions): any {
+  modelOptions = modelOptions || <ModelOptions>{};
 
   return function (target: any) {
     // add default static methods
-    addDefaultStaticMethods(target, 'delete', crudDeleteStatic, options);
-    addDefaultStaticMethods(target, 'deleteById', crudDeleteByIdStatic, options);
-    addDefaultStaticMethods(target, 'get', crudGetStatic, options);
-    addDefaultStaticMethods(target, 'getById', crudGetByIdStatic, options);
-    addDefaultStaticMethods(target, 'getCollection', getCollection, options);
-    addDefaultStaticMethods(target, 'getDb', getDb, options);
+    addDefaultStaticMethods(target, 'delete', crudDeleteStatic, modelOptions);
+    addDefaultStaticMethods(target, 'deleteById', crudDeleteByIdStatic, modelOptions);
+    addDefaultStaticMethods(target, 'get', crudGetStatic, modelOptions);
+    addDefaultStaticMethods(target, 'getById', crudGetByIdStatic, modelOptions);
+    addDefaultStaticMethods(target, 'getCollection', getCollection, modelOptions);
+    addDefaultStaticMethods(target, 'getDb', getDb, modelOptions);
 
     // Various internal methods are exposed to the integrator,
     // but allow the integrator to replace this functionality without
@@ -171,17 +171,18 @@ export function Model(options?: ModelOptions): any {
         c._id = null;
         Reflect.defineProperty(c, 'id', {
           get: () => c._id,
-          set: (v) => c._id = v
+          set: (v) => c._id = v,
+          enumerable: false
         });
 
         // configure Db
-        if (options.dbConfig) {
-          target[modelSymbols.dbName] = options.dbConfig.db || null;
+        if (modelOptions.dbConfig) {
+          target[modelSymbols.dbName] = modelOptions.dbConfig.db || null;
           if (!target[modelSymbols.dbName]) {
             throw new Error(`If you define a dbConfig for a model, you must define a db. target: ${target}`);
           }
 
-          target[modelSymbols.dbCollection] = options.dbConfig.collection || null;
+          target[modelSymbols.dbCollection] = modelOptions.dbConfig.collection || null;
           if (!target[modelSymbols.dbCollection]) {
             throw new Error(`If you define a dbConfig for a model, you must define a collection. target: ${target}`);
           }
@@ -192,12 +193,12 @@ export function Model(options?: ModelOptions): any {
     });
 
     // Inject default instance methods for CRUD if not already defined by integrator
-    addDefaultInstanceMethods(newConstructor, 'create', crudCreate, options);
-    addDefaultInstanceMethods(newConstructor, 'save', crudSave, options);
-    addDefaultInstanceMethods(newConstructor, 'delete', crudDelete, options);
-    addDefaultInstanceMethods(newConstructor, 'getCollection', getCollection, options);
-    addDefaultInstanceMethods(newConstructor, 'getDb', getDb, options);
-    addDefaultInstanceMethods(newConstructor, 'getNewId', getNewId, options);
+    addDefaultInstanceMethods(newConstructor, 'create', crudCreate, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'save', crudSave, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'delete', crudDelete, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'getCollection', getCollection, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'getDb', getDb, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'getNewId', getNewId, modelOptions);
 
     newConstructor.prototype.toJson = toJson;
     newConstructor.prototype[modelSymbols.toJson] = toJson;
@@ -217,8 +218,28 @@ export function Model(options?: ModelOptions): any {
           throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
         }
 
+        let dbOptionByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
+
+        let dbObj = {
+          _id: this._id
+        };
+
+        for (let propertyName of Object.getOwnPropertyNames(this)) {
+
+          let propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
+
+          if (propertyOptions && propertyOptions.field) {
+            dbObj[propertyOptions.field] = this[propertyName];
+          } else if ((modelOptions.dbConfig || <any>{}).promiscuous) {
+            if (!this.propertyIsEnumerable(propertyName)) {
+              continue;
+            }
+            dbObj[propertyName] = this[propertyName];
+          }
+        }
+
         col
-          .insertOne(this, options)
+          .insertOne(dbObj, options)
           .then((result) => {
             this.id = result.insertedId;
             return resolve(result);
@@ -240,9 +261,30 @@ export function Model(options?: ModelOptions): any {
         return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
       }
 
+      let dbOptionByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
+
+      let dbObj = {
+        _id: this._id
+      };
+
+      let changeSet = set || this;
+
+      for (let propertyName of Object.getOwnPropertyNames(changeSet)) {
+        let propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
+
+        if (propertyOptions && propertyOptions.field) {
+          dbObj[propertyOptions.field] = changeSet[propertyName];
+        } else if ((modelOptions.dbConfig || <any>{}).promiscuous) {
+          if (!changeSet.propertyIsEnumerable(propertyName)) {
+            continue;
+          }
+          dbObj[propertyName] = changeSet[propertyName];
+        }
+      }
+
       return new Promise((resolve, reject) => {
         col
-          .updateOne({_id: this.id}, {$set: set || this}, options)
+          .updateOne({_id: this.id}, {$set: dbObj}, options)
           .then((result) => {
             if (set) {
               for (let prop of Object.getOwnPropertyNames(set)) {
@@ -323,7 +365,7 @@ export function Model(options?: ModelOptions): any {
         if (dbFieldOptions) {
           obj[dbFieldOptions[dbSymbols.optionsPropertyName]] = json[fieldName];
         } else {
-          if ((options.dbConfig || <any>{}).promiscuous) {
+          if ((modelOptions.dbConfig || <any>{}).promiscuous) {
             obj[fieldName] = json[fieldName];
           }
         }
