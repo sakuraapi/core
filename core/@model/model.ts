@@ -138,7 +138,10 @@ export function Model(modelOptions?: ModelOptions): any {
     addDefaultStaticMethods(target, 'delete', crudDeleteStatic, modelOptions);
     addDefaultStaticMethods(target, 'deleteById', crudDeleteByIdStatic, modelOptions);
     addDefaultStaticMethods(target, 'get', crudGetStatic, modelOptions);
+    addDefaultStaticMethods(target, 'getOne', crudGetOneStatic, modelOptions);
     addDefaultStaticMethods(target, 'getById', crudGetByIdStatic, modelOptions);
+    addDefaultStaticMethods(target, 'getCursor', crudGetCursorStatic, modelOptions);
+    addDefaultStaticMethods(target, 'getCursorById', crudGetCursorByIdStatic, modelOptions);
     addDefaultStaticMethods(target, 'getCollection', getCollection, modelOptions);
     addDefaultStaticMethods(target, 'getDb', getDb, modelOptions);
 
@@ -300,7 +303,56 @@ export function Model(modelOptions?: ModelOptions): any {
       return col.deleteMany(filter, options);
     }
 
-    function crudGetStatic(filter: any, project?: any): Cursor<any> {
+    function crudGetStatic<T>(filter: any, project?: any): Promise<T> {
+      return new Promise((resolve, reject) => {
+        let cursor = target.getCursor(filter, project);
+
+        cursor
+          .toArray()
+          .then((results) => {
+            let objs = [];
+            for (let result of results) {
+              let obj = target.fromDb(result);
+              if (obj) {
+                objs.push(obj);
+              }
+            }
+            resolve(objs);
+          })
+          .catch(reject);
+      });
+    }
+
+    function crudGetOneStatic<T>(filter: any, project?: any): Promise<T> {
+      return new Promise((resolve, reject) => {
+        let cursor = target.getCursor(filter, project);
+
+        cursor
+          .limit(1)
+          .next()
+          .then((result) => {
+            let obj = target.fromDb(result);
+            resolve(obj);
+          })
+          .catch(reject);
+      });
+    }
+
+    function crudGetByIdStatic<T>(id: string, project?: any): Promise<T> {
+      let cursor = target.getCursorById(id, project);
+
+      return new Promise((resolve, reject) => {
+        cursor
+          .next()
+          .then((result) => {
+            let obj = target.fromDb(result);
+            resolve(obj);
+          })
+          .catch(reject);
+      });
+    }
+
+    function crudGetCursorStatic(filter: any, project?: any): Cursor<any> {
       let col = target.getCollection();
       debug(`.crudGetStatic started, dbName '${target[modelSymbols.dbName]}', found?: ${!!col}`);
 
@@ -313,8 +365,8 @@ export function Model(modelOptions?: ModelOptions): any {
         : col.find(filter);
     }
 
-    function crudGetByIdStatic(id, project?: any) {
-      return target.get({_id: id}, project).limit(1);
+    function crudGetCursorByIdStatic(id, project?: any) {
+      return target.getCursor({_id: id}, project).limit(1);
     }
 
     function fromDb<T>(json: any, ...constructorArgs: any[]): T {

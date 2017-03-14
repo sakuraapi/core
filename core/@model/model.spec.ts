@@ -111,7 +111,10 @@ describe('@Model', function () {
         static delete: (any) => any;
         static deleteById: (ObjectID) => any;
         static get: (...any) => any;
+        static getOne: (...any) => any;
         static getById: (...any) => any;
+        static getCursor: (...any) => any;
+        static getCursorById: (...any) => any;
 
         @Db({
           field: 'fn'
@@ -227,38 +230,36 @@ describe('@Model', function () {
 
                 TestDefaultMethods
                   .get({_id: this.tdm.id})
-                  .toArray()
                   .then((results) => {
                     expect(results.length).toBe(1);
                     expect(results[0]._id.toString()).toBe(this.tdm.id.toString());
-                    expect(results[0].fn).toBe(this.tdm.firstName);
+                    expect(results[0].firstName).toBe(this.tdm.firstName);
                     expect(results[0].lastName).toBe(this.tdm.lastName);
                     done();
                   })
                   .catch(done.fail);
-
               })
-              .catch(done.fail)
+              .catch(done.fail);
           });
 
-          it('get supports projection', function (done) {
+          it('getOne', function (done) {
             expect(this.tdm.id).toBeNull();
 
             this
               .tdm
               .create()
-              .then((createResults: InsertOneWriteOpResult) => {
-                expect(createResults.insertedCount).toBe(1);
+              .then((createdResult) => {
+                expect(createdResult.insertedCount).toBe(1);
 
                 TestDefaultMethods
-                  .getById(this.tdm.id, {_id: 1})
-                  .next()
+                  .getOne({_id: this.tdm.id})
                   .then((result) => {
-                    expect(result.firstName).toBeUndefined();
-                    expect(result.lastName).toBeUndefined();
                     expect(result._id.toString()).toBe(this.tdm.id.toString());
+                    expect(result.firstName).toBe(this.tdm.firstName);
+                    expect(result.lastName).toBe(this.tdm.lastName);
                     done();
-                  });
+                  })
+                  .catch(done.fail);
               })
               .catch(done.fail);
           });
@@ -274,6 +275,75 @@ describe('@Model', function () {
 
                 TestDefaultMethods
                   .getById(this.tdm.id)
+                  .then((result) => {
+                    expect(result._id.toString()).toBe(this.tdm.id.toString());
+                    expect(result.firstName).toBe(this.tdm.firstName);
+                    expect(result.lastName).toBe(this.tdm.lastName);
+                    done();
+                  })
+                  .catch(done.fail);
+              })
+              .catch(done.fail);
+          });
+
+          it('getCursor', function (done) {
+            expect(this.tdm.id).toBeNull();
+
+            this
+              .tdm
+              .create()
+              .then((createdResult) => {
+                expect(createdResult.insertedCount).toBe(1);
+
+                TestDefaultMethods
+                  .getCursor({_id: this.tdm.id})
+                  .toArray()
+                  .then((results) => {
+                    expect(results.length).toBe(1);
+                    expect(results[0]._id.toString()).toBe(this.tdm.id.toString());
+                    expect(results[0].fn).toBe(this.tdm.firstName);
+                    expect(results[0].lastName).toBe(this.tdm.lastName);
+                    done();
+                  })
+                  .catch(done.fail);
+
+              })
+              .catch(done.fail)
+          });
+
+          it('getCursor supports projection', function (done) {
+            expect(this.tdm.id).toBeNull();
+
+            this
+              .tdm
+              .create()
+              .then((createResults: InsertOneWriteOpResult) => {
+                expect(createResults.insertedCount).toBe(1);
+
+                TestDefaultMethods
+                  .getCursor(this.tdm.id, {_id: 1})
+                  .next()
+                  .then((result) => {
+                    expect(result.firstName).toBeUndefined();
+                    expect(result.lastName).toBeUndefined();
+                    expect(result._id.toString()).toBe(this.tdm.id.toString());
+                    done();
+                  });
+              })
+              .catch(done.fail);
+          });
+
+          it('getCursorById', function (done) {
+            expect(this.tdm.id).toBeNull();
+
+            this
+              .tdm
+              .create()
+              .then((createdResult) => {
+                expect(createdResult.insertedCount).toBe(1);
+
+                TestDefaultMethods
+                  .getCursorById(this.tdm.id)
                   .next()
                   .then((result) => {
                     expect(result._id.toString()).toBe(this.tdm.id.toString());
