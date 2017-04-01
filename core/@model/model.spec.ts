@@ -1,27 +1,30 @@
+import {Db} from './db';
+import {SapiMissingIdErr} from './errors';
 import {
   IModel,
   Model,
   modelSymbols
 } from './model';
-import {Db} from './db';
-import {
-  ObjectID,
-  UpdateWriteOpResult,
-  InsertOneWriteOpResult
-} from 'mongodb';
-import {SapiMissingIdErr} from './errors';
 
-describe('@Model', function () {
+import {
+  InsertOneWriteOpResult,
+  ObjectID,
+  UpdateWriteOpResult
+} from 'mongodb';
+
+describe('@Model', function() {
 
   @Model()
   class Test implements IModel {
-    testProperty = true;
-
+    /*tslint:disable:variable-name*/
     static get: (any) => (any) = null;
+    /*tslint:enable:variable-name*/
 
     static getById() {
       return 'custom';
     }
+
+    testProperty = true;
 
     constructor(public n: number) {
     }
@@ -29,85 +32,86 @@ describe('@Model', function () {
     save(): Promise<UpdateWriteOpResult> {
       return Promise.resolve({
         result: {
-          ok: 1,
           n: -1,
-          nModified: -1
+          nModified: -1,
+          ok: 1
         }
       } as UpdateWriteOpResult);
     }
   }
 
-  describe('construction', function () {
+  describe('construction', function() {
 
-    beforeEach(function () {
+    beforeEach(function() {
       this.t = new Test(777);
     });
 
-    it('properly passes the constructor parameters', function () {
+    it('properly passes the constructor parameters', function() {
       expect(this.t.n).toBe(777);
     });
 
-    it('maintains the prototype chain', function () {
+    it('maintains the prototype chain', function() {
       expect(this.t instanceof Test).toBe(true);
     });
 
-    it(`decorates itself with Symbol('sakuraApiModel') = true`, function () {
+    it(`decorates itself with Symbol('sakuraApiModel') = true`, function() {
       expect(this.t[modelSymbols.isSakuraApiModel]).toBe(true);
       expect(() => this.t[modelSymbols.isSakuraApiModel] = false)
         .toThrowError(`Cannot assign to read only property 'Symbol(isSakuraApiModel)' of object '#<Test>'`);
     });
 
-    it('maps _id to id without contaminating the object properties with the id accessor', function () {
+    it('maps _id to id without contaminating the object properties with the id accessor', function() {
       this.t.id = new ObjectID();
 
       expect(this.t._id).toEqual(this.t.id);
       expect(this.t.id).toEqual(this.t.id);
 
-      let json = JSON.parse(JSON.stringify(this.t));
+      const json = JSON.parse(JSON.stringify(this.t));
       expect(json.id).toBeUndefined();
     });
 
-    describe('ModelOptions.dbConfig', function () {
-      it('throws when dbConfig.db is missing', function () {
+    describe('ModelOptions.dbConfig', function() {
+      it('throws when dbConfig.db is missing', function() {
         @Model({
           dbConfig: {
-            db: '',
-            collection: ''
+            collection: '',
+            db: ''
           }
         })
         class TestDbConfig {
         }
 
         expect(() => {
-          new TestDbConfig();
+          new TestDbConfig(); // tslint:disable-line
         }).toThrow();
       });
 
-      it('throws when dbConfig.collection is missing', function () {
+      it('throws when dbConfig.collection is missing', function() {
         @Model({
           dbConfig: {
-            db: 'test',
-            collection: ''
+            collection: '',
+            db: 'test'
           }
         })
         class TestDbConfig {
         }
 
         expect(() => {
-          new TestDbConfig();
+          new TestDbConfig(); // tslint:disable-line
         }).toThrow();
       });
     });
 
-    describe('injects default CRUD method', function () {
+    describe('injects default CRUD method', function() {
       @Model({
         dbConfig: {
-          db: 'userDb',
           collection: 'users',
+          db: 'userDb',
           promiscuous: true
         }
       })
       class TestDefaultMethods implements IModel {
+        /*tslint:disable:variable-name*/
         static delete: (any) => any;
         static deleteById: (ObjectID) => any;
         static get: (...any) => any;
@@ -115,6 +119,7 @@ describe('@Model', function () {
         static getById: (...any) => any;
         static getCursor: (...any) => any;
         static getCursorById: (...any) => any;
+        /*tslint:enable:variable-name*/
 
         @Db({
           field: 'fn'
@@ -125,8 +130,8 @@ describe('@Model', function () {
 
       @Model({
         dbConfig: {
-          db: 'userDb',
           collection: 'users',
+          db: 'userDb',
           promiscuous: false
         }
       })
@@ -136,15 +141,15 @@ describe('@Model', function () {
         lastName = 'Washington';
       }
 
-      beforeEach(function () {
+      beforeEach(function() {
         this.tdm = new TestDefaultMethods();
         this.tdm2 = new TestDefaultMethods();
         this.ct = new ChastityTest();
       });
 
-      describe('when CRUD not provided by integrator', function () {
+      describe('when CRUD not provided by integrator', function() {
 
-        beforeEach(function (done) {
+        beforeEach(function(done) {
           this
             .sapi
             .dbConnections
@@ -153,14 +158,14 @@ describe('@Model', function () {
             .catch(done.fail);
         });
 
-        describe('static method', function () {
+        describe('static method', function() {
 
           /**
            * See json.spec.ts for toJson and fromJson tests.
            * See db.spec.ts for toDb and fromDb tests.
            */
 
-          it('delete', function (done) {
+          it('delete', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -191,7 +196,7 @@ describe('@Model', function () {
               .catch(done.fail);
           });
 
-          it('deleteById', function (done) {
+          it('deleteById', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -203,8 +208,8 @@ describe('@Model', function () {
                 this
                   .tdm2
                   .create()
-                  .then((createResult) => {
-                    expect(createResult.insertedCount).toBe(1);
+                  .then((createResult2) => {
+                    expect(createResult2.insertedCount).toBe(1);
 
                     TestDefaultMethods
                       .deleteById(this.tdm.id)
@@ -219,7 +224,7 @@ describe('@Model', function () {
               .catch(done.fail);
           });
 
-          it('get', function (done) {
+          it('get', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -242,7 +247,7 @@ describe('@Model', function () {
               .catch(done.fail);
           });
 
-          it('getOne', function (done) {
+          it('getOne', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -264,7 +269,7 @@ describe('@Model', function () {
               .catch(done.fail);
           });
 
-          it('getById', function (done) {
+          it('getById', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -286,7 +291,7 @@ describe('@Model', function () {
               .catch(done.fail);
           });
 
-          it('getCursor', function (done) {
+          it('getCursor', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -308,10 +313,10 @@ describe('@Model', function () {
                   .catch(done.fail);
 
               })
-              .catch(done.fail)
+              .catch(done.fail);
           });
 
-          it('getCursor supports projection', function (done) {
+          it('getCursor supports projection', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -333,7 +338,7 @@ describe('@Model', function () {
               .catch(done.fail);
           });
 
-          it('getCursorById', function (done) {
+          it('getCursorById', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -359,10 +364,10 @@ describe('@Model', function () {
           });
         });
 
-        describe('instance method', function () {
+        describe('instance method', function() {
 
-          describe('create', function () {
-            it('inserts model into db', function (done) {
+          describe('create', function() {
+            it('inserts model into db', function(done) {
               this.tdm.id = new ObjectID();
               this
                 .tdm
@@ -375,10 +380,10 @@ describe('@Model', function () {
                     .find({_id: this.tdm.id})
                     .limit(1)
                     .next()
-                    .then((result) => {
-                      expect(result._id.toString()).toBe(this.tdm.id.toString());
-                      expect(result.fName).toBe(this.tdm.fName);
-                      expect(result.lName).toBe(this.tdm.lName);
+                    .then((result2) => {
+                      expect(result2._id.toString()).toBe(this.tdm.id.toString());
+                      expect(result2.fName).toBe(this.tdm.fName);
+                      expect(result2.lName).toBe(this.tdm.lName);
                       done();
                     })
                     .catch(done.fail);
@@ -388,7 +393,7 @@ describe('@Model', function () {
                 });
             });
 
-            it('sets the models Id before writing if Id is not set', function (done) {
+            it('sets the models Id before writing if Id is not set', function(done) {
               expect(this.tdm.id).toBeNull();
               this
                 .tdm
@@ -401,10 +406,10 @@ describe('@Model', function () {
                     .find({_id: this.tdm.id})
                     .limit(1)
                     .next()
-                    .then((result) => {
-                      expect(result._id.toString()).toBe(this.tdm.id.toString());
-                      expect(result.fName).toBe(this.tdm.fName);
-                      expect(result.lName).toBe(this.tdm.lName);
+                    .then((result2) => {
+                      expect(result2._id.toString()).toBe(this.tdm.id.toString());
+                      expect(result2.fName).toBe(this.tdm.fName);
+                      expect(result2.lName).toBe(this.tdm.lName);
                       done();
                     })
                     .catch(done.fail);
@@ -412,13 +417,13 @@ describe('@Model', function () {
             });
           });
 
-          describe('save', function () {
-            it('rejects if missing id', function (done) {
+          describe('save', function() {
+            it('rejects if missing id', function(done) {
               this
                 .tdm
                 .save()
                 .then(() => {
-                  done.fail(new Error('Expected exception'))
+                  done.fail(new Error('Expected exception'));
                 })
                 .catch((err) => {
                   expect(err).toEqual(jasmine.any(SapiMissingIdErr));
@@ -427,7 +432,7 @@ describe('@Model', function () {
                 });
             });
 
-            it('updates specific fields if set parameter is passed', function (done) {
+            it('updates specific fields if set parameter is passed', function(done) {
               expect(this.tdm.id).toBeNull();
               this
                 .tdm
@@ -436,7 +441,7 @@ describe('@Model', function () {
                   expect(createResult.insertedCount).toBe(1);
                   expect(this.tdm.id).toBeTruthy();
 
-                  let updateSet = {
+                  const updateSet = {
                     firstName: 'updated'
                   };
 
@@ -463,7 +468,7 @@ describe('@Model', function () {
                 });
             });
 
-            it('updates entire model if no set parameter is passed', function (done) {
+            it('updates entire model if no set parameter is passed', function(done) {
               expect(this.tdm.id).toBeNull();
               this
                 .tdm
@@ -472,7 +477,7 @@ describe('@Model', function () {
                   expect(createResult.insertedCount).toBe(1);
                   expect(this.tdm.id).toBeTruthy();
 
-                  let changes = {
+                  const changes = {
                     firstName: 'updatedFirstName',
                     lastName: 'updatedLastName'
                   };
@@ -505,8 +510,8 @@ describe('@Model', function () {
 
           });
 
-          describe('delete', function () {
-            it('without filter', function (done) {
+          describe('delete', function() {
+            it('without filter', function(done) {
               expect(this.tdm.id).toBeNull();
 
               this
@@ -518,8 +523,8 @@ describe('@Model', function () {
                   this
                     .tdm2
                     .create()
-                    .then((createResult) => {
-                      expect(createResult.insertedCount).toBe(1);
+                    .then((createResult2) => {
+                      expect(createResult2.insertedCount).toBe(1);
                       this
                         .tdm
                         .delete()
@@ -534,7 +539,7 @@ describe('@Model', function () {
                 .catch(done.fail);
             });
 
-            it('with filter', function (done) {
+            it('with filter', function(done) {
               expect(this.tdm.id).toBeNull();
 
               this
@@ -546,8 +551,8 @@ describe('@Model', function () {
                   this
                     .tdm2
                     .create()
-                    .then((createResult) => {
-                      expect(createResult.insertedCount).toBe(1);
+                    .then((createResult2) => {
+                      expect(createResult2.insertedCount).toBe(1);
 
                       this
                         .tdm
@@ -569,12 +574,12 @@ describe('@Model', function () {
         });
       });
 
-      describe('but does not overwrite custom methods added by integrator', function () {
-        it('static methods getById', function () {
+      describe('but does not overwrite custom methods added by integrator', function() {
+        it('static methods getById', function() {
           expect(Test.getById()).toBe('custom');
         });
 
-        it('static methods save', function (done) {
+        it('static methods save', function(done) {
           this
             .t
             .save()
@@ -586,23 +591,23 @@ describe('@Model', function () {
         });
       });
 
-      describe('allows integrator to exclude CRUD with suppressInjection: [] in ModelOptions', function () {
+      describe('allows integrator to exclude CRUD with suppressInjection: [] in ModelOptions', function() {
         @Model({suppressInjection: ['get', 'save']})
         class TestSuppressedDefaultMethods implements IModel {
         }
 
-        beforeEach(function () {
+        beforeEach(function() {
           this.suppressed = new TestSuppressedDefaultMethods();
         });
 
-        it('with static defaults', function () {
+        it('with static defaults', function() {
           expect(this.suppressed.get).toBe(undefined);
         });
 
-        it('with instance defaults', function () {
+        it('with instance defaults', function() {
           expect(this.suppressed.save).toBe(undefined);
         });
-      })
+      });
     });
   });
 });

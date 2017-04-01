@@ -1,12 +1,12 @@
+import * as request from 'supertest';
 import {
-  Route,
-  Routable
+  Routable,
+  Route
 } from '../../core/@routable/routable';
 import {SakuraApi} from '../../core/sakura-api';
-import * as request from 'supertest';
 
 // These tests have to happen before anything else happens
-describe('SakuraApi.instance.middleware', function () {
+describe('SakuraApi.instance.middleware', function() {
   @Routable({
     baseUrl: 'middleware'
   })
@@ -16,8 +16,8 @@ describe('SakuraApi.instance.middleware', function () {
     }
 
     @Route({
-      path: 'test',
-      method: 'get'
+      method: 'get',
+      path: 'test'
     })
     test(req, res) {
       res
@@ -26,11 +26,11 @@ describe('SakuraApi.instance.middleware', function () {
     }
   }
 
-  beforeEach(function () {
+  beforeEach(function() {
     spyOn(console, 'log');
   });
 
-  afterEach(function (done) {
+  afterEach(function(done) {
     this
       .sapi
       .close()
@@ -38,9 +38,9 @@ describe('SakuraApi.instance.middleware', function () {
       .catch(done.fail);
   });
 
-  it('injects middleware before @Routable classes', function (done) {
+  it('injects middleware before @Routable classes', function(done) {
     this.sapi.addMiddleware((req, res, next) => {
-      (<any>req).bootStrapTest = 778;
+      (req as any).bootStrapTest = 778;
       next();
     });
 
@@ -54,7 +54,7 @@ describe('SakuraApi.instance.middleware', function () {
           .expect('Content-Length', '14')
           .expect('{"result":778}')
           .expect(200)
-          .end(function (err, res) {
+          .end(function(err, res) {
             if (err) {
               return done.fail(err);
             }
@@ -64,5 +64,3 @@ describe('SakuraApi.instance.middleware', function () {
       .catch(done.fail);
   });
 });
-
-

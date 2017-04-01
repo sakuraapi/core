@@ -1,12 +1,13 @@
-import {Model} from './model';
 import {Db} from './db';
+import {Model} from './model';
+
 import {ObjectID} from 'mongodb';
 
-describe('@Db', function () {
+describe('@Db', function() {
 
-  describe('fromDb', function () {
+  describe('fromDb', function() {
 
-    it('is injected as a static member of an @Model object by default', function () {
+    it('is injected as a static member of an @Model object by default', function() {
       @Model()
       class Test {
         static fromDb;
@@ -15,7 +16,7 @@ describe('@Db', function () {
       expect(Test.fromDb).toBeDefined();
     });
 
-    describe('constructor', function () {
+    describe('constructor', function() {
       @Model()
       class Test {
         static fromDb;
@@ -24,34 +25,34 @@ describe('@Db', function () {
         }
       }
 
-      it('returns null on invalid input', function () {
-        let result = Test.fromDb();
+      it('returns null on invalid input', function() {
+        const result = Test.fromDb();
         expect(result).toBeNull();
       });
 
-      it('properly constructs a new target object, passing along the constructor fields', function () {
-        let result = Test.fromDb({}, 777);
+      it('properly constructs a new target object, passing along the constructor fields', function() {
+        const result = Test.fromDb({}, 777);
         expect(result.constructorTest).toBe(777);
       });
 
-      it('returns an object of the correct instaceOf', function () {
-        let result = Test.fromDb({}, 777);
+      it('returns an object of the correct instaceOf', function() {
+        const result = Test.fromDb({}, 777);
         expect(result instanceof Test).toBe(true);
       });
     });
 
-    describe('maps fields from input', function () {
+    describe('maps fields from input', function() {
 
-      it('handles @Models with no @Db properties', function () {
+      it('handles @Models with no @Db properties', function() {
         @Model()
         class Test {
           static fromDb;
         }
-        let result = Test.fromDb({});
+        const result = Test.fromDb({});
         expect(result).toBeDefined();
       });
 
-      it('handles properties with empty @Db options', function () {
+      it('handles properties with empty @Db options', function() {
         @Model()
         class Test {
           static fromDb;
@@ -60,17 +61,17 @@ describe('@Db', function () {
           firstName: string;
         }
 
-        let input = {
+        const input = {
           firstName: 'George',
           lastName: 'Washington'
         };
-        let result = Test.fromDb(input);
+        const result = Test.fromDb(input);
 
         expect(result.firstName).toBe(input.firstName);
         expect(result.lastName).toBeUndefined();
       });
 
-      it('handles properties with @Db({field}) set', function () {
+      it('handles properties with @Db({field}) set', function() {
         @Model()
         class Test {
           static fromDb;
@@ -82,21 +83,21 @@ describe('@Db', function () {
           lastName: string;
         }
 
-        let input = {
+        const input = {
           fn: 'George',
           ln: 'Washington'
         };
-        let result = Test.fromDb(input);
+        const result = Test.fromDb(input);
 
         expect(result.firstName).toBe(input.fn);
         expect(result.lastName).toBeUndefined();
       });
 
-      it('handles @Model being in dbOptions.promiscuous mode', function () {
+      it('handles @Model being in dbOptions.promiscuous mode', function() {
         @Model({
           dbConfig: {
-            db: 'test',
             collection: 'test',
+            db: 'test',
             promiscuous: true
           }
         })
@@ -107,12 +108,12 @@ describe('@Db', function () {
           phone: string;
         }
 
-        let input = {
+        const input = {
           firstName: 'George',
           lastName: 'Washington',
           ph: '123'
         };
-        let result = Test.fromDb(input);
+        const result = Test.fromDb(input);
 
         expect(result.firstName).toBe(input.firstName);
         expect(result.lastName).toBe(input.lastName);
@@ -121,13 +122,13 @@ describe('@Db', function () {
     });
   });
 
-  describe('fromDbArray', function () {
+  describe('fromDbArray', function() {
     @Model()
     class Test {
       static fromDbArray;
 
       @Db({
-        field: 'fn',
+        field: 'fn'
       })
       firstName: string;
       @Db({
@@ -139,8 +140,8 @@ describe('@Db', function () {
       }
     }
 
-    it('takes an array of json and returns an array of Model objects', function () {
-      let input = [
+    it('takes an array of json and returns an array of Model objects', function() {
+      const input = [
         {
           fn: 'George',
           ln: 'Washington'
@@ -151,7 +152,7 @@ describe('@Db', function () {
         }
       ];
 
-      let results = Test.fromDbArray(input, 777);
+      const results = Test.fromDbArray(input, 777);
       expect(results.length).toBe(2);
       expect(results[0].firstName).toBe(input[0].fn);
       expect(results[0].lastName).toBe(input[0].ln);
@@ -160,25 +161,26 @@ describe('@Db', function () {
       expect(results[1].lastName).toBe(input[1].ln);
     });
 
-    it('returns an empty array if an invalid json input is passed in', function () {
-      let input = void(0);
+    it('returns an empty array if an invalid json input is passed in', function() {
+      // tslint:disable-next-line:no-unused-expression
+      const input = void(0);
 
-      let result = Test.fromDbArray(input);
+      const result = Test.fromDbArray(input);
       expect(Array.isArray(result)).toBeTruthy();
       expect(result.length).toBe(0);
     });
   });
 
-  describe('toDb', function () {
+  describe('toDb', function() {
     @Model({
       dbConfig: {
-        db: 'userDb',
         collection: 'users',
+        db: 'userDb',
         promiscuous: false // default
       }
     })
     class ChasteModelTest {
-      static toDb: (any) => any;
+      static toDb: () => any;
 
       @Db({
         field: 'fn'
@@ -192,13 +194,13 @@ describe('@Db', function () {
 
     @Model({
       dbConfig: {
-        db: 'userDb',
         collection: 'users',
+        db: 'userDb',
         promiscuous: true
       }
     })
     class PromiscuousModelTest {
-      static toDb: (any) => any;
+      static toDb: () => any;
 
       @Db({
         field: 'fn'
@@ -209,7 +211,7 @@ describe('@Db', function () {
       phone = '555-123-1234';
     }
 
-    beforeEach(function () {
+    beforeEach(function() {
       this.promiscuousModel = new PromiscuousModelTest();
       this.promiscuousModel.id = new ObjectID();
 
@@ -217,10 +219,10 @@ describe('@Db', function () {
       this.chasteModel.id = new ObjectID();
     });
 
-    describe('Chaste Mode', function () {
-      it('returns a db object with only explicit @Db fields, and does not include non-enumerable properties', function () {
+    describe('Chaste Mode', function() {
+      it('returns a db object with only explicit @Db fields, and does not include non-enumerable properties', function() {
 
-        let result = ChasteModelTest.toDb.call(this.chasteModel);
+        const result = ChasteModelTest.toDb.call(this.chasteModel);
 
         expect(result._id).toBe(this.chasteModel.id);
         expect(result.fn).toBe(this.chasteModel.firstName);
@@ -231,10 +233,10 @@ describe('@Db', function () {
       });
     });
 
-    describe('Promiscuous Mode (hey baby)', function () {
-      it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', function () {
+    describe('Promiscuous Mode (hey baby)', function() {
+      it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', function() {
 
-        let result = PromiscuousModelTest.toDb.call(this.promiscuousModel);
+        const result = PromiscuousModelTest.toDb.call(this.promiscuousModel);
 
         expect(result._id).toBe(this.promiscuousModel.id);
         expect(result.fn).toBe(this.promiscuousModel.firstName);
