@@ -219,7 +219,7 @@ export function Model(modelOptions?: ModelOptions): any {
     function crudCreate(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
       return new Promise((resolve, reject) => {
         let col = target.getCollection();
-        debug(`.crudCreate started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, this);
+        debug(`.crudCreate called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, this);
 
         if (!col) {
           throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
@@ -240,7 +240,7 @@ export function Model(modelOptions?: ModelOptions): any {
     function crudSave(set?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
 
       let col = target.getCollection();
-      debug(`.crudSave started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, set);
+      debug(`.crudSave called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, set);
 
       if (!col) {
         throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
@@ -270,7 +270,7 @@ export function Model(modelOptions?: ModelOptions): any {
 
     function crudDelete(filter: any | null, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
       if (!filter) {
-        debug(`.crudDelete started without filter, calling .deleteById, id: %O`, this.id);
+        debug(`.crudDelete called without filter, calling .deleteById, id: %O`, this.id);
         return target.deleteById(this.id, options);
       }
 
@@ -279,7 +279,7 @@ export function Model(modelOptions?: ModelOptions): any {
 
     function crudDeleteByIdStatic(id: ObjectID, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
       let col = target.getCollection();
-      debug(`.crudDeleteById started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
+      debug(`.crudDeleteById called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
 
       if (!col) {
         throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
@@ -294,7 +294,7 @@ export function Model(modelOptions?: ModelOptions): any {
 
     function crudDeleteStatic(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
       let col = target.getCollection();
-      debug(`.crudDelete started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
+      debug(`.crudDelete called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
 
       if (!col) {
         throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
@@ -306,6 +306,7 @@ export function Model(modelOptions?: ModelOptions): any {
     function crudGetStatic<T>(filter: any, project?: any): Promise<T> {
       return new Promise((resolve, reject) => {
         let cursor = target.getCursor(filter, project);
+        debug(`.crudGetStatic called, dbName '${target[modelSymbols.dbName]}'`);
 
         cursor
           .toArray()
@@ -326,6 +327,7 @@ export function Model(modelOptions?: ModelOptions): any {
     function crudGetOneStatic<T>(filter: any, project?: any): Promise<T> {
       return new Promise((resolve, reject) => {
         let cursor = target.getCursor(filter, project);
+        debug(`.crudGetOneStatic called, dbName '${target[modelSymbols.dbName]}'`);
 
         cursor
           .limit(1)
@@ -340,6 +342,7 @@ export function Model(modelOptions?: ModelOptions): any {
 
     function crudGetByIdStatic<T>(id: string, project?: any): Promise<T> {
       let cursor = target.getCursorById(id, project);
+      debug(`.crudGetByIdStatic called, dbName '${target[modelSymbols.dbName]}'`);
 
       return new Promise((resolve, reject) => {
         cursor
@@ -354,7 +357,7 @@ export function Model(modelOptions?: ModelOptions): any {
 
     function crudGetCursorStatic(filter: any, project?: any): Cursor<any> {
       let col = target.getCollection();
-      debug(`.crudGetStatic started, dbName '${target[modelSymbols.dbName]}', found?: ${!!col}`);
+      debug(`.crudGetCursorStatic called, dbName '${target[modelSymbols.dbName]}', found?: ${!!col}`);
 
       if (!col) {
         throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
@@ -366,11 +369,12 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function crudGetCursorByIdStatic(id, project?: any) {
+      debug(`.crudGetCursorByIdStatic called, dbName '${target[modelSymbols.dbName]}'`);
       return target.getCursor({_id: id}, project).limit(1);
     }
 
     function fromDb<T>(json: any, ...constructorArgs: any[]): T {
-
+      debug(`.fromDb called, target '${target}'`);
       if (!json || typeof json !== 'object') {
         return null;
       }
@@ -395,6 +399,7 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function fromDbArray<T>(jsons: any[], ...constructorArgs): T[] {
+      debug(`.fromDbArray called, target '${target}'`);
       if (!jsons || !Array.isArray(jsons)) {
         return [];
       }
@@ -411,6 +416,8 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function fromJson<T>(json: any, ...constructorArgs: any[]): T {
+      debug(`.fromJson called, target '${target}'`);
+
       if (!json || typeof json !== 'object') {
         return null;
       }
@@ -433,6 +440,8 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function fromJsonArray<T>(json: any, ...constructorArgs: any[]): T[] {
+      debug(`.fromJsonArray called, target '${target}'`);
+
       let result = [];
 
       if (Array.isArray(json)) {
@@ -453,7 +462,7 @@ export function Model(modelOptions?: ModelOptions): any {
 
       let col = db.collection(target[modelSymbols.dbCollection]);
 
-      debug(`.getCollection started, dbName: '${target[modelSymbols.dbName]}, collection: ${target[modelSymbols.dbCollection]}', found?: ${!!col}`);
+      debug(`.getCollection called, dbName: '${target[modelSymbols.dbName]}, collection: ${target[modelSymbols.dbCollection]}', found?: ${!!col}`);
 
       return col;
     }
@@ -461,7 +470,7 @@ export function Model(modelOptions?: ModelOptions): any {
     function getDb(): Db {
       let db = SakuraApi.instance.dbConnections.getDb(target[modelSymbols.dbName]);
 
-      debug(`.getDb started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);
+      debug(`.getDb called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);
 
       return db;
     }
@@ -471,6 +480,8 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function toJson() {
+      debug(`.toJson called, target '${target}'`);
+
       let jsonFieldNamesByProperty: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
       jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
 
@@ -509,6 +520,8 @@ export function Model(modelOptions?: ModelOptions): any {
      * Expects to be called with a this context: toDb.call(this, ...);
      */
     function toDb(changeSet: any): any {
+      debug(`.toDb called, target '${target}'`);
+
       changeSet = changeSet || this;
 
       let dbOptionByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
