@@ -6,11 +6,11 @@ import {jsonSymbols} from './json';
 import {privateSymbols} from './private';
 import {SakuraApi} from '../sakura-api';
 import {
-  Db,
   Collection,
-  CollectionOptions,
   CollectionInsertOneOptions,
+  CollectionOptions,
   Cursor,
+  Db,
   DeleteWriteOpResultObject,
   InsertOneWriteOpResult,
   ObjectID,
@@ -237,7 +237,7 @@ export function Model(modelOptions?: ModelOptions): any {
       });
     }
 
-    function crudSave(set?: {[key: string]: any} | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
+    function crudSave(set?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
 
       let col = target.getCollection();
       debug(`.crudSave started, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, set);
@@ -472,23 +472,36 @@ export function Model(modelOptions?: ModelOptions): any {
 
     function toJson() {
       let jsonFieldNamesByProperty: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
-      jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string,string>();
+      jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
 
       let privateFields: Map<string, string> = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
 
+      let dbOptionByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
+
       let obj = {};
       for (let prop of Object.getOwnPropertyNames(this)) {
-        if (typeof this[prop] !== 'function') {
+        if (typeof this[prop] === 'function') {
+          continue;
+        }
 
-          let override = (privateFields) ? privateFields.get(prop) : null;
-          if (override && typeof this[override] === 'function' && !this[override]()) {
-            continue;
-          } else if (override && !this[override]) {
+        if (dbOptionByPropertyName) {
+          if ((dbOptionByPropertyName.get(prop) || {}).private) {
             continue;
           }
-          obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
         }
+
+        let override = (privateFields) ? privateFields.get(prop) : null;
+
+        // do the function test for private otherwise do the boolean test
+        if (override && typeof this[override] === 'function' && !this[override]()) {
+          continue;
+        } else if (override && !this[override]) {
+          continue;
+        }
+
+        obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
       }
+
       return obj;
     }
 

@@ -1,8 +1,9 @@
+import {Db} from './db';
+import {Json} from './json';
 import {
   Model,
   modelSymbols
 } from './model';
-import {Json} from './json';
 
 describe('@Json', function () {
 
@@ -39,9 +40,35 @@ describe('@Json', function () {
     }
   }
 
+  @Model()
+  class TestDbFieldPrivate {
+    aProperty: string = 'test';
+    anotherProperty: string;
+    aThirdProperty: number = 777;
+
+    @Db({private: true})
+    hasDbButNotJson: string = 'test';
+
+    @Json('hasDbAndJson')
+    @Db({private: true})
+    hasDbAndJson: string = 'test';
+
+    @Json('marshallsWithJsonAndDb')
+    @Db()
+    marshallsWithJsonAndDb: boolean = true;
+
+    @Json('marshallsWithDb')
+    @Db()
+    marshallsWithDb: boolean = true;
+
+    aFunction() {
+    }
+  }
+
   beforeEach(function () {
     this.t = new Test();
     this.t2 = new Test2();
+    this.dbPrivate = new TestDbFieldPrivate();
   });
 
   it('allows the injected functions to be overridden without breaking the internal dependencies', function () {
@@ -66,15 +93,8 @@ describe('@Json', function () {
     expect(result.aThirdProperty).toBe(777);
   });
 
-  it('properties are marshalled when not decorated with @Json properties', function () {
-    expect(this.t2.toJson().aProperty).toBe('test');
-    expect(this.t2.toJson().anotherProperty).toBeUndefined();
-    expect(this.t2.toJson().aThirdProperty).toBe(777);
-    expect(this.t2.toJson().aFunction).toBeUndefined();
-  });
-
   describe('toJson', function () {
-    it('is injected into the prototype of the model by default', function () {
+    it('function is injected into the prototype of the model by default', function () {
       expect(this.t.toJson).toBeDefined();
     });
 
@@ -88,10 +108,42 @@ describe('@Json', function () {
       expect(this.t.anotherProperty).toBeUndefined();
       expect(this.t.aThirdProperty).toBe(777);
     });
+
+    it('properties are marshalled when not decorated with @Json properties', function () {
+      expect(this.t2.toJson().aProperty).toBe('test');
+      expect(this.t2.toJson().anotherProperty).toBeUndefined();
+      expect(this.t2.toJson().aThirdProperty).toBe(777);
+      expect(this.t2.toJson().aFunction).toBeUndefined();
+    });
+
+    describe('obeys @Db:{private:true} by not including that field when marshalling object to json', function () {
+      it('does not change expected toJson behavior', function () {
+        expect(this.dbPrivate.toJson().aProperty).toBe('test');
+        expect(this.dbPrivate.toJson().anotherProperty).toBeUndefined();
+        expect(this.dbPrivate.toJson().aThirdProperty).toBe(777);
+        expect(this.dbPrivate.toJson().aFunction).toBeUndefined();
+      });
+
+      it('when a private @Db field is not decorated with @Json', function () {
+        expect(this.dbPrivate.toJson().hasDbButNotJson).toBeUndefined();
+      });
+
+      it('when a private @Db fiels is also decordated with @Json', function () {
+        expect(this.dbPrivate.toJson().hasDbAndJson).toBeUndefined();
+      });
+
+      it('works as expected when there is an non private @Db decorator and @Json', function () {
+        expect(this.dbPrivate.toJson().marshallsWithJsonAndDb).toBeTruthy();
+      });
+
+      it('works as expected when there is an non private @Db decorator and no @Json', function () {
+        expect(this.dbPrivate.toJson().marshallsWithDb).toBeTruthy();
+      });
+    });
   });
 
   describe('toJsonString', function () {
-    it('is injected into the prototype of the model by default', function () {
+    it('function is injected into the prototype of the model by default', function () {
       expect(this.t.toJsonString())
         .toBeDefined();
     });
@@ -109,7 +161,7 @@ describe('@Json', function () {
   });
 
   describe('fromJson', function () {
-    it('is injected into the model as a static member by default', function () {
+    it('from is injected into the model as a static member by default', function () {
       expect(Test.fromJson).toBeDefined()
     });
 
@@ -224,7 +276,7 @@ describe('@Json', function () {
   });
 
   describe('fromJsonArray', function () {
-    it('is injected into the model as a static member by default', function () {
+    it('from is injected into the model as a static member by default', function () {
       expect(Test.fromJsonArray)
         .toBeDefined()
     });

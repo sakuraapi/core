@@ -11,6 +11,7 @@ export const dbSymbols = {
 
 export interface DbOptions {
   field?: string;
+  private?: boolean;
 }
 
 export function Db(options?: DbOptions) {
