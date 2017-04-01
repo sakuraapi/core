@@ -1,7 +1,7 @@
+import * as path from 'path';
 import {SakuraApi} from '../../core/sakura-api';
-import * as path   from 'path';
 
-beforeEach(function () {
+beforeEach(function() {
   this.baseUri = SakuraApi.instance.baseUri;
   this.sapi = SakuraApi.instance;
 

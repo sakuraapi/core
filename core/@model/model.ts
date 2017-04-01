@@ -2,9 +2,16 @@ import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods
 } from '../helpers/defaultMethodHelpers';
+import {SakuraApi} from '../sakura-api';
+
+import {
+  dbSymbols,
+  IDbOptions
+} from './db';
+import {SapiMissingIdErr} from './errors';
 import {jsonSymbols} from './json';
 import {privateSymbols} from './private';
-import {SakuraApi} from '../sakura-api';
+
 import {
   Collection,
   CollectionInsertOneOptions,
@@ -17,13 +24,9 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
-import {SapiMissingIdErr} from './errors';
-import {
-  DbOptions,
-  dbSymbols
-} from './db';
 
-const debug = require('debug')('sapi:Model');
+import debugPackage = require('debug');
+const debug = debugPackage('sapi:Model');
 
 /**
  * Interface used by classes that are decorated with `@Model` ([[Model]]) to prevent
@@ -31,17 +34,19 @@ const debug = require('debug')('sapi:Model');
  * by `@Model()`.
  */
 export interface IModel {
+  /* tslint:disable:variable-name */
   create?: () => Promise<InsertOneWriteOpResult>;
   delete?: (any) => Promise<DeleteWriteOpResultObject>;
   save?: (any) => Promise<UpdateWriteOpResult>;
   toJson?: (any) => any;
   toJsonString?: (any) => string;
+  /* tslint:enable */
 }
 
 /**
  * Interface defining the valid properties for the `@Model({})` decorator ([[Model]]).
  */
-export interface ModelOptions {
+export interface IModelOptions {
   /**
    * The database to which this @Model object is bound
    */
@@ -62,7 +67,7 @@ export interface ModelOptions {
      * If true, fields without an Explicit @Db will still be written to the Db and used to rehydrate objects `fromDb`.
      */
     promiscuous?: boolean;
-  }
+  };
   /**
    * Prevents the injection of CRUD functions (see [[Model]] function).
    */
@@ -73,8 +78,8 @@ export interface ModelOptions {
  * A collection of symbols used internally by [[Model]].
  */
 export const modelSymbols = {
-  dbName: Symbol('dbName'),
   dbCollection: Symbol('dbCollection'),
+  dbName: Symbol('dbName'),
   fromDb: Symbol('fromDb'),
   fromDbArray: Symbol('fromDbArray'),
   fromJson: Symbol('fromJson'),
@@ -116,11 +121,12 @@ export const modelSymbols = {
  *
  * #### Utility Functions
  * * *static*:
- *   * **`fromJson<T>(json: any, ...constructorArgs: any[]): T`** - takes a json object and returns an instantiated object
- * of the proper type. It also takes a variadic array of parameters that are passed on to the object's constructor.
- *   * *static*: **`fromJsonArray<T>(json: any, ...constructorArgs: any[]): T[]`** - takes an array of json objects and returns an
- * array of instantiated objects of the property type. It also takes a variadic array of parameters that are passed onto the
- * object's constructor.
+ *   * **`fromJson<T>(json: any, ...constructorArgs: any[]): T`** - takes a json object and returns an instantiated
+ *   object of the proper type. It also takes a variadic array of parameters that are passed on to the object's
+ *   constructor.
+ *   * *static*: **`fromJsonArray<T>(json: any, ...constructorArgs: any[]): T[]`** - takes an array of json objects and
+ *   returns an array of instantiated objects of the property type. It also takes a variadic array of parameters that
+ *   are passed onto the object's constructor.
  * * *instance*:
  *   * **`toJson()`** - returns the current object as json, respecting the various decorators like [[Private]]
  * and [[Json]].
@@ -130,10 +136,10 @@ export const modelSymbols = {
  * mapped for the integrators convenience. If the integrator wants to actually change the underlying behavior that
  * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
  */
-export function Model(modelOptions?: ModelOptions): any {
-  modelOptions = modelOptions || <ModelOptions>{};
+export function Model(modelOptions?: IModelOptions): any {
+  modelOptions = modelOptions || {} as IModelOptions;
 
-  return function (target: any) {
+  return (target: any) => {
     // add default static methods
     addDefaultStaticMethods(target, 'delete', crudDeleteStatic, modelOptions);
     addDefaultStaticMethods(target, 'deleteById', crudDeleteByIdStatic, modelOptions);
@@ -164,9 +170,9 @@ export function Model(modelOptions?: ModelOptions): any {
     target[modelSymbols.toDb] = toDb;
 
     // decorate the constructor
-    let newConstructor = new Proxy(target, {
-      construct: function (t, args, nt) {
-        let c = Reflect.construct(t, args, nt);
+    const newConstructor = new Proxy(target, {
+      construct: (t, args, nt) => {
+        const c = Reflect.construct(t, args, nt);
 
         // isSakuraApiModel
         Reflect.defineProperty(c, modelSymbols.isSakuraApiModel, {
@@ -177,9 +183,9 @@ export function Model(modelOptions?: ModelOptions): any {
         // map _id to id
         c._id = null;
         Reflect.defineProperty(c, 'id', {
+          enumerable: false,
           get: () => c._id,
-          set: (v) => c._id = v,
-          enumerable: false
+          set: (v) => c._id = v
         });
 
         // configure Db
@@ -218,14 +224,14 @@ export function Model(modelOptions?: ModelOptions): any {
     /////
     function crudCreate(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
       return new Promise((resolve, reject) => {
-        let col = target.getCollection();
+        const col = target.getCollection();
         debug(`.crudCreate called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, this);
 
         if (!col) {
           throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
         }
 
-        let dbObj = target.toDb.call(this);
+        const dbObj = target.toDb.call(this);
 
         col
           .insertOne(dbObj, options)
@@ -239,7 +245,7 @@ export function Model(modelOptions?: ModelOptions): any {
 
     function crudSave(set?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
 
-      let col = target.getCollection();
+      const col = target.getCollection();
       debug(`.crudSave called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, set);
 
       if (!col) {
@@ -250,15 +256,15 @@ export function Model(modelOptions?: ModelOptions): any {
         return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
       }
 
-      let changeSet = set || this;
-      let dbObj = target.toDb.call(this, changeSet);
+      const changeSet = set || this;
+      const dbObj = target.toDb.call(this, changeSet);
 
       return new Promise((resolve, reject) => {
         col
           .updateOne({_id: this.id}, {$set: dbObj}, options)
           .then((result) => {
             if (set) {
-              for (let prop of Object.getOwnPropertyNames(set)) {
+              for (const prop of Object.getOwnPropertyNames(set)) {
                 this[prop] = set[prop];
               }
             }
@@ -278,7 +284,7 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function crudDeleteByIdStatic(id: ObjectID, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
-      let col = target.getCollection();
+      const col = target.getCollection();
       debug(`.crudDeleteById called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
 
       if (!col) {
@@ -293,7 +299,7 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function crudDeleteStatic(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
-      let col = target.getCollection();
+      const col = target.getCollection();
       debug(`.crudDelete called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
 
       if (!col) {
@@ -305,15 +311,15 @@ export function Model(modelOptions?: ModelOptions): any {
 
     function crudGetStatic<T>(filter: any, project?: any): Promise<T> {
       return new Promise((resolve, reject) => {
-        let cursor = target.getCursor(filter, project);
+        const cursor = target.getCursor(filter, project);
         debug(`.crudGetStatic called, dbName '${target[modelSymbols.dbName]}'`);
 
         cursor
           .toArray()
           .then((results) => {
-            let objs = [];
-            for (let result of results) {
-              let obj = target.fromDb(result);
+            const objs = [];
+            for (const result of results) {
+              const obj = target.fromDb(result);
               if (obj) {
                 objs.push(obj);
               }
@@ -326,14 +332,14 @@ export function Model(modelOptions?: ModelOptions): any {
 
     function crudGetOneStatic<T>(filter: any, project?: any): Promise<T> {
       return new Promise((resolve, reject) => {
-        let cursor = target.getCursor(filter, project);
+        const cursor = target.getCursor(filter, project);
         debug(`.crudGetOneStatic called, dbName '${target[modelSymbols.dbName]}'`);
 
         cursor
           .limit(1)
           .next()
           .then((result) => {
-            let obj = target.fromDb(result);
+            const obj = target.fromDb(result);
             resolve(obj);
           })
           .catch(reject);
@@ -341,14 +347,14 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function crudGetByIdStatic<T>(id: string, project?: any): Promise<T> {
-      let cursor = target.getCursorById(id, project);
+      const cursor = target.getCursorById(id, project);
       debug(`.crudGetByIdStatic called, dbName '${target[modelSymbols.dbName]}'`);
 
       return new Promise((resolve, reject) => {
         cursor
           .next()
           .then((result) => {
-            let obj = target.fromDb(result);
+            const obj = target.fromDb(result);
             resolve(obj);
           })
           .catch(reject);
@@ -356,7 +362,7 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function crudGetCursorStatic(filter: any, project?: any): Cursor<any> {
-      let col = target.getCollection();
+      const col = target.getCollection();
       debug(`.crudGetCursorStatic called, dbName '${target[modelSymbols.dbName]}', found?: ${!!col}`);
 
       if (!col) {
@@ -379,17 +385,17 @@ export function Model(modelOptions?: ModelOptions): any {
         return null;
       }
 
-      let obj = new newConstructor(...constructorArgs);
+      const obj = new newConstructor(...constructorArgs);
 
-      let dbOptionsByFieldName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, obj);
+      const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, obj);
 
-      for (let fieldName of Object.getOwnPropertyNames(json)) {
-        let dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
+      for (const fieldName of Object.getOwnPropertyNames(json)) {
+        const dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
 
         if (dbFieldOptions) {
           obj[dbFieldOptions[dbSymbols.optionsPropertyName]] = json[fieldName];
         } else {
-          if ((modelOptions.dbConfig || <any>{}).promiscuous) {
+          if ((modelOptions.dbConfig || {} as any).promiscuous) {
             obj[fieldName] = json[fieldName];
           }
         }
@@ -404,9 +410,9 @@ export function Model(modelOptions?: ModelOptions): any {
         return [];
       }
 
-      let results = [];
-      for (let json of jsons) {
-        let obj = target.fromDb(json, constructorArgs);
+      const results = [];
+      for (const json of jsons) {
+        const obj = target.fromDb(json, constructorArgs);
         if (obj) {
           results.push(obj);
         }
@@ -422,12 +428,13 @@ export function Model(modelOptions?: ModelOptions): any {
         return null;
       }
 
-      let obj = new newConstructor(...constructorArgs);
+      const obj = new newConstructor(...constructorArgs);
 
-      let propertyNamesByJsonFieldName: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, obj);
+      const propertyNamesByJsonFieldName: Map<string, string>
+        = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, obj);
 
-      for (let field of Object.getOwnPropertyNames(json)) {
-        let prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
+      for (const field of Object.getOwnPropertyNames(json)) {
+        const prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
 
         if (prop) {
           obj[prop] = json[field]; // an @Json alias field
@@ -442,10 +449,10 @@ export function Model(modelOptions?: ModelOptions): any {
     function fromJsonArray<T>(json: any, ...constructorArgs: any[]): T[] {
       debug(`.fromJsonArray called, target '${target}'`);
 
-      let result = [];
+      const result = [];
 
       if (Array.isArray(json)) {
-        for (let item of json) {
+        for (const item of json) {
           result.push(target[modelSymbols.fromJson](item, ...constructorArgs));
         }
       }
@@ -454,21 +461,22 @@ export function Model(modelOptions?: ModelOptions): any {
     }
 
     function getCollection(): Collection {
-      let db = target.getDb();
+      const db = target.getDb();
 
       if (!db) {
         return null;
       }
 
-      let col = db.collection(target[modelSymbols.dbCollection]);
+      const col = db.collection(target[modelSymbols.dbCollection]);
 
-      debug(`.getCollection called, dbName: '${target[modelSymbols.dbName]}, collection: ${target[modelSymbols.dbCollection]}', found?: ${!!col}`);
+      debug(`.getCollection called, dbName: '${target[modelSymbols.dbName]},` +
+        ` collection: ${target[modelSymbols.dbCollection]}', found?: ${!!col}`);
 
       return col;
     }
 
     function getDb(): Db {
-      let db = SakuraApi.instance.dbConnections.getDb(target[modelSymbols.dbName]);
+      const db = SakuraApi.instance.dbConnections.getDb(target[modelSymbols.dbName]);
 
       debug(`.getDb called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);
 
@@ -482,15 +490,19 @@ export function Model(modelOptions?: ModelOptions): any {
     function toJson() {
       debug(`.toJson called, target '${target}'`);
 
-      let jsonFieldNamesByProperty: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
+      let jsonFieldNamesByProperty: Map<string, string>
+        = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
+
       jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
 
-      let privateFields: Map<string, string> = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
+      const privateFields: Map<string, string>
+        = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
 
-      let dbOptionByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
+      const dbOptionByPropertyName: Map<string, IDbOptions>
+        = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
 
-      let obj = {};
-      for (let prop of Object.getOwnPropertyNames(this)) {
+      const obj = {};
+      for (const prop of Object.getOwnPropertyNames(this)) {
         if (typeof this[prop] === 'function') {
           continue;
         }
@@ -501,7 +513,7 @@ export function Model(modelOptions?: ModelOptions): any {
           }
         }
 
-        let override = (privateFields) ? privateFields.get(prop) : null;
+        const override = (privateFields) ? privateFields.get(prop) : null;
 
         // do the function test for private otherwise do the boolean test
         if (override && typeof this[override] === 'function' && !this[override]()) {
@@ -524,20 +536,21 @@ export function Model(modelOptions?: ModelOptions): any {
 
       changeSet = changeSet || this;
 
-      let dbOptionByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
+      const dbOptionByPropertyName: Map<string, IDbOptions>
+        = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
 
-      let dbObj = {
+      const dbObj = {
         _id: this._id
       };
 
-      for (let propertyName of Object.getOwnPropertyNames(changeSet)) {
-        let propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
+      for (const propertyName of Object.getOwnPropertyNames(changeSet)) {
+        const propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
 
         if (propertyOptions && propertyOptions.field) {
           dbObj[propertyOptions.field] = changeSet[propertyName];
         } else if (propertyOptions) {
           dbObj[propertyName] = changeSet[propertyName];
-        } else if ((modelOptions.dbConfig || <any>{}).promiscuous) {
+        } else if ((modelOptions.dbConfig || {} as any).promiscuous) {
           if (!changeSet.propertyIsEnumerable(propertyName)) {
             continue;
           }
@@ -549,6 +562,7 @@ export function Model(modelOptions?: ModelOptions): any {
     }
   };
 
+  // tslint:disable-next-line: variable-name
   function toJsonString(replacer?: (any) => any, space?: string | number) {
     return JSON.stringify(this[modelSymbols.toJson](), replacer, space);
   }

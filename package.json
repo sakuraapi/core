@@ -15,12 +15,14 @@
     "doc:generate": "rm -rf docs && typedoc --options typedoc.json index.ts",
     "docker:compose-test": "docker-compose up -d --remove-orphans",
     "jasmine": "jasmine",
+    "lint": "npm run build && npm run tslint -- -e \"node_modules/**/**/*.ts\"  -e \"**/**/*.d.ts\" -e \"**/**/*.spec.ts\" -t stylish **/**/*.ts ",
     "prepublish": "npm test",
     "test": "npm run docker:compose-test && npm run build && npm run jasmine && docker-compose down",
     "test:debug": "DEBUG=sapi:*,-sapi:*:verbose npm test",
     "test:verbose": "DEBUG=sapi:* npm test",
     "test:vverbose": "DEBUG=* npm test",
     "tsc": "tsc",
+    "tslint": "tslint",
     "typedoc": "typedoc"
   },
   "repository": {
@@ -55,6 +57,7 @@
     "jasmine-spec-reporter": "^3.2.0",
     "nodemon": "^1.11.0",
     "supertest": "^3.0.0",
+    "tslint": "^5.0.0",
     "typedoc": "^0.5.7",
     "typescript": "^2.2.1"
   },

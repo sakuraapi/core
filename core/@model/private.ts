@@ -33,18 +33,20 @@ export const privateSymbols = {
  * </pre>
  */
 export function Private(override?: string | boolean) {
-  override = <any>override || defaultOverride;
+  override = override as any || defaultOverride;
 
-  return function (target: any, key: string) {
+  return (target: any, key: string) => {
 
-    let metaPropertyFieldMap: Map<string, any> = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, target);
+    let metaPropertyFieldMap: Map<string, any>
+      = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, target);
+
     if (!metaPropertyFieldMap) {
       metaPropertyFieldMap = new Map<string, any>();
       Reflect.defineMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, metaPropertyFieldMap, target);
     }
 
     metaPropertyFieldMap.set(key, override);
-  }
+  };
 }
 
 /**

@@ -4,35 +4,37 @@
  * The symbols used by Reflect to store `@Db()` metadata for use by `@Module`.
  */
 export const dbSymbols = {
-  sakuraApiDbByPropertyName: Symbol('sakuraApiDbByPropertyName'),
+  optionsPropertyName: Symbol('sakuraApiDbOptionsPropertyName'),
   sakuraApiDbByFieldName: Symbol('sakuraApiDbByFieldName'),
-  optionsPropertyName: Symbol('sakuraApiDbOptionsPropertyName')
+  sakuraApiDbByPropertyName: Symbol('sakuraApiDbByPropertyName')
 };
 
-export interface DbOptions {
+export interface IDbOptions {
   field?: string;
   private?: boolean;
 }
 
-export function Db(options?: DbOptions) {
+export function Db(options?: IDbOptions) {
   options = options || {};
 
-  return function (target: any, key: string) {
+  return (target: any, key: string) => {
     options[dbSymbols.optionsPropertyName] = key;
 
-    let metaMapByPropertyName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, target);
+    let metaMapByPropertyName: Map<string, IDbOptions>
+      = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, target);
+
     if (!metaMapByPropertyName) {
-      metaMapByPropertyName = new Map<string, DbOptions>();
+      metaMapByPropertyName = new Map<string, IDbOptions>();
       Reflect.defineMetadata(dbSymbols.sakuraApiDbByPropertyName, metaMapByPropertyName, target);
     }
 
-    let metaMapByFieldName: Map<string, DbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, target);
+    let metaMapByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, target);
     if (!metaMapByFieldName) {
-      metaMapByFieldName = new Map<string, DbOptions>();
+      metaMapByFieldName = new Map<string, IDbOptions>();
       Reflect.defineMetadata(dbSymbols.sakuraApiDbByFieldName, metaMapByFieldName, target);
     }
 
     metaMapByPropertyName.set(key, options);
     metaMapByFieldName.set(options.field || key, options);
-  }
+  };
 }

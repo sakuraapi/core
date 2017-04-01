@@ -4,8 +4,8 @@
  * The symbols used by Reflect to store `@Json()` metadata for use by `@Module`.
  */
 export const jsonSymbols = {
-  sakuraApiDbPropertyToFieldNames: Symbol('sakuraApiJsonPropertyToFieldNames'),
-  sakuraApiDbFieldToPropertyNames: Symbol('sakuraApiJsonFieldToPropertyNames')
+  sakuraApiDbFieldToPropertyNames: Symbol('sakuraApiJsonFieldToPropertyNames'),
+  sakuraApiDbPropertyToFieldNames: Symbol('sakuraApiJsonPropertyToFieldNames')
 };
 
 /**
@@ -40,20 +40,24 @@ export const jsonSymbols = {
  */
 export function Json(fieldName: string) {
 
-  return function (target: any, key: string) {
+  return (target: any, key: string) => {
 
-    let metaPropertyFieldMap: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, target);
+    let metaPropertyFieldMap: Map<string, string>
+      = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, target);
+
     if (!metaPropertyFieldMap) {
       metaPropertyFieldMap = new Map<string, string>();
       Reflect.defineMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, metaPropertyFieldMap, target);
     }
     metaPropertyFieldMap.set(key, fieldName);
 
-    let metaFieldPropertyMap: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, target);
+    let metaFieldPropertyMap: Map<string, string>
+      = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, target);
+
     if (!metaFieldPropertyMap) {
       metaFieldPropertyMap = new Map<string, string>();
       Reflect.defineMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, metaFieldPropertyMap, target);
     }
     metaFieldPropertyMap.set(fieldName, key);
-  }
+  };
 }

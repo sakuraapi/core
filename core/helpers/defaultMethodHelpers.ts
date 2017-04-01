@@ -1,3 +1,5 @@
+/* tslint:disable:variable-name */
+
 /**
  * This is an internal helper function used by the SakuraApi framework. It's behavior is not part of the
  * official API and as a result, that behavior may break without notice.
@@ -27,3 +29,4 @@ export function addDefaultStaticMethods(target: any, functionName: string, fn: (
     target[functionName] = fn;
   }
 }
+/* tslint:enable:variable-name */
