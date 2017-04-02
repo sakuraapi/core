@@ -2,8 +2,7 @@ import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
 import * as _ from 'lodash';
 import * as fs from 'fs';
 
-const debug = require('debug')('sapi:SakuraApiConfig');
-const debugVerbose = require('debug')('sapi:SakuraApiConfig:verbose');
+import debug = require('debug');
 
 /**
  * Class representing a configuration composed of cascading configuration files.
@@ -12,11 +11,17 @@ export class SakuraApiConfig {
 
   config: any;
 
+  private static debug = {
+    normal: debug('sapi:SakuraApiConfig'),
+    verbose: debug('sapi:SakuraApiConfig:verbose')
+  };
+  private debug = SakuraApiConfig.debug;
+
   /**
    * Instantiate a SakuraApiConfig.
    */
   constructor() {
-    debug('.constructor');
+    this.debug.normal('.constructor');
   }
 
   /**
@@ -45,7 +50,7 @@ export class SakuraApiConfig {
    */
   load(path?: string): any {
     path = path || process.env.SAKURA_API_CONFIG || 'config/environment.json';
-    debug(`.load path: '${path}'`);
+    this.debug.normal(`.load path: '${path}'`);
 
     let config = {};
     let baseConfig = {};
@@ -97,7 +102,7 @@ export class SakuraApiConfig {
     _.merge(config, baseConfig, baseTsConfig, envConfig, envTsConfig, process.env);
     this.config = config;
 
-    debugVerbose('.load %O', config);
+    this.debug.verbose('.load %O', config);
     return config;
 
     //////////
@@ -113,26 +118,26 @@ export class SakuraApiConfig {
     function handleLoadError(err: Error, path: string, noDefault: boolean) {
       if (err['code'] === 'ENOENT') {
         // NOOP: the config file is empty, just default to {}
-        debug(`.load config file empty, defaulting to {} for path: '${path}'`);
+        SakuraApiConfig.debug.normal(`.load config file empty, defaulting to {} for path: '${path}'`);
         return;
       } else if (err.message.startsWith('Cannot find module')) {
         // NOOP: a ts config file wasn't found
-        debug(`.load config file wasn't found, defaulting to {} for path: '${path}'`);
+        SakuraApiConfig.debug.normal(`.load config file wasn't found, defaulting to {} for path: '${path}'`);
         return;
       } else if (err.message === 'Unexpected end of JSON input') {
         let e = new Error(err.message);
         e['code'] = 'INVALID_JSON_EMPTY';
         e['path'] = path;
-        debug(`.load path: '${path}', error:`, err);
+        SakuraApiConfig.debug.normal(`.load path: '${path}', error:`, err);
         throw e;
       } else if (err.message.startsWith('Unexpected token')) {
         let e = new Error(err.message);
         e['code'] = 'INVALID_JSON_INVALID';
         e['path'] = path;
-        debug(`.load path: '${path}', error:`, err);
+        SakuraApiConfig.debug.normal(`.load path: '${path}', error:`, err);
         throw e;
       } else {
-        debug(`.load path: '${path}', error:`, err);
+        SakuraApiConfig.debug.normal(`.load path: '${path}', error:`, err);
         throw err;
       }
     }
@@ -168,7 +173,7 @@ export class SakuraApiConfig {
    * Same as the instance method, but static, and it won't try to use the last loaded config since that
    * requires an instance.
    */
-  static dataSources(config: {dbConnections: any[]}): SakuraMongoDbConnection {
+  static dataSources(config: { dbConnections: any[] }): SakuraMongoDbConnection {
     if (!config || !config.dbConnections) {
       return null;
     }

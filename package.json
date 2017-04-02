@@ -12,8 +12,10 @@
   ],
   "scripts": {
     "build": "tsc",
-    "doc:generate": "rm -rf docs && typedoc --options typedoc.json index.ts",
+    "doc:generate": "rm -rf docs && typedoc --options typedoc.json **/**",
+    "doc:serve": "nodemon --config nodemon.typedoc.json --exec 'npm run doc:generate && npm run http-server docs/ -- -a localhost -c-1'",
     "docker:compose-test": "docker-compose up -d --remove-orphans",
+    "http-server": "http-server",
     "jasmine": "jasmine",
     "lint": "npm run build && npm run lint:code && npm run lint:tests",
     "lint:code": "npm run tslint -- -e \"node_modules/**/**/*.ts\"  -e \"**/**/*.d.ts\" -e \"**/**/*.spec.ts\" -t stylish **/**/*.ts",
@@ -47,30 +49,31 @@
     "node": ">=7.0.0"
   },
   "devDependencies": {
-    "@types/colors": "^1.1.1",
+    "@types/colors": "^1.1.2",
     "@types/express": "^4.0.35",
-    "@types/jasmine": "^2.5.43",
-    "@types/lodash": "^4.14.53",
+    "@types/jasmine": "^2.5.41",
+    "@types/lodash": "^4.14.61",
     "@types/mongodb": "^2.1.41",
-    "@types/node": "^7.0.5",
+    "@types/node": "^7.0.12",
     "@types/supertest": "^2.0.0",
-    "install": "^0.8.7",
+    "http-server": "^0.9.0",
+    "install": "^0.8.8",
     "jasmine": "^2.5.3",
     "jasmine-spec-reporter": "^3.2.0",
     "nodemon": "^1.11.0",
     "supertest": "^3.0.0",
     "tslint": "^5.0.0",
-    "typedoc": "^0.5.7",
-    "typescript": "^2.2.1"
+    "typedoc": "^0.5.9",
+    "typescript": "^2.2.2"
   },
   "dependencies": {
     "bson-ext": "^1.0.5",
     "co": "^4.6.0",
     "colors": "^1.1.2",
-    "debug": "^2.6.1",
-    "express": "^4.14.1",
+    "debug": "^2.6.3",
+    "express": "^4.15.2",
     "lodash": "^4.17.4",
-    "mongodb": "^2.2.24",
+    "mongodb": "^2.2.25",
     "reflect-metadata": "^0.1.10"
   }
 }
