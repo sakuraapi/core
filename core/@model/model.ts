@@ -84,6 +84,8 @@ export const modelSymbols = {
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
+  modelOptions: Symbol('modelOptions'),
+  target: Symbol('target'),
   toDb: Symbol('toDb'),
   toJson: Symbol('toJson'),
   toJsonString: Symbol('toJsonString')
@@ -136,42 +138,21 @@ export const modelSymbols = {
  * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
  */
 export function Model(modelOptions?: IModelOptions): any {
+
+  //--------------------------------------------------------------------------------------------------------------------
+  // Developer notes:
+  //
+  // `target` represents the constructor function that is being reflected upon by the `@Model` decorator. It is
+  // decorated via a Proxy and becomes `newConstrutor` <- this is the decorated constructor function resulting
+  // from the `@Model` decorator.
+  //
+  // If you need to attach an "instance" property, you use `target.prototype` like you would with any other
+  // constructor function.
+  //====================================================================================================================
+
   modelOptions = modelOptions || {} as IModelOptions;
 
   return (target: any) => {
-
-    target.debug = {
-      normal: debug('sapi:Model')
-    };
-
-    // add default static methods
-    addDefaultStaticMethods(target, 'delete', crudDeleteStatic, modelOptions);
-    addDefaultStaticMethods(target, 'deleteById', crudDeleteByIdStatic, modelOptions);
-    addDefaultStaticMethods(target, 'get', crudGetStatic, modelOptions);
-    addDefaultStaticMethods(target, 'getOne', crudGetOneStatic, modelOptions);
-    addDefaultStaticMethods(target, 'getById', crudGetByIdStatic, modelOptions);
-    addDefaultStaticMethods(target, 'getCursor', crudGetCursorStatic, modelOptions);
-    addDefaultStaticMethods(target, 'getCursorById', crudGetCursorByIdStatic, modelOptions);
-    addDefaultStaticMethods(target, 'getCollection', getCollection, modelOptions);
-    addDefaultStaticMethods(target, 'getDb', getDb, modelOptions);
-
-    // Various internal methods are exposed to the integrator,
-    // but allow the integrator to replace this functionality without
-    // breaking the internal functionality
-    target.fromDb = fromDb;
-    target[modelSymbols.fromDb] = fromDb;
-
-    target.fromDbArray = fromDbArray;
-    target[modelSymbols.fromDbArray] = fromDbArray;
-
-    target.fromJson = fromJson;
-    target[modelSymbols.fromJson] = fromJson;
-
-    target.fromJsonArray = fromJsonArray;
-    target[modelSymbols.fromJsonArray] = fromJsonArray;
-
-    target.toDb = toDb;
-    target[modelSymbols.toDb] = toDb;
 
     // decorate the constructor
     const newConstructor = new Proxy(target, {
@@ -209,13 +190,51 @@ export function Model(modelOptions?: IModelOptions): any {
       }
     });
 
+    newConstructor.debug = {
+      normal: debug('sapi:Model')
+    };
+    newConstructor.prototype.debug = newConstructor.debug;
+
+    newConstructor[modelSymbols.modelOptions] = modelOptions;
+
+    // add default static methods
+    addDefaultStaticMethods(newConstructor, 'removeAll', removeAll, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'removeById', removeById, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'get', get, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'getOne', getOne, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'getById', getById, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'getCursor', getCursor, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'getCursorById', getCursorById, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'getCollection', getCollection, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'getDb', getDb, modelOptions);
+
+    // Various internal methods are exposed to the integrator,
+    // but allow the integrator to replace this functionality without
+    // breaking the internal functionality
+    newConstructor.fromDb = fromDb;
+    newConstructor[modelSymbols.fromDb] = fromDb;
+
+    newConstructor.fromDbArray = fromDbArray;
+    newConstructor[modelSymbols.fromDbArray] = fromDbArray;
+
+    newConstructor.fromJson = fromJson;
+    newConstructor[modelSymbols.fromJson] = fromJson;
+
+    newConstructor.fromJsonArray = fromJsonArray;
+    newConstructor[modelSymbols.fromJsonArray] = fromJsonArray;
+
+    newConstructor.toDb = toDb;
+    newConstructor[modelSymbols.toDb] = toDb;
+
+    // make the constructor function available to instance members
+    newConstructor.prototype[modelSymbols.target] = target;
+
     // Inject default instance methods for CRUD if not already defined by integrator
-    addDefaultInstanceMethods(newConstructor, 'create', crudCreate, modelOptions);
-    addDefaultInstanceMethods(newConstructor, 'save', crudSave, modelOptions);
-    addDefaultInstanceMethods(newConstructor, 'delete', crudDelete, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'create', create, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'save', save, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'remove', remove, modelOptions);
     addDefaultInstanceMethods(newConstructor, 'getCollection', getCollection, modelOptions);
     addDefaultInstanceMethods(newConstructor, 'getDb', getDb, modelOptions);
-    addDefaultInstanceMethods(newConstructor, 'getNewId', getNewId, modelOptions);
 
     newConstructor.prototype.toJson = toJson;
     newConstructor.prototype[modelSymbols.toJson] = toJson;
@@ -226,252 +245,6 @@ export function Model(modelOptions?: IModelOptions): any {
     return newConstructor;
 
     /////
-    function crudCreate(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
-      return new Promise((resolve, reject) => {
-        const col = target.getCollection();
-
-        target
-          .debug
-          .normal(`.crudCreate called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, this);
-
-        if (!col) {
-          throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
-        }
-
-        const dbObj = target.toDb.call(this);
-
-        col
-          .insertOne(dbObj, options)
-          .then((result) => {
-            this.id = result.insertedId;
-            return resolve(result);
-          })
-          .catch(reject);
-      });
-    }
-
-    function crudSave(set?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
-
-      const col = target.getCollection();
-      target.debug.normal(`.crudSave called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, set);
-
-      if (!col) {
-        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
-      }
-
-      if (!this.id) {
-        return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
-      }
-
-      const changeSet = set || this;
-      const dbObj = target.toDb.call(this, changeSet);
-
-      return new Promise((resolve, reject) => {
-        col
-          .updateOne({_id: this.id}, {$set: dbObj}, options)
-          .then((result) => {
-            if (set) {
-              for (const prop of Object.getOwnPropertyNames(set)) {
-                this[prop] = set[prop];
-              }
-            }
-            return resolve(result);
-          })
-          .catch(reject);
-      });
-    }
-
-    function crudDelete(filter: any | null, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
-      if (!filter) {
-        target.debug.normal(`.crudDelete called without filter, calling .deleteById, id: %O`, this.id);
-        return target.deleteById(this.id, options);
-      }
-
-      return target.delete(filter, options);
-    }
-
-    function crudDeleteByIdStatic(id: ObjectID, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
-      const col = target.getCollection();
-
-      target
-        .debug
-        .normal(`.crudDeleteById called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
-
-      if (!col) {
-        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
-      }
-
-      if (!id) {
-        return Promise.reject(new SapiMissingIdErr('Call to delete without Id, cannot proceed', target));
-      }
-
-      return col.deleteOne({_id: id}, options);
-    }
-
-    function crudDeleteStatic(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
-      const col = target.getCollection();
-
-      target
-        .debug
-        .normal(`.crudDelete called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
-
-      if (!col) {
-        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
-      }
-
-      return col.deleteMany(filter, options);
-    }
-
-    function crudGetStatic<T>(filter: any, project?: any): Promise<T> {
-      return new Promise((resolve, reject) => {
-        const cursor = target.getCursor(filter, project);
-        target.debug.normal(`.crudGetStatic called, dbName '${target[modelSymbols.dbName]}'`);
-
-        cursor
-          .toArray()
-          .then((results) => {
-            const objs = [];
-            for (const result of results) {
-              const obj = target.fromDb(result);
-              if (obj) {
-                objs.push(obj);
-              }
-            }
-            resolve(objs);
-          })
-          .catch(reject);
-      });
-    }
-
-    function crudGetOneStatic<T>(filter: any, project?: any): Promise<T> {
-      return new Promise((resolve, reject) => {
-        const cursor = target.getCursor(filter, project);
-        target.debug.normal(`.crudGetOneStatic called, dbName '${target[modelSymbols.dbName]}'`);
-
-        cursor
-          .limit(1)
-          .next()
-          .then((result) => {
-            const obj = target.fromDb(result);
-            resolve(obj);
-          })
-          .catch(reject);
-      });
-    }
-
-    function crudGetByIdStatic<T>(id: string, project?: any): Promise<T> {
-      const cursor = target.getCursorById(id, project);
-      target.debug.normal(`.crudGetByIdStatic called, dbName '${target[modelSymbols.dbName]}'`);
-
-      return new Promise((resolve, reject) => {
-        cursor
-          .next()
-          .then((result) => {
-            const obj = target.fromDb(result);
-            resolve(obj);
-          })
-          .catch(reject);
-      });
-    }
-
-    function crudGetCursorStatic(filter: any, project?: any): Cursor<any> {
-      const col = target.getCollection();
-      target.debug.normal(`.crudGetCursorStatic called, dbName '${target[modelSymbols.dbName]}', found?: ${!!col}`);
-
-      if (!col) {
-        throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
-      }
-
-      return (project)
-        ? col.find(filter).project(project)
-        : col.find(filter);
-    }
-
-    function crudGetCursorByIdStatic(id, project?: any) {
-      target.debug.normal(`.crudGetCursorByIdStatic called, dbName '${target[modelSymbols.dbName]}'`);
-      return target.getCursor({_id: id}, project).limit(1);
-    }
-
-    function fromDb<T>(json: any, ...constructorArgs: any[]): T {
-      target.debug.normal(`.fromDb called, target '${target}'`);
-      if (!json || typeof json !== 'object') {
-        return null;
-      }
-
-      const obj = new newConstructor(...constructorArgs);
-
-      const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, obj);
-
-      for (const fieldName of Object.getOwnPropertyNames(json)) {
-        const dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
-
-        if (dbFieldOptions) {
-          obj[dbFieldOptions[dbSymbols.optionsPropertyName]] = json[fieldName];
-        } else {
-          if ((modelOptions.dbConfig || {} as any).promiscuous) {
-            obj[fieldName] = json[fieldName];
-          }
-        }
-      }
-
-      return obj;
-    }
-
-    function fromDbArray<T>(jsons: any[], ...constructorArgs): T[] {
-      target.debug.normal(`.fromDbArray called, target '${target}'`);
-      if (!jsons || !Array.isArray(jsons)) {
-        return [];
-      }
-
-      const results = [];
-      for (const json of jsons) {
-        const obj = target.fromDb(json, constructorArgs);
-        if (obj) {
-          results.push(obj);
-        }
-      }
-
-      return results;
-    }
-
-    function fromJson<T>(json: any, ...constructorArgs: any[]): T {
-      target.debug.normal(`.fromJson called, target '${target}'`);
-
-      if (!json || typeof json !== 'object') {
-        return null;
-      }
-
-      const obj = new newConstructor(...constructorArgs);
-
-      const propertyNamesByJsonFieldName: Map<string, string>
-        = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, obj);
-
-      for (const field of Object.getOwnPropertyNames(json)) {
-        const prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
-
-        if (prop) {
-          obj[prop] = json[field]; // an @Json alias field
-        } else if (Reflect.has(obj, field)) {
-          obj[field] = json[field]; // a none @Json alias field
-        }
-      }
-
-      return obj;
-    }
-
-    function fromJsonArray<T>(json: any, ...constructorArgs: any[]): T[] {
-      target.debug.normal(`.fromJsonArray called, target '${target}'`);
-
-      const result = [];
-
-      if (Array.isArray(json)) {
-        for (const item of json) {
-          result.push(target[modelSymbols.fromJson](item, ...constructorArgs));
-        }
-      }
-
-      return result;
-    }
 
     function getCollection(): Collection {
       const db = target.getDb();
@@ -482,63 +255,10 @@ export function Model(modelOptions?: IModelOptions): any {
 
       const col = db.collection(target[modelSymbols.dbCollection]);
 
-      target.debug.normal(`.getCollection called, dbName: '${target[modelSymbols.dbName]},` +
+      this.debug.normal(`.getCollection called, dbName: '${target[modelSymbols.dbName]},` +
         ` collection: ${target[modelSymbols.dbCollection]}', found?: ${!!col}`);
 
       return col;
-    }
-
-    function getDb(): Db {
-      const db = SakuraApi.instance.dbConnections.getDb(target[modelSymbols.dbName]);
-
-      target.debug.normal(`.getDb called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);
-
-      return db;
-    }
-
-    function getNewId(): ObjectID {
-      return new ObjectID();
-    }
-
-    function toJson() {
-      target.debug.normal(`.toJson called, target '${target}'`);
-
-      let jsonFieldNamesByProperty: Map<string, string>
-        = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
-
-      jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
-
-      const privateFields: Map<string, string>
-        = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
-
-      const dbOptionByPropertyName: Map<string, IDbOptions>
-        = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
-
-      const obj = {};
-      for (const prop of Object.getOwnPropertyNames(this)) {
-        if (typeof this[prop] === 'function') {
-          continue;
-        }
-
-        if (dbOptionByPropertyName) {
-          if ((dbOptionByPropertyName.get(prop) || {}).private) {
-            continue;
-          }
-        }
-
-        const override = (privateFields) ? privateFields.get(prop) : null;
-
-        // do the function test for private otherwise do the boolean test
-        if (override && typeof this[override] === 'function' && !this[override]()) {
-          continue;
-        } else if (override && !this[override]) {
-          continue;
-        }
-
-        obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
-      }
-
-      return obj;
     }
 
     /**
@@ -579,4 +299,307 @@ export function Model(modelOptions?: IModelOptions): any {
   function toJsonString(replacer?: (any) => any, space?: string | number) {
     return JSON.stringify(this[modelSymbols.toJson](), replacer, space);
   }
+}
+
+function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
+  const target = this[modelSymbols.target];
+
+  return new Promise((resolve, reject) => {
+    const col = target.getCollection();
+
+    this
+      .debug
+      .normal(`.crudCreate called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, this);
+
+    if (!col) {
+      throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
+    }
+
+    const dbObj = target.toDb.call(this);
+
+    col
+      .insertOne(dbObj, options)
+      .then((result) => {
+        this.id = result.insertedId;
+        return resolve(result);
+      })
+      .catch(reject);
+  });
+}
+
+function save(set?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
+  const target = this[modelSymbols.target];
+
+  const col = target.getCollection();
+  this.debug.normal(`.crudSave called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, set);
+
+  if (!col) {
+    throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
+  }
+
+  if (!this.id) {
+    return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
+  }
+
+  const changeSet = set || this;
+  const dbObj = target.toDb.call(this, changeSet);
+
+  return new Promise((resolve, reject) => {
+    col
+      .updateOne({_id: this.id}, {$set: dbObj}, options)
+      .then((result) => {
+        if (set) {
+          for (const prop of Object.getOwnPropertyNames(set)) {
+            this[prop] = set[prop];
+          }
+        }
+        return resolve(result);
+      })
+      .catch(reject);
+  });
+}
+
+function remove(filter: any | null, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
+  const target = this[modelSymbols.target];
+
+  if (!filter) {
+    this.debug.normal(`.crudDelete called without filter, calling .deleteById, id: %O`, this.id);
+    return target.removeById(this.id, options);
+  }
+
+  return target.removeAll(filter, options);
+}
+
+function removeById(id: ObjectID, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
+  const col = this.getCollection();
+
+  this
+    .debug
+    .normal(`.crudDeleteById called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
+
+  if (!col) {
+    throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
+  }
+
+  if (!id) {
+    return Promise.reject(new SapiMissingIdErr('Call to delete without Id, cannot proceed', this));
+  }
+
+  return col.deleteOne({_id: id}, options);
+}
+
+function removeAll(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
+  const col = this.getCollection();
+
+  this
+    .debug
+    .normal(`.crudDelete called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
+
+  if (!col) {
+    throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
+  }
+
+  return col.deleteMany(filter, options);
+}
+
+function get(filter: any, project?: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const cursor = this.getCursor(filter, project);
+    this.debug.normal(`.crudGetStatic called, dbName '${this[modelSymbols.dbName]}'`);
+
+    cursor
+      .toArray()
+      .then((results) => {
+        const objs = [];
+        for (const result of results) {
+          const obj = this.fromDb(result);
+          if (obj) {
+            objs.push(obj);
+          }
+        }
+        resolve(objs);
+      })
+      .catch(reject);
+  });
+}
+
+function getOne(filter: any, project?: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const cursor = this.getCursor(filter, project);
+    this.debug.normal(`.crudGetOneStatic called, dbName '${this[modelSymbols.dbName]}'`);
+
+    cursor
+      .limit(1)
+      .next()
+      .then((result) => {
+        const obj = this.fromDb(result);
+        resolve(obj);
+      })
+      .catch(reject);
+  });
+}
+
+function getById(id: string, project?: any): Promise<any> {
+  const cursor = this.getCursorById(id, project);
+  this.debug.normal(`.crudGetByIdStatic called, dbName '${this[modelSymbols.dbName]}'`);
+
+  return new Promise((resolve, reject) => {
+    cursor
+      .next()
+      .then((result) => {
+        const obj = this.fromDb(result);
+        resolve(obj);
+      })
+      .catch(reject);
+  });
+}
+
+function getCursor(filter: any, project?: any): Cursor<any> {
+  const col = this.getCollection();
+  this.debug.normal(`.crudGetCursorStatic called, dbName '${this[modelSymbols.dbName]}', found?: ${!!col}`);
+
+  if (!col) {
+    throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
+  }
+
+  return (project)
+    ? col.find(filter).project(project)
+    : col.find(filter);
+}
+
+function getCursorById(id, project?: any) {
+  this.debug.normal(`.crudGetCursorByIdStatic called, dbName '${this[modelSymbols.dbName]}'`);
+  return this.getCursor({_id: id}, project).limit(1);
+}
+
+function fromDb(json: any, ...constructorArgs: any[]): any {
+  this.debug.normal(`.fromDb called, target '${this.name}'`);
+
+  if (!json || typeof json !== 'object') {
+    return null;
+  }
+
+  const obj = new this(...constructorArgs);
+
+  const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, obj);
+
+  for (const fieldName of Object.getOwnPropertyNames(json)) {
+    const dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
+
+    if (dbFieldOptions) {
+      obj[dbFieldOptions[dbSymbols.optionsPropertyName]] = json[fieldName];
+    } else {
+      if ((this[modelSymbols.modelOptions].dbConfig || {} as any).promiscuous) {
+        obj[fieldName] = json[fieldName];
+      }
+    }
+  }
+
+  return obj;
+}
+
+function fromDbArray(jsons: any[], ...constructorArgs): any[] {
+  this.debug.normal(`.fromDbArray called, target '${this.name}'`);
+
+  if (!jsons || !Array.isArray(jsons)) {
+    return [];
+  }
+
+  const results = [];
+  for (const json of jsons) {
+    const obj = this.fromDb(json, constructorArgs);
+    if (obj) {
+      results.push(obj);
+    }
+  }
+
+  return results;
+}
+
+function fromJson(json: any, ...constructorArgs: any[]): any {
+  this.debug.normal(`.fromJson called, target '${this.name}'`);
+
+  if (!json || typeof json !== 'object') {
+    return null;
+  }
+
+  const obj = new this(...constructorArgs);
+
+  const propertyNamesByJsonFieldName: Map<string, string>
+    = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, obj);
+
+  for (const field of Object.getOwnPropertyNames(json)) {
+    const prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
+
+    if (prop) {
+      obj[prop] = json[field]; // an @Json alias field
+    } else if (Reflect.has(obj, field)) {
+      obj[field] = json[field]; // a none @Json alias field
+    }
+  }
+
+  return obj;
+}
+
+function fromJsonArray(json: any, ...constructorArgs: any[]): any[] {
+  this.debug.normal(`.fromJsonArray called, target '${this.name}'`);
+
+  const result = [];
+
+  if (Array.isArray(json)) {
+    for (const item of json) {
+      result.push(this[modelSymbols.fromJson](item, ...constructorArgs));
+    }
+  }
+
+  return result;
+}
+
+function getDb(): Db {
+  const db = SakuraApi.instance.dbConnections.getDb(this[modelSymbols.dbName]);
+
+  this.debug.normal(`.getDb called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!db}`);
+
+  return db;
+}
+
+function toJson() {
+  this.debug.normal(`.toJson called, target '${this.name}'`);
+
+  let jsonFieldNamesByProperty: Map<string, string>
+    = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
+
+  jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
+
+  const privateFields: Map<string, string>
+    = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
+
+  const dbOptionByPropertyName: Map<string, IDbOptions>
+    = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
+
+  const obj = {};
+  for (const prop of Object.getOwnPropertyNames(this)) {
+    if (typeof this[prop] === 'function') {
+      continue;
+    }
+
+    if (dbOptionByPropertyName) {
+      if ((dbOptionByPropertyName.get(prop) || {}).private) {
+        continue;
+      }
+    }
+
+    const override = (privateFields) ? privateFields.get(prop) : null;
+
+    // do the function test for private otherwise do the boolean test
+    if (override && typeof this[override] === 'function' && !this[override]()) {
+      continue;
+    } else if (override && !this[override]) {
+      continue;
+    }
+
+    obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
+  }
+
+  return obj;
 }

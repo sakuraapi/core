@@ -112,8 +112,8 @@ describe('@Model', function() {
       })
       class TestDefaultMethods implements IModel {
         /*tslint:disable:variable-name*/
-        static delete: (any) => any;
-        static deleteById: (ObjectID) => any;
+        static removeAll: (any) => any;
+        static removeById: (ObjectID) => any;
         static get: (...any) => any;
         static getOne: (...any) => any;
         static getById: (...any) => any;
@@ -165,7 +165,7 @@ describe('@Model', function() {
            * See db.spec.ts for toDb and fromDb tests.
            */
 
-          it('delete', function(done) {
+          it('removeAll', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -181,7 +181,7 @@ describe('@Model', function() {
                     expect(createResult.insertedCount).toBe(1);
 
                     TestDefaultMethods
-                      .delete({
+                      .removeAll({
                         $or: [{_id: this.tdm.id}, {_id: this.tdm2.id}]
                       })
                       .then((deleteResults) => {
@@ -196,7 +196,7 @@ describe('@Model', function() {
               .catch(done.fail);
           });
 
-          it('deleteById', function(done) {
+          it('removeById', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -212,7 +212,7 @@ describe('@Model', function() {
                     expect(createResult2.insertedCount).toBe(1);
 
                     TestDefaultMethods
-                      .deleteById(this.tdm.id)
+                      .removeById(this.tdm.id)
                       .then((deleteResults) => {
                         expect(deleteResults.deletedCount).toBe(1);
                         done();
@@ -510,7 +510,7 @@ describe('@Model', function() {
 
           });
 
-          describe('delete', function() {
+          describe('remove', function() {
             it('without filter', function(done) {
               expect(this.tdm.id).toBeNull();
 
@@ -527,7 +527,7 @@ describe('@Model', function() {
                       expect(createResult2.insertedCount).toBe(1);
                       this
                         .tdm
-                        .delete()
+                        .remove()
                         .then((deleteResults) => {
                           expect(deleteResults.deletedCount).toBe(1);
                           done();
@@ -556,7 +556,7 @@ describe('@Model', function() {
 
                       this
                         .tdm
-                        .delete({
+                        .remove({
                           $or: [{_id: this.tdm.id}, {_id: this.tdm2.id}]
                         })
                         .then((deleteResults) => {
