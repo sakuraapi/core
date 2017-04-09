@@ -40,7 +40,7 @@
     "server"
   ],
   "author": "Jean-Pierre E. Poveda",
-  "license": "MIT",
+  "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/sakuraapi/api/issues"
   },

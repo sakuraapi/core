@@ -3,7 +3,7 @@ module.exports = {
     {
       mongoClientOptions: {},
       name: 'userDb',
-      url: `mongodb://localhost:${process.env.TEST_MONGO_DB_PORT}/userDb`
+      url: `mongodb://${process.env.TEST_MONGO_DB_ADDRESS}:${process.env.TEST_MONGO_DB_PORT}/userDb`
     }
   ]
 };

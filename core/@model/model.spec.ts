@@ -71,16 +71,17 @@ describe('@Model', function() {
     });
 
     describe('ModelOptions.dbConfig', function() {
-      it('throws when dbConfig.db is missing', function() {
-        @Model({
-          dbConfig: {
-            collection: '',
-            db: ''
-          }
-        })
-        class TestDbConfig {
-        }
 
+      @Model({
+        dbConfig: {
+          collection: '',
+          db: ''
+        }
+      })
+      class TestDbConfig {
+      }
+
+      it('throws when dbConfig.db is missing', function() {
         expect(() => {
           new TestDbConfig(); // tslint:disable-line
         }).toThrow();
@@ -306,6 +307,10 @@ describe('@Model', function() {
                   .then((results) => {
                     expect(results.length).toBe(1);
                     expect(results[0]._id.toString()).toBe(this.tdm.id.toString());
+
+                    expect(results[0].fn).toBeDefined();
+                    expect(results[0].lastName).toBeDefined();
+
                     expect(results[0].fn).toBe(this.tdm.firstName);
                     expect(results[0].lastName).toBe(this.tdm.lastName);
                     done();
@@ -352,6 +357,10 @@ describe('@Model', function() {
                   .next()
                   .then((result) => {
                     expect(result._id.toString()).toBe(this.tdm.id.toString());
+
+                    expect(result.fn).toBeDefined();
+                    expect(result.lastName).toBeDefined();
+
                     expect(result.fn).toBe(this.tdm.firstName);
                     expect(result.lastName).toBe(this.tdm.lastName);
                     done();
@@ -382,8 +391,12 @@ describe('@Model', function() {
                     .next()
                     .then((result2) => {
                       expect(result2._id.toString()).toBe(this.tdm.id.toString());
-                      expect(result2.fName).toBe(this.tdm.fName);
-                      expect(result2.lName).toBe(this.tdm.lName);
+
+                      expect(result2.fn).toBeDefined();
+                      expect(result2.lastName).toBeDefined();
+
+                      expect(result2.fn).toBe(this.tdm.firstName);
+                      expect(result2.lastName).toBe(this.tdm.lastName);
                       done();
                     })
                     .catch(done.fail);
@@ -408,8 +421,12 @@ describe('@Model', function() {
                     .next()
                     .then((result2) => {
                       expect(result2._id.toString()).toBe(this.tdm.id.toString());
-                      expect(result2.fName).toBe(this.tdm.fName);
-                      expect(result2.lName).toBe(this.tdm.lName);
+
+                      expect(result2.fn).toBeDefined();
+                      expect(result2.lastName).toBeDefined();
+
+                      expect(result2.fn).toBe(this.tdm.firstName);
+                      expect(result2.lastName).toBe(this.tdm.lastName);
                       done();
                     })
                     .catch(done.fail);
@@ -459,6 +476,8 @@ describe('@Model', function() {
                         .limit(1)
                         .next()
                         .then((updated) => {
+                          expect(updated.fn).toBeDefined();
+
                           expect(updated.fn).toBe(updateSet.firstName);
                           done();
                         })
@@ -498,6 +517,9 @@ describe('@Model', function() {
                         .limit(1)
                         .next()
                         .then((updated) => {
+                          expect(updated.fn).toBeDefined();
+                          expect(updated.lastName).toBeDefined();
+
                           expect(updated.fn).toBe(changes.firstName);
                           expect(updated.lastName).toBe(changes.lastName);
                           done();

@@ -1,7 +1,6 @@
-/** @module core/@model/db */
-
 /**
- * The symbols used by Reflect to store `@Db()` metadata for use by `@Module`.
+ * The symbols used by Reflect to store `@Db()` metadata for use by `@Module`. These symbols are not considered
+ * part of the API contract and may change or be removed without notice on patch releases.
  */
 export const dbSymbols = {
   optionsPropertyName: Symbol('sakuraApiDbOptionsPropertyName'),
@@ -10,11 +9,51 @@ export const dbSymbols = {
 };
 
 export interface IDbOptions {
+  /**
+   * The name of the field in the database that is mapped to this property when retrieving this document from the
+   * database and persisting this document back to the database.
+   *
+   * ### Example
+   * <pre>
+   *    <span>@</span>Model({...})
+   *    export class SomeModel {
+   *        <span>@</span>Db({
+   *          field: 'fn'
+   *        })
+   *        firstName: string = '';
+   *    }
+   * </pre>
+   *
+   * Explanation: `firstName` property of the `@Model` is mapped to the `fn` field of the database.
+   */
   field?: string;
+  /**
+   * Prevents this property from being marshaled to json by the built in `toJson` method that is attached to
+   * `@Model` decorated classes.
+   *
+   * ### Example
+   * <pre>
+   *    <span>@</span>Model({...})
+   *    export class SomeModel {
+   *        <span>@</span>Db({
+   *          private: true
+   *        })
+   *        firstName: string = '';
+   *    }
+   * </pre>
+   *
+   * Explanation: the `firstName` property will be mapped to the `firstName` property of a database document, but
+   * it will not be included in the output of `someModel.toJson()`. [[Model.modelsymbols]]
+   */
   private?: boolean;
 }
 
-export function Db(options?: IDbOptions) {
+/**
+ * @decorator `@Db` decorates fields in a class decorated by `@`[[Model]].
+ * @param options Sets the database options for the property.
+ * @returns Used by the framework to reflect on the `@Db` properties defined.
+ */
+export function Db(options?: IDbOptions): (target: any, key: string) => void {
   options = options || {};
 
   return (target: any, key: string) => {

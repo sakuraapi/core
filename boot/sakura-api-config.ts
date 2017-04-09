@@ -5,10 +5,15 @@ import * as fs from 'fs';
 import debug = require('debug');
 
 /**
- * Class representing a configuration composed of cascading configuration files.
+ * SakuraApiConfig loads and manages the cascading configuration files of SakuraApi.
+ *
  */
 export class SakuraApiConfig {
 
+  /**
+   * The configuration that was loaded from the various json and ts files and the environmental
+   * variables that were set at the time the configuration was last loaded.
+   */
   config: any;
 
   private static debug = {
@@ -18,10 +23,36 @@ export class SakuraApiConfig {
   private debug = SakuraApiConfig.debug;
 
   /**
-   * Instantiate a SakuraApiConfig.
+   * Instantiate SakuraApiConfig.
    */
   constructor() {
     this.debug.normal('.constructor');
+  }
+
+  /**
+   * Looks for a `dbConnections` property in the root of config. If one is found, it expects the
+   * following:
+   * <pre>
+   * {
+   *     "dbConnections": [
+   *         {
+   *           "name": "someDb1",
+   *           "url": "mongodb://localhost:1234/somedb1",
+   *           "mongoClientOptions: {}
+   *         },
+   *         {
+   *           "name": "someDb2",
+   *           "url": "mongodb://localhost:1234/somedb2",
+   *           "mongoClientOptions: {}
+   *         }
+   *     ]
+   * }
+   * </pre>
+   * Where `someDb1` is the name of the connection that you can use for retrieving the connection with
+   * [[SakuraMongoDbConnection.getDb]]('someDb1').
+   */
+  dataSources(config: any = this.config): SakuraMongoDbConnection {
+    return SakuraApiConfig.dataSources(config);
   }
 
   /**
@@ -141,32 +172,6 @@ export class SakuraApiConfig {
         throw err;
       }
     }
-  }
-
-  /**
-   * Looks for a `dbConnections` property in the root of config. If one is found, it expects the
-   * following:
-   * <pre>
-   * {
-   *     "dbConnections": [
-   *         {
-   *           "name": "someDb1",
-   *           "url": "mongodb://localhost:1234/somedb1",
-   *           "mongoClientOptions: {}
-   *         },
-   *         {
-   *           "name": "someDb2",
-   *           "url": "mongodb://localhost:1234/somedb2",
-   *           "mongoClientOptions: {}
-   *         }
-   *     ]
-   * }
-   * </pre>
-   * Where `someDb1` is the name of the connection that you can use for retrieving the connection with
-   * [[SakuraMongoDbConnection.getDb]]('someDb1').
-   */
-  dataSources(config: any = this.config): SakuraMongoDbConnection {
-    return SakuraApiConfig.dataSources(config);
   }
 
   /**
