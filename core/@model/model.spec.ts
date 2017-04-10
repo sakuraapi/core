@@ -533,7 +533,7 @@ describe('@Model', function() {
           });
 
           describe('remove', function() {
-            it('without filter', function(done) {
+            it('itself', function(done) {
               expect(this.tdm.id).toBeNull();
 
               this
@@ -561,37 +561,6 @@ describe('@Model', function() {
                 .catch(done.fail);
             });
 
-            it('with filter', function(done) {
-              expect(this.tdm.id).toBeNull();
-
-              this
-                .tdm
-                .create()
-                .then((createResult) => {
-                  expect(createResult.insertedCount).toBe(1);
-
-                  this
-                    .tdm2
-                    .create()
-                    .then((createResult2) => {
-                      expect(createResult2.insertedCount).toBe(1);
-
-                      this
-                        .tdm
-                        .remove({
-                          $or: [{_id: this.tdm.id}, {_id: this.tdm2.id}]
-                        })
-                        .then((deleteResults) => {
-                          expect(deleteResults.deletedCount).toBe(2);
-                          done();
-                        })
-                        .catch(done.fail);
-
-                    })
-                    .catch(done.fail);
-                })
-                .catch(done.fail);
-            });
           });
         });
       });

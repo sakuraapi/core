@@ -34,11 +34,15 @@ import debug = require('debug');
  */
 export interface IModel {
   /* tslint:disable:variable-name */
-  create?: () => Promise<InsertOneWriteOpResult>;
-  delete?: (any) => Promise<DeleteWriteOpResultObject>;
-  save?: (any) => Promise<UpdateWriteOpResult>;
+  create?: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
+  getCollection?: () => Collection;
+  getDb?: () => Db;
+  remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+  save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
+
+  toDb?: (changeSet?: object) => object;
   toJson?: () => object;
-  toJsonString?: () => string;
+  toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
   /* tslint:enable */
 }
 
@@ -124,15 +128,13 @@ export const modelSymbols = {
  *   * [[remove]]
  *   * [[save]]
  *   * [[toJson]]
- *
- * * *instance*:
- *   * **`toJsonString`** - works just like the aforementioned `toJson` but returns a string instead of a json object.
+ *   * [[toJsonString]]
  *
  * Injected unctions can be changed to point to a custom function references without breaking SakuraApi. They're
  * mapped for the integrators convenience. If the integrator wants to actually change the underlying behavior that
  * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
  */
-export function Model(modelOptions?: IModelOptions): any {
+export function Model(modelOptions?: IModelOptions): (object) => any {
   modelOptions = modelOptions || {} as IModelOptions;
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -257,10 +259,10 @@ export function Model(modelOptions?: IModelOptions): any {
 
     // Inject default instance methods for CRUD if not already defined by integrator
     addDefaultInstanceMethods(newConstructor, 'create', create, modelOptions);
-    addDefaultInstanceMethods(newConstructor, 'save', save, modelOptions);
-    addDefaultInstanceMethods(newConstructor, 'remove', remove, modelOptions);
     addDefaultInstanceMethods(newConstructor, 'getCollection', getCollection, modelOptions);
     addDefaultInstanceMethods(newConstructor, 'getDb', getDb, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'remove', remove, modelOptions);
+    addDefaultInstanceMethods(newConstructor, 'save', save, modelOptions);
 
     newConstructor.prototype.toDb = toDb;
     newConstructor.prototype[modelSymbols.toDb] = toDb;
@@ -277,6 +279,16 @@ export function Model(modelOptions?: IModelOptions): any {
 }
 
 //////////
+// tslint:disable:max-line-length
+/**
+ * @instance Creates a document in the Model's collection using
+ * [insertOne](http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#insertOne) and takes an optional
+ * CollectionInsertOneOptions.
+ * @param options See: [insertOne](http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#insertOne)
+ * @returns {Promise<T>} See:
+ * [insertOneWriteOpCallback](http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#~insertOneWriteOpCallback).
+ */
+// tslint:enable:max-line-length
 function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
   const target = this[modelSymbols.target];
 
@@ -285,7 +297,7 @@ function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpR
 
     this
       .debug
-      .normal(`.crudCreate called, dbName: '${target[modelSymbols.dbName].name}', found?: ${!!col}, set: %O`, this);
+      .normal(`.create called, dbName: '${target[modelSymbols.dbName].name}', found?: ${!!col}, set: %O`, this);
 
     if (!col) {
       throw new Error(`Database '${target[modelSymbols.dbName].name}' not found`);
@@ -303,7 +315,15 @@ function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpR
   });
 }
 
-function fromDb(json: any, ...constructorArgs: any[]): any {
+/**
+ * @static Creates an object from a MongoDb document with all of its fields properly mapped based on the [[Model]]'s various
+ * decorators (see [[Db]]).
+ * @param json The document returned from the Db.
+ * @param constructorArgs A variadic set of parameters that are passed to the constructor of the [[Model]]'s class.
+ * @returns {object} Returns an instantiated object which is an instance of the [[Model]]'s class. Returns null
+ * if the `json` parameter is null, undefined or not an object.
+ */
+function fromDb(json: object, ...constructorArgs: any[]): object {
   this.debug.normal(`.fromDb called, target '${this.name}'`);
 
   if (!json || typeof json !== 'object') {
@@ -329,14 +349,23 @@ function fromDb(json: any, ...constructorArgs: any[]): any {
   return obj;
 }
 
-function fromDbArray(jsons: any[], ...constructorArgs): any[] {
+/**
+ * @static Constructs an array of Models from an array of documents retrieved from the Db with all of their fields properly
+ * mapped based on the [[Model]]'s various decorators (see [[Db]]).
+ * @param jsons The array of documents returned from the Db.
+ * @param constructorArgs A variadic set of parameters that are passed to the constructor of the [[Model]]'s class.
+ * All of the resulting constructed objects will share the same constructor parameters.
+ * @returns {object[]} Returns an array of instantiated objects which are instances of the [[Model]]'s class. Returns
+ * null if the `jsons` parameter is null, undefined, or not an Array.
+ */
+function fromDbArray(jsons: any[], ...constructorArgs): object[] {
   this.debug.normal(`.fromDbArray called, target '${this.name}'`);
 
   if (!jsons || !Array.isArray(jsons)) {
     return [];
   }
 
-  const results = [];
+  const results: object[] = [];
   for (const json of jsons) {
     const obj = this.fromDb(json, constructorArgs);
     if (obj) {
@@ -348,11 +377,12 @@ function fromDbArray(jsons: any[], ...constructorArgs): any[] {
 }
 
 /**
- * Constructs an `@`Model object from a json object.
+ * @static Constructs an `@`Model object from a json object (see [[Json]]).
  * @param json The json object to be marshaled into an `@`[[Model]] object.
- * @param constructorArgs A variadic list of parameters to be passed to the constructor of the `@`Model object being
+ * @param constructorArgs A variadic list of parameters to be passed to the constructor of the `@`[[Model]] object being
  * constructed.
- * @returns {{}}
+ * @returns {{}} Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
+ * undefined, or not an object.
  */
 function fromJson(json: any, ...constructorArgs: any[]): object {
   this.debug.normal(`.fromJson called, target '${this.name}'`);
@@ -380,11 +410,12 @@ function fromJson(json: any, ...constructorArgs: any[]): object {
 }
 
 /**
- * Constructors an array of `@`Model objects from an array of json objects.
+ * @static Constructs an array of `@`Model objects from an array of json objects.
  * @param json The array of json objects to to be marshaled into an array of `@`[[Model]] objects.
  * @param constructorArgs A variadic list of parameters to be passed to the constructor of the `@`Model object being
  * constructed.
- * @returns [{{}}]
+ * @returns [{{}}] Returns an array of instantiated objects based on the [[Model]]'s. Returns null if the `json`
+ * parameter is null, undefined, or not an array.
  */
 function fromJsonArray(json: any, ...constructorArgs: any[]): object[] {
   this.debug.normal(`.fromJsonArray called, target '${this.name}'`);
@@ -400,10 +431,18 @@ function fromJsonArray(json: any, ...constructorArgs: any[]): object[] {
   return result;
 }
 
-function get(filter: any, project?: any): Promise<any> {
+/**
+ * @static Gets documents from the database and builds their corresponding [[Model]]s the resolves an array of those objects.
+ * @param filter A MongoDb query
+ * @param project The fields to project (all if not supplied)
+ * @returns {Promise<T>} Returns a Promise that resolves with an array of instantiated [[Model]] objects based on the
+ * documents returned from the database using MongoDB's find method. Returns an empty array if no matches are found
+ * in the database.
+ */
+function get(filter: any, project?: any): Promise<object[]> {
   return new Promise((resolve, reject) => {
     const cursor = this.getCursor(filter, project);
-    this.debug.normal(`.crudGetStatic called, dbName '${this[modelSymbols.dbName]}'`);
+    this.debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
 
     cursor
       .toArray()
@@ -421,6 +460,33 @@ function get(filter: any, project?: any): Promise<any> {
   });
 }
 
+/**
+ * @static Gets a document by its id from the database and builds its corresponding [[Model]] then resolves that object.
+ * @param id The id of the document in the database.
+ * @param project The fields to project (all if not supplied).
+ * @returns {Promise<T>} Returns a Promise that resolves with an instantiated [[Model]] object. Returns null
+ * if the record is not found in the Db.
+ */
+function getById(id: string, project?: any): Promise<any> {
+  const cursor = this.getCursorById(id, project);
+  this.debug.normal(`.crudGetByIdStatic called, dbName '${this[modelSymbols.dbName]}'`);
+
+  return new Promise((resolve, reject) => {
+    cursor
+      .next()
+      .then((result) => {
+        const obj = this.fromDb(result);
+        resolve(obj);
+      })
+      .catch(reject);
+  });
+}
+
+/**
+ * @instance Gets the MongoDB `Collection` object associated with this [[Model]] based on the [[IModelOptions.dbConfig]]
+ * parameters passed into the [[Model]]'s definition.
+ * @returns {Collection}
+ */
 function getCollection(): Collection {
   const target = this[modelSymbols.target] || this;
 
@@ -438,21 +504,14 @@ function getCollection(): Collection {
   return col;
 }
 
-function getById(id: string, project?: any): Promise<any> {
-  const cursor = this.getCursorById(id, project);
-  this.debug.normal(`.crudGetByIdStatic called, dbName '${this[modelSymbols.dbName]}'`);
-
-  return new Promise((resolve, reject) => {
-    cursor
-      .next()
-      .then((result) => {
-        const obj = this.fromDb(result);
-        resolve(obj);
-      })
-      .catch(reject);
-  });
-}
-
+/**
+ * @static Gets a `Cursor` from MongoDb based on the filter. This is a raw cursor from MongoDb. SakuraApi will not map the
+ * results back to a [[Model]]. See [[get]] or [[getById]] to retrieve documents from MongoDb as their corresponding
+ * [[Model]] objects.
+ * @param filter A MongoDb query.
+ * @param project The fields to project (all if not supplied).
+ * @returns {Cursor<any>}
+ */
 function getCursor(filter: any, project?: any): Cursor<any> {
   const col = this.getCollection();
   this.debug.normal(`.crudGetCursorStatic called, dbName '${this[modelSymbols.dbName]}', found?: ${!!col}`);
@@ -466,11 +525,21 @@ function getCursor(filter: any, project?: any): Cursor<any> {
     : col.find(filter);
 }
 
+/**
+ * @static Gets a `Cursor` from MonogDb based on the supplied `id` and applies a `limit(1)` before returning the cursor.
+ * @param id the document's id in the database.
+ * @param project The fields to project (all if not supplied).
+ * @returns {Cursor<T>}
+ */
 function getCursorById(id, project?: any) {
-  this.debug.normal(`.crudGetCursorByIdStatic called, dbName '${this[modelSymbols.dbName]}'`);
+  this.debug.normal(`.getCursorById called, dbName '${this[modelSymbols.dbName]}'`);
   return this.getCursor({_id: id}, project).limit(1);
 }
 
+/**
+ * @static Gets the Mongo `Db` object associated with the connection defined in [[IModelOptions.dbConfig]].
+ * @returns {Db}
+ */
 function getDb(): Db {
   const db = SakuraApi.instance.dbConnections.getDb(this[modelSymbols.dbName]);
 
@@ -479,10 +548,17 @@ function getDb(): Db {
   return db;
 }
 
+/**
+ * @static Like the [[get]] method, but retrieves only the first result.
+ * @param filter A MongoDb query.
+ * @param project The fields to project (all if nto supplied).
+ * @returns {Promise<any>} Returns a Promise that resolves with an instantiated [[Model]] object. Returns null if the
+ * record is not found in the Db.
+ */
 function getOne(filter: any, project?: any): Promise<any> {
   return new Promise((resolve, reject) => {
     const cursor = this.getCursor(filter, project);
-    this.debug.normal(`.crudGetOneStatic called, dbName '${this[modelSymbols.dbName]}'`);
+    this.debug.normal(`.getOne called, dbName '${this[modelSymbols.dbName]}'`);
 
     cursor
       .limit(1)
@@ -495,23 +571,50 @@ function getOne(filter: any, project?: any): Promise<any> {
   });
 }
 
-function remove(filter: any | null, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
+/**
+ * @instance Removes the current Model's document from the database.
+ * @param options MongoDB CollectionOptions
+ * @returns {Promise<DeleteWriteOpResultObject>}
+ */
+function remove(options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
   const target = this[modelSymbols.target];
 
-  if (!filter) {
-    this.debug.normal(`.crudDelete called without filter, calling .deleteById, id: %O`, this.id);
-    return target.removeById(this.id, options);
-  }
-
-  return target.removeAll(filter, options);
+  this.debug.normal(`.remove called for ${this.id}`);
+  return target.removeById(this.id, options);
 }
 
+/**
+ * @static Removes all documents from the database that match the filter criteria.
+ * @param filter A MongoDB query.
+ * @param options MongoDB CollectionOptions
+ * @returns {Promise<DeleteWriteOpResultObject>}
+ */
+function removeAll(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
+  const col = this.getCollection();
+
+  this
+    .debug
+    .normal(`.removeAll called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
+
+  if (!col) {
+    throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
+  }
+
+  return col.deleteMany(filter, options);
+}
+
+/**
+ * @static Removes a specific document from the database by its id.
+ * @param id
+ * @param options CollectionOptions
+ * @returns {DeleteWriteOpResultObject}
+ */
 function removeById(id: ObjectID, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
   const col = this.getCollection();
 
   this
     .debug
-    .normal(`.crudDeleteById called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
+    .normal(`.removeById called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
 
   if (!col) {
     throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
@@ -524,25 +627,24 @@ function removeById(id: ObjectID, options?: CollectionOptions): Promise<DeleteWr
   return col.deleteOne({_id: id}, options);
 }
 
-function removeAll(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
-  const col = this.getCollection();
-
-  this
-    .debug
-    .normal(`.crudDelete called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
-
-  if (!col) {
-    throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
-  }
-
-  return col.deleteMany(filter, options);
-}
-
-function save(set?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
+/**
+ * @instance Performs a MongoDB updateOne if the current [[Model]] has an Id.
+ * @param changeSet The change set. For example:
+ * <pre>
+ * {
+ *     firstName: "George"
+ * }
+ * </pre>
+ * This change set would cause only the `firstName` field to be updated. If the `set` parameter is not provided,
+ * `save` will assume the entire [[Model]] is the change set (obeying the various decorators like [[Db]]).
+ * @param options The MongoDB ReplaceOneOptions. If you want to set this, but not the `set`, then pass null into `set`.
+ * @returns {any}
+ */
+function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
   const target = this[modelSymbols.target];
 
   const col = target.getCollection();
-  this.debug.normal(`.crudSave called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, set);
+  this.debug.normal(`.save called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, changeSet);
 
   if (!col) {
     throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
@@ -552,16 +654,16 @@ function save(set?: { [key: string]: any } | null, options?: ReplaceOneOptions):
     return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
   }
 
-  const changeSet = set || this;
-  const dbObj = this.toDb(changeSet);
+  const set = changeSet || this;
+  const dbObj = this.toDb(set);
 
   return new Promise((resolve, reject) => {
     col
       .updateOne({_id: this.id}, {$set: dbObj}, options)
       .then((result) => {
-        if (set) {
-          for (const prop of Object.getOwnPropertyNames(set)) {
-            this[prop] = set[prop];
+        if (changeSet) {
+          for (const prop of Object.getOwnPropertyNames(changeSet)) {
+            this[prop] = changeSet[prop];
           }
         }
         return resolve(result);
@@ -570,10 +672,23 @@ function save(set?: { [key: string]: any } | null, options?: ReplaceOneOptions):
   });
 }
 
-function toDb(changeSet?: any): any {
+/**
+ * @instance Builds and returns a change set object that properly obeys the various decorators (like [[Db]]). The resulting
+ * object is what's persisted to the database.
+ * @param changeSet The change set. For example:
+ * <pre>
+ * {
+ *     firstName: "George"
+ * }
+ * </pre>
+ * This change set would cause only the `firstName` field to be updated. If the `set` parameter is not provided,
+ * `toDb` will assume the entire [[Model]] is the change set (obeying the various decorators like [[Db]]).
+ * @returns {{_id: (any|ObjectID|number)}}
+ */
+function toDb(changeSet?: object): object {
   const target = this[modelSymbols.target];
 
-  let modelOptions = target[modelSymbols.modelOptions];
+  const modelOptions = target[modelSymbols.modelOptions];
   this.debug.normal(`.toDb called, target '${this.name}'`);
 
   changeSet = changeSet || this;
@@ -604,7 +719,7 @@ function toDb(changeSet?: any): any {
 }
 
 /**
- * Returns the current object as json, respecting the various decorators like [[Private]]
+ * @instance Returns the current object as json, respecting the various decorators like [[Db]]
  * @returns {{}}
  */
 function toJson(): object {
@@ -648,7 +763,13 @@ function toJson(): object {
   return obj;
 }
 
-// tslint:disable-next-line: variable-name
-function toJsonString(replacer?: (any) => any, space?: string | number) {
+/**
+ * @instance Returns the current [[Model]] as a json string, respecting the various decorators like [[Db]]
+ * @param replacer See JavaScript's standard `JSON.stringify`.
+ * @param space See JavaScript's standard `JSON.stringify`.
+ * @returns {string}
+ */
+function toJsonString(replacer?: () => any | Array<string | number>, space?: string | number): string {
+  this.debug.normal(`.toJsonString called, target '${this.name}'`);
   return JSON.stringify(this[modelSymbols.toJson](), replacer, space);
 }
