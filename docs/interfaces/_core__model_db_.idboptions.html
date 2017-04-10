@@ -3,17 +3,17 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SakuraApi</title>
+	<title>IDbOptions | SakuraApi</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="assets/css/main.css">
+	<link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
 <header>
 	<div class="tsd-page-toolbar">
 		<div class="container">
 			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="assets/js/search.js" data-base=".">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
 					<div class="field">
 						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
 						<input id="tsd-search-field" type="text" />
@@ -22,7 +22,7 @@
 						<li class="state loading">Preparing search index...</li>
 						<li class="state failure">The search index is not available</li>
 					</ul>
-					<a href="index.html" class="title">SakuraApi</a>
+					<a href="../index.html" class="title">SakuraApi</a>
 				</div>
 				<div class="table-cell" id="tsd-widgets">
 					<div id="tsd-filter">
@@ -51,65 +51,164 @@
 		<div class="container">
 			<ul class="tsd-breadcrumb">
 				<li>
-					<a href="globals.html">Globals</a>
+					<a href="../globals.html">Globals</a>
+				</li>
+				<li>
+					<a href="../modules/_core__model_db_.html">&quot;core/@model/db&quot;</a>
+				</li>
+				<li>
+					<a href="_core__model_db_.idboptions.html">IDbOptions</a>
 				</li>
 			</ul>
-			<h1> SakuraApi</h1>
+			<h1>Interface IDbOptions</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
-			<div class="tsd-panel tsd-typography">
-				<h1 id="sakuraapi-documentation">SakuraApi Documentation</h1>
-				<p>This documentation is generated from the comments throughout the framework code.</p>
-				<p>You can navigate through the various modules using the links in the nav menu
-					to the right. Please submit corrections via a pull request after forking
-				the <code>develop</code> branch. Thanks!</p>
-				<p>Copyright 2016, <a href="https://github.com/sakuraapi/api/blob/develop/LICENSE">License</a></p>
-			</div>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="target">IDbOptions</span>
+					</li>
+				</ul>
+			</section>
+			<section class="tsd-panel-group tsd-index-group">
+				<h2>Index</h2>
+				<section class="tsd-panel tsd-index-panel">
+					<div class="tsd-index-content">
+						<section class="tsd-index-section ">
+							<h3>Properties</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_db_.idboptions.html#field" class="tsd-kind-icon">field</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_db_.idboptions.html#private" class="tsd-kind-icon">private</a></li>
+							</ul>
+						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="field" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> field</h3>
+					<div class="tsd-signature tsd-kind-icon">field<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/bc90094/core/@model/db.ts#L29">core/@model/db.ts:29</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>The name of the field in the database that is mapped to this property when retrieving this document from the
+							database and persisting this document back to the database.</p>
+						</div>
+						<h3 id="example">Example</h3>
+						<pre>
+   <span>@</span>Model({...})
+   export class SomeModel {
+       <span>@</span>Db({
+         field: 'fn'
+       })
+       firstName: string = '';
+   }
+</pre>
+						<p>Explanation: <code>firstName</code> property of the <code>@Model</code> is mapped to the <code>fn</code> field of the database.</p>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="private" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> private</h3>
+					<div class="tsd-signature tsd-kind-icon">private<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/bc90094/core/@model/db.ts#L48">core/@model/db.ts:48</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Prevents this property from being marshaled to json by the built in <code>toJson</code> method that is attached to
+							<code>@Model</code> decorated classes.</p>
+						</div>
+						<h3 id="example">Example</h3>
+						<pre>
+   <span>@</span>Model({...})
+   export class SomeModel {
+       <span>@</span>Db({
+         private: true
+       })
+       firstName: string = '';
+   }
+</pre>
+						<p>Explanation: the <code>firstName</code> property will be mapped to the <code>firstName</code> property of a database document, but
+						it will not be included in the output of <code>someModel.toJson()</code>. [[Model.modelsymbols]]</p>
+					</div>
+				</section>
+			</section>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 			<nav class="tsd-navigation primary">
 				<ul>
 					<li class="globals  ">
-						<a href="globals.html"><em>Globals</em></a>
+						<a href="../globals.html"><em>Globals</em></a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_boot_sakura_api_config_.html">"boot/sakura-<wbr>api-<wbr>config"</a>
+						<a href="../modules/_boot_sakura_api_config_.html">"boot/sakura-<wbr>api-<wbr>config"</a>
+					</li>
+					<li class="current tsd-kind-external-module">
+						<a href="../modules/_core__model_db_.html">"core/@model/db"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_core__model_db_.html">"core/@model/db"</a>
+						<a href="../modules/_core__model_errors_.html">"core/@model/errors"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_core__model_errors_.html">"core/@model/errors"</a>
+						<a href="../modules/_core__model_json_.html">"core/@model/json"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_core__model_json_.html">"core/@model/json"</a>
+						<a href="../modules/_core__model_model_.html">"core/@model/model"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_core__model_model_.html">"core/@model/model"</a>
+						<a href="../modules/_core__model_private_.html">"core/@model/private"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_core__model_private_.html">"core/@model/private"</a>
+						<a href="../modules/_core__routable_routable_.html">"core/@routable/routable"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_core__routable_routable_.html">"core/@routable/routable"</a>
+						<a href="../modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
+						<a href="../modules/_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_core_sakura_mongo_db_connection_.html">"core/sakura-<wbr>mongo-<wbr>db-<wbr>connection"</a>
+						<a href="../modules/_core_sakura_mongo_db_connection_.html">"core/sakura-<wbr>mongo-<wbr>db-<wbr>connection"</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core__model_db_.idboptions.html" class="tsd-kind-icon">IDb<wbr>Options</a>
+						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__model_db_.idboptions.html#field" class="tsd-kind-icon">field</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__model_db_.idboptions.html#private" class="tsd-kind-icon">private</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/_core__model_db_.html#db" class="tsd-kind-icon">Db</a>
+					</li>
+					<li class=" tsd-kind-object-literal tsd-parent-kind-external-module">
+						<a href="../modules/_core__model_db_.html#dbsymbols" class="tsd-kind-icon">db<wbr>Symbols</a>
+					</li>
 				</ul>
 			</nav>
 		</div>
@@ -178,7 +277,7 @@
 	<p>Generated using <a href="http://typedoc.org/" target="_blank">TypeDoc</a></p>
 </div>
 <div class="overlay"></div>
-<script src="assets/js/main.js"></script>
-<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+<script src="../assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="../assets/js/search.js"><' + '/script>');</script>
 </body>
 </html>

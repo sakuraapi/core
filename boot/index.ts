@@ -1,1 +1,1 @@
-export * from './config';
+export * from './sakura-api-config';

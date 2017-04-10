@@ -1,11 +1,12 @@
-import 'reflect-metadata';
 import {SakuraApi} from '../sakura-api';
-import * as path   from 'path';
+
+import * as path from 'path';
+import 'reflect-metadata';
 
 /**
  * Interface defining the valid properties for the `@Routable({})` decorator ([[Routable]]).
  */
-export interface RoutableClassOptions {
+export interface IRoutableClassOptions {
   /**
    * Array of strings defining which routes are ignored during route setup. Defaults to `[]`.
    */
@@ -32,8 +33,9 @@ export interface RoutableClassOptions {
    */
   baseUrl?: string;
   /**
-   * Boolean value (defaults to true) that tells SakuraApi whether or not to automatically bind this `@Routable`'s routes to
-   * the express router. If you turn this off, you will have to manually pass this class definition into [[SakuraApi.route]].
+   * Boolean value (defaults to true) that tells SakuraApi whether or not to automatically bind this `@Routable`'s
+   * routes to the express router. If you turn this off, you will have to manually pass this class definition into
+   * [[SakuraApi.route]].
    */
   autoRoute?: boolean;
 }
@@ -41,7 +43,7 @@ export interface RoutableClassOptions {
 /**
  * Interface defining the valid properties for the `@Route({})` decorator ([[Route]]).
  */
-export interface RoutableMethodOptions {
+export interface IRoutableMethodOptions {
   /**
    * String defining the endpoint of the route after the baseUrl set in [[RoutableClassOptions.baseUrl]]. The default
    * is `''`.
@@ -67,7 +69,8 @@ export interface RoutableMethodOptions {
    */
   path?: string;
   /**
-   * String defining the HTTP method for which this route handler will respond. See the example for [[RoutableMethodOptions.path]].
+   * String defining the HTTP method for which this route handler will respond. See the example for
+   * [[RoutableMethodOptions.path]].
    *
    * Valid methods are: `['get', 'post', 'put', 'delete', 'head']`.
    */
@@ -82,8 +85,9 @@ export interface RoutableMethodOptions {
 /**
  * Internal to SakuraApi's [[Routable]]. This can chance without notice since it's not an official part of the API.
  */
-interface SakuraApiClassRoutes {
+interface ISakuraApiClassRoutes {
   path: string;       // the class's baseUrl (if any) + the route's path
+                      // tslint:disable-next-line: variable-name
   f: (any) => any;    // the function that handles the route in Express.use
   httpMethod: string; // the http verb (e.g., GET, PUT, POST, DELETE)
   method: string;     // the classes's method name that handles the route (the name of f)
@@ -122,24 +126,24 @@ export const routableSymbols = {
  * Keep in mind that `@Routable` will instantiate the class and pass it to [[SakuraApi.route]],
  * unless you set the [[RoutableClassOptions.autoRoute]] to false.
  */
-export function Routable(options?: RoutableClassOptions): any {
+export function Routable(options?: IRoutableClassOptions): any {
   options = options || {};
   options.blackList = options.blackList || [];
   options.baseUrl = options.baseUrl || '';
 
   options.autoRoute = (typeof options.autoRoute === 'boolean') ? options.autoRoute : true;
 
-  return function (target: any) {
+  return (target: any) => {
 
-    let newConstructor = new Proxy(target, {
-      construct: function (t, args, nt) {
-        let c = Reflect.construct(t, args, nt);
+    const newConstructor = new Proxy(target, {
+      construct: (t, args, nt) => {
+        const c = Reflect.construct(t, args, nt);
 
-        let metaData: SakuraApiClassRoutes[] = [];
+        const metaData: ISakuraApiClassRoutes[] = [];
 
         Object
           .getOwnPropertyNames(Object.getPrototypeOf(c))
-          .forEach(function (methodName) {
+          .forEach((methodName) => {
 
             if (!Reflect.getMetadata(`hasRoute.${methodName}`, c)) {
               return;
@@ -149,16 +153,20 @@ export function Routable(options?: RoutableClassOptions): any {
               return;
             }
 
-            let endPoint = path.join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, c)).replace(/\/$/, "");
+            let endPoint = path
+              .join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, c))
+              .replace(/\/$/, '');
+
             if (!endPoint.startsWith('/')) {
               endPoint = '/' + endPoint;
             }
 
-            let data: SakuraApiClassRoutes = {
-              path: endPoint,
-              f: Reflect.getMetadata(`function.${methodName}`, c).bind(c),
+            const data: ISakuraApiClassRoutes = {
+              f: Reflect.getMetadata(`function.${methodName}`, c)
+                        .bind(c),
               httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, c),
-              method: methodName
+              method: methodName,
+              path: endPoint
             };
 
             metaData.push(data);
@@ -175,11 +183,12 @@ export function Routable(options?: RoutableClassOptions): any {
     });
 
     if (options.autoRoute) {
+      // tslint:disable-next-line: no-unused-expression
       new newConstructor();
     }
 
     return newConstructor;
-  }
+  };
 }
 
 /**
@@ -190,7 +199,7 @@ export function Routable(options?: RoutableClassOptions): any {
  *
  * See [[Routable]] for an example of how to use `@Route`.
  */
-export function Route(options?: RoutableMethodOptions) {
+export function Route(options?: IRoutableMethodOptions) {
   options = options || {};
   options.path = options.path || '';
   options.method = options.method || 'get';
@@ -198,14 +207,14 @@ export function Route(options?: RoutableMethodOptions) {
 
   const methods = ['get', 'post', 'put', 'delete', 'head'];
 
-  return function (target: any, key: string, value: TypedPropertyDescriptor<any>) {
+  return (target: any, key: string, value: TypedPropertyDescriptor<any>) => {
 
     if (methods.indexOf(options.method) < 0) {
       throw new Error(`@route(...)${(target.constructor || {}).name}.${key} had its 'method' `
         + `property set to '${options.method}', which is invalid. Valid options are: ${methods.join(', ')}`);
     }
 
-    let f = function (...args: any[]) {
+    const f = function(...args: any[]) {
       return value.value.apply(this, args);
     };
 
@@ -218,6 +227,6 @@ export function Route(options?: RoutableMethodOptions) {
 
     return {
       value: f
-    }
-  }
+    };
+  };
 }

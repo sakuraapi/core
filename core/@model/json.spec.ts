@@ -1,21 +1,18 @@
+import {Db} from './db';
+import {Json} from './json';
 import {
-  IModel,
   Model,
   modelSymbols
-}               from './model';
-import {
-  Json
-}               from './json';
+} from './model';
 
-describe('@Json', function () {
+describe('@Json', function() {
 
   @Model()
   class Test {
+    /*tslint:disable:variable-name*/
     static fromJson: (...any) => Test;
     static fromJsonArray: (...any) => Test[];
-
-    constructor(public constructedProperty?, public constructedProperty2?) {
-    }
+    /*tslint:enable:variable-name*/
 
     @Json('ap')
     aProperty: string = 'test';
@@ -27,8 +24,10 @@ describe('@Json', function () {
 
     aFourthProperty: string;
 
-    aFunction() {
+    constructor(public constructedProperty?, public constructedProperty2?) {
+    }
 
+    aFunction() {
     }
   }
 
@@ -42,18 +41,44 @@ describe('@Json', function () {
     }
   }
 
-  beforeEach(function () {
+  @Model()
+  class TestDbFieldPrivate {
+    aProperty: string = 'test';
+    anotherProperty: string;
+    aThirdProperty: number = 777;
+
+    @Db({private: true})
+    hasDbButNotJson: string = 'test';
+
+    @Json('hasDbAndJson')
+    @Db({private: true})
+    hasDbAndJson: string = 'test';
+
+    @Json('marshallsWithJsonAndDb')
+    @Db()
+    marshallsWithJsonAndDb: boolean = true;
+
+    @Json('marshallsWithDb')
+    @Db()
+    marshallsWithDb: boolean = true;
+
+    aFunction() {
+    }
+  }
+
+  beforeEach(function() {
     this.t = new Test();
     this.t2 = new Test2();
+    this.dbPrivate = new TestDbFieldPrivate();
   });
 
-  it('allows the injected functions to be overridden without breaking the internal dependencies', function () {
+  it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
 
-    this.t.toJson = function () {
+    this.t.toJson = function() {
       throw new Error('toJson broken');
     };
 
-    this.t.toJsonString = function () {
+    this.t.toJsonString = function() {
       throw new Error('toJsonString broken');
     };
 
@@ -62,26 +87,19 @@ describe('@Json', function () {
     expect(this.t[modelSymbols.toJson]().aThirdProperty).toBe(777);
     expect(this.t[modelSymbols.toJson]().aFunction).toBeUndefined();
 
-    let result = JSON.parse(this.t[modelSymbols.toJsonString]());
+    const result = JSON.parse(this.t[modelSymbols.toJsonString]());
 
     expect(result.ap).toBe('test');
     expect(result.anp).toBeUndefined();
     expect(result.aThirdProperty).toBe(777);
   });
 
-  it('works like a normal object when not decorated with @Json properties', function () {
-    expect(this.t2.toJson().aProperty).toBe('test');
-    expect(this.t2.toJson().anotherProperty).toBeUndefined();
-    expect(this.t2.toJson().aThirdProperty).toBe(777);
-    expect(this.t2.toJson().aFunction).toBeUndefined();
-  });
-
-  describe('toJson', function () {
-    it('is injected into the prototype of the model by default', function () {
+  describe('toJson', function() {
+    it('function is injected into the prototype of the model by default', function() {
       expect(this.t.toJson).toBeDefined();
     });
 
-    it('transforms a defined property to the designated fieldName in the output of toJson', function () {
+    it('transforms a defined property to the designated fieldName in the output of toJson', function() {
       expect(this.t.toJson().ap).toBe('test');
       expect(this.t.toJson().anp).toBeUndefined();
       expect(this.t.toJson().aThirdProperty).toBe(777);
@@ -91,15 +109,48 @@ describe('@Json', function () {
       expect(this.t.anotherProperty).toBeUndefined();
       expect(this.t.aThirdProperty).toBe(777);
     });
-  });
 
-  describe('toJsonString', function () {
-    it('is injected into the prototype of the model by default', function () {
-      expect(this.t.toJsonString()).toBeDefined();
+    it('properties are marshalled when not decorated with @Json properties', function() {
+      expect(this.t2.toJson().aProperty).toBe('test');
+      expect(this.t2.toJson().anotherProperty).toBeUndefined();
+      expect(this.t2.toJson().aThirdProperty).toBe(777);
+      expect(this.t2.toJson().aFunction).toBeUndefined();
     });
 
-    it('transforms a defined property to the designated fieldName in the output of toJsonString', function () {
-      let result = JSON.parse(this.t.toJsonString());
+    describe('obeys @Db:{private:true} by not including that field when marshalling object to json', function() {
+      it('does not change expected toJson behavior', function() {
+        expect(this.dbPrivate.toJson().aProperty).toBe('test');
+        expect(this.dbPrivate.toJson().anotherProperty).toBeUndefined();
+        expect(this.dbPrivate.toJson().aThirdProperty).toBe(777);
+        expect(this.dbPrivate.toJson().aFunction).toBeUndefined();
+      });
+
+      it('when a private @Db field is not decorated with @Json', function() {
+        expect(this.dbPrivate.toJson().hasDbButNotJson).toBeUndefined();
+      });
+
+      it('when a private @Db fiels is also decordated with @Json', function() {
+        expect(this.dbPrivate.toJson().hasDbAndJson).toBeUndefined();
+      });
+
+      it('works as expected when there is an non private @Db decorator and @Json', function() {
+        expect(this.dbPrivate.toJson().marshallsWithJsonAndDb).toBeTruthy();
+      });
+
+      it('works as expected when there is an non private @Db decorator and no @Json', function() {
+        expect(this.dbPrivate.toJson().marshallsWithDb).toBeTruthy();
+      });
+    });
+  });
+
+  describe('toJsonString', function() {
+    it('function is injected into the prototype of the model by default', function() {
+      expect(this.t.toJsonString())
+        .toBeDefined();
+    });
+
+    it('transforms a defined property to the designated fieldName in the output of toJsonString', function() {
+      const result = JSON.parse(this.t.toJsonString());
 
       expect(result.ap).toBe('test');
       expect(result.anp).toBeUndefined();
@@ -107,15 +158,17 @@ describe('@Json', function () {
     });
   });
 
-  describe('fromJson', function () {
-    it('is injected into the model as a static member by default', function () {
-      expect(Test.fromJson).toBeDefined()
+  describe('fromJson', function() {
+    it('from is injected into the model as a static member by default', function() {
+      expect(Test.fromJson).toBeDefined();
     });
 
-    it('allows the injected functions to be overridden without breaking the internal dependencies', function () {
+    it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
       @Model()
       class SymbolTest {
+        /*tslint:disable:variable-name*/
         static fromJson: (any) => SymbolTest;
+        /*tslint:enable:variable-name*/
 
         @Json('ap')
         aProperty: number;
@@ -125,31 +178,33 @@ describe('@Json', function () {
         throw new Error('fromJson failed');
       };
 
-      let obj = SymbolTest[modelSymbols.fromJson]({
+      const obj = SymbolTest[modelSymbols.fromJson]({
         ap: 1
       });
       expect(obj.aProperty).toBe(1);
     });
 
-    it('maintains proper instanceOf', function () {
-      let obj = Test.fromJson({});
+    it('maintains proper instanceOf', function() {
+      const obj = Test.fromJson({});
 
       expect(obj instanceof Test).toBe(true);
     });
 
-    describe('behaves such that it', function () {
+    describe('behaves such that it', function() {
 
-      it('passes on constructor arguments to the @Model target being returned', function () {
-        let obj = Test.fromJson({}, 888, 999);
+      it('passes on constructor arguments to the @Model target being returned', function() {
+        const obj = Test.fromJson({}, 888, 999);
 
         expect(obj.constructedProperty).toBe(888);
         expect(obj.constructedProperty2).toBe(999);
       });
 
-      it('does not throw if there are no @Json decorators', function () {
+      it('does not throw if there are no @Json decorators', function() {
         @Model()
         class C {
+          /*tslint:disable:variable-name*/
           static fromJson: (...any) => C;
+          /*tslint:enable:variable-name*/
           someProperty = 777;
         }
 
@@ -157,15 +212,15 @@ describe('@Json', function () {
         expect(C.fromJson({someProperty: 888}).someProperty).toBe(888);
       });
 
-      it('maps an @Json fieldname to an @Model property', function () {
-        let obj = Test.fromJson({
+      it('maps an @Json fieldname to an @Model property', function() {
+        const obj = Test.fromJson({
           ap: 1
         });
         expect(obj.aProperty).toBe(1);
       });
 
-      describe('allows multiple @json decorators', function () {
-        it('with only one of the @json properties used', function () {
+      describe('allows multiple @json decorators', function() {
+        it('with only one of the @json properties used', function() {
           let obj = Test.fromJson({
             anp: 2
           });
@@ -176,8 +231,8 @@ describe('@Json', function () {
           });
           expect(obj.anotherProperty).toBe(2);
         });
-        it('with the last property defined in the json object winning if there are multiple matching fields for a property', function () {
-          let obj = Test.fromJson({
+        it('with the last property defined in the json object winning if there are multiple matching fields for a property', function() {
+          const obj = Test.fromJson({
             anotherProperty: 3,
             anp: 2
           });
@@ -186,51 +241,53 @@ describe('@Json', function () {
 
       });
 
-      it('maps a model property that has no @Json property, but does have a default value', function () {
-        let obj = Test.fromJson({
+      it('maps a model property that has no @Json property, but does have a default value', function() {
+        const obj = Test.fromJson({
           aThirdProperty: 3
         });
 
         expect(obj.aThirdProperty).toBe(3);
       });
 
-      it('does not map a model property that has no default value and has no @Json decorator', function () {
-        let obj = Test.fromJson({
+      it('does not map a model property that has no default value and has no @Json decorator', function() {
+        const obj = Test.fromJson({
           aFourthProperty: 4
         });
 
         expect(obj.aFourthProperty).toBeUndefined();
       });
 
-      it('maps a model property that has no default value, but does have an @Json decorator', function () {
-        let obj = Test.fromJson({
+      it('maps a model property that has no default value, but does have an @Json decorator', function() {
+        const obj = Test.fromJson({
           anotherProperty: '2'
         });
 
         expect(obj.anotherProperty).toBe('2');
       });
 
-      it('returns a real @Model object, not just an object with the right properties', function () {
+      it('returns a real @Model object, not just an object with the right properties', function() {
         expect(Test.fromJson({}).aFunction).toBeDefined();
       });
 
-      it('returns null when no json object is provided', function () {
-        expect((<any>Test.fromJson)()).toBe(null);
+      it('returns null when no json object is provided', function() {
+        expect((Test.fromJson)() as any).toBe(null);
         expect(Test.fromJson(null)).toBe(null);
         expect(Test.fromJson(undefined)).toBe(null);
       });
     });
   });
 
-  describe('fromJsonArray', function () {
-    it('is injected into the model as a static member by default', function () {
-      expect(Test.fromJsonArray).toBeDefined()
+  describe('fromJsonArray', function() {
+    it('from is injected into the model as a static member by default', function() {
+      expect(Test.fromJsonArray).toBeDefined();
     });
 
-    it('allows the injected functions to be overridden without breaking the internal dependencies', function () {
+    it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
       @Model()
       class SymbolTest {
+        /*tslint:disable:variable-name*/
         static fromJsonArray: (...any) => SymbolTest;
+        /*tslint:enable:variable-name*/
 
         @Json('ap')
         aProperty: number;
@@ -240,7 +297,7 @@ describe('@Json', function () {
         throw new Error('fromJsonArray failed');
       };
 
-      let obj = SymbolTest[modelSymbols.fromJsonArray]([{
+      const obj = SymbolTest[modelSymbols.fromJsonArray]([{
         ap: 1
       }, {
         ap: 2
@@ -250,24 +307,24 @@ describe('@Json', function () {
       expect(obj[1].aProperty).toBe(2);
     });
 
-    it('maintains proper instanceOf', function () {
-      let obj = Test.fromJsonArray([{}]);
+    it('maintains proper instanceOf', function() {
+      const obj = Test.fromJsonArray([{}]);
 
       expect(obj[0] instanceof Test).toBe(true);
     });
 
-    it('passes on constructor arguments to the @Model target being returned', function () {
-      let obj = Test.fromJsonArray([{}], 888, 999);
+    it('passes on constructor arguments to the @Model target being returned', function() {
+      const obj = Test.fromJsonArray([{}], 888, 999);
 
       expect(obj[0].constructedProperty).toBe(888);
       expect(obj[0].constructedProperty2).toBe(999);
     });
 
-    it('gracefully takes a non array', function () {
-      let obj1 = Test.fromJsonArray(null);
-      let obj2 = Test.fromJsonArray({});
-      let obj3 = Test.fromJsonArray(undefined);
-      let obj4 = Test.fromJsonArray();
+    it('gracefully takes a non array', function() {
+      const obj1 = Test.fromJsonArray(null);
+      const obj2 = Test.fromJsonArray({});
+      const obj3 = Test.fromJsonArray(undefined);
+      const obj4 = Test.fromJsonArray();
 
       expect(Array.isArray(obj1)).toBeTruthy();
       expect(Array.isArray(obj2)).toBeTruthy();

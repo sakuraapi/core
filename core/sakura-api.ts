@@ -1,8 +1,11 @@
 import {routableSymbols} from './@routable/routable';
-import {SakuraApiConfig} from '../boot/config';
-import * as colors       from 'colors';
-import * as express      from 'express';
-import * as http         from 'http';
+import {SakuraApiConfig} from '../boot/sakura-api-config';
+import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
+import * as colors from 'colors';
+import * as express from 'express';
+import * as http from 'http';
+
+import debug = require('debug');
 
 /**
  * A set of properties defining the configuration of the server.
@@ -40,17 +43,22 @@ export interface ServerConfig {
  * import                   'colors';
  * import * as bodyParser   from 'body-parser'
  *
- * (function boot() {
- *    let sapi = SakuraApi.instance;
+ * class Server {
+ *    sapi = SakuraApi.instance;
  *
- *    sapi.addMiddleware(bodyParser.json());
+ *    constructor() {}
  *
- *    sapi
- *     .listen()
- *     .catch((err) => {
- *       console.log(`Error: ${err}`.red);
- *     });
- * })();
+ *    start() {
+ *        this.sapi.addMiddleware(bodyParser.json());
+ *        sapi
+ *          .listen()
+ *          .catch((err) => {
+ *            console.log(`Error: ${err}`.red);
+ *          });
+ *    }
+ * }
+ *
+ * new Server().start();
  * </pre>
  *
  * This example assumes you have a class called `User` that is decorated with [[Routable]]. You import that module
@@ -60,11 +68,17 @@ export class SakuraApi {
 
   private static _instance: SakuraApi;
 
+  private static debug = {
+    normal: debug('sapi:SakuraApi')
+  };
+  private debug = SakuraApi.debug;
+
   private _address: string = '127.0.0.1';
   private _app: express.Express;
   private _config: any;
   private _port: number = 3000;
   private _server: http.Server;
+  private _dbConnections: SakuraMongoDbConnection;
   private routes = [];
 
   /**
@@ -72,7 +86,7 @@ export class SakuraApi {
    */
   static get instance(): SakuraApi {
     if (!this._instance) {
-      this._instance = new SakuraApi(express());
+      this._instance = new SakuraApi();
     }
     return this._instance;
   }
@@ -116,6 +130,16 @@ export class SakuraApi {
   }
 
   /**
+   * The [[SakuraMongoDbConnection]] instance that was created when [[SakuraApi]] instantiated if
+   * the "dbConnections" property was found in the config with the proper configuration options set, or
+   * if [[SakuraApi.instantiate]] was used to instantiate the [[SakuraApi]] singleton and the
+   * [[SakuraMongoDbConnection]] was manually provided.
+   */
+  get dbConnections(): SakuraMongoDbConnection {
+    return this._dbConnections;
+  }
+
+  /**
    * Returns the port the server is listening on.
    */
   get port(): number {
@@ -129,17 +153,29 @@ export class SakuraApi {
     return this._server;
   }
 
-  private constructor(app: express.Express) {
+  private constructor(app?: express.Express, config?: any, dbConfig?: SakuraMongoDbConnection) {
+    this.debug.normal('.constructor started');
+
     if (!app) {
-      throw new Error('cannot instantiate a new SakuraApi without providing an Express object');
+      app = express();
+    }
+
+    if (!config) {
+      config = new SakuraApiConfig().load() || {};
+    }
+
+    if (!dbConfig) {
+      this._dbConnections = SakuraApiConfig.dataSources(config);
     }
 
     this._app = app;
     this._server = http.createServer(this.app);
 
-    this.config = new SakuraApiConfig().load() || {};
+    this.config = config;
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
+
+    this.debug.normal('.constructor done');
   }
 
   /**
@@ -149,6 +185,7 @@ export class SakuraApi {
    * This uses `express.use(...)` internally.
    */
   static addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
+    SakuraApi.debug.normal('.addMiddleware called');
     SakuraApi.instance.app.use(fn);
   }
 
@@ -167,28 +204,61 @@ export class SakuraApi {
    * with any error other than `Not running` that's returned from the `http.Server` instance.
    */
   close(): Promise<null> {
+    this.debug.normal('.close called');
+
     return new Promise((resolve, reject) => {
       this
         .server
         .close((err) => {
           if (err && err.message !== 'Not running') {
+            this.debug.normal('.close error', err);
+
             return reject(err);
           }
+          this.debug.normal('.close done');
+
           resolve();
         });
     });
   }
 
   /**
-   * Starts the server. You can override the settings loaded by [[SakuraApiConfig]] by passing in an object that implements [[ServerConfig]].
+   * Manually instantiate the [[SakuraApi]] singleton with your own `express.Express` and [[SakuraApiConfig]].
+   * If either parameter is null or undefined, then the defaults are used as if you can called
+   * [[SakuraApi.instance]]. Note that you can only call this if the [[SakuraApi]] singleton has not already been
+   * instantiated. Otherwise, it will throw `new Error('ALREADY_INSTANTIATED')`.
+   */
+  static instantiate(app?: express.Express, config?: SakuraApiConfig, dbConfig?: SakuraMongoDbConnection): SakuraApi {
+    SakuraApi.debug.normal(`.instantiate called`);
+
+    if (this._instance) {
+      throw new Error('ALREADY_INSTANTIATED');
+    }
+
+    this._instance = new SakuraApi(app, config, dbConfig);
+    return this.instance;
+  }
+
+  /**
+   * Starts the server. You can override the settings loaded by [[SakuraApiConfig]] by passing in
+   * an object that implements [[ServerConfig]].
+   *
+   * Connects to all the DB connections (if any) defined in [[SakuraApi.dbConnections]]. These are loaded
+   * by [[SakuraApiConfig.dataSources]]. If you do not provide a "dbConnections" property in your config, or if you
+   * did not instantiate SakuraApi manually with [[SakuraApi.instiate]] with a [[SakuraMongoDbConnection]] that
+   * you constructed elsewhere, then no DB connections will be opened. You can also user [[SakuraMongoDbConnection.connect]]
+   * to manually define Db connections.
    */
   listen(listenProperties?: ServerConfig): Promise<null> {
     listenProperties = listenProperties || {};
+
+    this.debug.normal(`.listen called with serverConfig:`, listenProperties);
 
     return new Promise((resolve, reject) => {
       this._address = listenProperties.address || this._address;
       this._port = listenProperties.port || this._port;
 
+      // Bind the routes
       let router = express.Router();
       this
         .routes
@@ -198,16 +268,38 @@ export class SakuraApi {
 
       this.app.use(this.baseUri, router);
 
-      this
-        .server
-        .listen(this.port, this.address, (err) => {
-          if (err) {
+      // Open the connections
+      if (this.dbConnections) {
+        this
+          .dbConnections
+          .connectAll()
+          .then(() => {
+            listen.bind(this)();
+          })
+          .catch((err) => {
             return reject(err);
-          }
-          let msg = listenProperties.bootMessage || `SakuraAPI started on: ${this.address}:${this.port}`;
-          console.log(colors.green(msg));
-          resolve();
-        });
+          })
+      } else {
+        listen.bind(this)();
+      }
+
+      // Start the server
+      function listen() {
+        this
+          .server
+          .listen(this.port, this.address, (err) => {
+            if (err) {
+              this.debug.normal('.listen error', err);
+              return reject(err);
+            }
+            let msg = listenProperties.bootMessage || `SakuraAPI started on: ${this.address}:${this.port}`;
+            console.log(colors.green(msg));
+            this.debug.normal(`.listen server started '%s'`, msg);
+            return resolve();
+          });
+      }
+
+      // Release the Kraken.
     });
   }
 
@@ -217,7 +309,10 @@ export class SakuraApi {
    * bound.
    */
   route(target: any) {
+    this.debug.normal(`.route called: '%o'`, target);
+
     if (!target[routableSymbols.sakuraApiClassRoutes]) {
+      this.debug.normal(`.route '%o' is not a routable class`);
       return;
     }
 
