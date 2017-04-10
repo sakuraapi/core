@@ -4,22 +4,30 @@ import {
   MongoClientOptions
 } from 'mongodb';
 
-const debug = require('debug')('sapi:SakuraMongoDbConnection');
-const debugVerbose = require('debug')('sapi:SakuraMongoDbConnection:verbose');
+import debug = require('debug');
 
+/**
+ * SakuraMongoDbConnection is responsible for managing connections to a MongoDB database or cluster.
+ */
 export class SakuraMongoDbConnection {
 
-  private connections = new Map<string, {uri: string, options?: MongoClientOptions}>();
+  private connections = new Map<string, { uri: string, options?: MongoClientOptions }>();
   private dbs = new Map<string, Db>();
+
+  private static debug = {
+    normal: debug('sapi:SakuraMongoDbConnection'),
+    verbose: debug('sapi:SakuraMongoDbConnection:verbose')
+  };
+  private debug = SakuraMongoDbConnection.debug;
 
   /**
    * Adds the parameters for a connection but doesn't actually connect to the DB. This is used to queue up
    * connection configurations that are later used for opening connections to MongoDB with [[SakuraMongoDbConnection.connectAll]].
    */
   addConnection(dbName: string, uri: string, options?: MongoClientOptions) {
-    debug(`.addConnection dbName: '${dbName}', uri: '${uri}', options:`, options);
+    this.debug.normal(`.addConnection dbName: '${dbName}', uri: '${uri}', options:`, options);
     this.connections.set(dbName, {uri, options});
-    debugVerbose(`.addConnection connections: '%O'`, this.connections);
+    this.debug.verbose(`.addConnection connections: '%O'`, this.connections);
   }
 
   /**
@@ -27,12 +35,12 @@ export class SakuraMongoDbConnection {
    * created by `MongoClient.connect`.
    */
   connect(dbName: string, uri: string, options?: MongoClientOptions): Promise<Db> {
-    debug(`.connect dbName: '${dbName}', uri: '${uri}', options:`, options);
+    this.debug.normal(`.connect dbName: '${dbName}', uri: '${uri}', options:`, options);
 
     return new Promise((resolve, reject) => {
       let isConnected = this.getDb(dbName) || null;
       if (isConnected) {
-        debug(`.connect dbName: '${dbName}' already connected`);
+        this.debug.normal(`.connect dbName: '${dbName}' already connected`);
         return resolve(isConnected);
       }
 
@@ -47,14 +55,14 @@ export class SakuraMongoDbConnection {
       MongoClient
         .connect(uri, options)
         .then((db) => {
-          debug(`.connect dbName: '${dbName}' connected`);
+          this.debug.normal(`.connect dbName: '${dbName}' connected`);
 
           this.dbs.set(dbName, db); // replace placeholder with the db
-          debugVerbose('.connect dbs: %O', this.dbs);
+          this.debug.verbose('.connect dbs: %O', this.dbs);
           resolve(db);
         })
         .catch((err) => {
-          debug(`.connect dbName: '${dbName}' error:`, err);
+          this.debug.normal(`.connect dbName: '${dbName}' error:`, err);
 
           this.dbs.delete(dbName); // remove placeholder
           reject(err);
@@ -68,7 +76,7 @@ export class SakuraMongoDbConnection {
    */
   connectAll(): Promise<Db[]> {
     return new Promise((resolve, reject) => {
-      debug('.connectAll start');
+      this.debug.normal('.connectAll start');
 
       let wait = [];
 
@@ -79,12 +87,12 @@ export class SakuraMongoDbConnection {
       Promise
         .all(wait)
         .then((results) => {
-          debug('.connectAll done');
+          this.debug.normal('.connectAll done');
 
           resolve(results);
         })
         .catch((err) => {
-          debug(`.connectAll error:`, err);
+          this.debug.normal(`.connectAll error:`, err);
 
           reject(err);
         });
@@ -97,7 +105,7 @@ export class SakuraMongoDbConnection {
   close(dbName: string, forceClose?: boolean): Promise<null> {
     let db = this.dbs.get(dbName);
 
-    debug(`.close dbName:'${dbName}', forceClose: ${forceClose}, connection found: ${!!db}`);
+    this.debug.normal(`.close dbName:'${dbName}', forceClose: ${forceClose}, connection found: ${!!db}`);
 
     if (db) {
       this.connections.delete(dbName);
@@ -112,7 +120,7 @@ export class SakuraMongoDbConnection {
    * Closes all connections tracked by this instance of [[SakuraMongoDbConnection]].
    */
   closeAll(): Promise<null> {
-    debug('.closeAll called');
+    this.debug.normal('.closeAll called');
 
     return new Promise((resolve, reject) => {
       let wait = [];
@@ -124,12 +132,12 @@ export class SakuraMongoDbConnection {
       Promise
         .all(wait)
         .then(() => {
-          debug('.closeAll done');
+          this.debug.normal('.closeAll done');
 
           return resolve();
         })
         .catch((err) => {
-          debug('.closeAll error:', err);
+          this.debug.normal('.closeAll error:', err);
 
           reject(err);
         });
@@ -142,19 +150,19 @@ export class SakuraMongoDbConnection {
   getDb(dbName: string): Db {
     let result = this.dbs.get(dbName);
 
-    debug(`.getDb dbName: '${dbName}', found: ${!!result}`);
-    debugVerbose(`.getDb dbs: %O`, this.dbs);
+    this.debug.normal(`.getDb dbName: '${dbName}', found: ${!!result}`);
+    this.debug.verbose(`.getDb dbs: %O`, this.dbs);
 
     return result;
   }
 
   /**
-   * Gets a connection parameter stored in the private [[SakuraMonoDb]] map tracking connections.
+   * Gets a connection parameter from the map tracking connections.
    */
-  getConnection(dbName: string): {uri: string, options?: MongoClientOptions} {
+  getConnection(dbName: string): { uri: string, options?: MongoClientOptions } {
     let result = this.connections.get(dbName);
 
-    debug(`.getConnection dbName:'${dbName}', found: ${!!result}`);
+    this.debug.normal(`.getConnection dbName:'${dbName}', found: ${!!result}`);
 
     return result;
   }

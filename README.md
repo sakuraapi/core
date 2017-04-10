@@ -8,27 +8,29 @@
 API Documentation: https://sakuraapi.github.io/api/
 
 # SakuraApi
-SakuraAPI is a collaborative effort to develop an appropriately opinionated NodeJS API framework utilizing modern technologies like TypeScript and emerging ECMAscript standards.
-
-What is appropriately opinionated is a matter of opinion. ;)
+SakuraAPI is a NodeJS API framework that utilizes modern and emerging webs standards like TypeScript and ES6 in a way that feels familiar to programmers that are responsible for full-stack MEAN stack development. 
 
 At the moment, this project is an experiment to explore various ideas with my team.
 
 ## Goals
 
-* Anyone looking at a SakuraApi based project should be able to get a quick feel for what's going on, if they're familiar with SakuraApi. The structure is opinionated enough that disparate projects will feel familiar (assuming the developer didn't go out of their way to be non-standard).
-* SakuraApi is built using modern and emerging web standards. If there is some reason your system cannot use Node 7+ or TypeScript 2+, then this isn't the right project for you. Currently there are no plans to expose a pure ECMAScript version of the framework.
-* Implementing a new model or route in a SakuraApi project should be ergonomic - it shouldn't require that you remember to change settings in various files spread throughout your project.
-* SakuraApi should encourage good API development practices through how developers implement it. In other words, using SakuraApi as intended should result in an API that's pretty close to best practices.
-* SakuraApi should facilitate interacting with the database, but the developer should not be abstracted away from the database.
-  * Many of the database abstractions in current frameworks actually make it harder to develop because you can't use you existing knowledge to solve non-trivial db queries. Sometimes the more advanced features of a db aren't event supported yet.
-  * Part of this means that interacting with databases will not be treated generically. The framework will initially expose support features for MongoDB. Later, if demand exists, other databases will be supported. Those new databases will have their own nuances and you will not be able to flip a few switches and have you API switch from a NoSQL Document Store to a properly architected Relational Database or Graph Database. It's our opinion that those sorts of features are great for trivial projects but inadequate for any sizable projects that require deep integration with the various data stores that have been selected for each of their unique strengths.
+* Angular developers should find the conventions in SakuraApi to be familiar.
+* Anyone looking at a SakuraApi based project should be able to get a quick feel for what's going on, if they're familiar with SakuraApi. The structure is opinionated enough that disparate projects will feel familiar (assuming the developer didn't go out of their way to be non-standard). 
+* SakuraApi is built using modern and emerging web standards. If there is some reason your project cannot use Node 7+ or TypeScript 2+, then this isn't the right project for you. Currently there are no plans to expose a pure ECMAScript version of the framework.
+* Implementing a new model or route in a SakuraApi project should be ergonomic - it shouldn't require that you remember to change settings in various files spread throughout your project. SakuraApi should, however, support a robust cascading configuration system.
+* SakuraApi should encourage good API development practices through how developers implement it. In other words, using SakuraApi as intended should result in an API that's reasonably close to best practices (withing the semantic domain of whatever that means).
+* SakuraApi should facilitate interacting with MongoDB, but the developer should not be abstracted away from the database if he or she needs to dive deep into MongoDB land.
+  * It is the opinion of the contributors to this frameowrkMany of the database abstractions in current frameworks actually make it harder to develop because you can't use you existing knowledge of MongoDB to solve non-trivial queries. Sometimes the more advanced features of a db aren't even supported yet.
+  * As a result, interacting with databases will not be treated generically - this is a MEAN stack framework, where the letter M is brought to you by MongoDB. 
+  * If you're looking for RDMS support (e.g., MySQL, PosgreSQL, etc.), support for some othe NoSQL database, or ______, this is likely not the API you're looking for (Jedi hand-wave).
 
 ## How to interact with others on this project:
 
 * Open an Issue: https://github.com/sakuraapi/api/issues
 * Google Forum: https://groups.google.com/forum/#!forum/sakuraapi
 * Gitter: https://gitter.im/sakuraapi
+
+This is a new tiny community, so if you don't get a response right away, it might be that we haven't noticed you rather than that we're ignoring you. Feel free to be persistent.
 
 ## Dependencies:
 
@@ -37,14 +39,14 @@ At the moment, this project is an experiment to explore various ideas with my te
 
 (among other things)
 
-Why NodeJS 7+? Because it has ECMAScript 2015 features we wanted, and SakuraApi is about emerging standards, not past ones.
-
 ## Standards & Process
 
 * Semantic Versioning
-* Contributions: Fork the project; work off a feature branch; do a pull request back to develop (pull updates frequently to keep up)
+* Contributions: Fork the project; make your contribution; do a pull request back to develop (pull updates frequently to keep up)
 * Before heading off to work on something, considering collaborating first by either (1) opening an issue or (2) starting a conversation on gitter or in the Google forum that leads to back to (1)
 * All work should be done against an issue (https://github.com/sakuraapi/api/issues)
+* All contributions require unit-tests.
+* An ideal bug report will include a PR with a unit-testing demonstrating the bug. TDBR (test driven bug reporting). :)
 
 ## Community and Conduct
 
@@ -61,12 +63,26 @@ npm install
 npm test
 ```
 
-It's a framework / library, so there isn't an `npm start`. You can look at the [starter](https://github.com/sakuraapi/starter) project to get an ostensive feel for how the api is used.
+It's a framework / library, so there isn't an `npm start`. You can look at the [starter](https://github.com/sakuraapi/example) project to get an ostensive feel for how the api is used.
+
+SakuraApi uses Docker for testing, so you need to have a Docker installed if you plan to contribute.
+
+If you need to override where the tests look for MongoDB, you can override the port like this:
+```
+TEST_MONGO_DB_PORT=27001 npm run test
+```
+
+You override the address with TEST_MONGO_DB_ADDRESS like this:
+```
+TEST_MONGO_DB_ADDRESS=0.0.0.0 npm run test
+```
+
+That said, you really should be using the project's docker setup.
 
 # Who should use this API?
 
 At the moment, no one for anything other than contributing or experimenting. This is pretty ground-floor stuff, and you have no way of knowing whether or not we get
-bored with this two months from now. It's a bad idea to use this framework for any "real" work until it reaches 1.0.0 (Deo volente et ceteris paribus).
+bored with this two months from now. It's a bad idea to use this framework for any "real" work until it reaches 1.0.0 (Deo volente).
 
 # environment
 
@@ -105,213 +121,6 @@ Naturally, anything you define is available to you. You get access to the config
 
 # Using SakuraAPI
 
-See: https://github.com/sakuraapi/starter
+https://github.com/sakuraapi/example
 
-Setup a basic project:
-
-```
-mkdir {project}
-cd {project}
-npm init
-npm install sakuraapi --save
-mkdir config
-cd {config}
-touch environment.json
-```
-
-You'll want to edit the {project}/config/environment.json file:
-
-```
-{
-  server: {
-    address: string,      // '127.0.0.1'
-    port: number          // 3000
-  }
-}
-```
-
-You'll probably also want to `git init` in your project root.
-
-Your `{project}/package.json` should look something like this:
-
-```
-{
-  "name": "starter",
-  "version": "0.0.0",
-  "description": "A starter project for SakuraAPI",
-  "private": true,
-  "main": "./dist/index.js",
-  "scripts": {
-    "build": "tsc",
-    "start": "npm run build && nodemon .",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "tsc": "tsc"
-  },
-  "author": "You",
-  "license": "MIT",
-  "dependencies": {
-    "colors": "^1.1.2",
-    "express": "^4.14.0",
-    "sakuraapi": "^0.1.0"
-  },
-  "devDependencies": {
-    "@types/colors": "^0.6.33",
-    "@types/es6-promise": "0.0.32",
-    "@types/express": "^4.0.34",
-    "@types/node": "^6.0.51",
-    "nodemon": "^1.11.0",
-    "typescript": "^2.0.10"
-  }
-}
-```
-
-Make sure to run `npm install` after you update your `{project}/package.json`.
-
-Your `{project}/tsconfig.json` should look something like this:
-
-```
-{
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "es5",
-    "noImplicitAny": false,
-    "outDir": "dist",
-    "sourceMap": false,
-    "removeComments": true,
-    "noLib": false,
-    "declaration": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  },
-  "exclude": [
-    "node_modules",
-    "scripts",
-    "dist"
-  ]
-}
-```
-
-You can create a route handler in `{project}/model/user.ts`:
-```
-import {
-  Routable,
-  Route
-}                   from 'sakuraapi';
-import * as express from 'express';
-
-@Routable({
-  baseUrl: 'api'
-})
-class User {
-  presidents = [{
-    firstName: 'George',
-    lastName: 'Washington'
-  }, {
-    firstName: 'John',
-    lastName: 'Adams'
-  }];
-
-  constructor() {
-  }
-
-  @Route({
-    path: 'user',
-    method: 'get'
-  })
-  getUsers(req: express.Request, res: express.Response) {
-    res.status(200).json(this.presidents);
-  }
-
-  @Route({
-    path: 'user/:id',
-    method: 'get'
-  })
-  getUser(req: express.Request, res: express.Response) {
-    let id = Number(req.params.id);
-
-    if (id && id - 1 < this.presidents.length && id > 0) {
-      res.status(200).json(this.presidents[id - 1]);
-    } else {
-      res.sendStatus(404);
-    }
-  }
-}
-```
-
-Once you've done that, your basic `{project}/index.ts` file should look something like this:
-
-```
-import {SakuraApi}       from 'sakuraapi';
-import                   './model/user';
-import                   'colors';
-import * as bodyParser   from 'body-parser'
-
-(function boot() {
-  let sapi = SakuraApi.instance;
-
-  sapi.addMiddleware(bodyParser.json());
-
-  sapi
-    .listen()
-    .catch((err) => {
-      console.log(`Error: ${err}`.red);
-    });
-})();
-
-```
-
-
-# @Routable and @Route
-
-You declare a class decorated with `@Routable()` to define your routes for SakuraApi. For example:
-
-## @Routable
-
-```
-@Routable()
-class RelatedRouteHandlers() {
-}
-```
-
-`@Routable()` takes an `RoutableClassOptions` object for its configuration.
-
-### Options:
-
-* `autoRoute` (true | false) [default: true]: a value of false tells `@Routable` to not automatically add the classes
-   routes to `SakuraApi`'s ExpressJS router.
-* `blackList` (string[]) [default: []]: an array of method names to black list. A black listed method with an `@Route` decorator will
-   be ignored when `@Routable` is adding its `@Route` methods to the router.
-* `baseUrl` (string) [default: '']: sets the base url shared by all `@Route` methods defined by this class.
-
-## @Route
-
-```
-@Routable({
-  baseUrl: 'users/'
-})
-class UserRoutes() {
-
-  @Route()
-  getUser(req: express.Request, res: express.Response) {
-    res.status(200).json({userId: 123});
-  }
-}
-```
-
-`@Route()` takes an `RoutableMethodOptions` object for its configuration.
-
-### Options:
-
-* `path` (string) [default: '']: the path after the `BaseUri` optionally defined in `@Routable` that routes to this handler method.
-* `method` (string) [default: 'get']: the HTTP method for this path that routes to this handler method.
-* `blackList` (boolean) [default: false]: whether or not this route should be excluded from the router.
-
-# Setting a base path
-`SakuraApi.instance.baseUri = '/api/v0';`
-
-# About the SakuraApi class
-
-* It's a singleton.
-* You get its instance with `SakuraApi.instance`
-* It creates the instance of `express();` used by your API
-* You get access to the `express` object with `SakuraApi.instance.app`
+This part of the documentation needs to be updated. The example project may be out of date at any given point. The example project is current <-> (if and only if) it has the same semver as the framework. A none-current example project may still work with the latest framework, but it will be dated in terms of how SakuraApi should be used. 

@@ -71,16 +71,17 @@ describe('@Model', function() {
     });
 
     describe('ModelOptions.dbConfig', function() {
-      it('throws when dbConfig.db is missing', function() {
-        @Model({
-          dbConfig: {
-            collection: '',
-            db: ''
-          }
-        })
-        class TestDbConfig {
-        }
 
+      @Model({
+        dbConfig: {
+          collection: '',
+          db: ''
+        }
+      })
+      class TestDbConfig {
+      }
+
+      it('throws when dbConfig.db is missing', function() {
         expect(() => {
           new TestDbConfig(); // tslint:disable-line
         }).toThrow();
@@ -112,8 +113,8 @@ describe('@Model', function() {
       })
       class TestDefaultMethods implements IModel {
         /*tslint:disable:variable-name*/
-        static delete: (any) => any;
-        static deleteById: (ObjectID) => any;
+        static removeAll: (any) => any;
+        static removeById: (ObjectID) => any;
         static get: (...any) => any;
         static getOne: (...any) => any;
         static getById: (...any) => any;
@@ -165,7 +166,7 @@ describe('@Model', function() {
            * See db.spec.ts for toDb and fromDb tests.
            */
 
-          it('delete', function(done) {
+          it('removeAll', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -181,7 +182,7 @@ describe('@Model', function() {
                     expect(createResult.insertedCount).toBe(1);
 
                     TestDefaultMethods
-                      .delete({
+                      .removeAll({
                         $or: [{_id: this.tdm.id}, {_id: this.tdm2.id}]
                       })
                       .then((deleteResults) => {
@@ -196,7 +197,7 @@ describe('@Model', function() {
               .catch(done.fail);
           });
 
-          it('deleteById', function(done) {
+          it('removeById', function(done) {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -212,7 +213,7 @@ describe('@Model', function() {
                     expect(createResult2.insertedCount).toBe(1);
 
                     TestDefaultMethods
-                      .deleteById(this.tdm.id)
+                      .removeById(this.tdm.id)
                       .then((deleteResults) => {
                         expect(deleteResults.deletedCount).toBe(1);
                         done();
@@ -306,6 +307,10 @@ describe('@Model', function() {
                   .then((results) => {
                     expect(results.length).toBe(1);
                     expect(results[0]._id.toString()).toBe(this.tdm.id.toString());
+
+                    expect(results[0].fn).toBeDefined();
+                    expect(results[0].lastName).toBeDefined();
+
                     expect(results[0].fn).toBe(this.tdm.firstName);
                     expect(results[0].lastName).toBe(this.tdm.lastName);
                     done();
@@ -352,6 +357,10 @@ describe('@Model', function() {
                   .next()
                   .then((result) => {
                     expect(result._id.toString()).toBe(this.tdm.id.toString());
+
+                    expect(result.fn).toBeDefined();
+                    expect(result.lastName).toBeDefined();
+
                     expect(result.fn).toBe(this.tdm.firstName);
                     expect(result.lastName).toBe(this.tdm.lastName);
                     done();
@@ -382,8 +391,12 @@ describe('@Model', function() {
                     .next()
                     .then((result2) => {
                       expect(result2._id.toString()).toBe(this.tdm.id.toString());
-                      expect(result2.fName).toBe(this.tdm.fName);
-                      expect(result2.lName).toBe(this.tdm.lName);
+
+                      expect(result2.fn).toBeDefined();
+                      expect(result2.lastName).toBeDefined();
+
+                      expect(result2.fn).toBe(this.tdm.firstName);
+                      expect(result2.lastName).toBe(this.tdm.lastName);
                       done();
                     })
                     .catch(done.fail);
@@ -408,8 +421,12 @@ describe('@Model', function() {
                     .next()
                     .then((result2) => {
                       expect(result2._id.toString()).toBe(this.tdm.id.toString());
-                      expect(result2.fName).toBe(this.tdm.fName);
-                      expect(result2.lName).toBe(this.tdm.lName);
+
+                      expect(result2.fn).toBeDefined();
+                      expect(result2.lastName).toBeDefined();
+
+                      expect(result2.fn).toBe(this.tdm.firstName);
+                      expect(result2.lastName).toBe(this.tdm.lastName);
                       done();
                     })
                     .catch(done.fail);
@@ -459,6 +476,8 @@ describe('@Model', function() {
                         .limit(1)
                         .next()
                         .then((updated) => {
+                          expect(updated.fn).toBeDefined();
+
                           expect(updated.fn).toBe(updateSet.firstName);
                           done();
                         })
@@ -498,6 +517,9 @@ describe('@Model', function() {
                         .limit(1)
                         .next()
                         .then((updated) => {
+                          expect(updated.fn).toBeDefined();
+                          expect(updated.lastName).toBeDefined();
+
                           expect(updated.fn).toBe(changes.firstName);
                           expect(updated.lastName).toBe(changes.lastName);
                           done();
@@ -510,8 +532,8 @@ describe('@Model', function() {
 
           });
 
-          describe('delete', function() {
-            it('without filter', function(done) {
+          describe('remove', function() {
+            it('itself', function(done) {
               expect(this.tdm.id).toBeNull();
 
               this
@@ -527,7 +549,7 @@ describe('@Model', function() {
                       expect(createResult2.insertedCount).toBe(1);
                       this
                         .tdm
-                        .delete()
+                        .remove()
                         .then((deleteResults) => {
                           expect(deleteResults.deletedCount).toBe(1);
                           done();
@@ -539,37 +561,6 @@ describe('@Model', function() {
                 .catch(done.fail);
             });
 
-            it('with filter', function(done) {
-              expect(this.tdm.id).toBeNull();
-
-              this
-                .tdm
-                .create()
-                .then((createResult) => {
-                  expect(createResult.insertedCount).toBe(1);
-
-                  this
-                    .tdm2
-                    .create()
-                    .then((createResult2) => {
-                      expect(createResult2.insertedCount).toBe(1);
-
-                      this
-                        .tdm
-                        .delete({
-                          $or: [{_id: this.tdm.id}, {_id: this.tdm2.id}]
-                        })
-                        .then((deleteResults) => {
-                          expect(deleteResults.deletedCount).toBe(2);
-                          done();
-                        })
-                        .catch(done.fail);
-
-                    })
-                    .catch(done.fail);
-                })
-                .catch(done.fail);
-            });
           });
         });
       });

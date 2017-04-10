@@ -1,7 +1,6 @@
-/** @module core/@model/json */
-
 /**
- * The symbols used by Reflect to store `@Json()` metadata for use by `@Module`.
+ * The symbols used by Reflect to store `@Json()` metadata for use by `@Module`. These symbols are not considered
+ * part of the API contract and may change or be removed without notice on patch releases.
  */
 export const jsonSymbols = {
   sakuraApiDbFieldToPropertyNames: Symbol('sakuraApiJsonFieldToPropertyNames'),
@@ -9,8 +8,8 @@ export const jsonSymbols = {
 };
 
 /**
- * Decorates properties in an `@Model` class to alias its properties to json (`obj.toJson()`) and
- * from json (`Obj.fromJson(json)`).
+ * Decorates properties in an `@`[[Model]] class to describe how a property will be marshaled to json
+ * (`ModelObject.toJson()`) and from json (`modelObject.fromJson(json)`).
  *
  * ### Example
  * <pre>
@@ -36,9 +35,9 @@ export const jsonSymbols = {
  * And `User.fromJson(json)` will map the json object back to an instantiated `User`.
  *
  * @param fieldName The alias you want to use instead of the property name when marshalling to json.
- * @returns {(target:any, key:string)=>undefined}
+ * @returns Returns a function that is used internally by the framework.
  */
-export function Json(fieldName: string) {
+export function Json(fieldName: string): (target: any, key: string) => void {
 
   return (target: any, key: string) => {
 

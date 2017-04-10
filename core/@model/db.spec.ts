@@ -222,7 +222,7 @@ describe('@Db', function() {
     describe('Chaste Mode', function() {
       it('returns a db object with only explicit @Db fields, and does not include non-enumerable properties', function() {
 
-        const result = ChasteModelTest.toDb.call(this.chasteModel);
+        const result = this.chasteModel.toDb();
 
         expect(result._id).toBe(this.chasteModel.id);
         expect(result.fn).toBe(this.chasteModel.firstName);
@@ -236,7 +236,7 @@ describe('@Db', function() {
     describe('Promiscuous Mode (hey baby)', function() {
       it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', function() {
 
-        const result = PromiscuousModelTest.toDb.call(this.promiscuousModel);
+        const result = this.promiscuousModel.toDb();
 
         expect(result._id).toBe(this.promiscuousModel.id);
         expect(result.fn).toBe(this.promiscuousModel.firstName);

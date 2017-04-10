@@ -5,7 +5,7 @@ import * as colors from 'colors';
 import * as express from 'express';
 import * as http from 'http';
 
-const debug = require('debug')('sapi:SakuraApi');
+import debug = require('debug');
 
 /**
  * A set of properties defining the configuration of the server.
@@ -43,17 +43,22 @@ export interface ServerConfig {
  * import                   'colors';
  * import * as bodyParser   from 'body-parser'
  *
- * (function boot() {
- *    let sapi = SakuraApi.instance;
+ * class Server {
+ *    sapi = SakuraApi.instance;
  *
- *    sapi.addMiddleware(bodyParser.json());
+ *    constructor() {}
  *
- *    sapi
- *     .listen()
- *     .catch((err) => {
- *       console.log(`Error: ${err}`.red);
- *     });
- * })();
+ *    start() {
+ *        this.sapi.addMiddleware(bodyParser.json());
+ *        sapi
+ *          .listen()
+ *          .catch((err) => {
+ *            console.log(`Error: ${err}`.red);
+ *          });
+ *    }
+ * }
+ *
+ * new Server().start();
  * </pre>
  *
  * This example assumes you have a class called `User` that is decorated with [[Routable]]. You import that module
@@ -62,6 +67,11 @@ export interface ServerConfig {
 export class SakuraApi {
 
   private static _instance: SakuraApi;
+
+  private static debug = {
+    normal: debug('sapi:SakuraApi')
+  };
+  private debug = SakuraApi.debug;
 
   private _address: string = '127.0.0.1';
   private _app: express.Express;
@@ -144,7 +154,7 @@ export class SakuraApi {
   }
 
   private constructor(app?: express.Express, config?: any, dbConfig?: SakuraMongoDbConnection) {
-    debug('.constructor started');
+    this.debug.normal('.constructor started');
 
     if (!app) {
       app = express();
@@ -165,7 +175,7 @@ export class SakuraApi {
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
 
-    debug('.constructor done');
+    this.debug.normal('.constructor done');
   }
 
   /**
@@ -175,7 +185,7 @@ export class SakuraApi {
    * This uses `express.use(...)` internally.
    */
   static addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
-    debug('.addMiddleware called');
+    SakuraApi.debug.normal('.addMiddleware called');
     SakuraApi.instance.app.use(fn);
   }
 
@@ -194,18 +204,18 @@ export class SakuraApi {
    * with any error other than `Not running` that's returned from the `http.Server` instance.
    */
   close(): Promise<null> {
-    debug('.close called');
+    this.debug.normal('.close called');
 
     return new Promise((resolve, reject) => {
       this
         .server
         .close((err) => {
           if (err && err.message !== 'Not running') {
-            debug('.close error', err);
+            this.debug.normal('.close error', err);
 
             return reject(err);
           }
-          debug('.close done');
+          this.debug.normal('.close done');
 
           resolve();
         });
@@ -219,7 +229,7 @@ export class SakuraApi {
    * instantiated. Otherwise, it will throw `new Error('ALREADY_INSTANTIATED')`.
    */
   static instantiate(app?: express.Express, config?: SakuraApiConfig, dbConfig?: SakuraMongoDbConnection): SakuraApi {
-    debug(`.instantiate called`);
+    SakuraApi.debug.normal(`.instantiate called`);
 
     if (this._instance) {
       throw new Error('ALREADY_INSTANTIATED');
@@ -242,7 +252,7 @@ export class SakuraApi {
   listen(listenProperties?: ServerConfig): Promise<null> {
     listenProperties = listenProperties || {};
 
-    debug(`.listen called with serverConfig:`, listenProperties);
+    this.debug.normal(`.listen called with serverConfig:`, listenProperties);
 
     return new Promise((resolve, reject) => {
       this._address = listenProperties.address || this._address;
@@ -279,12 +289,12 @@ export class SakuraApi {
           .server
           .listen(this.port, this.address, (err) => {
             if (err) {
-              debug('.listen error', err);
+              this.debug.normal('.listen error', err);
               return reject(err);
             }
             let msg = listenProperties.bootMessage || `SakuraAPI started on: ${this.address}:${this.port}`;
             console.log(colors.green(msg));
-            debug(`.listen server started '%s'`, msg);
+            this.debug.normal(`.listen server started '%s'`, msg);
             return resolve();
           });
       }
@@ -299,10 +309,10 @@ export class SakuraApi {
    * bound.
    */
   route(target: any) {
-    debug(`.route called: '%o'`, target);
+    this.debug.normal(`.route called: '%o'`, target);
 
     if (!target[routableSymbols.sakuraApiClassRoutes]) {
-      debug(`.route '%o' is not a routable class`);
+      this.debug.normal(`.route '%o' is not a routable class`);
       return;
     }
 
