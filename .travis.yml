@@ -8,3 +8,4 @@ node_js:
 services:
   - docker
 
+script: test:travis
