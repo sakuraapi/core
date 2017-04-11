@@ -742,6 +742,10 @@ function toJson(): object {
       continue;
     }
 
+    if (prop === '_id') {
+      continue;
+    }
+
     if (dbOptionByPropertyName) {
       if ((dbOptionByPropertyName.get(prop) || {}).private) {
         continue;

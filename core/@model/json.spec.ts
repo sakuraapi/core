@@ -4,6 +4,7 @@ import {
   Model,
   modelSymbols
 } from './model';
+import {ObjectID} from 'mongodb';
 
 describe('@Json', function() {
 
@@ -115,6 +116,13 @@ describe('@Json', function() {
       expect(this.t2.toJson().anotherProperty).toBeUndefined();
       expect(this.t2.toJson().aThirdProperty).toBe(777);
       expect(this.t2.toJson().aFunction).toBeUndefined();
+    });
+
+    it('does not return _id', function() {
+      this.t._id = new ObjectID();
+
+      expect(this.t._id).toBeDefined();
+      expect(this.t.toJson()._id).toBeUndefined();
     });
 
     describe('obeys @Db:{private:true} by not including that field when marshalling object to json', function() {
