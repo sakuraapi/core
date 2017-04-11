@@ -1,10 +1,10 @@
+import {ObjectID} from 'mongodb';
 import {Db} from './db';
 import {Json} from './json';
 import {
   Model,
   modelSymbols
 } from './model';
-import {ObjectID} from 'mongodb';
 
 describe('@Json', function() {
 

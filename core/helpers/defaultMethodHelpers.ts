@@ -1,8 +1,8 @@
 /* tslint:disable:variable-name */
 
 /**
- * @warning @internal This is an internal helper function used by the SakuraApi framework. It's behavior is not part of the
- * official API and as a result, that behavior may break without notice.
+ * @warning @internal This is an internal helper function used by the SakuraApi framework. It's behavior is not part of
+ * the official API and as a result, that behavior may break without notice.
  * @internal This is not part of the API contract.
  */
 export function addDefaultInstanceMethods(target: any, functionName: string, fn: (...any) => any, options?: any) {

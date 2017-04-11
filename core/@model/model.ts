@@ -316,8 +316,8 @@ function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpR
 }
 
 /**
- * @static Creates an object from a MongoDb document with all of its fields properly mapped based on the [[Model]]'s various
- * decorators (see [[Db]]).
+ * @static Creates an object from a MongoDb document with all of its fields properly mapped based on the [[Model]]'s
+ * various decorators (see [[Db]]).
  * @param json The document returned from the Db.
  * @param constructorArgs A variadic set of parameters that are passed to the constructor of the [[Model]]'s class.
  * @returns {object} Returns an instantiated object which is an instance of the [[Model]]'s class. Returns null
@@ -350,8 +350,8 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
 }
 
 /**
- * @static Constructs an array of Models from an array of documents retrieved from the Db with all of their fields properly
- * mapped based on the [[Model]]'s various decorators (see [[Db]]).
+ * @static Constructs an array of Models from an array of documents retrieved from the Db with all of their fields
+ * properly mapped based on the [[Model]]'s various decorators (see [[Db]]).
  * @param jsons The array of documents returned from the Db.
  * @param constructorArgs A variadic set of parameters that are passed to the constructor of the [[Model]]'s class.
  * All of the resulting constructed objects will share the same constructor parameters.
@@ -432,7 +432,8 @@ function fromJsonArray(json: any, ...constructorArgs: any[]): object[] {
 }
 
 /**
- * @static Gets documents from the database and builds their corresponding [[Model]]s the resolves an array of those objects.
+ * @static Gets documents from the database and builds their corresponding [[Model]]s the resolves an array of those
+ * objects.
  * @param filter A MongoDb query
  * @param project The fields to project (all if not supplied)
  * @returns {Promise<T>} Returns a Promise that resolves with an array of instantiated [[Model]] objects based on the
@@ -505,8 +506,8 @@ function getCollection(): Collection {
 }
 
 /**
- * @static Gets a `Cursor` from MongoDb based on the filter. This is a raw cursor from MongoDb. SakuraApi will not map the
- * results back to a [[Model]]. See [[get]] or [[getById]] to retrieve documents from MongoDb as their corresponding
+ * @static Gets a `Cursor` from MongoDb based on the filter. This is a raw cursor from MongoDb. SakuraApi will not map
+ * the results back to a [[Model]]. See [[get]] or [[getById]] to retrieve documents from MongoDb as their corresponding
  * [[Model]] objects.
  * @param filter A MongoDb query.
  * @param project The fields to project (all if not supplied).
@@ -673,8 +674,8 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
 }
 
 /**
- * @instance Builds and returns a change set object that properly obeys the various decorators (like [[Db]]). The resulting
- * object is what's persisted to the database.
+ * @instance Builds and returns a change set object that properly obeys the various decorators (like [[Db]]). The
+ * resulting object is what's persisted to the database.
  * @param changeSet The change set. For example:
  * <pre>
  * {
