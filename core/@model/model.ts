@@ -485,10 +485,12 @@ function getById(id: string, project?: any): Promise<any> {
 
 /**
  * @instance Gets the MongoDB `Collection` object associated with this [[Model]] based on the [[IModelOptions.dbConfig]]
+ * @static Also available as a static method
  * parameters passed into the [[Model]]'s definition.
  * @returns {Collection}
  */
 function getCollection(): Collection {
+  // can be called as instance or static method, so get the appropriate context
   const target = this[modelSymbols.target] || this;
 
   const db = target.getDb();
@@ -538,13 +540,17 @@ function getCursorById(id, project?: any) {
 }
 
 /**
- * @static Gets the Mongo `Db` object associated with the connection defined in [[IModelOptions.dbConfig]].
+ * @instance Gets the Mongo `Db` object associated with the connection defined in [[IModelOptions.dbConfig]].
+ * @static Also available as a static method
  * @returns {Db}
  */
 function getDb(): Db {
-  const db = SakuraApi.instance.dbConnections.getDb(this[modelSymbols.dbName]);
+  // can be called as instance or static method, so get the appropriate context
+  const target = this[modelSymbols.target] || this;
 
-  this.debug.normal(`.getDb called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!db}`);
+  const db = SakuraApi.instance.dbConnections.getDb(target[modelSymbols.dbName]);
+
+  this.debug.normal(`.getDb called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);
 
   return db;
 }

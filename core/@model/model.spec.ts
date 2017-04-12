@@ -118,8 +118,10 @@ describe('@Model', function() {
         static get: (...any) => any;
         static getOne: (...any) => any;
         static getById: (...any) => any;
+        static getCollection: (...any) => any;
         static getCursor: (...any) => any;
         static getCursorById: (...any) => any;
+        static getDb: (...any) => any;
         /*tslint:enable:variable-name*/
 
         @Db({
@@ -223,6 +225,20 @@ describe('@Model', function() {
                   .catch(done.fail);
               })
               .catch(done.fail);
+          });
+
+          describe('getCollection', function() {
+            it('returns a valid MongoDB Collection for the current model', function() {
+              const col = TestDefaultMethods.getCollection();
+              expect(col.s.dbName).toBe('userDb');
+            });
+          });
+
+          describe('getDb', function() {
+            it('returns a valid MongoDB Db for the current model', function() {
+              const db = TestDefaultMethods.getDb();
+              expect(db.s.databaseName).toBe('userDb');
+            });
           });
 
           it('get', function(done) {
@@ -431,6 +447,20 @@ describe('@Model', function() {
                     })
                     .catch(done.fail);
                 });
+            });
+          });
+
+          describe('getCollection', function() {
+            it('returns a valid MongoDB Collection for the current model', function() {
+              const col = this.tdm.getCollection();
+              expect(col.s.dbName).toBe('userDb');
+            });
+          });
+
+          describe('getDb', function() {
+            it('returns a valid MongoDB Db for the current model', function() {
+              const db = this.tdm.getDb();
+              expect(db.s.databaseName).toBe('userDb');
             });
           });
 
