@@ -21,7 +21,7 @@
     "lint:code": "npm run tslint -- -e \"node_modules/**/**/*.ts\"  -e \"**/**/*.d.ts\" -e \"**/**/*.spec.ts\" -t stylish **/**/*.ts",
     "lint:tests": "npm run tslint -- -e \"node_modules/**/**/*.ts\"  -e \"**/**/*.d.ts\" -t stylish --fix -c tslint.spec.json **/**/*.spec.ts",
     "prepublish": "npm test",
-    "test": "npm run lint && npm run docker:compose-test && npm run build && npm run jasmine && docker-compose down",
+    "test": "npm run docker:compose-test && npm run build && npm run jasmine && docker-compose down",
     "test:debug": "DEBUG=sapi:*,-sapi:*:verbose npm test",
     "test:verbose": "DEBUG=sapi:* npm test",
     "test:vverbose": "DEBUG=* npm test",

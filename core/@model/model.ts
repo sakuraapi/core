@@ -8,7 +8,10 @@ import {
   dbSymbols,
   IDbOptions
 } from './db';
-import {SapiMissingIdErr} from './errors';
+import {
+  SapiDbForModelNotFound,
+  SapiMissingIdErr
+} from './errors';
 import {jsonSymbols} from './json';
 import {privateSymbols} from './private';
 
@@ -551,6 +554,10 @@ function getDb(): Db {
   const db = SakuraApi.instance.dbConnections.getDb(target[modelSymbols.dbName]);
 
   this.debug.normal(`.getDb called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);
+
+  if (!db) {
+    throw new SapiDbForModelNotFound(target.name, target[modelSymbols.dbName]);
+  }
 
   return db;
 }

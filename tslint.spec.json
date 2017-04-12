@@ -3,14 +3,16 @@
   "defaultSeverity": "warning",
   "rules": {
     "curly": true,
+    "interface-name": false,
     "max-classes-per-file": false,
     "max-line-length": false,
     "member-access": [
       true,
       "no-public"
     ],
-    "only-arrow-functions": false,
+    "no-empty-interface": false,
     "no-empty": false,
+    "only-arrow-functions": false,
     "quotemark": [
       true,
       "single",

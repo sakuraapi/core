@@ -1,5 +1,8 @@
 import {Db} from './db';
-import {SapiMissingIdErr} from './errors';
+import {
+  SapiDbForModelNotFound,
+  SapiMissingIdErr
+} from './errors';
 import {
   IModel,
   Model,
@@ -144,6 +147,22 @@ describe('@Model', function() {
         lastName = 'Washington';
       }
 
+      interface TestBadDb extends IModel {
+      }
+      @Model({
+        dbConfig: {
+          collection: 'bad',
+          db: 'bad'
+        }
+      })
+      class TestBadDb {
+        /*tslint:disable:variable-name*/
+        static getCollection: (...any) => any;
+        static getDb: (...any) => any;
+        /*tslint:enable:variable-name*/
+
+      }
+
       beforeEach(function() {
         this.tdm = new TestDefaultMethods();
         this.tdm2 = new TestDefaultMethods();
@@ -238,6 +257,17 @@ describe('@Model', function() {
             it('returns a valid MongoDB Db for the current model', function() {
               const db = TestDefaultMethods.getDb();
               expect(db.s.databaseName).toBe('userDb');
+            });
+
+            it('throws SapiDbForModelNotFound when db is not found', function(done) {
+              try {
+                TestBadDb.getDb();
+                done.fail('Error was expected but not thrown');
+              } catch (err) {
+                expect(err instanceof SapiDbForModelNotFound).toBeTruthy();
+                done();
+              }
+
             });
           });
 
@@ -461,6 +491,19 @@ describe('@Model', function() {
             it('returns a valid MongoDB Db for the current model', function() {
               const db = this.tdm.getDb();
               expect(db.s.databaseName).toBe('userDb');
+            });
+
+            it('throws SapiDbForModelNotFound when db is not found', function(done) {
+              try {
+                const badDb = new TestBadDb();
+                badDb.getDb();
+
+                done.fail('Error was expected but not thrown');
+              } catch (err) {
+                expect(err instanceof SapiDbForModelNotFound).toBeTruthy();
+                done();
+              }
+
             });
           });
 
