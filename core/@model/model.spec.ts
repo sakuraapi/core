@@ -4,35 +4,38 @@ import {
   SapiMissingIdErr
 } from './errors';
 import {
-  IModel,
   Model,
   modelSymbols
 } from './model';
+import {SakuraApiModel} from './sakura-api-model';
 
 import {
   InsertOneWriteOpResult,
   ObjectID,
+  ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
 
 describe('@Model', function() {
 
   @Model()
-  class Test implements IModel {
-    /*tslint:disable:variable-name*/
-    static get: (any) => (any) = null;
-    /*tslint:enable:variable-name*/
+  class Test extends SakuraApiModel {
 
-    static getById() {
-      return 'custom';
+    static getById(id: string, project?: any): Promise<string> {
+      return new Promise((resolve) => {
+        resolve('custom');
+      });
     }
 
     testProperty = true;
 
     constructor(public n: number) {
+      super();
+      this.save = this.saveOverride;
     }
 
-    save(): Promise<UpdateWriteOpResult> {
+    //https://github.com/Microsoft/TypeScript/issues/14439
+    saveOverride(set?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
       return Promise.resolve({
         result: {
           n: -1,
@@ -107,6 +110,7 @@ describe('@Model', function() {
     });
 
     describe('injects default CRUD method', function() {
+
       @Model({
         dbConfig: {
           collection: 'users',
@@ -114,19 +118,7 @@ describe('@Model', function() {
           promiscuous: true
         }
       })
-      class TestDefaultMethods implements IModel {
-        /*tslint:disable:variable-name*/
-        static removeAll: (any) => any;
-        static removeById: (ObjectID) => any;
-        static get: (...any) => any;
-        static getOne: (...any) => any;
-        static getById: (...any) => any;
-        static getCollection: (...any) => any;
-        static getCursor: (...any) => any;
-        static getCursorById: (...any) => any;
-        static getDb: (...any) => any;
-        /*tslint:enable:variable-name*/
-
+      class TestDefaultMethods extends SakuraApiModel {
         @Db({
           field: 'fn'
         })
@@ -141,26 +133,19 @@ describe('@Model', function() {
           promiscuous: false
         }
       })
-      class ChastityTest implements IModel {
+      class ChastityTest extends SakuraApiModel {
         @Db({field: 'fn'})
         firstName = 'George';
         lastName = 'Washington';
       }
 
-      interface TestBadDb extends IModel {
-      }
       @Model({
         dbConfig: {
           collection: 'bad',
           db: 'bad'
         }
       })
-      class TestBadDb {
-        /*tslint:disable:variable-name*/
-        static getCollection: (...any) => any;
-        static getDb: (...any) => any;
-        /*tslint:enable:variable-name*/
-
+      class TestBadDb extends SakuraApiModel {
       }
 
       beforeEach(function() {
@@ -249,14 +234,14 @@ describe('@Model', function() {
           describe('getCollection', function() {
             it('returns a valid MongoDB Collection for the current model', function() {
               const col = TestDefaultMethods.getCollection();
-              expect(col.s.dbName).toBe('userDb');
+              expect(col['s'].dbName).toBe('userDb');
             });
           });
 
           describe('getDb', function() {
             it('returns a valid MongoDB Db for the current model', function() {
               const db = TestDefaultMethods.getDb();
-              expect(db.s.databaseName).toBe('userDb');
+              expect(db['s'].databaseName).toBe('userDb');
             });
 
             it('throws SapiDbForModelNotFound when db is not found', function(done) {
@@ -639,8 +624,14 @@ describe('@Model', function() {
       });
 
       describe('but does not overwrite custom methods added by integrator', function() {
-        it('static methods getById', function() {
-          expect(Test.getById()).toBe('custom');
+        it('static methods getById', function(done) {
+          Test
+            .getById('123')
+            .then(result => {
+              expect(result).toBe('custom');
+              done();
+            })
+            .catch(done.fail);
         });
 
         it('static methods save', function(done) {
@@ -657,7 +648,7 @@ describe('@Model', function() {
 
       describe('allows integrator to exclude CRUD with suppressInjection: [] in ModelOptions', function() {
         @Model({suppressInjection: ['get', 'save']})
-        class TestSuppressedDefaultMethods implements IModel {
+        class TestSuppressedDefaultMethods extends SakuraApiModel {
         }
 
         beforeEach(function() {

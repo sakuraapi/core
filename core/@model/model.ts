@@ -31,25 +31,6 @@ import {
 import debug = require('debug');
 
 /**
- * Interface used by classes that are decorated with `@`[[Model]] to prevent
- * TypeScript type errors since TypeScript isn't aware that these methods were injected
- * by `@Model()`.
- */
-export interface IModel {
-  /* tslint:disable:variable-name */
-  create?: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
-  getCollection?: () => Collection;
-  getDb?: () => Db;
-  remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
-  save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
-
-  toDb?: (changeSet?: object) => object;
-  toJson?: () => object;
-  toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
-  /* tslint:enable */
-}
-
-/**
  * Interface defining the properties for the `@`[[Model]]({})` decorator.
  */
 export interface IModelOptions {
@@ -537,7 +518,7 @@ function getCursor(filter: any, project?: any): Cursor<any> {
  * @param project The fields to project (all if not supplied).
  * @returns {Cursor<T>}
  */
-function getCursorById(id, project?: any) {
+function getCursorById(id, project?: any): Cursor<any> {
   this.debug.normal(`.getCursorById called, dbName '${this[modelSymbols.dbName]}'`);
   return this.getCursor({_id: id}, project).limit(1);
 }

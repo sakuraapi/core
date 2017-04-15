@@ -69,7 +69,8 @@ export class SakuraApi {
   private static _instance: SakuraApi;
 
   private static debug = {
-    normal: debug('sapi:SakuraApi')
+    normal: debug('sapi:SakuraApi'),
+    route: debug('sapi:route')
   };
   private debug = SakuraApi.debug;
 
@@ -309,16 +310,17 @@ export class SakuraApi {
    * bound.
    */
   route(target: any) {
-    this.debug.normal(`.route called: '%o'`, target);
+    this.debug.route(`SakuraApi.route called for %o`, target);
 
     if (!target[routableSymbols.sakuraApiClassRoutes]) {
-      this.debug.normal(`.route '%o' is not a routable class`);
+      this.debug.route(`.route '%o' is not a routable class`, target);
       return;
     }
 
     target
       [routableSymbols.sakuraApiClassRoutes]
       .forEach((route) => {
+        this.debug.route(`\tadded '${JSON.stringify(route)}'`);
         this.routes.push(route);
       });
   }

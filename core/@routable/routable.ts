@@ -3,6 +3,8 @@ import {SakuraApi} from '../sakura-api';
 import * as path from 'path';
 import 'reflect-metadata';
 
+import debug = require('debug')
+
 /**
  * Interface defining the valid properties for the `@Routable({})` decorator ([[Routable]]).
  */
@@ -135,6 +137,8 @@ export function Routable(options?: IRoutableClassOptions): any {
 
   return (target: any) => {
 
+    debug('sapi:route')(`@Routable decorated '${target.name}' with options ${JSON.stringify(options)}`);
+
     const newConstructor = new Proxy(target, {
       construct: (t, args, nt) => {
         const c = Reflect.construct(t, args, nt);
@@ -208,6 +212,8 @@ export function Route(options?: IRoutableMethodOptions) {
   const methods = ['get', 'post', 'put', 'delete', 'head'];
 
   return (target: any, key: string, value: TypedPropertyDescriptor<any>) => {
+
+    debug('sapi:route')(`@Route decorated '${key}' with options ${JSON.stringify(options)}`);
 
     if (methods.indexOf(options.method) < 0) {
       throw new Error(`@route(...)${(target.constructor || {}).name}.${key} had its 'method' `

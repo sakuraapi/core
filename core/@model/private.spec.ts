@@ -1,13 +1,11 @@
 import {Json} from './json';
-import {
-  IModel,
-  Model
-} from './model';
+import {Model} from './model';
+import {SakuraApiModel} from './sakura-api-model';
 import {Private} from './private';
 
 describe('@Private', function() {
   @Model()
-  class Test implements IModel {
+  class Test implements SakuraApiModel {
 
     @Private()
     aPrivateField1: number = 1;
