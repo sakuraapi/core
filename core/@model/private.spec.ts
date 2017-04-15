@@ -1,7 +1,7 @@
 import {Json} from './json';
 import {Model} from './model';
-import {SakuraApiModel} from './sakura-api-model';
 import {Private} from './private';
+import {SakuraApiModel} from './sakura-api-model';
 
 describe('@Private', function() {
   @Model()

@@ -3,7 +3,7 @@ import {SakuraApi} from '../sakura-api';
 import * as path from 'path';
 import 'reflect-metadata';
 
-import debug = require('debug')
+import debug = require('debug');
 
 /**
  * Interface defining the valid properties for the `@Routable({})` decorator ([[Routable]]).

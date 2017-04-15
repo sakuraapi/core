@@ -155,12 +155,10 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
         // has those properties defined. Otherwise, throw an error to help the integrator know what s/he's doing
         // wrong.
         if (modelOptions.dbConfig) {
-          target[modelSymbols.dbName] = modelOptions.dbConfig.db || null;
           if (!target[modelSymbols.dbName]) {
             throw new Error(`If you define a dbConfig for a model, you must define a db. target: ${target}`);
           }
-
-          target[modelSymbols.dbCollection] = modelOptions.dbConfig.collection || null;
+          
           if (!target[modelSymbols.dbCollection]) {
             throw new Error(`If you define a dbConfig for a model, you must define a collection. target: ${target}`);
           }
@@ -185,6 +183,9 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     newConstructor[modelSymbols.modelOptions] = modelOptions;
     // make the constructor function available to instance members
     newConstructor.prototype[modelSymbols.target] = newConstructor;
+
+    newConstructor[modelSymbols.dbName] = (modelOptions.dbConfig || {} as any).db || null;
+    newConstructor[modelSymbols.dbCollection] = (modelOptions.dbConfig || {} as any).collection || null;
 
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
@@ -258,7 +259,6 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     newConstructor.prototype[modelSymbols.toJsonString] = toJsonString;
 
     return newConstructor;
-
   };
 }
 
@@ -342,7 +342,7 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
  * @returns {object[]} Returns an array of instantiated objects which are instances of the [[Model]]'s class. Returns
  * null if the `jsons` parameter is null, undefined, or not an Array.
  */
-function fromDbArray(jsons: any[], ...constructorArgs): object[] {
+function fromDbArray(jsons: object[], ...constructorArgs): object[] {
   this.debug.normal(`.fromDbArray called, target '${this.name}'`);
 
   if (!jsons || !Array.isArray(jsons)) {
@@ -368,7 +368,7 @@ function fromDbArray(jsons: any[], ...constructorArgs): object[] {
  * @returns {{}} Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
  * undefined, or not an object.
  */
-function fromJson(json: any, ...constructorArgs: any[]): object {
+function fromJson(json: object, ...constructorArgs: any[]): object {
   this.debug.normal(`.fromJson called, target '${this.name}'`);
 
   if (!json || typeof json !== 'object') {
@@ -401,7 +401,7 @@ function fromJson(json: any, ...constructorArgs: any[]): object {
  * @returns [{{}}] Returns an array of instantiated objects based on the [[Model]]'s. Returns null if the `json`
  * parameter is null, undefined, or not an array.
  */
-function fromJsonArray(json: any, ...constructorArgs: any[]): object[] {
+function fromJsonArray(json: object[], ...constructorArgs: any[]): object[] {
   this.debug.normal(`.fromJsonArray called, target '${this.name}'`);
 
   const result = [];
@@ -425,9 +425,9 @@ function fromJsonArray(json: any, ...constructorArgs: any[]): object[] {
  * in the database.
  */
 function get(filter: any, project?: any): Promise<object[]> {
+  this.debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
   return new Promise((resolve, reject) => {
     const cursor = this.getCursor(filter, project);
-    this.debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
 
     cursor
       .toArray()
@@ -531,7 +531,6 @@ function getCursorById(id, project?: any): Cursor<any> {
 function getDb(): Db {
   // can be called as instance or static method, so get the appropriate context
   const target = this[modelSymbols.target] || this;
-
   const db = SakuraApi.instance.dbConnections.getDb(target[modelSymbols.dbName]);
 
   this.debug.normal(`.getDb called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);

@@ -5,16 +5,12 @@ import {
   Model,
   modelSymbols
 } from './model';
+import {SakuraApiModel} from './sakura-api-model';
 
 describe('@Json', function() {
 
   @Model()
-  class Test {
-    /*tslint:disable:variable-name*/
-    static fromJson: (...any) => Test;
-    static fromJsonArray: (...any) => Test[];
-    /*tslint:enable:variable-name*/
-
+  class Test extends SakuraApiModel {
     @Json('ap')
     aProperty: string = 'test';
 
@@ -26,6 +22,7 @@ describe('@Json', function() {
     aFourthProperty: string;
 
     constructor(public constructedProperty?, public constructedProperty2?) {
+      super();
     }
 
     aFunction() {
@@ -173,11 +170,7 @@ describe('@Json', function() {
 
     it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
       @Model()
-      class SymbolTest {
-        /*tslint:disable:variable-name*/
-        static fromJson: (any) => SymbolTest;
-        /*tslint:enable:variable-name*/
-
+      class SymbolTest extends SakuraApiModel {
         @Json('ap')
         aProperty: number;
       }
@@ -209,10 +202,7 @@ describe('@Json', function() {
 
       it('does not throw if there are no @Json decorators', function() {
         @Model()
-        class C {
-          /*tslint:disable:variable-name*/
-          static fromJson: (...any) => C;
-          /*tslint:enable:variable-name*/
+        class C extends SakuraApiModel {
           someProperty = 777;
         }
 
@@ -278,7 +268,6 @@ describe('@Json', function() {
       });
 
       it('returns null when no json object is provided', function() {
-        expect((Test.fromJson)() as any).toBe(null);
         expect(Test.fromJson(null)).toBe(null);
         expect(Test.fromJson(undefined)).toBe(null);
       });
@@ -292,11 +281,7 @@ describe('@Json', function() {
 
     it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
       @Model()
-      class SymbolTest {
-        /*tslint:disable:variable-name*/
-        static fromJsonArray: (...any) => SymbolTest;
-        /*tslint:enable:variable-name*/
-
+      class SymbolTest extends SakuraApiModel {
         @Json('ap')
         aProperty: number;
       }
@@ -330,14 +315,10 @@ describe('@Json', function() {
 
     it('gracefully takes a non array', function() {
       const obj1 = Test.fromJsonArray(null);
-      const obj2 = Test.fromJsonArray({});
-      const obj3 = Test.fromJsonArray(undefined);
-      const obj4 = Test.fromJsonArray();
+      const obj2 = Test.fromJsonArray(undefined);
 
       expect(Array.isArray(obj1)).toBeTruthy();
       expect(Array.isArray(obj2)).toBeTruthy();
-      expect(Array.isArray(obj3)).toBeTruthy();
-      expect(Array.isArray(obj4)).toBeTruthy();
     });
   });
 });

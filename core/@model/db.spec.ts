@@ -2,6 +2,7 @@ import {Db} from './db';
 import {Model} from './model';
 
 import {ObjectID} from 'mongodb';
+import {SakuraApiModel} from './sakura-api-model';
 
 describe('@Db', function() {
 
@@ -9,24 +10,24 @@ describe('@Db', function() {
 
     it('is injected as a static member of an @Model object by default', function() {
       @Model()
-      class Test {
-        static fromDb;
+      class Test extends SakuraApiModel {
       }
 
       expect(Test.fromDb).toBeDefined();
     });
 
     describe('constructor', function() {
-      @Model()
-      class Test {
-        static fromDb;
 
-        constructor(public constructorTest: number) {
+      @Model()
+      class Test extends SakuraApiModel {
+
+        constructor(public constructorTest?: number) {
+          super();
         }
       }
 
       it('returns null on invalid input', function() {
-        const result = Test.fromDb();
+        const result = Test.fromDb(null);
         expect(result).toBeNull();
       });
 

@@ -34,7 +34,7 @@ describe('@Model', function() {
       this.save = this.saveOverride;
     }
 
-    //https://github.com/Microsoft/TypeScript/issues/14439
+    // https://github.com/Microsoft/TypeScript/issues/14439
     saveOverride(set?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
       return Promise.resolve({
         result: {
@@ -257,6 +257,7 @@ describe('@Model', function() {
           });
 
           it('get', function(done) {
+
             expect(this.tdm.id).toBeNull();
 
             this
@@ -627,7 +628,7 @@ describe('@Model', function() {
         it('static methods getById', function(done) {
           Test
             .getById('123')
-            .then(result => {
+            .then((result) => {
               expect(result).toBe('custom');
               done();
             })
