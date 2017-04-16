@@ -72,6 +72,8 @@ export abstract class SakuraApiModel {
   public static removeById?: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
 
   public _id?: ObjectID; // tslint:disable-line
+  public id?: ObjectID;
+  
   public create?: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
 
   public getCollection?: () => Collection;
