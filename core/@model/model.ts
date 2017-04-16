@@ -329,15 +329,14 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
       }
     }
   }
-
   // make sure the _id field is included as one of the properties
   if (!obj._id && (json as any)._id) {
     obj._id = (json as any)._id;
   }
 
-
+  // make sure _id is ObjectID, if possible
   if (obj._id && !(obj._id instanceof ObjectID) && ObjectID.isValid(obj._id)) {
-    obj._id = new ObjectID(obj._id);
+    obj._id = new ObjectID(obj._id.toString());
   }
 
   return obj;
@@ -397,11 +396,11 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
       obj[prop] = json[field]; // an @Json alias field
     } else if (Reflect.has(obj, field)) {
       if (field === 'id' || field === '_id') {
-      if (ObjectID.isValid(json[field])) {
-        obj[field] = new ObjectID(json[field]);
-      } else {
-        obj[field] = json[field];
-      }
+        if (ObjectID.isValid(json[field])) {
+          obj[field] = new ObjectID(json[field]);
+        } else {
+          obj[field] = json[field];
+        }
       } else {
         obj[field] = json[field]; // a none @Json alias field
       }
@@ -470,7 +469,7 @@ function get(filter: any, project?: any): Promise<object[]> {
  * @returns {Promise<T>} Returns a Promise that resolves with an instantiated [[Model]] object. Returns null
  * if the record is not found in the Db.
  */
-function getById(id: string, project?: any): Promise<any> {
+function getById(id: string | ObjectID, project?: any): Promise<any> {
   this.debug.normal(`.getById called, dbName '${this[modelSymbols.dbName]}'`);
   const cursor = this.getCursorById(id, project);
 
@@ -528,7 +527,7 @@ function getCursor(filter: any, project?: any): Cursor<any> {
 
   // make sure the _id field is an ObjectId
   if (filter._id && !(filter._id instanceof ObjectID) && ObjectID.isValid(filter._id)) {
-    filter._id = new ObjectID(filter._id);
+    filter._id = new ObjectID(filter._id.toString());
   }
 
   return (project)
@@ -672,8 +671,9 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
     return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
   }
 
-  const set = changeSet || this;
-  const dbObj = this.toDb(set);
+  const dbObj = this.toDb(changeSet || this);
+  delete dbObj._id;
+  delete dbObj.id;
 
   return new Promise((resolve, reject) => {
     col

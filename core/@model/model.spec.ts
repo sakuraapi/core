@@ -124,6 +124,11 @@ describe('@Model', function() {
         })
         firstName = 'George';
         lastName = 'Washington';
+        @Db({
+          field: 'pw',
+          private: true
+        })
+        password = '';
       }
 
       @Model({
@@ -508,161 +513,213 @@ describe('@Model', function() {
                 });
             });
 
-            it('updates specific fields if set parameter is passed', function(done) {
-              expect(this.tdm.id).toBeNull();
-              this
-                .tdm
-                .create()
-                .then((createResult) => {
-                  expect(createResult.insertedCount).toBe(1);
-                  expect(this.tdm.id).toBeTruthy();
-
-                  const updateSet = {
-                    firstName: 'updated'
-                  };
-
-                  this
-                    .tdm
-                    .save(updateSet)
-                    .then((result: UpdateWriteOpResult) => {
-                      expect(result.modifiedCount).toBe(1);
-                      expect(this.tdm.firstName).toBe(updateSet.firstName);
-
-                      this
-                        .tdm
-                        .getCollection()
-                        .find({_id: this.tdm.id})
-                        .limit(1)
-                        .next()
-                        .then((updated) => {
-                          expect(updated.fn).toBeDefined();
-
-                          expect(updated.fn).toBe(updateSet.firstName);
-                          done();
-                        })
-                        .catch(done.fail);
-                    })
-                    .catch(done.fail);
-                });
-            });
-
-            it('updates entire model if no set parameter is passed', function(done) {
-              expect(this.tdm.id).toBeNull();
-              this
-                .tdm
-                .create()
-                .then((createResult) => {
-                  expect(createResult.insertedCount).toBe(1);
-                  expect(this.tdm.id).toBeTruthy();
-
-                  const changes = {
-                    firstName: 'updatedFirstName',
-                    lastName: 'updatedLastName'
-                  };
-
-                  this.tdm.firstName = changes.firstName;
-                  this.tdm.lastName = changes.lastName;
-
-                  this
-                    .tdm
-                    .save()
-                    .then((result: UpdateWriteOpResult) => {
-                      expect(result.modifiedCount).toBe(1);
-
-                      this
-                        .tdm
-                        .getCollection()
-                        .find({_id: this.tdm.id})
-                        .limit(1)
-                        .next()
-                        .then((updated) => {
-                          expect(updated.fn).toBeDefined();
-                          expect(updated.lastName).toBeDefined();
-
-                          expect(updated.fn).toBe(changes.firstName);
-                          expect(updated.lastName).toBe(changes.lastName);
-                          done();
-                        })
-                        .catch(done.fail);
-                    })
-                    .catch(done.fail);
-                });
-            });
-
-          });
-
-          describe('remove', function() {
-            it('itself', function(done) {
-              expect(this.tdm.id).toBeNull();
-
-              this
-                .tdm
-                .create()
-                .then((createResult) => {
-                  expect(createResult.insertedCount).toBe(1);
-
-                  this
-                    .tdm2
-                    .create()
-                    .then((createResult2) => {
-                      expect(createResult2.insertedCount).toBe(1);
-                      this
-                        .tdm
-                        .remove()
-                        .then((deleteResults) => {
-                          expect(deleteResults.deletedCount).toBe(1);
-                          done();
-                        })
-                        .catch(done.fail);
-                    })
-                    .catch(done.fail);
+            describe('with projection', function() {
+              @Model({
+                dbConfig: {
+                  collection: 'users',
+                  db: 'userDb',
+                  promiscuous: true
+                }
+              })
+              class PartialUpdateTest extends SakuraApiModel {
+                @Db({
+                  field: 'fn'
                 })
-                .catch(done.fail);
+                firstName = 'George';
+                lastName = 'Washington';
+                @Db({
+                  field: 'pw',
+                  private: true
+                })
+                password = '';
+              }
+
+              it('sets the proper database level fields', function(done) {
+                const pud = new PartialUpdateTest();
+
+                pud
+                  .create()
+                  .then((createResult) => {
+                    expect(createResult.insertedCount).toBe(1);
+                    expect(pud.id).toBeTruthy();
+
+                    const updateSet = {
+                      firstName: 'updated'
+                    };
+
+                    pud
+                      .save(updateSet)
+                      .then((result: UpdateWriteOpResult) => {
+                        expect(result.modifiedCount).toBe(1);
+                        expect(pud.firstName).toBe(updateSet.firstName);
+
+                        pud
+                          .getCollection()
+                          .find({_id: pud.id})
+                          .limit(1)
+                          .next()
+                          .then((updated) => {
+                            expect(updated._id instanceof ObjectID || updated._id.constructor.name === 'ObjectID')
+                              .toBe(true);
+                            expect(updated.fn).toBeDefined();
+
+                            expect(updated.fn).toBe(updateSet.firstName);
+                            done();
+                          })
+                          .catch(done.fail);
+                      })
+                      .catch(done.fail);
+                  });
+              });
+
+              it('performs a partial update without disturbing other fields', function(done) {
+                const pud = new PartialUpdateTest();
+                pud.password = 'test-password';
+
+                let data = {
+                  firstName: 'Georgio',
+                  lastName: 'Washington'
+                };
+
+                pud
+                  .create()
+                  .then(() => {
+                    const body = JSON.parse(JSON.stringify(data));
+                    body.id = pud.id.toString();
+
+                    return PartialUpdateTest.fromJson(body).save(body);
+                  })
+                  .then(() => PartialUpdateTest.getById(pud.id))
+                  .then(result => {
+                    expect(result._id instanceof ObjectID).toBe(true);
+                    expect(result._id.toString()).toBe(pud.id.toString());
+                    expect(result.firstName).toBe(data.firstName);
+                    expect(result.lastName).toBe(data.lastName);
+                    expect(result.password).toBe(pud.password);
+
+                    done();
+                  })
+                  .catch(done.fail);
+              });
             });
-
           });
+
+          it('updates entire model if no set parameter is passed', function(done) {
+            expect(this.tdm.id).toBeNull();
+            this
+              .tdm
+              .create()
+              .then((createResult) => {
+                expect(createResult.insertedCount).toBe(1);
+                expect(this.tdm.id).toBeTruthy();
+
+                const changes = {
+                  firstName: 'updatedFirstName',
+                  lastName: 'updatedLastName'
+                };
+
+                this.tdm.firstName = changes.firstName;
+                this.tdm.lastName = changes.lastName;
+
+                this
+                  .tdm
+                  .save()
+                  .then((result: UpdateWriteOpResult) => {
+                    expect(result.modifiedCount).toBe(1);
+
+                    this
+                      .tdm
+                      .getCollection()
+                      .find({_id: this.tdm.id})
+                      .limit(1)
+                      .next()
+                      .then((updated) => {
+                        expect(updated.fn).toBeDefined();
+                        expect(updated.lastName).toBeDefined();
+
+                        expect(updated.fn).toBe(changes.firstName);
+                        expect(updated.lastName).toBe(changes.lastName);
+                        done();
+                      })
+                      .catch(done.fail);
+                  })
+                  .catch(done.fail);
+              });
+          });
+
+        });
+
+        describe('remove', function() {
+          it('itself', function(done) {
+            expect(this.tdm.id).toBeNull();
+
+            this
+              .tdm
+              .create()
+              .then((createResult) => {
+                expect(createResult.insertedCount).toBe(1);
+
+                this
+                  .tdm2
+                  .create()
+                  .then((createResult2) => {
+                    expect(createResult2.insertedCount).toBe(1);
+                    this
+                      .tdm
+                      .remove()
+                      .then((deleteResults) => {
+                        expect(deleteResults.deletedCount).toBe(1);
+                        done();
+                      })
+                      .catch(done.fail);
+                  })
+                  .catch(done.fail);
+              })
+              .catch(done.fail);
+          });
+
         });
       });
+    });
 
-      describe('but does not overwrite custom methods added by integrator', function() {
-        it('static methods getById', function(done) {
-          Test
-            .getById('123')
-            .then((result) => {
-              expect(result).toBe('custom');
-              done();
-            })
-            .catch(done.fail);
-        });
-
-        it('static methods save', function(done) {
-          this
-            .t
-            .save()
-            .then((op) => {
-              expect(op.result.nModified).toBe(-1);
-              done();
-            })
-            .catch(done.fail);
-        });
+    describe('but does not overwrite custom methods added by integrator', function() {
+      it('static methods getById', function(done) {
+        Test
+          .getById('123')
+          .then((result) => {
+            expect(result).toBe('custom');
+            done();
+          })
+          .catch(done.fail);
       });
 
-      describe('allows integrator to exclude CRUD with suppressInjection: [] in ModelOptions', function() {
-        @Model({suppressInjection: ['get', 'save']})
-        class TestSuppressedDefaultMethods extends SakuraApiModel {
-        }
+      it('static methods save', function(done) {
+        this
+          .t
+          .save()
+          .then((op) => {
+            expect(op.result.nModified).toBe(-1);
+            done();
+          })
+          .catch(done.fail);
+      });
+    });
 
-        beforeEach(function() {
-          this.suppressed = new TestSuppressedDefaultMethods();
-        });
+    describe('allows integrator to exclude CRUD with suppressInjection: [] in ModelOptions', function() {
+      @Model({suppressInjection: ['get', 'save']})
+      class TestSuppressedDefaultMethods extends SakuraApiModel {
+      }
 
-        it('with static defaults', function() {
-          expect(this.suppressed.get).toBe(undefined);
-        });
+      beforeEach(function() {
+        this.suppressed = new TestSuppressedDefaultMethods();
+      });
 
-        it('with instance defaults', function() {
-          expect(this.suppressed.save).toBe(undefined);
-        });
+      it('with static defaults', function() {
+        expect(this.suppressed.get).toBe(undefined);
+      });
+
+      it('with instance defaults', function() {
+        expect(this.suppressed.save).toBe(undefined);
       });
     });
   });

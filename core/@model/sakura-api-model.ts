@@ -61,7 +61,7 @@ export abstract class SakuraApiModel {
   public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
 
   public static get?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T[]>;
-  public static getById?: <T>(this: { new (): T }, id: string, project?: any) => Promise<T>;
+  public static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
   public static getCollection?: () => Collection;
   public static getCursor?: (filter: any, project?: any) => Cursor<any>;
   public static getCursorById?: (id, project?: any) => Cursor<any>;
@@ -73,7 +73,7 @@ export abstract class SakuraApiModel {
 
   public _id?: ObjectID; // tslint:disable-line
   public id?: ObjectID;
-  
+
   public create?: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
 
   public getCollection?: () => Collection;
