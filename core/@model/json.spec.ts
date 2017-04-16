@@ -273,11 +273,21 @@ describe('@Json', function() {
     });
 
     it('maps a model property that has no @Json property, but does have a default value', function() {
-      const obj = Test.fromJson({
-        aThirdProperty: 3
-      });
+      @Model()
+      class TestDefaults extends SakuraApiModel {
+        firstName: string = 'George';
+        lastName: string = 'Washington';
+      }
 
-      expect(obj.aThirdProperty).toBe(3);
+      let data = {
+        firstName: 'Thomas',
+        lastName: 'Jefferson'
+      };
+
+      let test = TestDefaults.fromJson(data);
+
+      expect(test.firstName).toBe(data.firstName);
+      expect(test.lastName).toBe(data.lastName);
     });
 
     it('does not map a model property that has no default value and has no @Json decorator', function() {
