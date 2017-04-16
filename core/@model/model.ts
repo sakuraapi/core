@@ -391,12 +391,14 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
     if (prop) {
       obj[prop] = json[field]; // an @Json alias field
     } else if (Reflect.has(obj, field)) {
-      obj[field] = json[field]; // a none @Json alias field
-    } else if (field === 'id' || field === '_id') {
+      if (field === 'id' || field === '_id') {
       if (ObjectID.isValid(json[field])) {
         obj[field] = new ObjectID(json[field]);
       } else {
         obj[field] = json[field];
+      }
+      } else {
+        obj[field] = json[field]; // a none @Json alias field
       }
     }
   }

@@ -308,7 +308,7 @@ describe('@Json', function() {
     describe('id behavior', function() {
       it('unmarshalls id as an ObjectID when it is a valid ObjectID', function() {
         const data = {
-          id: new ObjectID()
+          id: new ObjectID().toString()
         };
 
         const test = Test.fromJson(data);
@@ -330,7 +330,7 @@ describe('@Json', function() {
 
       it('unmarshalls _id as an ObjectID when it is a valid ObjectID', function() {
         const data = {
-          _id: new ObjectID()
+          _id: new ObjectID().toString()
         };
 
         const test = Test.fromJson(data);
