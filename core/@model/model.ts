@@ -330,6 +330,11 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
     }
   }
 
+  // make sure the _id field is included as one of the properties
+  if (!obj._id && (json as any)._id) {
+    obj._id = (json as any)._id;
+  }
+
   return obj;
 }
 
@@ -453,13 +458,14 @@ function get(filter: any, project?: any): Promise<object[]> {
  * if the record is not found in the Db.
  */
 function getById(id: string, project?: any): Promise<any> {
+  this.debug.normal(`.getById called, dbName '${this[modelSymbols.dbName]}'`);
   const cursor = this.getCursorById(id, project);
-  this.debug.normal(`.crudGetByIdStatic called, dbName '${this[modelSymbols.dbName]}'`);
 
   return new Promise((resolve, reject) => {
     cursor
       .next()
       .then((result) => {
+
         const obj = this.fromDb(result);
         resolve(obj);
       })

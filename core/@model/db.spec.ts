@@ -120,6 +120,27 @@ describe('@Db', function() {
         expect(result.lastName).toBe(input.lastName);
         expect(result.phone).toBe(input.ph);
       });
+
+      it('unmarshalls _id', function(done) {
+
+        @Model()
+        class Test extends SakuraApiModel {
+
+          @Db({field: 'ph'})
+          phone: string;
+        }
+
+        let data = {
+          _id: new ObjectID(),
+          ph: '1234567890'
+        };
+
+        let test = Test.fromDb(data);
+
+        expect((test._id || 'missing _id').toString()).toBe(data._id.toString());
+        expect((test.id || 'missing id').toString()).toBe(data._id.toString());
+        done();
+      });
     });
   });
 

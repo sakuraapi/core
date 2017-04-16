@@ -9,7 +9,13 @@ import {SakuraApiModel} from './sakura-api-model';
 
 describe('@Json', function() {
 
-  @Model()
+  @Model({
+    dbConfig: {
+      collection: 'users',
+      db: 'userDb',
+      promiscuous: true
+    }
+  })
   class Test extends SakuraApiModel {
     @Json('ap')
     aProperty: string = 'test';
@@ -120,6 +126,35 @@ describe('@Json', function() {
 
       expect(this.t._id).toBeDefined();
       expect(this.t.toJson()._id).toBeUndefined();
+    });
+
+    describe('when interacting with Db', function() {
+      beforeEach(function(done) {
+        this
+          .sapi
+          .dbConnections
+          .connectAll()
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('returns id when _id is not null', function(done) {
+        this
+          .t
+          .create()
+          .then(() => {
+
+            Test
+              .getById(this.t._id)
+              .then(result => {
+                expect(result._id).toBeDefined();
+                expect(result.toJson()['id'].toString()).toBe(this.t._id.toString());
+                done();
+              })
+              .catch(done.fail);
+          })
+          .catch(done.fail);
+      });
     });
 
     describe('obeys @Db:{private:true} by not including that field when marshalling object to json', function() {
