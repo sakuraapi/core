@@ -158,7 +158,7 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
           if (!target[modelSymbols.dbName]) {
             throw new Error(`If you define a dbConfig for a model, you must define a db. target: ${target}`);
           }
-          
+
           if (!target[modelSymbols.dbCollection]) {
             throw new Error(`If you define a dbConfig for a model, you must define a collection. target: ${target}`);
           }
@@ -501,10 +501,15 @@ function getCollection(): Collection {
  */
 function getCursor(filter: any, project?: any): Cursor<any> {
   const col = this.getCollection();
-  this.debug.normal(`.crudGetCursorStatic called, dbName '${this[modelSymbols.dbName]}', found?: ${!!col}`);
+  this.debug.normal(`.getCursor called, dbName '${this[modelSymbols.dbName]}', found?: ${!!col}`);
 
   if (!col) {
     throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
+  }
+
+  // make sure the _id field is an ObjectId
+  if (filter._id && !(filter._id instanceof ObjectID) && ObjectID.isValid(filter._id)) {
+    filter._id = new ObjectID(filter._id);
   }
 
   return (project)

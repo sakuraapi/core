@@ -15,3 +15,4 @@ dist
 *xunit.xml
 *.js
 *.d.ts
+*.map
