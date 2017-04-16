@@ -128,12 +128,12 @@ describe('@Db', function() {
           phone: string;
         }
 
-        let data = {
+        const data = {
           _id: new ObjectID(),
           ph: '1234567890'
         };
 
-        let test = Test.fromDb(data);
+        const test = Test.fromDb(data);
 
         expect((test._id || 'missing _id').toString()).toBe(data._id.toString());
         expect((test.id || 'missing id').toString()).toBe(data._id.toString());

@@ -226,87 +226,131 @@ describe('@Json', function() {
       expect(obj instanceof Test).toBe(true);
     });
 
-    describe('behaves such that it', function() {
+    it('passes on constructor arguments to the @Model target being returned', function() {
+      const obj = Test.fromJson({}, 888, 999);
 
-      it('passes on constructor arguments to the @Model target being returned', function() {
-        const obj = Test.fromJson({}, 888, 999);
+      expect(obj.constructedProperty).toBe(888);
+      expect(obj.constructedProperty2).toBe(999);
+    });
 
-        expect(obj.constructedProperty).toBe(888);
-        expect(obj.constructedProperty2).toBe(999);
+    it('does not throw if there are no @Json decorators', function() {
+      @Model()
+      class C extends SakuraApiModel {
+        someProperty = 777;
+      }
+
+      expect(() => C.fromJson({someProperty: 888})).not.toThrow();
+      expect(C.fromJson({someProperty: 888}).someProperty).toBe(888);
+    });
+
+    it('maps an @Json fieldname to an @Model property', function() {
+      const obj = Test.fromJson({
+        ap: 1
       });
+      expect(obj.aProperty).toBe(1);
+    });
 
-      it('does not throw if there are no @Json decorators', function() {
-        @Model()
-        class C extends SakuraApiModel {
-          someProperty = 777;
-        }
+    describe('allows multiple @json decorators', function() {
+      it('with only one of the @json properties used', function() {
+        let obj = Test.fromJson({
+          anp: 2
+        });
+        expect(obj.anotherProperty).toBe(2);
 
-        expect(() => C.fromJson({someProperty: 888})).not.toThrow();
-        expect(C.fromJson({someProperty: 888}).someProperty).toBe(888);
+        obj = Test.fromJson({
+          anotherProperty: 2
+        });
+        expect(obj.anotherProperty).toBe(2);
       });
-
-      it('maps an @Json fieldname to an @Model property', function() {
+      it('with the last property defined in the json object winning if there are multiple matching fields for a property', function() {
         const obj = Test.fromJson({
-          ap: 1
+          anotherProperty: 3,
+          anp: 2
         });
-        expect(obj.aProperty).toBe(1);
+        expect(obj.anotherProperty).toBe(2);
       });
 
-      describe('allows multiple @json decorators', function() {
-        it('with only one of the @json properties used', function() {
-          let obj = Test.fromJson({
-            anp: 2
-          });
-          expect(obj.anotherProperty).toBe(2);
+    });
 
-          obj = Test.fromJson({
-            anotherProperty: 2
-          });
-          expect(obj.anotherProperty).toBe(2);
-        });
-        it('with the last property defined in the json object winning if there are multiple matching fields for a property', function() {
-          const obj = Test.fromJson({
-            anotherProperty: 3,
-            anp: 2
-          });
-          expect(obj.anotherProperty).toBe(2);
-        });
-
+    it('maps a model property that has no @Json property, but does have a default value', function() {
+      const obj = Test.fromJson({
+        aThirdProperty: 3
       });
 
-      it('maps a model property that has no @Json property, but does have a default value', function() {
-        const obj = Test.fromJson({
-          aThirdProperty: 3
-        });
+      expect(obj.aThirdProperty).toBe(3);
+    });
 
-        expect(obj.aThirdProperty).toBe(3);
+    it('does not map a model property that has no default value and has no @Json decorator', function() {
+      const obj = Test.fromJson({
+        aFourthProperty: 4
       });
 
-      it('does not map a model property that has no default value and has no @Json decorator', function() {
-        const obj = Test.fromJson({
-          aFourthProperty: 4
-        });
+      expect(obj.aFourthProperty).toBeUndefined();
+    });
 
-        expect(obj.aFourthProperty).toBeUndefined();
+    it('maps a model property that has no default value, but does have an @Json decorator', function() {
+      const obj = Test.fromJson({
+        anotherProperty: '2'
       });
 
-      it('maps a model property that has no default value, but does have an @Json decorator', function() {
-        const obj = Test.fromJson({
-          anotherProperty: '2'
-        });
+      expect(obj.anotherProperty).toBe('2');
+    });
 
-        expect(obj.anotherProperty).toBe('2');
+    it('returns a real @Model object, not just an object with the right properties', function() {
+      expect(Test.fromJson({}) instanceof Test).toBeTruthy();
+    });
+
+    it('returns null when no json object is provided', function() {
+      expect(Test.fromJson(null)).toBe(null);
+      expect(Test.fromJson(undefined)).toBe(null);
+    });
+
+    describe('id behavior', function() {
+      it('unmarshalls id as an ObjectID when it is a valid ObjectID', function() {
+        const data = {
+          id: new ObjectID()
+        };
+
+        const test = Test.fromJson(data);
+
+        expect(test.id instanceof ObjectID).toBeTruthy();
+        expect(test._id instanceof ObjectID).toBeTruthy();
       });
 
-      it('returns a real @Model object, not just an object with the right properties', function() {
-        expect(Test.fromJson({}).aFunction).toBeDefined();
+      it('unmarshalls id as a string when it not a vlaid ObjectID', function() {
+        const data = {
+          id: '1234567890987654321'
+        };
+
+        const test = Test.fromJson(data);
+
+        expect(test.id instanceof ObjectID).not.toBeTruthy();
+        expect(test._id instanceof ObjectID).not.toBeTruthy();
       });
 
-      it('returns null when no json object is provided', function() {
-        expect(Test.fromJson(null)).toBe(null);
-        expect(Test.fromJson(undefined)).toBe(null);
+      it('unmarshalls _id as an ObjectID when it is a valid ObjectID', function() {
+        const data = {
+          _id: new ObjectID()
+        };
+
+        const test = Test.fromJson(data);
+
+        expect(test._id instanceof ObjectID).toBeTruthy();
+        expect(test.id instanceof ObjectID).toBeTruthy();
+      });
+
+      it('unmarshalls _id as a string when it is not a valid ObjectID', function() {
+        const data = {
+          _id: '12345678900987654321'
+        };
+
+        const test = Test.fromJson(data);
+
+        expect(test._id instanceof ObjectID).not.toBeTruthy();
+        expect(test.id instanceof ObjectID).not.toBeTruthy();
       });
     });
+
   });
 
   describe('fromJsonArray', function() {
