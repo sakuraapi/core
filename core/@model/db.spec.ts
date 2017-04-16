@@ -102,9 +102,7 @@ describe('@Db', function() {
             promiscuous: true
           }
         })
-        class Test {
-          static fromDb;
-
+        class Test extends SakuraApiModel {
           @Db({field: 'ph'})
           phone: string;
         }
@@ -116,8 +114,8 @@ describe('@Db', function() {
         };
         const result = Test.fromDb(input);
 
-        expect(result.firstName).toBe(input.firstName);
-        expect(result.lastName).toBe(input.lastName);
+        expect((result as any).firstName).toBe(input.firstName);
+        expect((result as any).lastName).toBe(input.lastName);
         expect(result.phone).toBe(input.ph);
       });
 
@@ -202,7 +200,6 @@ describe('@Db', function() {
       }
     })
     class ChasteModelTest {
-      static toDb: () => any;
 
       @Db({
         field: 'fn'
@@ -222,8 +219,6 @@ describe('@Db', function() {
       }
     })
     class PromiscuousModelTest {
-      static toDb: () => any;
-
       @Db({
         field: 'fn'
       })
@@ -243,7 +238,6 @@ describe('@Db', function() {
 
     describe('Chaste Mode', function() {
       it('returns a db object with only explicit @Db fields, and does not include non-enumerable properties', function() {
-
         const result = this.chasteModel.toDb();
 
         expect(result._id).toBe(this.chasteModel.id);
@@ -257,7 +251,6 @@ describe('@Db', function() {
 
     describe('Promiscuous Mode (hey baby)', function() {
       it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', function() {
-
         const result = this.promiscuousModel.toDb();
 
         expect(result._id).toBe(this.promiscuousModel.id);
@@ -265,7 +258,6 @@ describe('@Db', function() {
         expect(result.lastName).toBe(this.promiscuousModel.lastName);
         expect(result.phone).toBe(this.promiscuousModel.phone);
         expect(result.id).toBeUndefined();
-
       });
     });
   });
