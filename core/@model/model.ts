@@ -335,6 +335,11 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
     obj._id = (json as any)._id;
   }
 
+
+  if (obj._id && !(obj._id instanceof ObjectID) && ObjectID.isValid(obj._id)) {
+    obj._id = new ObjectID(obj._id);
+  }
+
   return obj;
 }
 

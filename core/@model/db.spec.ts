@@ -94,11 +94,11 @@ describe('@Db', function() {
         expect(result.lastName).toBeUndefined();
       });
 
-      it('handles @Model being in dbOptions.promiscuous mode', function() {
+      describe('with dbOptions.promiscuous mode', function() {
         @Model({
           dbConfig: {
-            collection: 'test',
-            db: 'test',
+            collection: 'users',
+            db: 'UserDb',
             promiscuous: true
           }
         })
@@ -107,16 +107,37 @@ describe('@Db', function() {
           phone: string;
         }
 
-        const input = {
-          firstName: 'George',
-          lastName: 'Washington',
-          ph: '123'
-        };
-        const result = Test.fromDb(input);
+        it('promiscuously includes fields not mapped with @Db', function() {
+          const input = {
+            firstName: 'George',
+            lastName: 'Washington',
+            ph: '123'
+          };
+          const result = Test.fromDb(input);
 
-        expect((result as any).firstName).toBe(input.firstName);
-        expect((result as any).lastName).toBe(input.lastName);
-        expect(result.phone).toBe(input.ph);
+          expect((result as any).firstName).toBe(input.firstName);
+          expect((result as any).lastName).toBe(input.lastName);
+          expect(result.phone).toBe(input.ph);
+        });
+
+        it('Properly return _id as instanceOf ObjectID', function() {
+
+          let dbResult = {
+            _id: new ObjectID().toString(),
+            firstName: 'George',
+            lastName: 'Washington',
+            ph: '123'
+          };
+
+          let result = Test.fromDb(dbResult);
+
+          expect((result as any).firstName).toBe(dbResult.firstName);
+          expect((result as any).lastName).toBe(dbResult.lastName);
+          expect(result.phone).toBe(dbResult.ph);
+          expect(result._id.toString()).toBe(dbResult._id.toString());
+          expect(((result._id instanceof ObjectID) ? 'is' : 'is not') + ' instance of ObjectID')
+            .toBe('is instance of ObjectID');
+        });
       });
 
       it('unmarshalls _id', function(done) {
