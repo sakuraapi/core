@@ -71,6 +71,7 @@ export const modelSymbols = {
   fromDbArray: Symbol('fromDbArray'),
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
+  fromJsonAsChangeSet: Symbol('fromJsonAsChangeSet'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
   modelOptions: Symbol('modelOptions'),
   target: Symbol('target'),
@@ -228,6 +229,9 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     newConstructor.fromJsonArray = fromJsonArray;
     newConstructor[modelSymbols.fromJsonArray] = fromJsonArray;
 
+    newConstructor.fromJsonAsChangeSet = fromJsonAsChangeSet;
+    newConstructor[modelSymbols.fromJsonAsChangeSet] = fromJsonAsChangeSet;
+
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
     // Instance method injection... TypeScript won't know these are part of the type of the object being constructed
@@ -371,7 +375,7 @@ function fromDbArray(jsons: object[], ...constructorArgs): object[] {
 
 /**
  * @static Constructs an `@`Model object from a json object (see [[Json]]).
- * @param json The json object to be marshaled into an `@`[[Model]] object.
+ * @param json The json object to be unmarshaled into an `@`[[Model]] object.
  * @param constructorArgs A variadic list of parameters to be passed to the constructor of the `@`[[Model]] object being
  * constructed.
  * @returns {{}} Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
@@ -386,28 +390,7 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
 
   const obj = new this(...constructorArgs);
 
-  const propertyNamesByJsonFieldName: Map<string, string>
-    = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, obj);
-
-  for (const field of Object.getOwnPropertyNames(json)) {
-    const prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
-
-    if (prop) {
-      obj[prop] = json[field]; // an @Json alias field
-    } else if (Reflect.has(obj, field)) {
-      if (field === 'id' || field === '_id') {
-        if (ObjectID.isValid(json[field])) {
-          obj[field] = new ObjectID(json[field]);
-        } else {
-          obj[field] = json[field];
-        }
-      } else {
-        obj[field] = json[field]; // a none @Json alias field
-      }
-    }
-  }
-
-  return obj;
+  return this.fromJsonAsChangeSet(json, obj);
 }
 
 /**
@@ -430,6 +413,47 @@ function fromJsonArray(json: object[], ...constructorArgs: any[]): object[] {
   }
 
   return result;
+}
+
+/**
+ * @static Takes a json object (probably from something like req.body) and applies the various mappings defined by the
+ * decorators and returns a change set object that can be used for any of the methods that take projection objections.
+ * For example [[save]].
+ * @param json The json object to be transformed into a change set object.
+ * @param dest The target object to apply the properties to. This is used by [[fromJson]] and is not considered part of
+ * the API contract; thus, it is subject to change without notice.
+ */
+function fromJsonAsChangeSet(json: object, dest?: any): any {
+  this.debug.normal(`.fromJson called, target '${this.name}'`);
+
+  if (!json || typeof json !== 'object') {
+    return null;
+  }
+
+  const propertyNamesByJsonFieldName: Map<string, string>
+    = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, dest || new this());
+
+  const obj = dest || {};
+
+  for (const field of Object.getOwnPropertyNames(json)) {
+    const prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
+
+    if (prop) {
+      obj[prop] = json[field]; // an @Json alias field
+    } else if (Reflect.has(obj, field)) {
+      if (field === 'id' || field === '_id') {
+        if (ObjectID.isValid(json[field])) {
+          obj[field] = new ObjectID(json[field]);
+        } else {
+          obj[field] = json[field];
+        }
+      } else {
+        obj[field] = json[field]; // a none @Json alias field
+      }
+    }
+  }
+
+  return obj;
 }
 
 /**
@@ -707,7 +731,7 @@ function toDb(changeSet?: object): object {
   const target = this[modelSymbols.target];
 
   const modelOptions = target[modelSymbols.modelOptions];
-  this.debug.normal(`.toDb called, target '${this.name}'`);
+  this.debug.normal(`.toDb called, target '${this.name || (this.constructor || {}).name}'`);
 
   changeSet = changeSet || this;
 

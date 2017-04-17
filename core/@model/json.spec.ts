@@ -146,7 +146,7 @@ describe('@Json', function() {
 
             Test
               .getById(this.t._id)
-              .then(result => {
+              .then((result) => {
                 expect(result._id).toBeDefined();
                 expect(result.toJson()['id'].toString()).toBe(this.t._id.toString());
                 done();
@@ -279,12 +279,12 @@ describe('@Json', function() {
         lastName: string = 'Washington';
       }
 
-      let data = {
+      const data = {
         firstName: 'Thomas',
         lastName: 'Jefferson'
       };
 
-      let test = TestDefaults.fromJson(data);
+      const test = TestDefaults.fromJson(data);
 
       expect(test.firstName).toBe(data.firstName);
       expect(test.lastName).toBe(data.lastName);
@@ -361,6 +361,32 @@ describe('@Json', function() {
       });
     });
 
+  });
+
+  describe('fromJsonAsChangeSet', function() {
+
+    @Model()
+    class ChangeSetTest extends SakuraApiModel {
+
+      @Json('fn')
+      firstName: string = '';
+      @Json('ln')
+      lastName: string = '';
+
+    }
+
+    it('takes a json object and transforms it to a change set object', function() {
+      const body = {
+        fn: 'George',
+        ln: 'Washington'
+      };
+
+      const result = ChangeSetTest.fromJsonAsChangeSet(body);
+
+      expect(result.firstName).toBe(body.fn);
+      expect(result.lastName).toBe(body.ln);
+      expect(result instanceof ChangeSetTest).toBe(false);
+    });
   });
 
   describe('fromJsonArray', function() {

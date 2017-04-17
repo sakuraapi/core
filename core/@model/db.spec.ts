@@ -122,14 +122,14 @@ describe('@Db', function() {
 
         it('Properly return _id as instanceOf ObjectID', function() {
 
-          let dbResult = {
+          const dbResult = {
             _id: new ObjectID().toString(),
             firstName: 'George',
             lastName: 'Washington',
             ph: '123'
           };
 
-          let result = Test.fromDb(dbResult);
+          const result = Test.fromDb(dbResult);
 
           expect((result as any).firstName).toBe(dbResult.firstName);
           expect((result as any).lastName).toBe(dbResult.lastName);

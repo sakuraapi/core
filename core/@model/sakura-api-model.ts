@@ -56,6 +56,7 @@ import {
 export abstract class SakuraApiModel {
   public static fromDb?: <T>(this: { new(): T }, json: object, ...constructorArgs: any[]) => T;
   public static fromJson?: <T>(this: { new(): T }, json: object, ...constructorArgs: any[]) => T;
+  public static fromJsonAsChangeSet?: (json: object) => any;
 
   public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs) => T[];
   public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];

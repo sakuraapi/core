@@ -576,7 +576,7 @@ describe('@Model', function() {
                 const pud = new PartialUpdateTest();
                 pud.password = 'test-password';
 
-                let data = {
+                const data = {
                   firstName: 'Georgio',
                   lastName: 'Washington'
                 };
@@ -590,7 +590,7 @@ describe('@Model', function() {
                     return PartialUpdateTest.fromJson(body).save(body);
                   })
                   .then(() => PartialUpdateTest.getById(pud.id))
-                  .then(result => {
+                  .then((result) => {
                     expect(result._id instanceof ObjectID).toBe(true);
                     expect(result._id.toString()).toBe(pud.id.toString());
                     expect(result.firstName).toBe(data.firstName);
