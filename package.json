@@ -1,6 +1,6 @@
 {
   "name": "@sakuraapi/api",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A NodeJS API Experiment",
   "main": "index.js",
   "typings": "index.d.ts",
