@@ -131,7 +131,7 @@ export const routableSymbols = {
  * unless you set the [[RoutableClassOptions.autoRoute]] to false.
  */
 export function Routable(sapi: SakuraApi, options?: IRoutableClassOptions): any {
-  
+
   options = options || {};
   options.blackList = options.blackList || [];
   options.baseUrl = options.baseUrl || '';

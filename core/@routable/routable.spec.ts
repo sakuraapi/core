@@ -1,11 +1,11 @@
 import * as express from 'express';
 import * as request from 'supertest';
+import {sapi} from '../../spec/helpers/sakuraapi';
 import {
   Routable,
   routableSymbols,
   Route
 } from './routable';
-import {sapi} from '../../spec/helpers/sakuraapi';
 
 import method = require('lodash/method');
 import before = require('lodash/before');
