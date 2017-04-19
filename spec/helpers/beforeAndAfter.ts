@@ -1,13 +1,12 @@
 import * as path from 'path';
-import {SakuraApi} from '../../core/sakura-api';
+
+import {sapi} from './sakuraapi';
 
 beforeEach(function() {
-  this.baseUri = SakuraApi.instance.baseUri;
-  this.sapi = SakuraApi.instance;
-
+  this.baseUri = sapi.baseUri;
   this.uri = (endpoint: string) => {
     return path.join(this.baseUri, endpoint);
   };
 
-  this.mongoDbBaseUri = `mongodb://localhost:${SakuraApi.instance.config.TEST_MONGO_DB_PORT}`;
+  this.mongoDbBaseUri = `mongodb://localhost:${sapi.config.TEST_MONGO_DB_PORT}`;
 });

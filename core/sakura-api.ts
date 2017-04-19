@@ -32,9 +32,8 @@ export interface ServerConfig {
  * 3. Taking routes from `@Routable` decorated classes ([[Routable]]) and binding those routes to Express.
  * 4. Starting and stopping the server.
  *
- * SakuraApi is a singleton, so all you have to do is use [[SakuraApi.instance]] to get access to the server's instance.
- * This is important, but the `@Routable` classes and be auto binding their routes to Express and you'll want a way to get
- * a reference to the same instance of SakuraApi that they used.
+ * You'll want to instantiate SakuraApi and export SakuraApi then import that to anywhere that requires a reference
+ * to that instance (for example [[Model]] or [[Routable]]).
  *
  * ### Example
  * <pre>
@@ -43,13 +42,14 @@ export interface ServerConfig {
  * import                   'colors';
  * import * as bodyParser   from 'body-parser'
  *
+ * export const sapi = new SakuraApi();
+ *
  * class Server {
- *    sapi = SakuraApi.instance;
  *
  *    constructor() {}
  *
  *    start() {
- *        this.sapi.addMiddleware(bodyParser.json());
+ *        sapi.addMiddleware(bodyParser.json());
  *        sapi
  *          .listen()
  *          .catch((err) => {
@@ -66,8 +66,6 @@ export interface ServerConfig {
  */
 export class SakuraApi {
 
-  private static _instance: SakuraApi;
-
   private static debug = {
     normal: debug('sapi:SakuraApi'),
     route: debug('sapi:route')
@@ -83,21 +81,11 @@ export class SakuraApi {
   private routes = [];
 
   /**
-   * SakuraApi is a singleton. You get a reference to the instance with [[SakuraApi.instance]].
-   */
-  static get instance(): SakuraApi {
-    if (!this._instance) {
-      this._instance = new SakuraApi();
-    }
-    return this._instance;
-  }
-
-  /**
    * Sets the baseUri for the entire application.
    *
    * ### Example
    * <pre>
-   * SakuraApi.instance.baseUri = 'api';
+   * sakuraApi.baseUri = '/api';
    * </pre>
    *
    * This will cause SakuraApi to expect all routes to have `api` at their base (e.g., `http://localhost:8080/api/user`).
@@ -154,7 +142,7 @@ export class SakuraApi {
     return this._server;
   }
 
-  private constructor(app?: express.Express, config?: any, dbConfig?: SakuraMongoDbConnection) {
+  constructor(app?: express.Express, config?: any, dbConfig?: SakuraMongoDbConnection) {
     this.debug.normal('.constructor started');
 
     if (!app) {
@@ -180,24 +168,14 @@ export class SakuraApi {
   }
 
   /**
-   * A static helper method to make it easier to add middleware. See [[SakuraApi]] for an example of its use. You could also
-   * use [[SakuraApi.app]] to get a reference to Express then add your middleware with that reference directly.
-   *
-   * This uses `express.use(...)` internally.
-   */
-  static addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
-    SakuraApi.debug.normal('.addMiddleware called');
-    SakuraApi.instance.app.use(fn);
-  }
-
-  /**
    * A helper method to make it easier to add middleware. See [[SakuraApi]] for an example of its use. You could also
    * use [[SakuraApi.app]] to get a reference to Express then add your middleware with that reference directly.
    *
    * This uses `express.use(...)` internally.
    */
   addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
-    SakuraApi.addMiddleware(fn);
+    SakuraApi.debug.normal('.addMiddleware called');
+    this.app.use(fn);
   }
 
   /**
@@ -221,23 +199,6 @@ export class SakuraApi {
           resolve();
         });
     });
-  }
-
-  /**
-   * Manually instantiate the [[SakuraApi]] singleton with your own `express.Express` and [[SakuraApiConfig]].
-   * If either parameter is null or undefined, then the defaults are used as if you can called
-   * [[SakuraApi.instance]]. Note that you can only call this if the [[SakuraApi]] singleton has not already been
-   * instantiated. Otherwise, it will throw `new Error('ALREADY_INSTANTIATED')`.
-   */
-  static instantiate(app?: express.Express, config?: SakuraApiConfig, dbConfig?: SakuraMongoDbConnection): SakuraApi {
-    SakuraApi.debug.normal(`.instantiate called`);
-
-    if (this._instance) {
-      throw new Error('ALREADY_INSTANTIATED');
-    }
-
-    this._instance = new SakuraApi(app, config, dbConfig);
-    return this.instance;
   }
 
   /**
@@ -267,6 +228,7 @@ export class SakuraApi {
           router[route.httpMethod](route.path, route.f);
         });
 
+      this.debug.normal(`.listen setting baseUri to ${this.baseUri}`);
       this.app.use(this.baseUri, router);
 
       // Open the connections
@@ -317,8 +279,7 @@ export class SakuraApi {
       return;
     }
 
-    target
-      [routableSymbols.sakuraApiClassRoutes]
+    target[routableSymbols.sakuraApiClassRoutes]
       .forEach((route) => {
         this.debug.route(`\tadded '${JSON.stringify(route)}'`);
         this.routes.push(route);

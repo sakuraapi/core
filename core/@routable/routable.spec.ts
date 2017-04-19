@@ -1,16 +1,69 @@
 import * as express from 'express';
 import * as request from 'supertest';
-import {SakuraApi} from '../sakura-api';
 import {
   Routable,
   routableSymbols,
   Route
 } from './routable';
+import {sapi} from '../../spec/helpers/sakuraapi';
 
 import method = require('lodash/method');
 import before = require('lodash/before');
 
 describe('core/Routable', function() {
+
+  @Routable(sapi, {
+    baseUrl: 'test',
+    blackList: ['someBlacklistedMethod']
+  })
+  class Test {
+
+    constructor(public someProperty?: number) {
+    }
+
+    @Route({
+      method: 'get',
+      path: '/'
+    })
+    someMethod(req: express.Request, res: express.Response) {
+      res
+        .status(200)
+        .send({someMethodCalled: true});
+    }
+
+    @Route({
+      method: 'post',
+      path: 'someOtherMethod/'
+    })
+    someOtherMethod(req: express.Request, res: express.Response) {
+      res
+        .status(200)
+        .send({someOtherMethodCalled: true});
+    }
+
+    @Route({
+      method: 'post',
+      path: 'someBlacklistedMethod/'
+    })
+    someBlacklistedMethod(req: express.Request, res: express.Response) {
+      res
+        .status(200)
+        .send({someOtherMethodCalled: true});
+    }
+
+    @Route({
+      method: 'post',
+      path: 'methodStillWorks/'
+    })
+    methodStillWorks() {
+      return 'it works';
+    }
+
+    @Route()
+    emptyRouteDecorator() {
+
+    }
+  }
 
   beforeEach(function() {
     this.t = new Test(777);
@@ -38,6 +91,29 @@ describe('core/Routable', function() {
       });
 
       it('handle the lack of a baseUrl gracefully', function() {
+        @Routable(sapi)
+        class Test2 {
+          @Route({
+            method: 'get',
+            path: '/'
+          })
+          someMethodTest2(req: express.Request, res: express.Response) {
+            res
+              .status(200)
+              .send({someMethodCalled: true});
+          }
+
+          @Route({
+            method: 'get',
+            path: 'someOtherMethodTest2'
+          })
+          someOtherMethodTest2(req: express.Request, res: express.Response) {
+            res
+              .status(200)
+              .send({someMethodCalled: true});
+          }
+        }
+
         const t2 = new Test2();
         expect(t2[routableSymbols.sakuraApiClassRoutes][0].path).toBe('/');
         expect(t2[routableSymbols.sakuraApiClassRoutes][1].path).toBe('/someOtherMethodTest2');
@@ -45,7 +121,7 @@ describe('core/Routable', function() {
 
       it('suppress autoRouting if options.autoRoute = false', function(done) {
 
-        @Routable({
+        @Routable(sapi, {
           autoRoute: false
         })
         class Test {
@@ -57,19 +133,17 @@ describe('core/Routable', function() {
           }
         }
 
-        SakuraApi
-          .instance
+        sapi
           .listen()
           .then(function() {
-            request(SakuraApi.instance.app)
+            request(sapi.app)
               .get('/autoRoutingFalseTest')
               .expect(404)
               .end(function(err, res) {
                 if (err) {
                   return done.fail(err);
                 }
-                SakuraApi
-                  .instance
+                sapi
                   .close()
                   .then(done)
                   .catch(done.fail);
@@ -108,6 +182,16 @@ describe('core/Routable', function() {
     });
 
     it('property binds the instantiated class as the context of this for each route method', function() {
+      @Routable(sapi)
+      class Test4 {
+        someProperty = 'instance';
+
+        @Route()
+        someMethodTest4() {
+          return this.someProperty;
+        }
+      }
+
       const c = new Test4();
 
       expect(c.someMethodTest4()).toBe(c.someProperty);
@@ -115,11 +199,47 @@ describe('core/Routable', function() {
     });
 
     it('automatically instantiates its class and adds it to SakuraApi.instance.route(...)', function(done) {
-      SakuraApi
-        .instance
+
+      @Routable(sapi)
+      class Test5 {
+
+        @Route({
+          path: 'someMethodTest5'
+        })
+        someMethodTest5(req, res) {
+          res
+            .status(200)
+            .json({someMethodTest5: 'testRouterGet worked'});
+        }
+
+        @Route({
+          path: 'route/parameter/:test'
+        })
+        routeParameterTest(req: express.Request, res: express.Response) {
+          const test = req.params.test;
+
+          res
+            .status(200)
+            .json({result: test});
+        }
+
+        @Route({
+          path: 'route2/:parameter/test'
+        })
+        routeParameterTest2(req: express.Request, res: express.Response) {
+          const test = req.params.parameter;
+
+          res
+            .status(200)
+            .json({result: test});
+        }
+
+      }
+
+      sapi
         .listen()
         .then(() => {
-          request(SakuraApi.instance.app)
+          request(sapi.app)
             .get(this.uri('/someMethodTest5'))
             .expect('Content-Type', /json/)
             .expect('Content-Length', '42')
@@ -156,7 +276,7 @@ describe('core/Routable', function() {
     it('throws an exception when an invalid HTTP method is specificed', function() {
       let err;
       try {
-        @Routable()
+        @Routable(sapi)
         class X {
           @Route({method: 'imnotarealhttpmethod'})
           badHttpMethod() {
@@ -169,6 +289,14 @@ describe('core/Routable', function() {
     });
 
     it('excludes a method level blacklisted @Route', function() {
+      @Routable(sapi)
+      class Test3 {
+        @Route({blackList: true})
+        blackListedMethod() {
+
+        }
+      }
+
       const t3 = new Test3();
       expect(t3[routableSymbols.sakuraApiClassRoutes].length).toBe(0);
     });
@@ -176,8 +304,7 @@ describe('core/Routable', function() {
     describe('handles route parameters', function() {
 
       afterEach(function(done) {
-        SakuraApi
-          .instance
+        sapi
           .close()
           .then(function() {
             done();
@@ -188,11 +315,10 @@ describe('core/Routable', function() {
       });
 
       it('at the end of the path', function(done) {
-        SakuraApi
-          .instance
+        sapi
           .listen()
           .then(() => {
-            request(SakuraApi.instance.app)
+            request(sapi.app)
               .get(this.uri('/route/parameter/777'))
               .expect('Content-Type', /json/)
               .expect('Content-Length', '16')
@@ -208,11 +334,10 @@ describe('core/Routable', function() {
       });
 
       it('at the end of the path', function(done) {
-        SakuraApi
-          .instance
+        sapi
           .listen()
           .then(() => {
-            request(SakuraApi.instance.app)
+            request(sapi.app)
               .get(this.uri('/route2/888/test'))
               .expect('Content-Type', /json/)
               .expect('Content-Length', '16')
@@ -229,133 +354,3 @@ describe('core/Routable', function() {
     });
   });
 });
-
-@Routable({
-  baseUrl: 'test',
-  blackList: ['someBlacklistedMethod']
-})
-class Test {
-
-  constructor(public someProperty?: number) {
-  }
-
-  @Route({
-    method: 'get',
-    path: '/'
-  })
-  someMethod(req: express.Request, res: express.Response) {
-    res
-      .status(200)
-      .send({someMethodCalled: true});
-  }
-
-  @Route({
-    method: 'post',
-    path: 'someOtherMethod/'
-  })
-  someOtherMethod(req: express.Request, res: express.Response) {
-    res
-      .status(200)
-      .send({someOtherMethodCalled: true});
-  }
-
-  @Route({
-    method: 'post',
-    path: 'someBlacklistedMethod/'
-  })
-  someBlacklistedMethod(req: express.Request, res: express.Response) {
-    res
-      .status(200)
-      .send({someOtherMethodCalled: true});
-  }
-
-  @Route({
-    method: 'post',
-    path: 'methodStillWorks/'
-  })
-  methodStillWorks() {
-    return 'it works';
-  }
-
-  @Route()
-  emptyRouteDecorator() {
-
-  }
-}
-
-@Routable()
-class Test2 {
-  @Route({
-    method: 'get',
-    path: '/'
-  })
-  someMethodTest2(req: express.Request, res: express.Response) {
-    res
-      .status(200)
-      .send({someMethodCalled: true});
-  }
-
-  @Route({
-    method: 'get',
-    path: 'someOtherMethodTest2'
-  })
-  someOtherMethodTest2(req: express.Request, res: express.Response) {
-    res
-      .status(200)
-      .send({someMethodCalled: true});
-  }
-}
-
-@Routable()
-class Test3 {
-  @Route({blackList: true})
-  blackListedMethod() {
-
-  }
-}
-
-@Routable()
-class Test4 {
-  someProperty = 'instance';
-
-  @Route()
-  someMethodTest4() {
-    return this.someProperty;
-  }
-}
-
-@Routable()
-class Test5 {
-
-  @Route({
-    path: 'someMethodTest5'
-  })
-  someMethodTest5(req, res) {
-    res
-      .status(200)
-      .json({someMethodTest5: 'testRouterGet worked'});
-  }
-
-  @Route({
-    path: 'route/parameter/:test'
-  })
-  routeParameterTest(req: express.Request, res: express.Response) {
-    const test = req.params.test;
-
-    res
-      .status(200)
-      .json({result: test});
-  }
-
-  @Route({
-    path: 'route2/:parameter/test'
-  })
-  routeParameterTest2(req: express.Request, res: express.Response) {
-    const test = req.params.parameter;
-
-    res
-      .status(200)
-      .json({result: test});
-  }
-
-}

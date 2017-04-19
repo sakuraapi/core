@@ -74,6 +74,7 @@ export const modelSymbols = {
   fromJsonAsChangeSet: Symbol('fromJsonAsChangeSet'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
   modelOptions: Symbol('modelOptions'),
+  sapi: Symbol('sapi'),
   target: Symbol('target'),
   toDb: Symbol('toDb'),
   toJson: Symbol('toJson'),
@@ -85,6 +86,8 @@ export const modelSymbols = {
  *
  * ### Example
  * <pre>
+ * import sapi from '../index'; // your app's reference to its instance of SakuraApi
+ *
  * <span>@</span>Model()
  * class User {
  *    firstName: string = '';
@@ -115,11 +118,11 @@ export const modelSymbols = {
  *   * [[toJson]]
  *   * [[toJsonString]]
  *
- * Injected unctions can be changed to point to a custom function references without breaking SakuraApi. They're
+ * Injected functions can be changed to point to a custom function references without breaking SakuraApi. They're
  * mapped for the integrators convenience. If the integrator wants to actually change the underlying behavior that
  * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
  */
-export function Model(modelOptions?: IModelOptions): (object) => any {
+export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) => any {
   modelOptions = modelOptions || {} as IModelOptions;
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -132,8 +135,10 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
   // To add an instance member: newConstructor.prototype.newFunction = () => {}
   // to add a static member: newConstructor.newFunction = () => {}
   // ===================================================================================================================
-
   return (target: any) => {
+    if (!sapi) {
+      throw new Error(`A valid instance of SakuraApi must be provided to the model '${target.name}'`);
+    }
 
     const newConstructor = new Proxy(target, {
       // ---------------------------------------------------------------------------------------------------------------
@@ -232,6 +237,8 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     newConstructor.fromJsonAsChangeSet = fromJsonAsChangeSet;
     newConstructor[modelSymbols.fromJsonAsChangeSet] = fromJsonAsChangeSet;
 
+    newConstructor[modelSymbols.sapi] = sapi;
+
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
     // Instance method injection... TypeScript won't know these are part of the type of the object being constructed
@@ -261,6 +268,8 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
 
     newConstructor.prototype.toJsonString = toJsonString;
     newConstructor.prototype[modelSymbols.toJsonString] = toJsonString;
+
+    newConstructor.prototype[modelSymbols.sapi] = sapi;
 
     return newConstructor;
   };
@@ -518,7 +527,6 @@ function getById(id: string | ObjectID, project?: any): Promise<any> {
 function getCollection(): Collection {
   // can be called as instance or static method, so get the appropriate context
   const target = this[modelSymbols.target] || this;
-
   const db = target.getDb();
 
   if (!db) {
@@ -578,7 +586,7 @@ function getCursorById(id, project?: any): Cursor<any> {
 function getDb(): Db {
   // can be called as instance or static method, so get the appropriate context
   const target = this[modelSymbols.target] || this;
-  const db = SakuraApi.instance.dbConnections.getDb(target[modelSymbols.dbName]);
+  const db = target[modelSymbols.sapi].dbConnections.getDb(target[modelSymbols.dbName]);
 
   this.debug.normal(`.getDb called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);
 

@@ -1,6 +1,6 @@
 import {
-  ServerConfig,
-  SakuraApi
+  SakuraApi,
+  ServerConfig
 } from './sakura-api';
 import {
   Routable,
@@ -9,147 +9,191 @@ import {
 import {MongoClient} from 'mongodb';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
 import * as request from 'supertest';
+import {sapi} from '../spec/helpers/sakuraapi';
 import Spy = jasmine.Spy;
 
-describe('core/SakuraApi', function () {
+describe('core/SakuraApi', function() {
+  @Routable(sapi)
+  class RoutableTest {
+    response = 'testRouterGet worked';
 
-  beforeEach(function () {
+    constructor() {
+    }
+
+    @Route({
+      path: 'testRouterGet',
+      method: 'get'
+    })
+    testRouterGet(req, res) {
+      res.status(200)
+         .json({
+           testRouterGet: this.response
+         });
+    }
+  }
+
+  beforeEach(function() {
     this.config = {} as ServerConfig;
     this.config.port = 9000;
     this.config.address = '127.0.0.1';
 
-    spyOn(this.sapi.server, 'listen')
-      .and
-      .callThrough();
+    spyOn(sapi.server, 'listen').and.callThrough();
     spyOn(console, 'log');
   });
 
-  afterEach(function (done) {
-    this.sapi
+  afterEach(function(done) {
+    sapi
+      .close()
+      .then(done)
+      .catch(done.fail);
+  });
+
+  it('port property defaults to a valid integer > 1000', function() {
+    expect(sapi.port).toBeDefined();
+    expect(typeof  sapi.port).toBe('number');
+    expect(sapi.port).toBeGreaterThanOrEqual(1000);
+  });
+
+  it('app property exposes the Express app object used for construction', function() {
+    expect(sapi.app).toBeDefined();
+    expect(typeof sapi.app).toBe('function');
+  });
+
+  it('config is loaded properly', function() {
+    expect(sapi.config.SAKURA_API_CONFIG_TEST).toBe('found');
+  });
+
+  describe('middleware', function() {
+    let sak = new SakuraApi();
+    sak.baseUri = '/testApi';
+
+    @Routable(sak, {
+      baseUrl: 'middleware'
+    })
+    class MiddleWareTest {
+      @Route({
+        method: 'get',
+        path: 'test'
+      })
+      test(req, res) {
+        res
+          .status(200)
+          .json({result: req.bootStrapTest});
+      }
+    }
+
+    afterEach(function(done) {
+      sak
         .close()
         .then(done)
         .catch(done.fail);
-  });
-
-  it('port property defaults to a valid integer > 1000', function () {
-    expect(this.sapi.port)
-      .toBeDefined();
-    expect(typeof  this.sapi.port)
-      .toBe('number');
-    expect(this.sapi.port)
-      .toBeGreaterThanOrEqual(1000);
-  });
-
-  it('app property exposes the Express app object used for construction', function () {
-    expect(this.sapi.app)
-      .toBeDefined();
-    expect(typeof this.sapi.app)
-      .toBe('function');
-  });
-
-  it('config is loaded properly', function () {
-    expect(this.sapi.config.SAKURA_API_CONFIG_TEST)
-      .toBe('found');
-  });
-
-  describe('instantiate(...)', function () {
-    it('throws if already SakuraApi is already instatiated', function () {
-      expect(() => {
-        SakuraApi.instantiate()
-      })
-        .toThrowError('ALREADY_INSTANTIATED');
-    });
-  });
-
-  describe('listen(...)', function () {
-    it('bootstraps Express with defaulting settings when no parameters are provided', function (done) {
-      this.sapi
-          .listen()
-          .then(() => {
-            expect(this.sapi.server.listen)
-              .toHaveBeenCalledTimes(1);
-            expect(console.log)
-              .toHaveBeenCalledTimes(1);
-            expect(this.sapi.port)
-              .toBeGreaterThanOrEqual(1000);
-            expect(this.sapi.address)
-              .toEqual('127.0.0.1');
-            done();
-          })
-          .catch((err) => {
-            expect(err)
-              .toBeUndefined();
-            done();
-          });
     });
 
-    it('sets the port, when provided', function (done) {
+    it('injects middleware before @Routable classes', function(done) {
+      sak
+        .addMiddleware((req, res, next) => {
+          (req as any).bootStrapTest = 778;
+          next();
+        });
+
+      sak
+        .listen()
+        .then(() => {
+          request(sak.app)
+            .get(this.uri('/middleware/test'))
+            .expect('Content-Type', /json/)
+            .expect('Content-Length', '14')
+            .expect('{"result":778}')
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done.fail(err);
+              }
+              done();
+            });
+        })
+        .catch(done.fail);
+    });
+
+  });
+
+  describe('listen(...)', function() {
+    it('bootstraps Express with defaulting settings when no parameters are provided', function(done) {
+      sapi
+        .listen()
+        .then(() => {
+          expect(sapi.server.listen).toHaveBeenCalledTimes(1);
+          expect(console.log).toHaveBeenCalledTimes(1);
+          expect(sapi.port).toBeGreaterThanOrEqual(1000);
+          expect(sapi.address).toEqual('127.0.0.1');
+          done();
+        })
+        .catch((err) => {
+          expect(err).toBeUndefined();
+          done();
+        });
+    });
+
+    it('sets the port, when provided', function(done) {
       this.config.port = 7777;
 
-      this.sapi
-          .listen(this.config)
-          .then(() => {
-            expect(this.sapi.port)
-              .toEqual(this.config.port);
-            expect(this.sapi.server.listening)
-              .toEqual(true);
-            expect(this.sapi.server.address().port)
-              .toEqual(this.config.port);
-            done();
-          })
-          .catch(done.fail);
+      sapi
+        .listen(this.config)
+        .then(() => {
+          expect(sapi.port).toEqual(this.config.port);
+          expect(sapi.server.listening).toEqual(true);
+          expect(sapi.server.address().port).toEqual(this.config.port);
+          done();
+        })
+        .catch(done.fail);
     });
 
-    it('sets the address, when provided', function (done) {
+    it('sets the address, when provided', function(done) {
       this.config.address = 'localhost';
 
-      this.sapi
-          .listen(this.config)
-          .then(() => {
-            expect(this.sapi.port)
-              .toEqual(this.config.port);
-            expect(this.sapi.server.listening)
-              .toEqual(true);
-            expect(this.sapi.server.address().address)
-              .toEqual('127.0.0.1');
-            done();
-          })
-          .catch(done.fail);
+      sapi
+        .listen(this.config)
+        .then(() => {
+          expect(sapi.port).toEqual(this.config.port);
+          expect(sapi.server.listening).toEqual(true);
+          expect(sapi.server.address().address).toEqual('127.0.0.1');
+          done();
+        })
+        .catch(done.fail);
     });
 
-    it('responds to a route setup in middleware', function (done) {
-      this.sapi
-          .listen(this.config)
-          .then(() => {
-            this.sapi
-                .app
-                .get('/middleWareTest', function (req, res) {
-                  res.status(200)
-                     .json({isTest: true});
-                });
+    it('responds to a route setup in middleware', function(done) {
+      sapi
+        .listen(this.config)
+        .then(() => {
+          sapi
+            .app
+            .get('/middleWareTest', function(req, res) {
+              res
+                .status(200)
+                .json({isTest: true});
+            });
 
-            request(this.sapi.app)
-              .get('/middleWareTest')
-              .expect('Content-Type', /json/)
-              .expect('Content-Length', '15')
-              .expect('{"isTest":true}')
-              .expect(200)
-              .end(function (err, res) {
-                if (err) {
-                  return done.fail(err);
-                }
-                done();
-              });
-          })
-          .catch(done.fail);
+          request(sapi.app)
+            .get('/middleWareTest')
+            .expect('Content-Type', /json/)
+            .expect('Content-Length', '15')
+            .expect('{"isTest":true}')
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done.fail(err);
+              }
+              done();
+            });
+        })
+        .catch(done.fail);
     });
 
-    it('connects to databases', function (done) {
-      spyOn(MongoClient, 'connect')
-        .and
-        .callThrough();
+    it('connects to databases', function(done) {
+      spyOn(MongoClient, 'connect').and.callThrough();
 
-      this.sapi['_dbConnections'] = SakuraApiConfig.dataSources({
+      sapi['_dbConnections'] = SakuraApiConfig.dataSources({
         dbConnections: [
           {
             name: 'testDb',
@@ -158,19 +202,18 @@ describe('core/SakuraApi', function () {
         ]
       });
 
-      this
-        .sapi
+      sapi
         .listen()
         .then(() => {
-          this
-            .sapi
+          sapi
             .app
-            .get('/middleWareTest', function (req, res) {
-              res.status(200)
-                 .json({isTest: true});
+            .get('/middleWareTest', function(req, res) {
+              res
+                .status(200)
+                .json({isTest: true});
             });
 
-          request(this.sapi.app)
+          request(sapi.app)
             .get('/middleWareTest')
             .expect('Content-Type', /json/)
             .expect('Content-Length', '15')
@@ -183,15 +226,13 @@ describe('core/SakuraApi', function () {
 
               expect(MongoClient.connect)
                 .toHaveBeenCalledTimes(1);
-              this
-                .sapi
+              sapi
                 .dbConnections
                 .getDb('testDb')
                 .collection('testCollection')
                 .insertOne({someValue: 777})
                 .then((results) => {
-                  expect(results.insertedCount)
-                    .toBe(1);
+                  expect(results.insertedCount).toBe(1);
                   done();
                 })
                 .catch(done.fail);
@@ -201,67 +242,46 @@ describe('core/SakuraApi', function () {
     });
   });
 
-  describe('close(...)', function () {
-    it('closes the port when told to', function (done) {
-      this.sapi
-          .listen()
-          .then(() => {
-            expect(this.sapi.server.listening)
-              .toBe(true);
-            this.sapi
-                .close()
-                .then(() => {
-                  expect(this.sapi.server.listening)
-                    .toBe(false);
-                  done();
-                })
-                .catch(done.fail);
-          })
-          .catch(done.fail);
+  describe('close(...)', function() {
+    it('closes the port when told to', function(done) {
+      sapi
+        .listen()
+        .then(() => {
+          expect(sapi.server.listening).toBe(true);
+          sapi
+            .close()
+            .then(() => {
+              expect(sapi.server.listening).toBe(false);
+              done();
+            })
+            .catch(done.fail);
+        })
+        .catch(done.fail);
     });
   });
 
-  describe('route(...)', function () {
-    it('takes a @Routable class and adds the proper routes to express', function (done) {
+  describe('route(...)', function() {
+    it('takes a @Routable class and adds the proper routes to express', function(done) {
       // note: the @Routable decorator logic called the route(...) method and passed its Class instance
       // that it instantiated, which caused .route(...) to be called (magic)
-      this.sapi
-          .listen(this.config)
-          .then(() => {
-            request(this.sapi.app)
-              .get(this.uri('/testRouterGet'))
-              .expect('Content-Type', /json/)
-              .expect('Content-Length', '40')
-              .expect('{"testRouterGet":"testRouterGet worked"}')
-              .expect(200)
-              .end(function (err, res) {
-                if (err) {
-                  return done.fail(err);
-                }
-                done();
-              });
-          })
-          .catch(done.fail);
+      sapi
+        .listen(this.config)
+        .then(() => {
+          request(sapi.app)
+            .get(this.uri('/testRouterGet'))
+            .expect('Content-Type', /json/)
+            .expect('Content-Length', '40')
+            .expect('{"testRouterGet":"testRouterGet worked"}')
+            .expect(200)
+            .end(function(err, res) {
+              if (err) {
+                return done.fail(err);
+              }
+              done();
+            });
+        })
+        .catch(done.fail);
     });
   });
-
 });
 
-@Routable()
-class RoutableTest {
-  response = 'testRouterGet worked';
-
-  constructor() {
-  }
-
-  @Route({
-    path: 'testRouterGet',
-    method: 'get'
-  })
-  testRouterGet(req, res) {
-    res.status(200)
-       .json({
-         testRouterGet: this.response
-       });
-  }
-}

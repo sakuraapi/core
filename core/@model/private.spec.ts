@@ -3,8 +3,10 @@ import {Model} from './model';
 import {Private} from './private';
 import {SakuraApiModel} from './sakura-api-model';
 
+import {sapi} from '../../spec/helpers/sakuraapi';
+
 describe('@Private', function() {
-  @Model()
+  @Model(sapi)
   class Test implements SakuraApiModel {
 
     @Private()

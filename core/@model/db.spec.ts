@@ -4,12 +4,14 @@ import {Model} from './model';
 import {ObjectID} from 'mongodb';
 import {SakuraApiModel} from './sakura-api-model';
 
+import {sapi} from '../../spec/helpers/sakuraapi';
+
 describe('@Db', function() {
 
   describe('fromDb', function() {
 
     it('is injected as a static member of an @Model object by default', function() {
-      @Model()
+      @Model(sapi)
       class Test extends SakuraApiModel {
       }
 
@@ -18,7 +20,7 @@ describe('@Db', function() {
 
     describe('constructor', function() {
 
-      @Model()
+      @Model(sapi)
       class Test extends SakuraApiModel {
 
         constructor(public constructorTest?: number) {
@@ -45,7 +47,7 @@ describe('@Db', function() {
     describe('maps fields from input', function() {
 
       it('handles @Models with no @Db properties', function() {
-        @Model()
+        @Model(sapi)
         class Test {
           static fromDb;
         }
@@ -54,7 +56,7 @@ describe('@Db', function() {
       });
 
       it('handles properties with empty @Db options', function() {
-        @Model()
+        @Model(sapi)
         class Test {
           static fromDb;
 
@@ -73,7 +75,7 @@ describe('@Db', function() {
       });
 
       it('handles properties with @Db({field}) set', function() {
-        @Model()
+        @Model(sapi)
         class Test {
           static fromDb;
 
@@ -95,7 +97,7 @@ describe('@Db', function() {
       });
 
       describe('with dbOptions.promiscuous mode', function() {
-        @Model({
+        @Model(sapi, {
           dbConfig: {
             collection: 'users',
             db: 'UserDb',
@@ -142,7 +144,7 @@ describe('@Db', function() {
 
       it('unmarshalls _id', function(done) {
 
-        @Model()
+        @Model(sapi)
         class Test extends SakuraApiModel {
 
           @Db({field: 'ph'})
@@ -164,7 +166,7 @@ describe('@Db', function() {
   });
 
   describe('fromDbArray', function() {
-    @Model()
+    @Model(sapi)
     class Test {
       static fromDbArray;
 
@@ -213,7 +215,7 @@ describe('@Db', function() {
   });
 
   describe('toDb', function() {
-    @Model({
+    @Model(sapi, {
       dbConfig: {
         collection: 'users',
         db: 'userDb',
@@ -232,13 +234,14 @@ describe('@Db', function() {
 
     }
 
-    @Model({
-      dbConfig: {
-        collection: 'users',
-        db: 'userDb',
-        promiscuous: true
+    @Model(sapi, {
+        dbConfig: {
+          collection: 'users',
+          db: 'userDb',
+          promiscuous: true
+        }
       }
-    })
+    )
     class PromiscuousModelTest {
       @Db({
         field: 'fn'

@@ -7,9 +7,11 @@ import {
 } from './model';
 import {SakuraApiModel} from './sakura-api-model';
 
+import {sapi} from '../../spec/helpers/sakuraapi';
+
 describe('@Json', function() {
 
-  @Model({
+  @Model(sapi, {
     dbConfig: {
       collection: 'users',
       db: 'userDb',
@@ -35,7 +37,7 @@ describe('@Json', function() {
     }
   }
 
-  @Model()
+  @Model(sapi)
   class Test2 {
     aProperty: string = 'test';
     anotherProperty: string;
@@ -45,7 +47,7 @@ describe('@Json', function() {
     }
   }
 
-  @Model()
+  @Model(sapi)
   class TestDbFieldPrivate {
     aProperty: string = 'test';
     anotherProperty: string;
@@ -130,8 +132,7 @@ describe('@Json', function() {
 
     describe('when interacting with Db', function() {
       beforeEach(function(done) {
-        this
-          .sapi
+        sapi
           .dbConnections
           .connectAll()
           .then(done)
@@ -139,11 +140,11 @@ describe('@Json', function() {
       });
 
       it('returns id when _id is not null', function(done) {
+
         this
           .t
           .create()
           .then(() => {
-
             Test
               .getById(this.t._id)
               .then((result) => {
@@ -154,6 +155,7 @@ describe('@Json', function() {
               .catch(done.fail);
           })
           .catch(done.fail);
+
       });
     });
 
@@ -204,7 +206,7 @@ describe('@Json', function() {
     });
 
     it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
-      @Model()
+      @Model(sapi)
       class SymbolTest extends SakuraApiModel {
         @Json('ap')
         aProperty: number;
@@ -234,7 +236,7 @@ describe('@Json', function() {
     });
 
     it('does not throw if there are no @Json decorators', function() {
-      @Model()
+      @Model(sapi)
       class C extends SakuraApiModel {
         someProperty = 777;
       }
@@ -273,7 +275,7 @@ describe('@Json', function() {
     });
 
     it('maps a model property that has no @Json property, but does have a default value', function() {
-      @Model()
+      @Model(sapi)
       class TestDefaults extends SakuraApiModel {
         firstName: string = 'George';
         lastName: string = 'Washington';
@@ -365,7 +367,7 @@ describe('@Json', function() {
 
   describe('fromJsonAsChangeSet', function() {
 
-    @Model()
+    @Model(sapi)
     class ChangeSetTest extends SakuraApiModel {
 
       @Json('fn')
@@ -395,7 +397,7 @@ describe('@Json', function() {
     });
 
     it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
-      @Model()
+      @Model(sapi)
       class SymbolTest extends SakuraApiModel {
         @Json('ap')
         aProperty: number;

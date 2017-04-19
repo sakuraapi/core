@@ -107,7 +107,9 @@ export const routableSymbols = {
  *
  * ### Example
  * <pre>
- * <span>@</span>Routable({
+ * import sapi from '../index'; // your app's reference to its instance of SakuraApi
+ *
+ * <span>@</span>Routable(sapi, {
  *    baseUrl: 'users'
  * })
  * class User {
@@ -128,7 +130,8 @@ export const routableSymbols = {
  * Keep in mind that `@Routable` will instantiate the class and pass it to [[SakuraApi.route]],
  * unless you set the [[RoutableClassOptions.autoRoute]] to false.
  */
-export function Routable(options?: IRoutableClassOptions): any {
+export function Routable(sapi: SakuraApi, options?: IRoutableClassOptions): any {
+  
   options = options || {};
   options.blackList = options.blackList || [];
   options.baseUrl = options.baseUrl || '';
@@ -179,7 +182,7 @@ export function Routable(options?: IRoutableClassOptions): any {
         c[routableSymbols.sakuraApiClassRoutes] = metaData;
 
         if (options.autoRoute) {
-          SakuraApi.instance.route(c);
+          sapi.route(c);
         }
 
         return c;
