@@ -1,11 +1,14 @@
 {
-  "name": "SakuraApi",
-  "readme": "README.md",
-  "out": "docs",
-  "excludePrivate": true,
-  "excludeExternals": false,
-  "exclude": "!(**/*+(e2e|spec|index).ts | **/node_modules)",
+  "out": "docs/",
+  "mode": "modules",
+  "module": "commonjs",
+  "exclude": "**/**/*+(spec|index).ts",
+  "externalPattern": "**/spec/**",
   "includeDeclarations": false,
-  "mode": "file",
-  "theme": "minimal"
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "target": "ES6",
+  "theme": "default",
+  "name": "SakuraApi",
+  "readme": "doc.md"
 }

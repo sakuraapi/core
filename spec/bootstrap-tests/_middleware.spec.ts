@@ -1,18 +1,36 @@
-import {
-  Route,
-  Routable
-}                   from '../../core/@routable/routable';
-import {SakuraApi}  from '../../core/sakura-api';
-
 import * as request from 'supertest';
+import {
+  Routable,
+  Route
+} from '../../core/@routable/routable';
+import {SakuraApi} from '../../core/sakura-api';
 
-describe('SakuraApi.instance.middleware', function () {
+// These tests have to happen before anything else happens
+describe('SakuraApi.instance.middleware', function() {
+  @Routable({
+    baseUrl: 'middleware'
+  })
+  class MiddleWareTest {
 
-  beforeEach(function () {
+    constructor() {
+    }
+
+    @Route({
+      method: 'get',
+      path: 'test'
+    })
+    test(req, res) {
+      res
+        .status(200)
+        .json({result: req.bootStrapTest});
+    }
+  }
+
+  beforeEach(function() {
     spyOn(console, 'log');
   });
 
-  afterEach(function (done) {
+  afterEach(function(done) {
     this
       .sapi
       .close()
@@ -20,9 +38,9 @@ describe('SakuraApi.instance.middleware', function () {
       .catch(done.fail);
   });
 
-  it('injects middleware before @Routable classes', function (done) {
+  it('injects middleware before @Routable classes', function(done) {
     this.sapi.addMiddleware((req, res, next) => {
-      (<any>req).bootStrapTest = 778;
+      (req as any).bootStrapTest = 778;
       next();
     });
 
@@ -36,7 +54,7 @@ describe('SakuraApi.instance.middleware', function () {
           .expect('Content-Length', '14')
           .expect('{"result":778}')
           .expect(200)
-          .end(function (err, res) {
+          .end(function(err, res) {
             if (err) {
               return done.fail(err);
             }
@@ -46,22 +64,3 @@ describe('SakuraApi.instance.middleware', function () {
       .catch(done.fail);
   });
 });
-
-@Routable({
-  baseUrl: 'middleware'
-})
-class MiddleWareTest {
-
-  constructor() {
-  }
-
-  @Route({
-    path: 'test',
-    method: 'get'
-  })
-  test(req, res) {
-    res
-      .status(200)
-      .json({result: req.bootStrapTest});
-  }
-}

@@ -1,16 +1,15 @@
-/** @module core/@model/json */
-
 /**
- * The symbols used by Reflect to store `@Json()` metadata for use by `@Module`.
+ * The symbols used by Reflect to store `@Json()` metadata for use by `@Module`. These symbols are not considered
+ * part of the API contract and may change or be removed without notice on patch releases.
  */
 export const jsonSymbols = {
-  sakuraApiJsonPropertyToFieldNames: Symbol('sakuraApiJsonPropertyToFieldNames'),
-  sakuraApiJsonFieldToPropertyNames: Symbol('sakuraApiJsonFieldToPropertyNames')
+  sakuraApiDbFieldToPropertyNames: Symbol('sakuraApiJsonFieldToPropertyNames'),
+  sakuraApiDbPropertyToFieldNames: Symbol('sakuraApiJsonPropertyToFieldNames')
 };
 
 /**
- * Decorates properties in an `@Model` class to alias its properties to json (`obj.toJson()`) and
- * from json (`Obj.fromJson(json)`).
+ * Decorates properties in an `@`[[Model]] class to describe how a property will be marshaled to json
+ * (`ModelObject.toJson()`) and from json (`modelObject.fromJson(json)`).
  *
  * ### Example
  * <pre>
@@ -36,24 +35,28 @@ export const jsonSymbols = {
  * And `User.fromJson(json)` will map the json object back to an instantiated `User`.
  *
  * @param fieldName The alias you want to use instead of the property name when marshalling to json.
- * @returns {(target:any, key:string)=>undefined}
+ * @returns Returns a function that is used internally by the framework.
  */
-export function Json(fieldName: string) {
+export function Json(fieldName: string): (target: any, key: string) => void {
 
-  return function (target: any, key: string) {
+  return (target: any, key: string) => {
 
-    let metaPropertyFieldMap: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiJsonPropertyToFieldNames, target);
+    let metaPropertyFieldMap: Map<string, string>
+      = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, target);
+
     if (!metaPropertyFieldMap) {
-      metaPropertyFieldMap = new Map<string ,string>();
-      Reflect.defineMetadata(jsonSymbols.sakuraApiJsonPropertyToFieldNames, metaPropertyFieldMap, target);
+      metaPropertyFieldMap = new Map<string, string>();
+      Reflect.defineMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, metaPropertyFieldMap, target);
     }
     metaPropertyFieldMap.set(key, fieldName);
 
-    let metaFieldPropertyMap: Map<string, string> = Reflect.getMetadata(jsonSymbols.sakuraApiJsonFieldToPropertyNames, target);
+    let metaFieldPropertyMap: Map<string, string>
+      = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, target);
+
     if (!metaFieldPropertyMap) {
-      metaFieldPropertyMap = new Map<string ,string>();
-      Reflect.defineMetadata(jsonSymbols.sakuraApiJsonFieldToPropertyNames, metaFieldPropertyMap, target);
+      metaFieldPropertyMap = new Map<string, string>();
+      Reflect.defineMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, metaFieldPropertyMap, target);
     }
     metaFieldPropertyMap.set(fieldName, key);
-  }
+  };
 }
