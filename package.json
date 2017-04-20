@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "doc:generate": "rm -rf docs && typedoc --options typedoc.json **/**",
+    "doc:generate": "rm -rf docs && mkdir docs && typedoc --options typedoc.json **/** && touch docs/.nojekyll",
     "doc:serve": "nodemon --config nodemon.typedoc.json -e ts --exec 'npm run doc:generate && npm run http-server docs/ -- -a localhost -c-1'",
     "docker:compose-test": "(docker volume prune -f || echo \"skipped docker volume prune\") ; docker-compose up -d --remove-orphans",
     "http-server": "http-server",
