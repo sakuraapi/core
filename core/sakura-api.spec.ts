@@ -5,11 +5,12 @@ import {
 import {
   Routable,
   Route
-} from './@routable/routable';
+} from './@routable/';
 import {MongoClient} from 'mongodb';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
-import * as request from 'supertest';
 import {sapi} from '../spec/helpers/sakuraapi';
+
+import * as request from 'supertest';
 import Spy = jasmine.Spy;
 
 describe('core/SakuraApi', function() {
