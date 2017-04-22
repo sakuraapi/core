@@ -770,5 +770,60 @@ describe('@Model', function() {
         expect(this.suppressed.save).toBe(undefined);
       });
     });
+
+    describe('handles complex Models', function() {
+      @Model(sapi, {
+        dbConfig: {
+          collection: 'users',
+          db: 'userDb'
+        }
+      })
+      class NestedModel extends SakuraApiModel {
+        @Db()
+        contact: {
+          firstName: string,
+          lastName: string
+        };
+
+        ignoreThis: {
+          level2: string
+        }
+      }
+
+      beforeEach(function(done) {
+        sapi
+          .dbConnections
+          .connectAll()
+          .then(() => NestedModel.removeAll({}))
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('can create and retrieve property with nested object', function(done) {
+
+        const nested = new NestedModel();
+        nested.contact = {
+          firstName: 'George',
+          lastName: 'Washington'
+        };
+        nested.ignoreThis = {
+          level2: 'test'
+        };
+
+        nested
+          .create()
+          .then(() => NestedModel.getById(nested.id))
+          .then((obj) => {
+            expect(obj.id.toString()).toBe(nested.id.toString());
+            expect(obj.contact).toBeDefined();
+            expect((obj.contact || {} as any).firstName).toBe(nested.contact.firstName);
+            expect((obj.contact || {} as any).lastName).toBe(nested.contact.lastName);
+            expect(obj.ignoreThis).toBeUndefined();
+
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+    });
   });
 });
