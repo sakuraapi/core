@@ -222,6 +222,7 @@ export class SakuraApi {
 
       // Bind the routes
       let router = express.Router();
+
       this
         .routes
         .forEach((route) => {

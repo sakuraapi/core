@@ -55,6 +55,7 @@ export interface IModelOptions {
      */
     promiscuous?: boolean;
   };
+
   /**
    * Prevents the injection of CRUD functions (see [[Model]] function).
    */
@@ -65,6 +66,7 @@ export interface IModelOptions {
  * A collection of symbols used internally by [[Model]].
  */
 export const modelSymbols = {
+  constructor: Symbol('constructor'),
   dbCollection: Symbol('dbCollection'),
   dbName: Symbol('dbName'),
   fromDb: Symbol('fromDb'),
@@ -75,7 +77,6 @@ export const modelSymbols = {
   isSakuraApiModel: Symbol('isSakuraApiModel'),
   modelOptions: Symbol('modelOptions'),
   sapi: Symbol('sapi'),
-  target: Symbol('target'),
   toDb: Symbol('toDb'),
   toJson: Symbol('toJson'),
   toJsonString: Symbol('toJsonString')
@@ -137,15 +138,15 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
   // ===================================================================================================================
   return (target: any) => {
     if (!sapi) {
-      throw new Error(`A valid instance of SakuraApi must be provided to the model '${target.name}'`);
+      throw new Error(`A valid instance of SakuraApi must be provided to the @Model '${target.name}'`);
     }
 
+    // -----------------------------------------------------------------------------------------------------------------
+    // Developer notes:
+    //
+    // The constructor proxy implements logic that needs to take place upon constructions
+    // =================================================================================================================
     const newConstructor = new Proxy(target, {
-      // ---------------------------------------------------------------------------------------------------------------
-      // Developer notes:
-      //
-      // The constructor proxy implements logic that needs to take place upon constructions
-      // ===============================================================================================================
       construct: (t, args, nt) => {
         const c = Reflect.construct(t, args, nt);
 
@@ -184,11 +185,16 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
       value: true,
       writable: false
     });
+    Reflect.defineProperty(newConstructor, modelSymbols.isSakuraApiModel, {
+      value: true,
+      writable: false
+    });
 
     // make a copy of the model options available to the decorated objected
     newConstructor[modelSymbols.modelOptions] = modelOptions;
-    // make the constructor function available to instance members
-    newConstructor.prototype[modelSymbols.target] = newConstructor;
+    // tag instances with the constructor function for the class to make it easier to determine when `this`
+    // is pointing to an instance of the class or the class constructor.
+    newConstructor.prototype[modelSymbols.constructor] = newConstructor;
 
     newConstructor[modelSymbols.dbName] = (modelOptions.dbConfig || {} as any).db || null;
     newConstructor[modelSymbols.dbCollection] = (modelOptions.dbConfig || {} as any).collection || null;
@@ -237,10 +243,12 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
     newConstructor.fromJsonAsChangeSet = fromJsonAsChangeSet;
     newConstructor[modelSymbols.fromJsonAsChangeSet] = fromJsonAsChangeSet;
 
+    newConstructor.mapJsonToDb = mapJsonToDb;
     newConstructor[modelSymbols.sapi] = sapi;
 
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
+    //
     // Instance method injection... TypeScript won't know these are part of the type of the object being constructed
     // since they're dynamically injected. This is best done with TypeScript declaration merging.
     //     See: https://www.typescriptlang.org/docs/handbook/declaration-merging.html
@@ -251,6 +259,10 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
     //
     //    @Model()
     //    class Example {}
+    //
+    // alternatively:
+    //    @Model()
+    //    class Example extends SakuraApiModel {}
     // =================================================================================================================
 
     // Inject default instance methods for CRUD if not already defined by integrator
@@ -287,17 +299,17 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
  */
 // tslint:enable:max-line-length
 function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
-  const target = this[modelSymbols.target];
+  const constructor = this.constructor;
 
   return new Promise((resolve, reject) => {
-    const col = target.getCollection();
+    const col = constructor.getCollection();
 
     this
       .debug
-      .normal(`.create called, dbName: '${target[modelSymbols.dbName].name}', found?: ${!!col}, set: %O`, this);
+      .normal(`.create called, dbName: '${constructor[modelSymbols.dbName].name}', found?: ${!!col}, set: %O`, this);
 
     if (!col) {
-      throw new Error(`Database '${target[modelSymbols.dbName].name}' not found`);
+      throw new Error(`Database '${constructor[modelSymbols.dbName].name}' not found`);
     }
 
     const dbObj = this.toDb();
@@ -526,17 +538,18 @@ function getById(id: string | ObjectID, project?: any): Promise<any> {
  */
 function getCollection(): Collection {
   // can be called as instance or static method, so get the appropriate context
-  const target = this[modelSymbols.target] || this;
-  const db = target.getDb();
+  const constructor = this[modelSymbols.constructor] || this;
+
+  const db = constructor.getDb();
 
   if (!db) {
     return null;
   }
 
-  const col = db.collection(target[modelSymbols.dbCollection]);
+  const col = db.collection(constructor[modelSymbols.dbCollection]);
 
-  this.debug.normal(`.getCollection called, dbName: '${target[modelSymbols.dbName]},` +
-    ` collection: ${target[modelSymbols.dbCollection]}', found?: ${!!col}`);
+  this.debug.normal(`.getCollection called, dbName: '${constructor[modelSymbols.dbName]},` +
+    ` collection: ${constructor[modelSymbols.dbCollection]}', found?: ${!!col}`);
 
   return col;
 }
@@ -550,6 +563,8 @@ function getCollection(): Collection {
  * @returns {Cursor<any>}
  */
 function getCursor(filter: any, project?: any): Cursor<any> {
+  filter = filter || {};
+
   const col = this.getCollection();
   this.debug.normal(`.getCursor called, dbName '${this[modelSymbols.dbName]}', found?: ${!!col}`);
 
@@ -575,7 +590,11 @@ function getCursor(filter: any, project?: any): Cursor<any> {
  */
 function getCursorById(id, project?: any): Cursor<any> {
   this.debug.normal(`.getCursorById called, dbName '${this[modelSymbols.dbName]}'`);
-  return this.getCursor({_id: id}, project).limit(1);
+  return this
+    .getCursor({
+      _id: (id instanceof ObjectID) ? id : id.toString() || `${id}`
+    }, project)
+    .limit(1);
 }
 
 /**
@@ -585,13 +604,13 @@ function getCursorById(id, project?: any): Cursor<any> {
  */
 function getDb(): Db {
   // can be called as instance or static method, so get the appropriate context
-  const target = this[modelSymbols.target] || this;
-  const db = target[modelSymbols.sapi].dbConnections.getDb(target[modelSymbols.dbName]);
+  const constructor = this[modelSymbols.constructor] || this;
+  const db = constructor[modelSymbols.sapi].dbConnections.getDb(constructor[modelSymbols.dbName]);
 
-  this.debug.normal(`.getDb called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!db}`);
+  this.debug.normal(`.getDb called, dbName: '${constructor[modelSymbols.dbName]}', found?: ${!!db}`);
 
   if (!db) {
-    throw new SapiDbForModelNotFound(target.name, target[modelSymbols.dbName]);
+    throw new SapiDbForModelNotFound(constructor.name, constructor[modelSymbols.dbName]);
   }
 
   return db;
@@ -620,16 +639,44 @@ function getOne(filter: any, project?: any): Promise<any> {
   });
 }
 
+/** @static Takes a json object and maps its fields fromJson to model properties, which are then mapped to Db fields
+ *
+ * ### Example
+ * <pre>
+ * <span>@</span>Model(sapi)
+ * class SomeModelObject extends SakuraApiModel {
+ *   <span>@</span>Db({field: 'fn'})
+ *   <span>@</span>Json('jfn')
+ *   firstName = 'Geroge';
+ *   <span>@</span>Db({field: 'ln'})
+ *   <span>@</span>Json('jln')
+ *   lastName = 'Washington';
+ * }
+ * let result = SomeModelObject.mapJsonToDb(new SomeModelObject());
+ * </pre>
+ * `result` here would be:
+ * <pre>
+ * {
+ *   fn: 'George',
+ *   ln: 'Washington'
+ * }
+ * </pre>
+ * @param json
+ */
+function mapJsonToDb(json: object): object {
+  return toDb.bind(this)(this.fromJsonAsChangeSet(json));
+}
+
 /**
  * @instance Removes the current Model's document from the database.
  * @param options MongoDB CollectionOptions
  * @returns {Promise<DeleteWriteOpResultObject>}
  */
 function remove(options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
-  const target = this[modelSymbols.target];
+  const constructor = this.constructor;
 
   this.debug.normal(`.remove called for ${this.id}`);
-  return target.removeById(this.id, options);
+  return constructor.removeById(this.id, options);
 }
 
 /**
@@ -690,13 +737,13 @@ function removeById(id: ObjectID, options?: CollectionOptions): Promise<DeleteWr
  * @returns {any}
  */
 function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
-  const target = this[modelSymbols.target];
+  const constructor = this.constructor;
 
-  const col = target.getCollection();
-  this.debug.normal(`.save called, dbName: '${target[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, changeSet);
+  const col = constructor.getCollection();
+  this.debug.normal(`.save called, dbName: '${constructor[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, changeSet);
 
   if (!col) {
-    throw new Error(`Database '${target[modelSymbols.dbName]}' not found`);
+    throw new Error(`Database '${constructor[modelSymbols.dbName]}' not found`);
   }
 
   if (!this.id) {
@@ -736,15 +783,16 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
  * @returns {{_id: (any|ObjectID|number)}}
  */
 function toDb(changeSet?: object): object {
-  const target = this[modelSymbols.target];
+  const constructor = this[modelSymbols.constructor] || this;
 
-  const modelOptions = target[modelSymbols.modelOptions];
-  this.debug.normal(`.toDb called, target '${this.name || (this.constructor || {}).name}'`);
+  const modelOptions = constructor[modelSymbols.modelOptions];
+  this.debug.normal(`.toDb called, target '${constructor.name}'`);
 
   changeSet = changeSet || this;
 
   const dbOptionByPropertyName: Map<string, IDbOptions>
-    = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
+    = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this)
+    || constructor[dbSymbols.sakuraApiDbByPropertyName];
 
   const dbObj = {
     _id: this._id
@@ -773,7 +821,7 @@ function toDb(changeSet?: object): object {
  * @returns {{}}
  */
 function toJson(): object {
-  this.debug.normal(`.toJson called, target '${this.name}'`);
+  this.debug.normal(`.toJson called, target '${this.constructor.name}'`);
 
   let jsonFieldNamesByProperty: Map<string, string>
     = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
@@ -824,6 +872,6 @@ function toJson(): object {
  * @returns {string}
  */
 function toJsonString(replacer?: () => any | Array<string | number>, space?: string | number): string {
-  this.debug.normal(`.toJsonString called, target '${this.name}'`);
+  this.debug.normal(`.toJsonString called, target '${this.constructor.name}'`);
   return JSON.stringify(this[modelSymbols.toJson](), replacer, space);
 }

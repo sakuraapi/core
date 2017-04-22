@@ -2,6 +2,12 @@ import * as express from 'express';
 import * as request from 'supertest';
 import {sapi} from '../../spec/helpers/sakuraapi';
 import {
+  Db,
+  Json,
+  Model,
+  SakuraApiModel
+} from '../@model';
+import {
   Routable,
   routableSymbols,
   Route
@@ -72,7 +78,7 @@ describe('core/Routable', function() {
     spyOn(console, 'log');
   });
 
-  describe('options', function() {
+  describe('IRoutableOptions', function() {
     it('add a baseUrl to the path of an @Route, if provided', function() {
       expect(this.sakuraApiClassRoutes[0].path).toBe('/test');
     });
@@ -146,7 +152,8 @@ describe('core/Routable', function() {
                 .then(done)
                 .catch(done.fail);
             });
-        });
+        })
+        .catch(done.fail);
     });
   });
 
@@ -179,7 +186,7 @@ describe('core/Routable', function() {
     expect(this.t instanceof Test).toBe(true);
   });
 
-  it('property binds the instantiated class as the context of this for each route method', function() {
+  it('binds the instantiated class as the context of this for each route method', function() {
     @Routable(sapi)
     class Test4 {
       someProperty = 'instance';
@@ -244,13 +251,222 @@ describe('core/Routable', function() {
           .expect('{"someMethodTest5":"testRouterGet worked"}')
           .expect(200)
           .end(function(err, res) {
-            if (err) {
-              return done.fail(err);
-            }
-            done();
+            (err)
+              ? done.fail(err)
+              : done();
+            return;
           });
       })
       .catch(done.fail);
   });
 
+  describe('takes an @Model class in IRoutableOptions', function() {
+    @Model(sapi, {
+      dbConfig: {
+        collection: 'usersRoutableTests',
+        db: 'userDb'
+      }
+    })
+    class User extends SakuraApiModel {
+      @Db() @Json('fn')
+      firstName: string = 'George';
+      @Db() @Json('ln')
+      lastName: string = 'Washington';
+    }
+
+    @Model(sapi, {
+      dbConfig: {
+        collection: 'noDocsCreatedTests',
+        db: 'userDb'
+      }
+    })
+    class NoDocsCreated extends SakuraApiModel {
+    }
+
+    @Routable(sapi, {
+      model: User
+    })
+    class UserApi1 {
+      @Route({
+        method: 'post',
+        path: 'test-path'
+      })
+      testRoute(req, res) {
+      }
+    }
+
+    @Routable(sapi, {
+      baseUrl: 'testUserApi2',
+      model: NoDocsCreated
+    })
+    class UserApi2 {
+      @Route({
+        method: 'post',
+        path: 'test-path'
+      })
+      testRoute(req, res) {
+      }
+    }
+
+    beforeEach(function(done) {
+      sapi
+        .listen()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    afterEach(function(done) {
+      sapi
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    describe('throws', function() {
+      it('if the provided model is not decorated with @Model', function() {
+        expect(() => {
+          class NotAModel {
+          }
+
+          @Routable(sapi, {
+            model: NotAModel
+          })
+          class BrokenRoutable {
+
+          }
+        }).toThrow(new Error(`BrokenRoutable is not decorated by @Model and therefore cannot be used as a model for`
+          + ` @Routable`));
+      });
+
+      it('if provided an exposeApi option that is not an array', function() {
+        expect(() => {
+          @Routable(sapi, {
+            exposeApi: (1 as any),
+            model: User
+          })
+          class FailRoutableExposeApiOptionTest {
+          }
+        }).toThrow(new Error(`If @Routable 'FailRoutableExposeApiOptionTest' defines an 'exposeApi' option, that option`
+          + ` must be an array of valid strings`));
+      });
+
+      it('if provided a suppressApi option that is not an array', function() {
+        expect(() => {
+          @Routable(sapi, {
+            model: User,
+            suppressApi: (1 as any)
+          })
+          class FailRoutableSuppressApiOptionTest {
+          }
+        }).toThrow(new Error(`If @Routable 'FailRoutableSuppressApiOptionTest' defines a 'suppressApi' option, that`
+          + ` option must be an array of valid strings`));
+      });
+
+      it('if provided either suppressApi or exposeApi options without a model', function() {
+        expect(() => {
+          @Routable(sapi, {
+            suppressApi: ['get']
+          })
+          class FailRoutableSuppressApiOptionTest {
+          }
+        })
+          .toThrow(new Error(`If @Routable 'FailRoutableSuppressApiOptionTest' defines a 'suppressApi' or 'exposeApi'`
+            + ` option, then a model option with a valid @Model must also be provided`));
+
+        expect(() => {
+          @Routable(sapi, {
+            exposeApi: ['get']
+          })
+          class FailRoutableSuppressApiOptionTest {
+          }
+        }).toThrow(new Error(`If @Routable 'FailRoutableSuppressApiOptionTest' defines a 'suppressApi' or 'exposeApi'`
+          + ` option, then a model option with a valid @Model must also be provided`));
+      });
+    });
+
+    describe('generates routes', function() {
+      describe('properly names routes', function() {
+        it('uses the model\'s name if there is no baseUrl for the @Routable class', function(done) {
+          request(sapi.app)
+            .get(this.uri('/user'))
+            .expect(200)
+            .end((err) => err ? done.fail(err) : done());
+        });
+      });
+
+      it('uses the baseUrl for the @Routable class if one is set', function(done) {
+        request(sapi.app)
+          .get(this.uri('/testUserApi2'))
+          .expect(200)
+          .end((err) => err ? done.fail(err) : done());
+      });
+    });
+
+    describe('GET ./model', function() {
+      beforeEach(function(done) {
+        User
+          .removeAll({})
+          .then(() => {
+            const user1 = new User();
+            const user2 = new User();
+            user2.firstName = 'Martha';
+
+            const wait = [];
+            wait.push(user1.create());
+            wait.push(user2.create());
+
+            Promise
+              .all(wait)
+              .then(() => {
+                this.user1 = user1;
+                this.user2 = user2;
+                done();
+              })
+              .catch(done.fail);
+          })
+          .catch(done.fail);
+      });
+
+      it('returns all documents with all fields properly mapped by @Json', function(done) {
+        request(sapi.app)
+          .get(this.uri('/user'))
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .then((res) => {
+            expect(Array.isArray(res.body)).toBeTruthy();
+            expect(res.body.length).toBe(2);
+            expect(res.body[0].fn).toBe(this.user1.firstName);
+            expect(res.body[0].ln).toBe(this.user1.lastName);
+            expect(res.body[1].fn).toBe(this.user2.firstName);
+            expect(res.body[1].ln).toBe(this.user2.lastName);
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('returns empty array with no results', function(done) {
+        request(sapi.app)
+          .get(this.uri('/testUserApi2'))
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .then((res) => {
+            expect(Array.isArray(res.body)).toBeTruthy();
+            expect(res.body.length).toBe(0);
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      xdescribe('supports a where query', function() {
+
+        it('takes @Json mapped fields', function() {
+
+        });
+
+        it('does not allow for NoSQL injection', function() {
+        });
+
+      });
+    });
+  });
 });

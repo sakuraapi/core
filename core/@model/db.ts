@@ -57,6 +57,7 @@ export function Db(options?: IDbOptions): (target: any, key: string) => void {
   options = options || {};
 
   return (target: any, key: string) => {
+
     options[dbSymbols.optionsPropertyName] = key;
 
     let metaMapByPropertyName: Map<string, IDbOptions>
@@ -65,12 +66,16 @@ export function Db(options?: IDbOptions): (target: any, key: string) => void {
     if (!metaMapByPropertyName) {
       metaMapByPropertyName = new Map<string, IDbOptions>();
       Reflect.defineMetadata(dbSymbols.sakuraApiDbByPropertyName, metaMapByPropertyName, target);
+      target.constructor[dbSymbols.sakuraApiDbByPropertyName] = metaMapByPropertyName;
     }
 
-    let metaMapByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, target);
+    let metaMapByFieldName: Map<string, IDbOptions>
+      = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, target);
+
     if (!metaMapByFieldName) {
       metaMapByFieldName = new Map<string, IDbOptions>();
       Reflect.defineMetadata(dbSymbols.sakuraApiDbByFieldName, metaMapByFieldName, target);
+      target.constructor[dbSymbols.sakuraApiDbByFieldName] = metaMapByFieldName;
     }
 
     metaMapByPropertyName.set(key, options);

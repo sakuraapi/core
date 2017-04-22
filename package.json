@@ -18,7 +18,7 @@
     "http-server": "http-server",
     "jasmine": "jasmine",
     "lint": "npm run build && npm run lint:code && npm run lint:tests",
-    "lint:code": "npm run tslint -- -e \"node_modules/**/**/*.ts\"  -e \"**/**/*.d.ts\" -e \"**/**/*.spec.ts\" -t stylish **/**/*.ts",
+    "lint:code": "npm run tslint -- -e \"node_modules/**/**/*.ts\"  -e \"**/**/*.d.ts\" -e \"**/**/*.spec.ts\" -t stylish --fix **/**/*.ts",
     "lint:tests": "npm run tslint -- -e \"node_modules/**/**/*.ts\"  -e \"**/**/*.d.ts\" -t stylish --fix -c tslint.spec.json **/**/*.spec.ts",
     "prepublish": "npm test",
     "test": "npm run docker:compose-test && npm run build && npm run jasmine && docker-compose down",

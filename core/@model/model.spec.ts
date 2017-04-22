@@ -1,13 +1,14 @@
-import {Db} from './db';
 import {
   SapiDbForModelNotFound,
   SapiMissingIdErr
 } from './errors';
 import {
+  Db,
+  Json,
   Model,
-  modelSymbols
-} from './model';
-import {SakuraApiModel} from './sakura-api-model';
+  modelSymbols,
+  SakuraApiModel
+} from './';
 
 import {
   InsertOneWriteOpResult,
@@ -420,6 +421,39 @@ describe('@Model', function() {
 
               })
               .catch(done.fail);
+
+          });
+
+          describe('mapJsonToDb', function() {
+
+            @Model(sapi)
+            class MapJsonToDBTest extends SakuraApiModel {
+              @Db({field: 'fn'})
+              @Json('jfn')
+              firstName: string;
+              @Db({field: 'ln'})
+              @Json('jln')
+              lastName: string;
+            }
+
+            it('is injected into @Model classes', function() {
+              expect(MapJsonToDBTest.mapJsonToDb).toBeDefined();
+              expect(typeof MapJsonToDBTest.mapJsonToDb).toBe('function');
+            });
+
+            it('takes a json object and returns the object with valid DB fields', function() {
+
+              const obj = {
+                jfn: 'George',
+                jln: 'Washington',
+                blah: 'dropThis'
+              };
+
+              const result = (MapJsonToDBTest.mapJsonToDb(obj) as any);
+              expect(result.fn).toBe(obj.jfn);
+              expect(result.ln).toBe(obj.jln);
+              expect(result.blah).toBeUndefined();
+            });
 
           });
         });

@@ -34,6 +34,7 @@ import {
  *   public static getCursorById?: (id, project?: any) => Cursor<any>;
  *   public static getDb?: () => Db;
  *   public static getOne?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
+ *   public static mapJsonToDb?: (json: object) => object;
  *   public static removeAll?: (filter: any, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
  *   public static removeById?: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>
  *   public _id?: ObjectID;
@@ -68,6 +69,8 @@ export abstract class SakuraApiModel {
   public static getCursorById?: (id, project?: any) => Cursor<any>;
   public static getDb?: () => Db;
   public static getOne?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
+
+  public static mapJsonToDb?: (json: object) => object;
 
   public static removeAll?: (filter: any, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
   public static removeById?: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;

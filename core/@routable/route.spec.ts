@@ -118,12 +118,8 @@ describe('core/Route', function() {
     afterEach(function(done) {
       sapi
         .close()
-        .then(function() {
-          done();
-        })
-        .catch((err) => {
-          done.fail(err);
-        });
+        .then(done)
+        .catch(done.fail);
     });
 
     it('at the end of the path', function(done) {
@@ -142,7 +138,8 @@ describe('core/Route', function() {
               }
               done();
             });
-        });
+        })
+        .catch(done.fail);
     });
 
     it('at the end of the path', function(done) {
@@ -161,7 +158,8 @@ describe('core/Route', function() {
               }
               done();
             });
-        });
+        })
+        .catch(done.fail);
     });
   });
 });
