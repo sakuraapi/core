@@ -341,30 +341,34 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
 
   const obj = new this(...constructorArgs);
 
-  const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, obj);
+  // TODO legacy implementation, remove --------------------------------------------------------------------------------
+  if (!this[dbSymbols.hasNewChildOption]) {
+    const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, obj);
 
-  for (const fieldName of Object.getOwnPropertyNames(json)) {
-    const dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
+    for (const fieldName of Object.getOwnPropertyNames(json)) {
+      const dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
 
-    if (dbFieldOptions) {
-      obj[dbFieldOptions[dbSymbols.optionsPropertyName]] = json[fieldName];
-    } else {
-      if ((this[modelSymbols.modelOptions].dbConfig || {} as any).promiscuous) {
-        obj[fieldName] = json[fieldName];
+      if (dbFieldOptions) {
+        obj[dbFieldOptions[dbSymbols.optionsPropertyName]] = json[fieldName];
+      } else {
+        if ((this[modelSymbols.modelOptions].dbConfig || {} as any).promiscuous) {
+          obj[fieldName] = json[fieldName];
+        }
       }
     }
-  }
-  // make sure the _id field is included as one of the properties
-  if (!obj._id && (json as any)._id) {
-    obj._id = (json as any)._id;
+    // make sure the _id field is included as one of the properties
+    if (!obj._id && (json as any)._id) {
+      obj._id = (json as any)._id;
+    }
+
+    // make sure _id is ObjectID, if possible
+    if (obj._id && !(obj._id instanceof ObjectID) && ObjectID.isValid(obj._id)) {
+      obj._id = new ObjectID(obj._id.toString());
+    }
+
+    return obj;
   }
 
-  // make sure _id is ObjectID, if possible
-  if (obj._id && !(obj._id instanceof ObjectID) && ObjectID.isValid(obj._id)) {
-    obj._id = new ObjectID(obj._id.toString());
-  }
-
-  return obj;
 }
 
 /**
@@ -790,30 +794,33 @@ function toDb(changeSet?: object): object {
 
   changeSet = changeSet || this;
 
-  const dbOptionByPropertyName: Map<string, IDbOptions>
-    = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this)
-    || constructor[dbSymbols.sakuraApiDbByPropertyName];
+  // TODO legacy implementation, remove --------------------------------------------------------------------------------
+  if (!constructor[dbSymbols.hasNewChildOption]) {
+    const dbOptionByPropertyName: Map<string, IDbOptions>
+      = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this)
+      || constructor[dbSymbols.sakuraApiDbByPropertyName];
 
-  const dbObj = {
-    _id: this._id
-  };
+    const dbObj = {
+      _id: this._id
+    };
 
-  for (const propertyName of Object.getOwnPropertyNames(changeSet)) {
-    const propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
+    for (const propertyName of Object.getOwnPropertyNames(changeSet)) {
+      const propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
 
-    if (propertyOptions && propertyOptions.field) {
-      dbObj[propertyOptions.field] = changeSet[propertyName];
-    } else if (propertyOptions) {
-      dbObj[propertyName] = changeSet[propertyName];
-    } else if ((modelOptions.dbConfig || {} as any).promiscuous) {
-      if (!changeSet.propertyIsEnumerable(propertyName)) {
-        continue;
+      if (propertyOptions && propertyOptions.field) {
+        dbObj[propertyOptions.field] = changeSet[propertyName];
+      } else if (propertyOptions) {
+        dbObj[propertyName] = changeSet[propertyName];
+      } else if ((modelOptions.dbConfig || {} as any).promiscuous) {
+        if (!changeSet.propertyIsEnumerable(propertyName)) {
+          continue;
+        }
+        dbObj[propertyName] = changeSet[propertyName];
       }
-      dbObj[propertyName] = changeSet[propertyName];
     }
-  }
 
-  return dbObj;
+    return dbObj;
+  }
 }
 
 /**
@@ -823,46 +830,52 @@ function toDb(changeSet?: object): object {
 function toJson(): object {
   this.debug.normal(`.toJson called, target '${this.constructor.name}'`);
 
-  let jsonFieldNamesByProperty: Map<string, string>
-    = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
+  // TODO legacy implementation, remove --------------------------------------------------------------------------------
+  if (!this.constructor[dbSymbols.hasNewChildOption]) {
 
-  jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
+    let jsonFieldNamesByProperty: Map<string, string>
+      = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
 
-  const privateFields: Map<string, string>
-    = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
+    jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
 
-  const dbOptionByPropertyName: Map<string, IDbOptions>
-    = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
+    const privateFields: Map<string, string>
+      = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
 
-  const obj = {};
-  for (const prop of Object.getOwnPropertyNames(this)) {
-    if (typeof this[prop] === 'function') {
-      continue;
-    }
+    const dbOptionByPropertyName: Map<string, IDbOptions>
+      = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
 
-    if (prop === '_id') {
-      continue;
-    }
-
-    if (dbOptionByPropertyName) {
-      if ((dbOptionByPropertyName.get(prop) || {}).private) {
+    const obj = {};
+    for (const prop of Object.getOwnPropertyNames(this)) {
+      if (typeof this[prop] === 'function') {
         continue;
       }
+
+      if (prop === '_id') {
+        continue;
+      }
+
+      if (dbOptionByPropertyName) {
+        if ((dbOptionByPropertyName.get(prop) || {}).private) {
+          continue;
+        }
+      }
+
+      const override = (privateFields) ? privateFields.get(prop) : null;
+
+      // do the function test for private otherwise do the boolean test
+      if (override && typeof this[override] === 'function' && !this[override]()) {
+        continue;
+      } else if (override && !this[override]) {
+        continue;
+      }
+
+      obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
     }
 
-    const override = (privateFields) ? privateFields.get(prop) : null;
-
-    // do the function test for private otherwise do the boolean test
-    if (override && typeof this[override] === 'function' && !this[override]()) {
-      continue;
-    } else if (override && !this[override]) {
-      continue;
-    }
-
-    obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
+    return obj;
   }
 
-  return obj;
+  // TODO new code goes here ===========================================================================================
 }
 
 /**

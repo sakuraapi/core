@@ -5,7 +5,8 @@
 export const dbSymbols = {
   optionsPropertyName: Symbol('sakuraApiDbOptionsPropertyName'),
   sakuraApiDbByFieldName: Symbol('sakuraApiDbByFieldName'),
-  sakuraApiDbByPropertyName: Symbol('sakuraApiDbByPropertyName')
+  sakuraApiDbByPropertyName: Symbol('sakuraApiDbByPropertyName'),
+  hasNewChildOption: Symbol('hasNewChildOption')
 };
 
 export interface IDbOptions {
@@ -46,6 +47,14 @@ export interface IDbOptions {
    * it will not be included in the output of `someModel.toJson()`. [[Model.modelsymbols]]
    */
   private?: boolean;
+
+  children?: IDbOptionsChild | { [key: string]: string } [];
+}
+
+export interface IDbOptionsChild {
+  field?: string;
+  private?: boolean;
+  children: IDbOptionsChild | { [key: string]: string } [];
 }
 
 /**
@@ -58,27 +67,33 @@ export function Db(options?: IDbOptions): (target: any, key: string) => void {
 
   return (target: any, key: string) => {
 
-    options[dbSymbols.optionsPropertyName] = key;
+    // TODO legacy implementation, remove ------------------------------------------------------------------------------
+    if (!options.children) {
+      options[dbSymbols.optionsPropertyName] = key;
 
-    let metaMapByPropertyName: Map<string, IDbOptions>
-      = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, target);
+      let metaMapByPropertyName: Map<string, IDbOptions>
+        = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, target);
 
-    if (!metaMapByPropertyName) {
-      metaMapByPropertyName = new Map<string, IDbOptions>();
-      Reflect.defineMetadata(dbSymbols.sakuraApiDbByPropertyName, metaMapByPropertyName, target);
-      target.constructor[dbSymbols.sakuraApiDbByPropertyName] = metaMapByPropertyName;
+      if (!metaMapByPropertyName) {
+        metaMapByPropertyName = new Map<string, IDbOptions>();
+        Reflect.defineMetadata(dbSymbols.sakuraApiDbByPropertyName, metaMapByPropertyName, target);
+        target.constructor[dbSymbols.sakuraApiDbByPropertyName] = metaMapByPropertyName;
+      }
+
+      let metaMapByFieldName: Map<string, IDbOptions>
+        = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, target);
+
+      if (!metaMapByFieldName) {
+        metaMapByFieldName = new Map<string, IDbOptions>();
+        Reflect.defineMetadata(dbSymbols.sakuraApiDbByFieldName, metaMapByFieldName, target);
+        target.constructor[dbSymbols.sakuraApiDbByFieldName] = metaMapByFieldName;
+      }
+
+      metaMapByPropertyName.set(key, options);
+      metaMapByFieldName.set(options.field || key, options);
+      return;
     }
 
-    let metaMapByFieldName: Map<string, IDbOptions>
-      = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, target);
-
-    if (!metaMapByFieldName) {
-      metaMapByFieldName = new Map<string, IDbOptions>();
-      Reflect.defineMetadata(dbSymbols.sakuraApiDbByFieldName, metaMapByFieldName, target);
-      target.constructor[dbSymbols.sakuraApiDbByFieldName] = metaMapByFieldName;
-    }
-
-    metaMapByPropertyName.set(key, options);
-    metaMapByFieldName.set(options.field || key, options);
+    target.constructor[dbSymbols.hasNewChildOption] = true;
   };
 }
