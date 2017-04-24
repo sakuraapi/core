@@ -1,4 +1,7 @@
-import {Db} from './db';
+import {
+  Db,
+  dbSymbols
+} from './';
 import {Model} from './model';
 
 import {ObjectID} from 'mongodb';
@@ -7,6 +10,20 @@ import {SakuraApiModel} from './sakura-api-model';
 import {sapi} from '../../spec/helpers/sakuraapi';
 
 describe('@Db', function() {
+
+  it('takes a string for the fieldname or an IDbOptions if other options are needed', function() {
+    class DbTestStringField {
+      @Db('t1')
+      test1 = 'test1';
+
+      @Db({field: 't2'})
+      test2 = 'test2';
+    }
+
+    const map = DbTestStringField[dbSymbols.dbByPropertyName];
+    expect(map.get('test1').field).toBe('t1');
+    expect(map.get('test2').field).toBe('t2');
+  });
 
   describe('fromDb', function() {
 
@@ -215,6 +232,28 @@ describe('@Db', function() {
   });
 
   describe('toDb', function() {
+
+    class Address {
+      @Db('st')
+      street = '1600 Pennsylvania Ave NW';
+      @Db('c')
+      city = 'Washington';
+      @Db()
+      state = 'DC';
+      @Db({field: 'code', private: true})
+      gateCode = '123';
+      dogsName = 'Charlie';
+    }
+
+    class Order {
+      @Db('on')
+      orderNumber = 'a123';
+      @Db('t')
+      total = 100;
+      @Db('adr')
+      address: Address = new Address();
+    }
+
     @Model(sapi, {
       dbConfig: {
         collection: 'users',
@@ -224,14 +263,13 @@ describe('@Db', function() {
     })
     class ChasteModelTest {
 
-      @Db({
-        field: 'fn'
-      })
+      @Db('fn')
       firstName = 'George';
       @Db()
       lastName = 'Washington';
       phone = '555-123-1234';
-
+      @Db()
+      order = new Order();
     }
 
     @Model(sapi, {
@@ -243,13 +281,12 @@ describe('@Db', function() {
       }
     )
     class PromiscuousModelTest {
-      @Db({
-        field: 'fn'
-      })
+      @Db('fn')
       firstName = 'George';
       @Db()
       lastName = 'Washington';
       phone = '555-123-1234';
+      order = new Order();
     }
 
     beforeEach(function() {
@@ -267,6 +304,13 @@ describe('@Db', function() {
         expect(result._id).toBe(this.chasteModel.id);
         expect(result.fn).toBe(this.chasteModel.firstName);
         expect(result.lastName).toBe(this.chasteModel.lastName);
+        expect(result.order).toBeDefined();
+        expect(result.order.on).toBe(this.chasteModel.order.orderNumber);
+        expect(result.order.t).toBe(this.chasteModel.order.total);
+        expect(result.order.adr).toBeDefined();
+        expect(result.order.adr.st).toBe(this.chasteModel.order.address.street);
+        expect(result.order.adr.code).toBe(this.chasteModel.order.address.gateCode);
+        expect(result.order.adr.dogsName).toBeUndefined();
         expect(result.phone).toBeUndefined();
         expect(result.id).toBeUndefined();
 
@@ -276,10 +320,17 @@ describe('@Db', function() {
     describe('Promiscuous Mode (hey baby)', function() {
       it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', function() {
         const result = this.promiscuousModel.toDb();
-
+        
         expect(result._id).toBe(this.promiscuousModel.id);
         expect(result.fn).toBe(this.promiscuousModel.firstName);
         expect(result.lastName).toBe(this.promiscuousModel.lastName);
+        expect(result.order).toBeDefined();
+        expect(result.order.on).toBe(this.promiscuousModel.order.orderNumber);
+        expect(result.order.t).toBe(this.promiscuousModel.order.total);
+        expect(result.order.adr).toBeDefined();
+        expect(result.order.adr.st).toBe(this.promiscuousModel.order.address.street);
+        expect(result.order.adr.code).toBe(this.promiscuousModel.order.address.gateCode);
+        expect(result.order.adr.dogsName).toBe(this.promiscuousModel.order.address.dogsName);
         expect(result.phone).toBe(this.promiscuousModel.phone);
         expect(result.id).toBeUndefined();
       });

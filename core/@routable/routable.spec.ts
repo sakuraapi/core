@@ -457,13 +457,14 @@ describe('core/Routable', function() {
           .catch(done.fail);
       });
 
-      xdescribe('supports a where query', function() {
+      describe('supports a where query', function() {
 
         it('takes @Json mapped fields', function() {
-
+          pending('needs #59 to be finished first');
         });
 
         it('does not allow for NoSQL injection', function() {
+          pending('needs #59 to be finished first');
         });
 
       });

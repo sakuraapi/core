@@ -324,7 +324,7 @@ function getAllRouteHandler(req: Request, res: Response) {
 
   const where = Sanitize.remove$where(req.params.where) || {};
   const fields = req.params.fields || {};
-  const skip = req.params.skip || null;
+  const skip = req.params.recurse || null;
   const limit = req.params.limit || null;
 
   this

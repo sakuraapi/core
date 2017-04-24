@@ -22,6 +22,7 @@
     "lint:tests": "npm run tslint -- -e \"node_modules/**/**/*.ts\"  -e \"**/**/*.d.ts\" -t stylish --fix -c tslint.spec.json **/**/*.spec.ts",
     "prepublish": "npm test",
     "test": "npm run docker:compose-test && npm run build && npm run jasmine && docker-compose down",
+    "test:trace": "JASMINE_REPORTER=plain npm test",
     "test:debug": "JASMINE_REPORTER=plain DEBUG=sapi:*,-sapi:*:verbose npm test",
     "test:verbose": "JASMINE_REPORTER=plain DEBUG=sapi:* npm test",
     "test:vverbose": "JASMINE_REPORTER=plain DEBUG=* npm test",

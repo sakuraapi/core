@@ -140,22 +140,16 @@ describe('@Json', function() {
       });
 
       it('returns id when _id is not null', function(done) {
-
         this
           .t
           .create()
-          .then(() => {
-            Test
-              .getById(this.t._id)
-              .then((result) => {
-                expect(result._id).toBeDefined();
-                expect(result.toJson()['id'].toString()).toBe(this.t._id.toString());
-                done();
-              })
-              .catch(done.fail);
+          .then(() => Test.getById(this.t._id))
+          .then((result) => {
+            expect(result._id).toBeDefined();
+            expect(result.toJson()['id'].toString()).toBe(this.t._id.toString());
           })
+          .then(done)
           .catch(done.fail);
-
       });
     });
 

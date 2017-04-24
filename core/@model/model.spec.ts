@@ -1,14 +1,14 @@
 import {
-  SapiDbForModelNotFound,
-  SapiMissingIdErr
-} from './errors';
-import {
   Db,
   Json,
   Model,
   modelSymbols,
   SakuraApiModel
 } from './';
+import {
+  SapiDbForModelNotFound,
+  SapiMissingIdErr
+} from './errors';
 
 import {
   InsertOneWriteOpResult,
@@ -442,14 +442,20 @@ describe('@Model', function() {
             });
 
             it('takes a json object and returns the object with valid DB fields', function() {
+              pending('needs refactor as part of #59');
 
               const obj = {
+                blah: 'dropThis',
                 jfn: 'George',
-                jln: 'Washington',
-                blah: 'dropThis'
+                jln: 'Washington'
               };
 
               const result = (MapJsonToDBTest.mapJsonToDb(obj) as any);
+
+              console.log('↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓'.america);
+              console.log(result);
+              console.log('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑'.america);
+
               expect(result.fn).toBe(obj.jfn);
               expect(result.ln).toBe(obj.jln);
               expect(result.blah).toBeUndefined();
@@ -585,39 +591,35 @@ describe('@Model', function() {
               it('sets the proper database level fields', function(done) {
                 const pud = new PartialUpdateTest();
 
+                const updateSet = {
+                  firstName: 'updated'
+                };
+
                 pud
                   .create()
                   .then((createResult) => {
                     expect(createResult.insertedCount).toBe(1);
                     expect(pud.id).toBeTruthy();
+                  })
+                  .then(() => pud.save(updateSet))
+                  .then((result: UpdateWriteOpResult) => {
+                    expect(result.modifiedCount).toBe(1);
+                    expect(pud.firstName).toBe(updateSet.firstName);
 
-                    const updateSet = {
-                      firstName: 'updated'
-                    };
-
-                    pud
-                      .save(updateSet)
-                      .then((result: UpdateWriteOpResult) => {
-                        expect(result.modifiedCount).toBe(1);
-                        expect(pud.firstName).toBe(updateSet.firstName);
-
-                        pud
-                          .getCollection()
-                          .find({_id: pud.id})
-                          .limit(1)
-                          .next()
-                          .then((updated) => {
-                            expect(updated._id instanceof ObjectID || updated._id.constructor.name === 'ObjectID')
-                              .toBe(true);
-                            expect(updated.fn).toBeDefined();
-
-                            expect(updated.fn).toBe(updateSet.firstName);
-                            done();
-                          })
-                          .catch(done.fail);
-                      })
-                      .catch(done.fail);
-                  });
+                    return pud
+                      .getCollection()
+                      .find({_id: pud.id})
+                      .limit(1)
+                      .next()
+                  })
+                  .then((updated: any) => {
+                    expect(updated._id instanceof ObjectID || updated._id.constructor.name === 'ObjectID')
+                      .toBe(true);
+                    expect(updated.fn).toBeDefined();
+                    expect(updated.fn).toBe(updateSet.firstName);
+                  })
+                  .then(done)
+                  .catch(done.fail);
               });
 
               it('performs a partial update without disturbing other fields', function(done) {
@@ -787,7 +789,7 @@ describe('@Model', function() {
 
         ignoreThis: {
           level2: string
-        }
+        };
       }
 
       beforeEach(function(done) {
@@ -800,6 +802,7 @@ describe('@Model', function() {
       });
 
       it('can create and retrieve property with nested object', function(done) {
+        pending('completion of #59')
 
         const nested = new NestedModel();
         nested.contact = {
@@ -812,6 +815,11 @@ describe('@Model', function() {
 
         nested
           .create()
+          .then(() => {
+            console.log('↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓'.america);
+            console.log(nested);
+            console.log('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑'.america);
+          })
           .then(() => NestedModel.getById(nested.id))
           .then((obj) => {
             expect(obj.id.toString()).toBe(nested.id.toString());

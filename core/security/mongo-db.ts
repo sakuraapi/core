@@ -9,7 +9,7 @@ export class SanitizeMongoDB {
    * Deep inspects the input for any keys that start with $ and deletes them. If the input is not
    * an object, the original input will be returned.
    */
-  static removeAll$Keys(input: any): any {
+  public static removeAll$Keys(input: any): any {
     return SanitizeMongoDB.sanitizeObject(input, (key) => {
       return /^\$/.test(key);
     });
@@ -19,13 +19,13 @@ export class SanitizeMongoDB {
    * Deep inspects the input for any $where keys and deletes them. If the input is not
    * an object, the original input will be returned.
    */
-  static remove$where(input: any) : any {
+  public static remove$where(input: any): any {
     return SanitizeMongoDB.sanitizeObject(input, (key) => {
       return key === '$where';
     });
   }
 
-  static sanitizeObject(input: any, filter: (key:any) => boolean): any {
+  public static sanitizeObject(input: any, filter: (key: any) => boolean): any {
     if (input === null || input === undefined) {
       return input;
     }
@@ -38,7 +38,7 @@ export class SanitizeMongoDB {
 
     /////
     function sanitize(obj: any) {
-      for (let key in obj) {
+      for (const key in obj) { // tslint:disable-line:forin
         const field = obj[key];
         if (filter(key)) {
           delete obj[key];
@@ -49,5 +49,3 @@ export class SanitizeMongoDB {
     }
   }
 }
-
-

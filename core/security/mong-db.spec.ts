@@ -10,23 +10,23 @@ describe('core/security/mongo-db', function() {
     });
 
     it('returns numbers and strings untouched', function() {
-      let stringInput = `{$where:'this.field === this.field'}`;
-      let numberInput = 777;
+      const stringInput = `{$where:'this.field === this.field'}`;
+      const numberInput = 777;
 
       expect(SanitizeMongoDB.removeAll$Keys(stringInput)).toBe(stringInput);
       expect(SanitizeMongoDB.removeAll$Keys(numberInput)).toBe(numberInput);
     });
 
     it('removes top level object keys starting with $', function() {
-      let obj = {
+      const obj = {
         firstName: 'Geroge',
         lastName: 'Washington',
-        $where: function() {
+        $where() {
           /*do something bad*/
         }
       };
 
-      let result = SanitizeMongoDB.removeAll$Keys(obj);
+      const result = SanitizeMongoDB.removeAll$Keys(obj);
 
       expect(result.$where).toBeUndefined();
       expect(result.firstName).toBe(obj.firstName);
@@ -34,21 +34,21 @@ describe('core/security/mongo-db', function() {
     });
 
     it('deep inspects object for $ fields and removes them', function() {
-      let obj = {
+      const obj = {
         firstName: 'Geroge',
-        lastName: 'Washington',
         inner: {
           color: 'red',
-          number: 777,
           innerInner: {
-            $where: function() {
+            $where() {
               /*do something bad*/
             }
-          }
-        }
+          },
+          number: 777
+        },
+        lastName: 'Washington'
       };
 
-      let result = SanitizeMongoDB.removeAll$Keys(obj);
+      const result = SanitizeMongoDB.removeAll$Keys(obj);
 
       expect(result.firstName).toBe(obj.firstName);
       expect(result.lastName).toBe(obj.lastName);

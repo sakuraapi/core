@@ -1,9 +1,9 @@
 import {
   addDefaultInstanceMethods,
-  addDefaultStaticMethods
-} from '../helpers/defaultMethodHelpers';
+  addDefaultStaticMethods,
+  deepMapKeys
+} from '../helpers';
 import {SakuraApi} from '../sakura-api';
-
 import {
   dbSymbols,
   IDbOptions
@@ -14,7 +14,6 @@ import {
 } from './errors';
 import {jsonSymbols} from './json';
 import {privateSymbols} from './private';
-
 import {
   Collection,
   CollectionInsertOneOptions,
@@ -341,34 +340,30 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
 
   const obj = new this(...constructorArgs);
 
-  // TODO legacy implementation, remove --------------------------------------------------------------------------------
-  if (!this[dbSymbols.hasNewChildOption]) {
-    const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, obj);
+  const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByFieldName, obj);
 
-    for (const fieldName of Object.getOwnPropertyNames(json)) {
-      const dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
+  for (const fieldName of Object.getOwnPropertyNames(json)) {
+    const dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
 
-      if (dbFieldOptions) {
-        obj[dbFieldOptions[dbSymbols.optionsPropertyName]] = json[fieldName];
-      } else {
-        if ((this[modelSymbols.modelOptions].dbConfig || {} as any).promiscuous) {
-          obj[fieldName] = json[fieldName];
-        }
+    if (dbFieldOptions) {
+      obj[dbFieldOptions[dbSymbols.propertyName]] = json[fieldName];
+    } else {
+      if ((this[modelSymbols.modelOptions].dbConfig || {} as any).promiscuous) {
+        obj[fieldName] = json[fieldName];
       }
     }
-    // make sure the _id field is included as one of the properties
-    if (!obj._id && (json as any)._id) {
-      obj._id = (json as any)._id;
-    }
-
-    // make sure _id is ObjectID, if possible
-    if (obj._id && !(obj._id instanceof ObjectID) && ObjectID.isValid(obj._id)) {
-      obj._id = new ObjectID(obj._id.toString());
-    }
-
-    return obj;
+  }
+  // make sure the _id field is included as one of the properties
+  if (!obj._id && (json as any)._id) {
+    obj._id = (json as any)._id;
   }
 
+  // make sure _id is ObjectID, if possible
+  if (obj._id && !(obj._id instanceof ObjectID) && ObjectID.isValid(obj._id)) {
+    obj._id = new ObjectID(obj._id.toString());
+  }
+
+  return obj;
 }
 
 /**
@@ -744,7 +739,9 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
   const constructor = this.constructor;
 
   const col = constructor.getCollection();
-  this.debug.normal(`.save called, dbName: '${constructor[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, changeSet);
+  this
+    .debug
+    .normal(`.save called, dbName: '${constructor[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, changeSet);
 
   if (!col) {
     throw new Error(`Database '${constructor[modelSymbols.dbName]}' not found`);
@@ -786,7 +783,7 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
  * `toDb` will assume the entire [[Model]] is the change set (obeying the various decorators like [[Db]]).
  * @returns {{_id: (any|ObjectID|number)}}
  */
-function toDb(changeSet?: object): object {
+function toDb(changeSet?: any): object {
   const constructor = this[modelSymbols.constructor] || this;
 
   const modelOptions = constructor[modelSymbols.modelOptions];
@@ -794,33 +791,52 @@ function toDb(changeSet?: object): object {
 
   changeSet = changeSet || this;
 
-  // TODO legacy implementation, remove --------------------------------------------------------------------------------
-  if (!constructor[dbSymbols.hasNewChildOption]) {
-    const dbOptionByPropertyName: Map<string, IDbOptions>
-      = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this)
-      || constructor[dbSymbols.sakuraApiDbByPropertyName];
+  const dbObj = deepMapKeys({
+    map: fieldMapper,
+    metaLookup: [dbSymbols.dbByPropertyName],
+    recurse: (key, value) => !(value instanceof ObjectID),
+    source: changeSet
+  });
 
-    const dbObj = {
-      _id: this._id
-    };
+  delete (dbObj as any).id;
+  if (!(dbObj as any)._id && this._id) {
+    (dbObj as any)._id = this._id;
+  }
+  
+  return dbObj;
 
-    for (const propertyName of Object.getOwnPropertyNames(changeSet)) {
-      const propertyOptions = (dbOptionByPropertyName) ? dbOptionByPropertyName.get(propertyName) : null;
+  /////
+  function fieldMapper(key, value, meta) {
 
-      if (propertyOptions && propertyOptions.field) {
-        dbObj[propertyOptions.field] = changeSet[propertyName];
-      } else if (propertyOptions) {
-        dbObj[propertyName] = changeSet[propertyName];
-      } else if ((modelOptions.dbConfig || {} as any).promiscuous) {
-        if (!changeSet.propertyIsEnumerable(propertyName)) {
-          continue;
-        }
-        dbObj[propertyName] = changeSet[propertyName];
+    let dbMeta = (meta && meta.length > 0 && meta[0]) ? meta[0] : null;
+
+    if (!dbMeta) {
+      dbMeta = constructor[dbSymbols.dbByPropertyName];
+    }
+
+    let fieldName = undefined;
+    // if there's @Db meta data on the property
+    if (dbMeta && dbMeta.get) {
+      let dbOptions = (dbMeta.get(key)) as IDbOptions;
+
+      if ((dbOptions || {}).field) {
+        // if there's specifically a @Db('fieldName') - i.e., there's a declared field name
+        fieldName = dbOptions.field;
+      } else if (dbOptions) {
+        // if there's at least an @Db on the property, use the property name for the field name
+        fieldName = key;
       }
     }
 
-    return dbObj;
+    // if the model's promiscuous use the property name for the field name if @Db wasn't found...
+    // otherwise leave the field out of the results
+    if (!fieldName && (modelOptions.dbConfig || {}).promiscuous) {
+      fieldName = key
+    }
+
+    return fieldName;
   }
+
 }
 
 /**
@@ -830,52 +846,47 @@ function toDb(changeSet?: object): object {
 function toJson(): object {
   this.debug.normal(`.toJson called, target '${this.constructor.name}'`);
 
-  // TODO legacy implementation, remove --------------------------------------------------------------------------------
-  if (!this.constructor[dbSymbols.hasNewChildOption]) {
+  let jsonFieldNamesByProperty: Map<string, string>
+    = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
 
-    let jsonFieldNamesByProperty: Map<string, string>
-      = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
+  jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
 
-    jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
+  const privateFields: Map<string, string>
+    = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
 
-    const privateFields: Map<string, string>
-      = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
+  const dbOptionByPropertyName: Map<string, IDbOptions>
+    = Reflect.getMetadata(dbSymbols.dbByPropertyName, this);
 
-    const dbOptionByPropertyName: Map<string, IDbOptions>
-      = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, this);
-
-    const obj = {};
-    for (const prop of Object.getOwnPropertyNames(this)) {
-      if (typeof this[prop] === 'function') {
-        continue;
-      }
-
-      if (prop === '_id') {
-        continue;
-      }
-
-      if (dbOptionByPropertyName) {
-        if ((dbOptionByPropertyName.get(prop) || {}).private) {
-          continue;
-        }
-      }
-
-      const override = (privateFields) ? privateFields.get(prop) : null;
-
-      // do the function test for private otherwise do the boolean test
-      if (override && typeof this[override] === 'function' && !this[override]()) {
-        continue;
-      } else if (override && !this[override]) {
-        continue;
-      }
-
-      obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
+  const obj = {};
+  for (const prop of Object.getOwnPropertyNames(this)) {
+    if (typeof this[prop] === 'function') {
+      continue;
     }
 
-    return obj;
+    if (prop === '_id') {
+      continue;
+    }
+
+    if (dbOptionByPropertyName) {
+      if ((dbOptionByPropertyName.get(prop) || {}).private) {
+        continue;
+      }
+    }
+
+    const override = (privateFields) ? privateFields.get(prop) : null;
+
+    // do the function test for private otherwise do the boolean test
+    if (override && typeof this[override] === 'function' && !this[override]()) {
+      continue;
+    } else if (override && !this[override]) {
+      continue;
+    }
+
+    obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
   }
 
-  // TODO new code goes here ===========================================================================================
+  return obj;
+
 }
 
 /**

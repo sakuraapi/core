@@ -3,10 +3,10 @@
  * part of the API contract and may change or be removed without notice on patch releases.
  */
 export const dbSymbols = {
-  optionsPropertyName: Symbol('sakuraApiDbOptionsPropertyName'),
-  sakuraApiDbByFieldName: Symbol('sakuraApiDbByFieldName'),
-  sakuraApiDbByPropertyName: Symbol('sakuraApiDbByPropertyName'),
-  hasNewChildOption: Symbol('hasNewChildOption')
+  dbByFieldName: Symbol('sakuraApiDbByFieldName'),
+  dbByPropertyName: Symbol('sakuraApiDbByPropertyName'),
+  hasNewChildOption: Symbol('sakuraApiHasNewChildOption'),
+  propertyName: Symbol('sakuraApiDbOptionsPropertyName')
 };
 
 export interface IDbOptions {
@@ -47,14 +47,6 @@ export interface IDbOptions {
    * it will not be included in the output of `someModel.toJson()`. [[Model.modelsymbols]]
    */
   private?: boolean;
-
-  children?: IDbOptionsChild | { [key: string]: string } [];
-}
-
-export interface IDbOptionsChild {
-  field?: string;
-  private?: boolean;
-  children: IDbOptionsChild | { [key: string]: string } [];
 }
 
 /**
@@ -62,38 +54,34 @@ export interface IDbOptionsChild {
  * @param options Sets the database options for the property.
  * @returns Used by the framework to reflect on the `@Db` properties defined.
  */
-export function Db(options?: IDbOptions): (target: any, key: string) => void {
-  options = options || {};
+export function Db(dbOptions?: IDbOptions | string): (target: any, key: string) => void {
+  const options = (typeof dbOptions === 'string')
+    ? {field: dbOptions}
+    : (!dbOptions) ? {} : dbOptions;
 
   return (target: any, key: string) => {
+    options[dbSymbols.propertyName] = key;
 
-    // TODO legacy implementation, remove ------------------------------------------------------------------------------
-    if (!options.children) {
-      options[dbSymbols.optionsPropertyName] = key;
+    let mapByPropertyName = getMetaDataMap(target, dbSymbols.dbByPropertyName);
+    let mapByFieldName = getMetaDataMap(target, dbSymbols.dbByFieldName);
 
-      let metaMapByPropertyName: Map<string, IDbOptions>
-        = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, target);
+    mapByPropertyName.set(key, options);
+    mapByFieldName.set(options.field || key, options);
+  };
 
-      if (!metaMapByPropertyName) {
-        metaMapByPropertyName = new Map<string, IDbOptions>();
-        Reflect.defineMetadata(dbSymbols.sakuraApiDbByPropertyName, metaMapByPropertyName, target);
-        target.constructor[dbSymbols.sakuraApiDbByPropertyName] = metaMapByPropertyName;
-      }
+  /////
 
-      let metaMapByFieldName: Map<string, IDbOptions>
-        = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, target);
+  // Lazy adds the metadata map to the object if it's missing then returns it, otherwise, it returns the existing map
+  function getMetaDataMap(target, symbol): Map<string, IDbOptions> {
 
-      if (!metaMapByFieldName) {
-        metaMapByFieldName = new Map<string, IDbOptions>();
-        Reflect.defineMetadata(dbSymbols.sakuraApiDbByFieldName, metaMapByFieldName, target);
-        target.constructor[dbSymbols.sakuraApiDbByFieldName] = metaMapByFieldName;
-      }
+    let map: Map<string, IDbOptions> = Reflect.getMetadata(symbol, target);
 
-      metaMapByPropertyName.set(key, options);
-      metaMapByFieldName.set(options.field || key, options);
-      return;
+    if (!map) {
+      map = new Map<string, IDbOptions>();
+      Reflect.defineMetadata(symbol, map, target);
+      target.constructor[symbol] = map;
     }
 
-    target.constructor[dbSymbols.hasNewChildOption] = true;
-  };
+    return map;
+  }
 }
