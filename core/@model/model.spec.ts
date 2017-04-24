@@ -442,7 +442,6 @@ describe('@Model', function() {
             });
 
             it('takes a json object and returns the object with valid DB fields', function() {
-              pending('needs refactor as part of #59');
 
               const obj = {
                 blah: 'dropThis',
@@ -451,10 +450,6 @@ describe('@Model', function() {
               };
 
               const result = (MapJsonToDBTest.mapJsonToDb(obj) as any);
-
-              console.log('↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓'.america);
-              console.log(result);
-              console.log('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑'.america);
 
               expect(result.fn).toBe(obj.jfn);
               expect(result.ln).toBe(obj.jln);
@@ -773,11 +768,15 @@ describe('@Model', function() {
       });
     });
 
-    describe('handles complex Models', function() {
+    describe('properties that are declared as embedded objects', function() {
+      // Integrator note: to persist complex models with deeply embedded objects, the embeded objects
+      // should be their own classes.
+      
       @Model(sapi, {
         dbConfig: {
           collection: 'users',
-          db: 'userDb'
+          db: 'userDb',
+          promiscuous: true
         }
       })
       class NestedModel extends SakuraApiModel {
@@ -801,9 +800,7 @@ describe('@Model', function() {
           .catch(done.fail);
       });
 
-      it('can create and retrieve property with nested object', function(done) {
-        pending('completion of #59')
-
+      it('require promiscuous mode', function(done) {
         const nested = new NestedModel();
         nested.contact = {
           firstName: 'George',
@@ -815,19 +812,12 @@ describe('@Model', function() {
 
         nested
           .create()
-          .then(() => {
-            console.log('↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓'.america);
-            console.log(nested);
-            console.log('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑'.america);
-          })
           .then(() => NestedModel.getById(nested.id))
           .then((obj) => {
             expect(obj.id.toString()).toBe(nested.id.toString());
             expect(obj.contact).toBeDefined();
-            expect((obj.contact || {} as any).firstName).toBe(nested.contact.firstName);
-            expect((obj.contact || {} as any).lastName).toBe(nested.contact.lastName);
-            expect(obj.ignoreThis).toBeUndefined();
-
+            expect(obj.contact.firstName).toBe(nested.contact.firstName);
+            expect(obj.contact.lastName).toBe(nested.contact.lastName);
           })
           .then(done)
           .catch(done.fail);
