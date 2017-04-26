@@ -61,34 +61,155 @@ describe('@Db', function() {
       });
     });
 
-    describe('maps fields from input', function() {
+    describe('maps db fields to deeply nested model properties', function() {
+      class Address {
+        @Db('st')
+        street = '1600 Pennsylvania Ave NW';
 
-      it('handles @Models with no @Db properties', function() {
-        @Model(sapi)
-        class Test {
-          static fromDb;
+        @Db('c')
+        city = 'Washington';
+
+        @Db('s')
+        state = 'DC';
+
+        @Db('z')
+        zip = '20500';
+
+        @Db({field: 'gc', private: true})
+        gateCode = 'a123';
+      }
+
+      class Order {
+        @Db()
+        orderId: string = 'a123';
+
+        @Db()
+        total: number = 100;
+
+        @Db({field: 'addr', model: Address})
+        address = new Address();
+
+        itemName = 'Cherry Tree Axe';
+      }
+
+      @Model(sapi)
+      class Test extends SakuraApiModel {
+
+        @Db('fn')
+        firstName: string;
+
+        middleName: string;
+
+        @Db({field: 'o', model: Order})
+        order = new Order();
+      }
+
+      const input = {
+        fn: 'George',
+        lastName: 'Washington',
+        middleName: 'Nonely',
+        o: {
+          addr: {
+            c: 'Los Angeles',
+            gc: '00000',
+            s: 'CA',
+            st: '123',
+            z: '90277'
+          },
+          itemName: 'Mid Sized Cherry Tree',
+          orderId: '321',
+          origin: 'Japan',
+          total: 200
         }
+      };
+
+      it('returns a model default property even if the Db source is missing that property', function() {
+        class Contact {
+          firstName: string = 'George';
+          lastName: string = 'Washington';
+        }
+
+        @Model(sapi)
+        class Test extends SakuraApiModel {
+          @Db({model: Contact})
+          contact: Contact = new Contact();
+        }
+
         const result = Test.fromDb({});
-        expect(result).toBeDefined();
+
+        expect(result instanceof Test)
+          .toBeTruthy(`the result should be an instance of the model '${Test.name}', instead it was a instance of `
+            + `'${result.constructor.name}'`);
+
+        expect(result).toBeDefined('an object should always result .fromDb({})');
+        expect(result.contact).toBeDefined('a contact object should have been part of the result even though it ' +
+          'was not part of the db input');
+        expect(result.contact.firstName).toBe('George');
+        expect(result.contact.lastName).toBe('Washington');
       });
 
-      it('handles properties with empty @Db options', function() {
-        @Model(sapi)
-        class Test {
-          static fromDb;
-
-          @Db()
-          firstName: string;
-        }
-
-        const input = {
-          firstName: 'George',
-          lastName: 'Washington'
-        };
+      it('excludes fields without @Db model properties if not in promiscuous mode', function() {
         const result = Test.fromDb(input);
 
-        expect(result.firstName).toBe(input.firstName);
-        expect(result.lastName).toBeUndefined();
+        expect(result.firstName).toBe(input.fn);
+        expect(result.middleName).toBeUndefined('A property in a model should not be assigned a matching db '
+          + 'field if the Model property is not decorated with @Db');
+        expect((result as any).lastName)
+          .toBeUndefined('A property without @Db should not be mapped from the db unless ' +
+            'the Model is in promiscuous mode');
+        expect(result.order.itemName)
+          .toBe('Cherry Tree Axe', 'A default value should be set instead of the value from' +
+            ' the db');
+        expect((result.order as any).origin)
+          .toBeUndefined('A property without @Db should not be mapped from the db unless ' +
+            'the Model is in promiscuous mode');
+
+      });
+
+      it('properly throws when IDbOptions.model is invalid constructor function', function() {
+        @Model(sapi)
+        class TestModelOptionFail extends SakuraApiModel {
+          @Db({model: {}})
+          doh = new Order();
+        }
+
+        expect(() => TestModelOptionFail.fromDb({doh: {}}))
+          .toThrow(Error(`Model 'TestModelOptionFail' has a property 'doh' that defines `
+            + `its model with a value that cannot be constructed`));
+      });
+
+      it('maps objects with an IDbOptions.model option to an instance of that object constructor', function() {
+        const result = Test.fromDb(input);
+
+        expect(result.order instanceof Order).toBeTruthy('result.order should be instance of Order '
+          + `but it was instance of '${result.order.constructor.name}' instead`);
+        expect(result.order.address instanceof Address)
+          .toBeTruthy('result.order.address should be instance of Address '
+            + `but it was instance of '${result.order.address.constructor.name}' instead`);
+      });
+
+      it('deeply maps values with matching @Db', function() {
+
+        const result = Test.fromDb(input);
+
+        expect(result instanceof Test).toBeTruthy();
+        expect(result.firstName).toBe(input.fn);
+        expect(result.middleName).toBeUndefined('should not have mapped without promiscuous mode');
+        expect((result as any).lastName).toBeUndefined('should not have mapped without promiscuous mode');
+        expect(result.order).toBeDefined('result.order shold be defined');
+        expect(result.order instanceof Order).toBeTruthy();
+        expect(result.order.orderId).toBe('321');
+        expect(result.order.total).toBe(200);
+        expect(result.order.itemName).toBe('Cherry Tree Axe');
+        expect((result.order as any).origin).toBeUndefined('should not have mapped without promiscuous mode');
+        expect(result.order.address).toBeDefined('result.order.address should be defined');
+        expect(result.order.address instanceof Address).toBeTruthy();
+        expect(result.order.address.street).toBe('123');
+        expect(result.order.address.city).toBe('Los Angeles');
+        expect(result.order.address.state).toBe('CA');
+        expect(result.order.address.zip).toBe('90277');
+        expect(result.order.address.gateCode).toBe('00000');
+
       });
 
       it('handles properties with @Db({field}) set', function() {
@@ -114,6 +235,7 @@ describe('@Db', function() {
       });
 
       describe('with dbOptions.promiscuous mode', function() {
+
         @Model(sapi, {
           dbConfig: {
             collection: 'users',
@@ -124,12 +246,18 @@ describe('@Db', function() {
         class Test extends SakuraApiModel {
           @Db({field: 'ph'})
           phone: string;
+
+          @Db({model: Order})
+          order = new Order();
         }
 
         it('promiscuously includes fields not mapped with @Db', function() {
           const input = {
             firstName: 'George',
             lastName: 'Washington',
+            order: {
+              test: 777
+            },
             ph: '123'
           };
           const result = Test.fromDb(input);
@@ -137,6 +265,7 @@ describe('@Db', function() {
           expect((result as any).firstName).toBe(input.firstName);
           expect((result as any).lastName).toBe(input.lastName);
           expect(result.phone).toBe(input.ph);
+          expect((result.order as any).test).toBe(777);
         });
 
         it('Properly return _id as instanceOf ObjectID', function() {
@@ -320,7 +449,7 @@ describe('@Db', function() {
     describe('Promiscuous Mode (hey baby)', function() {
       it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', function() {
         const result = this.promiscuousModel.toDb();
-        
+
         expect(result._id).toBe(this.promiscuousModel.id);
         expect(result.fn).toBe(this.promiscuousModel.firstName);
         expect(result.lastName).toBe(this.promiscuousModel.lastName);

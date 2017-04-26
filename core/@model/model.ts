@@ -1,4 +1,16 @@
 import {
+  Collection,
+  CollectionInsertOneOptions,
+  CollectionOptions,
+  Cursor,
+  Db,
+  DeleteWriteOpResultObject,
+  InsertOneWriteOpResult,
+  ObjectID,
+  ReplaceOneOptions,
+  UpdateWriteOpResult
+} from 'mongodb';
+import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods,
   deepMapKeys
@@ -14,18 +26,6 @@ import {
 } from './errors';
 import {jsonSymbols} from './json';
 import {privateSymbols} from './private';
-import {
-  Collection,
-  CollectionInsertOneOptions,
-  CollectionOptions,
-  Cursor,
-  Db,
-  DeleteWriteOpResultObject,
-  InsertOneWriteOpResult,
-  ObjectID,
-  ReplaceOneOptions,
-  UpdateWriteOpResult
-} from 'mongodb';
 
 import debug = require('debug');
 
@@ -332,7 +332,8 @@ function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpR
  * if the `json` parameter is null, undefined or not an object.
  */
 function fromDb(json: object, ...constructorArgs: any[]): object {
-  this.debug.normal(`.fromDb called, target '${this.name}'`);
+  const modelName = this.name;
+  this.debug.normal(`.fromDb called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
     return null;
@@ -340,19 +341,6 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
 
   const obj = new this(...constructorArgs);
 
-  const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByFieldName, obj);
-
-  for (const fieldName of Object.getOwnPropertyNames(json)) {
-    const dbFieldOptions = (dbOptionsByFieldName) ? dbOptionsByFieldName.get(fieldName) : null;
-
-    if (dbFieldOptions) {
-      obj[dbFieldOptions[dbSymbols.propertyName]] = json[fieldName];
-    } else {
-      if ((this[modelSymbols.modelOptions].dbConfig || {} as any).promiscuous) {
-        obj[fieldName] = json[fieldName];
-      }
-    }
-  }
   // make sure the _id field is included as one of the properties
   if (!obj._id && (json as any)._id) {
     obj._id = (json as any)._id;
@@ -363,7 +351,79 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
     obj._id = new ObjectID(obj._id.toString());
   }
 
-  return obj;
+  const result = mapDbToModel(json, obj, keyMapper.bind(this));
+
+  // make sure the _id field is included as one of the properties
+  if (!obj._id && (json as any)._id) {
+    obj._id = (json as any)._id;
+  }
+
+  // make sure _id is ObjectID, if possible
+  if (obj._id && !(obj._id instanceof ObjectID) && ObjectID.isValid(obj._id)) {
+    obj._id = new ObjectID(obj._id.toString());
+  }
+
+  return result;
+  //////
+  function mapDbToModel(source, target, map) {
+    target = target || {};
+
+    if (!source) {
+      return source;
+    }
+
+    const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByFieldName, target);
+
+    // iterate over each property of the source json object
+    for (const key of Object.getOwnPropertyNames(source)) {
+
+      // if the property is an Object, but not an ObjectID
+      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID)) {
+
+        // convert the DB key name to the Model key name
+        const mapper = map(key, source[key], dbOptionsByFieldName);
+
+        // if the key should be included, recurse into it
+        if (mapper.newKey !== undefined) {
+          let value = mapDbToModel(source[key], target[mapper.newKey], map);
+
+          if (mapper.model) {
+            try {
+              value = Object.assign(new mapper.model(), value);
+            } catch (err) {
+              throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
+                + ` cannot be constructed`);
+            }
+          }
+
+          target[mapper.newKey] = value;
+        }
+
+        continue;
+      }
+
+      // otherwise, map a property that has a primitive value or an ObjectID value
+      const mapper = map(key, source[key], dbOptionsByFieldName);
+      if (mapper.newKey !== undefined) {
+        target[mapper.newKey] = source[key];
+      }
+    }
+
+    return target;
+  }
+
+  function keyMapper(key: string, value: any, meta: Map<string, IDbOptions>) {
+    const dbFieldOptions = (meta) ? meta.get(key) : null;
+
+    return {
+      model: ((dbFieldOptions || {}).model),
+      newKey: (dbFieldOptions)
+        ? dbFieldOptions[dbSymbols.propertyName]
+        : ((this[modelSymbols.modelOptions].dbConfig || {} as any).promiscuous)
+          ? key
+          : undefined
+    };
+  }
 }
 
 /**
@@ -521,7 +581,6 @@ function getById(id: string | ObjectID, project?: any): Promise<any> {
     cursor
       .next()
       .then((result) => {
-
         const obj = this.fromDb(result);
         resolve(obj);
       })
@@ -771,8 +830,8 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
 }
 
 /**
- * @instance Builds and returns a change set object that properly obeys the various decorators (like [[Db]]). The
- * resulting object is what's persisted to the database.
+ * @instance Builds and returns a change set object with its fields mapped based on decorators like [[Db]]. The
+ * resulting change set object is what's persisted to the database.
  * @param changeSet The change set. For example:
  * <pre>
  * {
@@ -781,6 +840,11 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
  * </pre>
  * This change set would cause only the `firstName` field to be updated. If the `set` parameter is not provided,
  * `toDb` will assume the entire [[Model]] is the change set (obeying the various decorators like [[Db]]).
+ *
+ * Nested objects are supported. Each property that is an object (except for ObjectID properties) needs to have its
+ * own class declared. The properties classes that represent sub-documents, obey the `@`[[Db]] and `@`[[Json]] decorator
+ * rules.
+ *
  * @returns {{_id: (any|ObjectID|number)}}
  */
 function toDb(changeSet?: any): object {
@@ -802,7 +866,7 @@ function toDb(changeSet?: any): object {
   if (!(dbObj as any)._id && this._id) {
     (dbObj as any)._id = this._id;
   }
-  
+
   return dbObj;
 
   /////
@@ -814,10 +878,10 @@ function toDb(changeSet?: any): object {
       dbMeta = constructor[dbSymbols.dbByPropertyName];
     }
 
-    let fieldName = undefined;
+    let fieldName;
     // if there's @Db meta data on the property
     if (dbMeta && dbMeta.get) {
-      let dbOptions = (dbMeta.get(key)) as IDbOptions;
+      const dbOptions = (dbMeta.get(key)) as IDbOptions;
 
       if ((dbOptions || {}).field) {
         // if there's specifically a @Db('fieldName') - i.e., there's a declared field name
@@ -831,7 +895,7 @@ function toDb(changeSet?: any): object {
     // if the model's promiscuous use the property name for the field name if @Db wasn't found...
     // otherwise leave the field out of the results
     if (!fieldName && (modelOptions.dbConfig || {}).promiscuous) {
-      fieldName = key
+      fieldName = key;
     }
 
     return fieldName;

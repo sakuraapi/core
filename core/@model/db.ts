@@ -11,6 +11,13 @@ export const dbSymbols = {
 
 export interface IDbOptions {
   /**
+   * An optional constructor function (ES6 Class) that is used to instantiate a property if nothing
+   * comes back from the DB and if the property isn't assigned a default instance of that object
+   * upon construction.
+   */
+  model?: any;
+
+  /**
    * The name of the field in the database that is mapped to this property when retrieving this document from the
    * database and persisting this document back to the database.
    *
@@ -28,6 +35,7 @@ export interface IDbOptions {
    * Explanation: `firstName` property of the `@Model` is mapped to the `fn` field of the database.
    */
   field?: string;
+
   /**
    * Prevents this property from being marshaled to json by the built in `toJson` method that is attached to
    * `@Model` decorated classes.
@@ -62,8 +70,8 @@ export function Db(dbOptions?: IDbOptions | string): (target: any, key: string) 
   return (target: any, key: string) => {
     options[dbSymbols.propertyName] = key;
 
-    let mapByPropertyName = getMetaDataMap(target, dbSymbols.dbByPropertyName);
-    let mapByFieldName = getMetaDataMap(target, dbSymbols.dbByFieldName);
+    const mapByPropertyName = getMetaDataMap(target, dbSymbols.dbByPropertyName);
+    const mapByFieldName = getMetaDataMap(target, dbSymbols.dbByFieldName);
 
     mapByPropertyName.set(key, options);
     mapByFieldName.set(options.field || key, options);

@@ -6,16 +6,18 @@ import SuiteInfo = jasmine.SuiteInfo;
 
 class CustomProcessor extends DisplayProcessor {
   public displayJasmineStarted(info: SuiteInfo, log: string): string {
-    return `TypeScript ${log}`;
+    return `Jasmine ${log}`.blue;
   }
 }
-
-if (process.env.JASMINE_REPORTER !== 'plain') {
-  jasmine.getEnv().clearReporters();
-  jasmine.getEnv().addReporter(new SpecReporter({
-    customProcessors: [CustomProcessor],
-    spec: {
-      displayPending: true
-    }
-  }));
-}
+jasmine.getEnv().clearReporters();
+jasmine.getEnv().addReporter(new SpecReporter({
+  customProcessors: [CustomProcessor],
+  spec: {
+    displayErrorMessages: true,
+    displayPending: true,
+    displayStacktrace: true
+  },
+  suite: {
+    displayNumber: true
+  }
+}));

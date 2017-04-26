@@ -605,7 +605,7 @@ describe('@Model', function() {
                       .getCollection()
                       .find({_id: pud.id})
                       .limit(1)
-                      .next()
+                      .next();
                   })
                   .then((updated: any) => {
                     expect(updated._id instanceof ObjectID || updated._id.constructor.name === 'ObjectID')
@@ -768,10 +768,10 @@ describe('@Model', function() {
       });
     });
 
-    describe('properties that are declared as embedded objects', function() {
-      // Integrator note: to persist complex models with deeply embedded objects, the embeded objects
+    describe('properties that are declared as object literals', function() {
+      // Integrator note: to persist complex models with deeply embedded objects, the embedded objects
       // should be their own classes.
-      
+
       @Model(sapi, {
         dbConfig: {
           collection: 'users',
@@ -802,17 +802,24 @@ describe('@Model', function() {
 
       it('require promiscuous mode', function(done) {
         const nested = new NestedModel();
+
         nested.contact = {
           firstName: 'George',
           lastName: 'Washington'
         };
+
         nested.ignoreThis = {
           level2: 'test'
         };
 
         nested
           .create()
-          .then(() => NestedModel.getById(nested.id))
+          .then(() => {
+
+            const x = NestedModel.getById(nested.id);
+
+            return x;
+          })
           .then((obj) => {
             expect(obj.id.toString()).toBe(nested.id.toString());
             expect(obj.contact).toBeDefined();
@@ -821,6 +828,7 @@ describe('@Model', function() {
           })
           .then(done)
           .catch(done.fail);
+
       });
     });
   });

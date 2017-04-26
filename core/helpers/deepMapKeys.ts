@@ -17,35 +17,40 @@
  * // This is necessary to make sure the resulting meta parameter passed to map has the same number of members as
  * // the metaLookup array so that the integrator can correlate the two arrays.
  * metaLookup?: Symbol[]
+ *
+ * // the object where to get the meta data from, if different from the source
+ * metaSource?: any
  */
 export function deepMapKeys(params: {
   source: object,
   map: (k, v, m?: any[]) => any,
   recurse?: (k, v) => boolean,
-  metaLookup?: Symbol[]
+  metaLookup?: symbol[],
+  metaSource?: any
 }) {
   const result = {};
   if (!params.source) {
     return;
   }
 
-  let meta = [];
+  const meta = [];
   if (params.metaLookup && Array.isArray(params.metaLookup)) {
-    for (let symbol of params.metaLookup) {
-      meta.push(Reflect.getMetadata(symbol, params.source));
+    for (const symbol of params.metaLookup) {
+      meta.push(Reflect.getMetadata(symbol, params.metaSource || params.source));
     }
   }
 
-  for (let key of Object.getOwnPropertyNames(params.source)) {
+  // iterate over each property
+  for (const key of Object.getOwnPropertyNames(params.source)) {
     if (typeof params.source[key] === 'object' && ((params.recurse) ? params.recurse(key, params.source[key]) : true)) {
 
       const newKey = params.map(key, params.source[key], meta);
       if (newKey !== undefined) {
         const value = deepMapKeys({
-          source: params.source[key],
           map: params.map,
+          metaLookup: params.metaLookup,
           recurse: params.recurse,
-          metaLookup: params.metaLookup
+          source: params.source[key]
         });
 
         result[newKey] = value;
