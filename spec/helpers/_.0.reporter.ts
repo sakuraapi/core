@@ -2,6 +2,7 @@ import {
   DisplayProcessor,
   SpecReporter
 } from 'jasmine-spec-reporter';
+import 'source-map-support/register';
 import SuiteInfo = jasmine.SuiteInfo;
 
 class CustomProcessor extends DisplayProcessor {
@@ -13,6 +14,7 @@ jasmine.getEnv().clearReporters();
 jasmine.getEnv().addReporter(new SpecReporter({
   customProcessors: [CustomProcessor],
   spec: {
+    displayDuration: true,
     displayErrorMessages: true,
     displayPending: true,
     displayStacktrace: true
