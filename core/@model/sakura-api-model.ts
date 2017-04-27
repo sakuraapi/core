@@ -43,8 +43,8 @@ import {
  *   public getDb?: () => Db;
  *   public remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
  *   public save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
- *   public toDb?: (changeSet?: object) => object;
- *   public toJson?: () => object;
+ *   public toDb?: (changeSet?: object) => any;
+ *   public toJson?: () => any;
  *   public toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
  *
  *   ///
@@ -86,7 +86,7 @@ export abstract class SakuraApiModel {
   public remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
   public save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
 
-  public toDb?: (changeSet?: object) => object;
-  public toJson?: () => object;
+  public toDb?: (changeSet?: object) => any;
+  public toJson?: () => any;
   public toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
 }

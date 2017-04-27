@@ -12,8 +12,7 @@ import {
 } from 'mongodb';
 import {
   addDefaultInstanceMethods,
-  addDefaultStaticMethods,
-  deepMapKeys
+  addDefaultStaticMethods
 } from '../helpers';
 import {SakuraApi} from '../sakura-api';
 import {
@@ -364,7 +363,8 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
   }
 
   return result;
-  //////
+
+  ////////////
   function mapDbToModel(source, target, map) {
     target = target || {};
 
@@ -855,12 +855,7 @@ function toDb(changeSet?: any): object {
 
   changeSet = changeSet || this;
 
-  const dbObj = deepMapKeys({
-    map: fieldMapper,
-    metaLookup: [dbSymbols.dbByPropertyName],
-    recurse: (key, value) => !(value instanceof ObjectID),
-    source: changeSet
-  });
+  const dbObj = mapModelToDb(changeSet);
 
   delete (dbObj as any).id;
   if (!(dbObj as any)._id && this._id) {
@@ -869,10 +864,39 @@ function toDb(changeSet?: any): object {
 
   return dbObj;
 
-  /////
-  function fieldMapper(key, value, meta) {
+  //////////
+  function mapModelToDb(source) {
 
-    let dbMeta = (meta && meta.length > 0 && meta[0]) ? meta[0] : null;
+    const result = {};
+    if (!source) {
+      return;
+    }
+
+    const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
+
+    // iterate over each property
+    for (const key of Object.getOwnPropertyNames(source)) {
+      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID)) {
+
+        const newKey = keyMapper(key, source[key], dbOptionsByPropertyName);
+        if (newKey !== undefined) {
+          const value = mapModelToDb(source[key]);
+          result[newKey] = value;
+        }
+
+        continue;
+      }
+
+      const newKey = keyMapper(key, source[key], dbOptionsByPropertyName);
+      if (newKey !== undefined) {
+        result[newKey] = source[key];
+      }
+    }
+
+    return result;
+  }
+
+  function keyMapper(key, value, dbMeta) {
 
     if (!dbMeta) {
       dbMeta = constructor[dbSymbols.dbByPropertyName];
@@ -907,50 +931,78 @@ function toDb(changeSet?: any): object {
  * @instance Returns the current object as json, respecting the various decorators like [[Db]]
  * @returns {{}}
  */
-function toJson(): object {
+function toJson(): any {
   this.debug.normal(`.toJson called, target '${this.constructor.name}'`);
 
-  let jsonFieldNamesByProperty: Map<string, string>
-    = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, this);
+  const obj = mapModelToJson(this);
+  return obj;
 
-  jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
-
-  const privateFields: Map<string, string>
-    = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, this);
-
-  const dbOptionByPropertyName: Map<string, IDbOptions>
-    = Reflect.getMetadata(dbSymbols.dbByPropertyName, this);
-
-  const obj = {};
-  for (const prop of Object.getOwnPropertyNames(this)) {
-    if (typeof this[prop] === 'function') {
-      continue;
+  //////////
+  function mapModelToJson(source) {
+    const result = {};
+    if (!source) {
+      return source;
     }
 
-    if (prop === '_id') {
-      continue;
-    }
+    let jsonFieldNamesByProperty: Map<string, string>
+      = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, source);
 
-    if (dbOptionByPropertyName) {
-      if ((dbOptionByPropertyName.get(prop) || {}).private) {
+    jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
+
+    const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
+
+    const privateFields: Map<string, string>
+      = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, source);
+
+    // iterate over each property
+    for (const key of Object.getOwnPropertyNames(source)) {
+      if (typeof source[key] === 'function') {
         continue;
+      }
+
+      // don't include _id since the model already has id property which is the same as _id
+      if (key === '_id') {
+        continue;
+      }
+
+      if (dbOptionsByPropertyName) {
+        if ((dbOptionsByPropertyName.get(key) || {}).private) {
+          continue;
+        }
+      }
+
+      const override = (privateFields) ? privateFields.get(key) : null;
+
+      // do the function test for private otherwise do the boolean test
+      if (override && typeof source[override] === 'function' && !source[override]()) {
+        continue;
+      } else if (override && !source[override]) {
+        continue;
+      }
+
+      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID)) {
+
+        const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
+        if (newKey !== undefined) {
+          const value = mapModelToJson(source[key]);
+          result[newKey] = value;
+        }
+
+        continue;
+      }
+
+      const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
+      if (newKey !== undefined) {
+        result[newKey] = source[key];
       }
     }
 
-    const override = (privateFields) ? privateFields.get(prop) : null;
-
-    // do the function test for private otherwise do the boolean test
-    if (override && typeof this[override] === 'function' && !this[override]()) {
-      continue;
-    } else if (override && !this[override]) {
-      continue;
-    }
-
-    obj[jsonFieldNamesByProperty.get(prop) || prop] = this[prop];
+    return result;
   }
 
-  return obj;
-
+  function keyMapper(key, value, jsonMeta: Map<string, string>) {
+    return jsonMeta.get(key) || key;
+  }
 }
 
 /**
