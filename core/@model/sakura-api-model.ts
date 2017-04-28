@@ -25,7 +25,7 @@ import {
  * class SuperChicken extends SuperHeroBirds {
  *   public static fromDb?: <T>(this: { new (): T }, json: object, ...constructorArgs: any[]) => T;
  *   public static fromDbArray?: <T>(this: { new(): T }, jsons: any[], ...constructorArgs) => T[];
- *   public static fromJson?: <T>(this: { new(): T }, json: any, ...constructorArgs: any[]) => T;
+ *   public static fromJson?: <T>(this: { new(...any): T }, json: any, ...constructorArgs: any[]) => T;
  *   public static fromJsonArray?: <T>(this: { new(): T }, json: any, ...constructorArgs: any[]) => T[];
  *   public static get?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T[]>;
  *   public static getById?: <T>(this: { new (): T }, id: string, project?: any) => Promise<T>;
@@ -56,8 +56,9 @@ import {
  */
 export abstract class SakuraApiModel {
   public static fromDb?: <T>(this: { new(): T }, json: object, ...constructorArgs: any[]) => T;
-  public static fromJson?: <T>(this: { new(): T }, json: object, ...constructorArgs: any[]) => T;
-  public static fromJsonAsChangeSet?: (json: object) => any;
+  // tslint:disable-next-line:variable-name
+  public static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
+  public static fromJsonAsChangeSet?: (json: any) => any;
 
   public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs) => T[];
   public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];

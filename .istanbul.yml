@@ -1,0 +1,14 @@
+instrumentation:
+  baseline-file: ./coverage/coverage-baseline.json
+  extensions:
+    - .js
+  es-modules: true
+  root: .
+  excludes: ['spec/**', 'docs/**', '**/**/index.js', '**/**/*.spec.js']
+  embed-source: false
+
+reporting:
+  print: summary
+  reports:
+    - lcov
+  dir: ./coverage

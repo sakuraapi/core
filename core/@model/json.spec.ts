@@ -341,8 +341,57 @@ describe('@Json', function() {
   });
 
   describe('fromJson', function() {
+
+    class Address {
+      @Db('st')
+      street = '1600 Pennsylvania Ave NW';
+
+      @Db('c')
+      @Json('cy')
+      city = 'Washington';
+
+      state = 'DC';
+
+      @Json('z')
+      zipCode = '20500';
+    }
+
+    class Contact {
+      @Db('ph')
+      phone = '123-123-1234';
+
+      @Db({field: 'a', model: Address})
+      @Json('addr')
+      address = new Address();
+    }
+
+    @Model(sapi, {})
+    class User extends SakuraApiModel {
+      @Db('fn')
+      @Json('fn')
+      firstName = 'George';
+      @Db('ln')
+      @Json('ln')
+      lastName = 'Washington';
+
+      @Db({field: 'c', model: Contact})
+      contact = new Contact();
+
+      @Json({field: 'c2', model: Contact})
+      contact2 = new Contact();
+
+      constructedPropertyX: number;
+      constructedPropertyY: number;
+
+      constructor(x, y) {
+        super();
+        this.constructedPropertyX = x;
+        this.constructedPropertyY = y;
+      }
+    }
+
     it('from is injected into the model as a static member by default', function() {
-      expect(Test.fromJson).toBeDefined();
+      expect(User.fromJson).toBeDefined();
     });
 
     it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
@@ -359,20 +408,21 @@ describe('@Json', function() {
       const obj = SymbolTest[modelSymbols.fromJson]({
         ap: 1
       });
+
       expect(obj.aProperty).toBe(1);
     });
 
     it('maintains proper instanceOf', function() {
-      const obj = Test.fromJson({});
+      const obj = User.fromJson({});
 
-      expect(obj instanceof Test).toBe(true);
+      expect(obj instanceof User).toBe(true);
     });
 
     it('passes on constructor arguments to the @Model target being returned', function() {
-      const obj = Test.fromJson({}, 888, 999);
+      const user = User.fromJson({}, 888, 999);
 
-      expect(obj.constructedProperty).toBe(888);
-      expect(obj.constructedProperty2).toBe(999);
+      expect(user.constructedPropertyX).toBe(888);
+      expect(user.constructedPropertyY).toBe(999);
     });
 
     it('does not throw if there are no @Json decorators', function() {
@@ -385,11 +435,74 @@ describe('@Json', function() {
       expect(C.fromJson({someProperty: 888}).someProperty).toBe(888);
     });
 
-    it('maps an @Json fieldname to an @Model property', function() {
-      const obj = Test.fromJson({
-        ap: 1
-      });
-      expect(obj.aProperty).toBe(1);
+    it('maps an @Json field name to an @Model property', function() {
+      const json = {
+        c2: {
+          addr: {
+            cy: 'test2',
+            foreignField: true,
+            street: 'test'
+          },
+          foreignField: true,
+          phone: 'aaa'
+        },
+        contact: {
+          addr: {
+            cy: 'Los Angeles',
+            foreignField: true
+          },
+          foreignField: true,
+          phone: 'a'
+        },
+        fn: 'Arturo',
+        foreignField: true,
+        ln: 'Fuente'
+      };
+
+      const user = User.fromJson(json);
+
+      // user object
+      expect(user.firstName).toBe(json.fn);
+      expect(user.lastName).toBe(json.ln);
+      expect((user as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+
+      // user.contact object
+      expect(user.contact).toBeDefined('user.contact should be defined');
+      expect(user.contact instanceof Contact).toBeTruthy(`user.contact should have been instance of Contact but was ` +
+        `instance of '${user.contact.constructor.name}' instead`);
+      expect(user.contact.phone).toBe(json.contact.phone);
+      expect((user.contact as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+
+      // user.contact.address object
+      expect(user.contact.address).toBeDefined('user.contact.address should have been defined');
+      expect(user.contact.address instanceof Address).toBeTruthy('user.contact.address should be and instance of' +
+        ` Address, but was an instance of '${user.contact.address.constructor.name}' instead`);
+      expect(user.contact.address.street).toBe('1600 Pennsylvania Ave NW');
+      expect(user.contact.address.city).toBe(json.contact.addr.cy);
+      expect((user.contact as any).addr).toBeUndefined('addr from the json object should not have made it to the ' +
+        ' resulting user object');
+      expect((user.contact.address as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+
+      // user.contact2 object
+      expect(user.contact2).toBeDefined('contact2 should be a property on the resulting user object');
+      expect(user.contact2 instanceof Contact).toBeTruthy(`user.contact should have been instance of Contact but was ` +
+        `instance of '${user.contact2.constructor.name}' instead`);
+      expect(user.contact2.phone).toBe(json.c2.phone);
+      expect((user.contact2 as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+
+      // user.contact2.address object
+      expect(user.contact2.address).toBeDefined('user.contact2.address should have been defined');
+      expect(user.contact2.address instanceof Address).toBeTruthy('user.contact2.address should be and instance of' +
+        ` Address, but was an instance of '${user.contact2.address.constructor.name}' instead`);
+      expect((user.contact2.address as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+      expect(user.contact2.address.street).toBe(json.c2.addr.street);
+      expect(user.contact2.address.city).toBe(json.c2.addr.cy);
+
     });
 
     describe('allows multiple @json decorators', function() {
@@ -458,15 +571,22 @@ describe('@Json', function() {
     });
 
     describe('id behavior', function() {
+
+      @Model(sapi)
+      class User extends SakuraApiModel {
+      }
+
       it('unmarshalls id as an ObjectID when it is a valid ObjectID', function() {
         const data = {
           id: new ObjectID().toString()
         };
 
-        const test = Test.fromJson(data);
+        const user = User.fromJson(data);
 
-        expect(test.id instanceof ObjectID).toBeTruthy();
-        expect(test._id instanceof ObjectID).toBeTruthy();
+        expect(new User().id).toBeDefined('nope');
+        expect(user instanceof User).toBeTruthy('Should have gotten back an instance of User');
+        expect(user.id instanceof ObjectID).toBeTruthy();
+        expect(user._id instanceof ObjectID).toBeTruthy();
       });
 
       it('unmarshalls id as a string when it not a vlaid ObjectID', function() {

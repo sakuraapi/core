@@ -77,7 +77,7 @@ export function Db(dbOptions?: IDbOptions | string): (target: any, key: string) 
     mapByFieldName.set(options.field || key, options);
   };
 
-  /////
+  //////////
 
   // Lazy adds the metadata map to the object if it's missing then returns it, otherwise, it returns the existing map
   function getMetaDataMap(target, symbol): Map<string, IDbOptions> {

@@ -23,7 +23,10 @@ import {
   SapiDbForModelNotFound,
   SapiMissingIdErr
 } from './errors';
-import {jsonSymbols} from './json';
+import {
+  IJsonOptions,
+  jsonSymbols
+} from './json';
 import {privateSymbols} from './private';
 
 import debug = require('debug');
@@ -462,7 +465,8 @@ function fromDbArray(jsons: object[], ...constructorArgs): object[] {
  * undefined, or not an object.
  */
 function fromJson(json: object, ...constructorArgs: any[]): object {
-  this.debug.normal(`.fromJson called, target '${this.name}'`);
+  const modelName = this.name;
+  this.debug.normal(`.fromJson called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
     return null;
@@ -470,7 +474,82 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
 
   const obj = new this(...constructorArgs);
 
-  return this.fromJsonAsChangeSet(json, obj);
+  return mapJsonToModel(json, obj);
+
+  ////////////
+  function mapJsonToModel(source, target) {
+    target = target || {};
+
+    if (!source) {
+      return source;
+    }
+
+    const propertyNamesByJsonFieldName: Map<string, IJsonOptions>
+      = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, target);
+
+    const propertyNamesByDbPropertyName: Map<string, IDbOptions>
+      = Reflect.getMetadata(dbSymbols.dbByPropertyName, target);
+
+    // iterate over each property of the source json object
+    for (const key of Object.getOwnPropertyNames(source)) {
+
+      // if the property is an Object, but not an ObjectID
+      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID)) {
+
+        // convert the DB key name to the Model key name
+        const mapper = keyMapper(key, source[key], propertyNamesByJsonFieldName, target);
+        const dbModel = propertyNamesByDbPropertyName.get(mapper.newKey) || {};
+
+        // if the key should be included, recurse into it
+        if (mapper.newKey !== undefined) {
+          let value = mapJsonToModel(source[key], target[mapper.newKey]);
+
+          // use @Json({model:...}) || @Db({model:...})
+          const model = mapper.model || (dbModel || {}).model || null;
+
+          if (model) {
+            try {
+              value = Object.assign(new model(), value);
+            } catch (err) {
+              throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
+                + ` cannot be constructed`);
+            }
+          }
+
+          target[mapper.newKey] = value;
+        }
+
+      } else {
+        // otherwise, map a property that has a primitive value or an ObjectID value
+        const mapper = keyMapper(key, source[key], propertyNamesByJsonFieldName, target);
+        if (mapper.newKey !== undefined) {
+          let value = source[key];
+          if ((mapper.newKey === 'id' || mapper.newKey === '_id') && ObjectID.isValid(value)) {
+            value = new ObjectID(value);
+          }
+
+          target[mapper.newKey] = value;
+        }
+      }
+    }
+
+    return target;
+  }
+
+  function keyMapper(key: string, value: any, meta: Map<string, IJsonOptions>, target) {
+    const jsonFieldOptions = (meta) ? meta.get(key) : null;
+
+    return {
+      model: ((jsonFieldOptions || {}).model),
+      newKey: (jsonFieldOptions)
+        ? jsonFieldOptions[jsonSymbols.propertyName]
+        : (target[key])
+          ? key
+          : (key === 'id' || key === '_id')
+            ? key
+            : undefined
+    };
+  }
 }
 
 /**
@@ -503,32 +582,40 @@ function fromJsonArray(json: object[], ...constructorArgs: any[]): object[] {
  * @param dest The target object to apply the properties to. This is used by [[fromJson]] and is not considered part of
  * the API contract; thus, it is subject to change without notice.
  */
-function fromJsonAsChangeSet(json: object, dest?: any): any {
-  this.debug.normal(`.fromJson called, target '${this.name}'`);
+function fromJsonAsChangeSet(json: any, dest?: any): any {
+  const modelName = this.name;
+  this.debug.normal(`.fromJsonAsChangeSet called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
     return null;
   }
 
-  const propertyNamesByJsonFieldName: Map<string, string>
+  const propertyNamesByJsonFieldName: Map<string, IJsonOptions>
     = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, dest || new this());
+
+  const propertyNamesByDbPropertyName: Map<string, IDbOptions>
+    = Reflect.getMetadata(dbSymbols.dbByPropertyName, dest || new this());
 
   const obj = dest || {};
 
   for (const field of Object.getOwnPropertyNames(json)) {
     const prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
 
-    if (prop) {
-      obj[prop] = json[field]; // an @Json alias field
-    } else if (Reflect.has(obj, field)) {
+    if (prop) { // @Json field set
+      obj[prop[jsonSymbols.propertyName]] = json[field];
+
+    } else if (Reflect.has(obj, field)) {     // if the Model has a matching property, then probe further
+
+      // if it's _id / id then instantiate it as an ObjectID
       if (field === 'id' || field === '_id') {
         if (ObjectID.isValid(json[field])) {
           obj[field] = new ObjectID(json[field]);
         } else {
           obj[field] = json[field];
         }
-      } else {
-        obj[field] = json[field]; // a none @Json alias field
+      } else { // otherwise, just copy the value / reference over
+        // @Json field not set
+        obj[field] = json[field];
       }
     }
   }
@@ -1000,8 +1087,9 @@ function toJson(): any {
     return result;
   }
 
-  function keyMapper(key, value, jsonMeta: Map<string, string>) {
-    return jsonMeta.get(key) || key;
+  function keyMapper(key, value, jsonMeta: Map<string, IJsonOptions>) {
+    const options = (jsonMeta) ? jsonMeta.get(key) : null;
+    return (options) ? options.field : key;
   }
 }
 
