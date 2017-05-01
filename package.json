@@ -27,6 +27,7 @@
     "say:fail": "say 'fail' || echo ''",
     "say:pass": "say 'pass' || echo ''",
     "test": "npm run docker:compose-test && npm run build && ((npm run jasmine && npm run say:pass) || npm run say:fail) && docker-compose down",
+    "test:db": "npm run docker:compose-test && npm run build && ((npm run jasmine && npm run say:pass) || npm run say:fail)",
     "test:trace": "npm test",
     "test:debug": "DEBUG=sapi:*,-sapi:*:verbose npm test",
     "test:verbose": "DEBUG=sapi:* npm test",
@@ -57,7 +58,7 @@
   "devDependencies": {
     "@types/colors": "^1.1.3",
     "@types/express": "^4.0.35",
-    "@types/jasmine": "^2.5.45",
+    "@types/jasmine": "2.5.45",
     "@types/lodash": "^4.14.63",
     "@types/mongodb": "^2.2.0",
     "@types/node": "^7.0.14",
