@@ -21,6 +21,7 @@ import {
 } from './db';
 import {
   SapiDbForModelNotFound,
+  SapiInvalidModelObject,
   SapiMissingIdErr
 } from './errors';
 import {
@@ -74,7 +75,7 @@ export const modelSymbols = {
   fromDbArray: Symbol('fromDbArray'),
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
-  fromJsonAsChangeSet: Symbol('fromJsonAsChangeSet'),
+  fromJsonToDb: Symbol('fromJsonToDb'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
   modelOptions: Symbol('modelOptions'),
   sapi: Symbol('sapi'),
@@ -241,10 +242,9 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
     newConstructor.fromJsonArray = fromJsonArray;
     newConstructor[modelSymbols.fromJsonArray] = fromJsonArray;
 
-    newConstructor.fromJsonAsChangeSet = fromJsonAsChangeSet;
-    newConstructor[modelSymbols.fromJsonAsChangeSet] = fromJsonAsChangeSet;
+    newConstructor.fromJsonToDb = fromJsonToDb;
+    newConstructor[modelSymbols.fromJsonToDb] = fromJsonToDb;
 
-    newConstructor.mapJsonToDb = mapJsonToDb;
     newConstructor[modelSymbols.sapi] = sapi;
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -485,7 +485,7 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
     }
 
     const propertyNamesByJsonFieldName: Map<string, IJsonOptions>
-      = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, target);
+      = Reflect.getMetadata(jsonSymbols.jsonByFieldName, target);
 
     const propertyNamesByDbPropertyName: Map<string, IDbOptions>
       = Reflect.getMetadata(dbSymbols.dbByPropertyName, target);
@@ -575,14 +575,14 @@ function fromJsonArray(json: object[], ...constructorArgs: any[]): object[] {
 }
 
 /**
- * @static Takes a json object (probably from something like req.body) and applies the various mappings defined by the
- * decorators and returns a change set object that can be used for any of the methods that take projection objections.
- * For example [[save]].
- * @param json The json object to be transformed into a change set object.
- * @param dest The target object to apply the properties to. This is used by [[fromJson]] and is not considered part of
- * the API contract; thus, it is subject to change without notice.
+ * @static Takes a json object (probably from something like req.body) and maps its fields to db field names.
+ * @param json The json object to be transformed.
+ * @param model The Model that has the `@`[[Json]] and/or `@`[[Db]] properties that inform how the json object should
+ * be transformed.
+ * @throws SapiInvalidModelObject if the provided model does not have .fromJson and .toDb methods
+ * @returns {any} json object with fields mapped from json fields to db fields.
  */
-function fromJsonAsChangeSet(json: any, dest?: any): any {
+function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
   const modelName = this.name;
   this.debug.normal(`.fromJsonAsChangeSet called, target '${modelName}'`);
 
@@ -590,37 +590,40 @@ function fromJsonAsChangeSet(json: any, dest?: any): any {
     return null;
   }
 
-  const propertyNamesByJsonFieldName: Map<string, IJsonOptions>
-    = Reflect.getMetadata(jsonSymbols.sakuraApiDbFieldToPropertyNames, dest || new this());
+  return mapJsonToDb(new this(...constructorArgs), json);
 
-  const propertyNamesByDbPropertyName: Map<string, IDbOptions>
-    = Reflect.getMetadata(dbSymbols.dbByPropertyName, dest || new this());
+  //////////
+  function mapJsonToDb(model, jsonSrc, result?) {
 
-  const obj = dest || {};
+    const dbByPropertyName = Reflect.getMetadata(dbSymbols.dbByPropertyName, model);
+    const jsonByPropertyName = Reflect.getMetadata(jsonSymbols.jsonByPropertyName, model);
 
-  for (const field of Object.getOwnPropertyNames(json)) {
-    const prop = (propertyNamesByJsonFieldName) ? propertyNamesByJsonFieldName.get(field) : null;
+    result = result || {};
+    for (const key of Object.getOwnPropertyNames(model)) {
+      const dbMeta = (dbByPropertyName) ? dbByPropertyName.get(key) : null;
+      const jsonMeta = (jsonByPropertyName) ? jsonByPropertyName.get(key) : null;
 
-    if (prop) { // @Json field set
-      obj[prop[jsonSymbols.propertyName]] = json[field];
+      if (!jsonSrc || !jsonMeta || !dbMeta) {
+        continue;
+      }
 
-    } else if (Reflect.has(obj, field)) {     // if the Model has a matching property, then probe further
+      if (typeof model[key] === 'object' && !(model[key] instanceof ObjectID) && model[key] !== null) {
 
-      // if it's _id / id then instantiate it as an ObjectID
-      if (field === 'id' || field === '_id') {
-        if (ObjectID.isValid(json[field])) {
-          obj[field] = new ObjectID(json[field]);
-        } else {
-          obj[field] = json[field];
+        const value = mapJsonToDb(model[key], jsonSrc[jsonMeta.field || key], result[dbMeta.field || key]);
+        if (value && Object.keys(value).length > 0) {
+          result[dbMeta.field || key] = value;
         }
-      } else { // otherwise, just copy the value / reference over
-        // @Json field not set
-        obj[field] = json[field];
+      } else {
+
+        const value = jsonSrc[jsonMeta.field || key];
+        if (value) {
+          result[dbMeta.field || key] = value;
+        }
       }
     }
-  }
 
-  return obj;
+    return result;
+  }
 }
 
 /**
@@ -782,34 +785,6 @@ function getOne(filter: any, project?: any): Promise<any> {
       })
       .catch(reject);
   });
-}
-
-/** @static Takes a json object and maps its fields fromJson to model properties, which are then mapped to Db fields
- *
- * ### Example
- * <pre>
- * <span>@</span>Model(sapi)
- * class SomeModelObject extends SakuraApiModel {
- *   <span>@</span>Db({field: 'fn'})
- *   <span>@</span>Json('jfn')
- *   firstName = 'Geroge';
- *   <span>@</span>Db({field: 'ln'})
- *   <span>@</span>Json('jln')
- *   lastName = 'Washington';
- * }
- * let result = SomeModelObject.mapJsonToDb(new SomeModelObject());
- * </pre>
- * `result` here would be:
- * <pre>
- * {
- *   fn: 'George',
- *   ln: 'Washington'
- * }
- * </pre>
- * @param json
- */
-function mapJsonToDb(json: object): object {
-  return toDb.bind(this)(this.fromJsonAsChangeSet(json));
 }
 
 /**
@@ -1032,7 +1007,7 @@ function toJson(): any {
     }
 
     let jsonFieldNamesByProperty: Map<string, string>
-      = Reflect.getMetadata(jsonSymbols.sakuraApiDbPropertyToFieldNames, source);
+      = Reflect.getMetadata(jsonSymbols.jsonByPropertyName, source);
 
     jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
 
@@ -1043,6 +1018,7 @@ function toJson(): any {
 
     // iterate over each property
     for (const key of Object.getOwnPropertyNames(source)) {
+
       if (typeof source[key] === 'function') {
         continue;
       }
@@ -1067,9 +1043,10 @@ function toJson(): any {
         continue;
       }
 
-      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID)) {
+      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID) && source[key] !== null) {
 
         const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
+
         if (newKey !== undefined) {
           const value = mapModelToJson(source[key]);
           result[newKey] = value;
@@ -1088,8 +1065,8 @@ function toJson(): any {
   }
 
   function keyMapper(key, value, jsonMeta: Map<string, IJsonOptions>) {
-    const options = (jsonMeta) ? jsonMeta.get(key) : null;
-    return (options) ? options.field : key;
+    const options = (jsonMeta) ? jsonMeta.get(key) || {} : {};
+    return options.field || key;
   }
 }
 

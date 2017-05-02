@@ -25,23 +25,34 @@ export class SanitizeMongoDB {
     });
   }
 
+  /**
+   * Takes a json string, or an object, and sanitizes it with the provided filter function.
+   * @param input string or object to be sanitized. Note: if input is a string, and it cannot be parsed with JSON.parse
+   * a (SyntaxError)[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError]
+   * will be thrown.
+   * @param filter the function that filters what's permitted in the resulting object
+   * @returns {any} if the input was a valid JSON string, the result will be a sanitized JSON object
+   */
   public static sanitizeObject(input: any, filter: (key: any) => boolean): any {
     if (input === null || input === undefined) {
       return input;
     }
 
-    if (input instanceof Object) {
-      sanitize(input);
-    }
+    const obj = (typeof input === 'string')
+      ? JSON.parse(input)
+      : input;
 
-    return input;
+    sanitize(obj);
+
+    return obj;
 
     /////
-    function sanitize(obj: any) {
-      for (const key in obj) { // tslint:disable-line:forin
-        const field = obj[key];
+    function sanitize(targetObj: any) {
+      for (const key in targetObj) { // tslint:disable-line:forin
+        const field = targetObj[key];
+
         if (filter(key)) {
-          delete obj[key];
+          delete targetObj[key];
         } else if (field instanceof Object) {
           sanitize(field);
         }

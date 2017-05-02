@@ -22,8 +22,14 @@ export class SapiMissingIdErr extends Error {
    * @param target The target that's throwing the error.
    */
   constructor(msg: string, public target: any) {
-    super(`${msg}; target: ${target.name || target}`);
+    super(`${msg}; target: ${target.name || target.constructor.name}`);
   }
 
+}
+
+export class SapiInvalidModelObject extends Error {
+  constructor(msg: string, target: any) {
+    super(`${msg}; target ${(target) ? target.name || target.constructor.name : `${target}`}`);
+  }
 }
 // tslint:enable max-classes-per-file

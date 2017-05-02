@@ -625,29 +625,64 @@ describe('@Json', function() {
 
   });
 
-  describe('fromJsonAsChangeSet', function() {
+  describe('fromJsonToDb', function() {
+
+    class Contact {
+      @Db('p')
+      @Json()
+      phone = '111-111-1111';
+
+      @Db()
+      @Json()
+      nullTest = null; // leave this here, it tests to make sure that model[key] === null isn't recursed into
+
+      @Db()
+      @Json()
+      wrong: '123'; // leave this here, it tests to make sure that !jsonSrc results in a continue
+    }
 
     @Model(sapi)
     class ChangeSetTest extends SakuraApiModel {
 
+      @Db('first')
       @Json('fn')
       firstName: string = '';
       @Json('ln')
+      @Db()
       lastName: string = '';
+
+      @Db('cn')
+      @Json({field: 'ctac', model: Contact})
+      contact = new Contact();
+
+      @Db('cn2')
+      contact2 = new Contact();
 
     }
 
-    it('takes a json object and transforms it to a change set object', function() {
-      const body = {
+    it('a json object and returns an object literal with the json fields mapped to db fields', function() {
+      const json = {
+        ctac: {
+          phone: '000'
+        },
         fn: 'George',
         ln: 'Washington'
       };
 
-      const result = ChangeSetTest.fromJsonAsChangeSet(body);
+      const dbObj = ChangeSetTest.fromJsonToDb(json);
+      expect(dbObj instanceof ChangeSetTest).toBe(false);
+      expect(dbObj.first).toBe(json.fn);
+      expect(dbObj.lastName).toBe(json.ln);
+      expect(dbObj.cn).toBeDefined('contact should have been included');
+      expect(dbObj.cn.p).toBe('000');
+    });
 
-      expect(result.firstName).toBe(body.fn);
-      expect(result.lastName).toBe(body.ln);
-      expect(result instanceof ChangeSetTest).toBe(false);
+    it(`handles properties accidentally defined like \`wrong: '123'\` instead of \`wrong = '123'\``, function() {
+      const json = {
+        fn: 'George'
+      };
+
+      expect(() => ChangeSetTest.fromJsonToDb(json)).not.toThrow();
     });
   });
 

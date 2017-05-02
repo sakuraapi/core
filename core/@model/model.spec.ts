@@ -1,6 +1,5 @@
 import {
   Db,
-  Json,
   Model,
   modelSymbols,
   SakuraApiModel
@@ -424,39 +423,6 @@ describe('@Model', function() {
 
           });
 
-          describe('mapJsonToDb', function() {
-
-            @Model(sapi)
-            class MapJsonToDBTest extends SakuraApiModel {
-              @Db({field: 'fn'})
-              @Json('jfn')
-              firstName: string;
-              @Db({field: 'ln'})
-              @Json('jln')
-              lastName: string;
-            }
-
-            it('is injected into @Model classes', function() {
-              expect(MapJsonToDBTest.mapJsonToDb).toBeDefined();
-              expect(typeof MapJsonToDBTest.mapJsonToDb).toBe('function');
-            });
-
-            it('takes a json object and returns the object with valid DB fields', function() {
-
-              const obj = {
-                blah: 'dropThis',
-                jfn: 'George',
-                jln: 'Washington'
-              };
-
-              const result = (MapJsonToDBTest.mapJsonToDb(obj) as any);
-
-              expect(result.fn).toBe(obj.jfn);
-              expect(result.ln).toBe(obj.jln);
-              expect(result.blah).toBeUndefined();
-            });
-
-          });
         });
 
         describe('instance method', function() {
@@ -517,6 +483,46 @@ describe('@Model', function() {
                     })
                     .catch(done.fail);
                 });
+            });
+
+            it('persists deeply nested objects', function(done) {
+
+              class Contact {
+                @Db()
+                phone = '000-000-0000';
+              }
+
+              @Model(sapi, {
+                dbConfig: {
+                  collection: 'userCreateTest',
+                  db: 'userDb'
+                }
+              })
+              class UserCreateTest extends SakuraApiModel {
+                @Db()
+                firstName = 'George';
+                @Db()
+                lastName = 'Washington';
+
+                @Db({model: Contact})
+                contact = new Contact();
+              }
+
+              const user = new UserCreateTest();
+
+              user
+                .create()
+                .then(() => user.getCollection().find({_id: user.id}).limit(1).next())
+                .then((result: any) => {
+                  expect(result._id.toString()).toBe(user.id.toString());
+                  expect(result.firstName).toBe(user.firstName || 'firstName should have been defined');
+                  expect(result.lastName).toBe(user.lastName || 'lastName should have been defined');
+                  expect(result.contact).toBeDefined();
+                  expect(result.contact.phone).toBe('000-000-0000');
+                })
+                .then(done)
+                .catch(done.fail);
+
             });
           });
 

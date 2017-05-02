@@ -23,26 +23,38 @@ import {
  * ### Example
  * <pre>
  * class SuperChicken extends SuperHeroBirds {
- *   public static fromDb?: <T>(this: { new (): T }, json: object, ...constructorArgs: any[]) => T;
- *   public static fromDbArray?: <T>(this: { new(): T }, jsons: any[], ...constructorArgs) => T[];
- *   public static fromJson?: <T>(this: { new(...any): T }, json: any, ...constructorArgs: any[]) => T;
- *   public static fromJsonArray?: <T>(this: { new(): T }, json: any, ...constructorArgs: any[]) => T[];
+ *   public static fromDb?: <T>(this: { new(): T }, json: object, ...constructorArgs: any[]) => T;
+ *
+ *   public static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
+ *   public static fromJsonToDb?: (json: any) => any;
+ *
+ *   public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs) => T[];
+ *   public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
+ *
  *   public static get?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T[]>;
- *   public static getById?: <T>(this: { new (): T }, id: string, project?: any) => Promise<T>;
+ *   public static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
  *   public static getCollection?: () => Collection;
  *   public static getCursor?: (filter: any, project?: any) => Cursor<any>;
  *   public static getCursorById?: (id, project?: any) => Cursor<any>;
  *   public static getDb?: () => Db;
  *   public static getOne?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
+ *
  *   public static mapJsonToDb?: (json: object) => object;
+ *
  *   public static removeAll?: (filter: any, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
- *   public static removeById?: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>
- *   public _id?: ObjectID;
+ *   public static removeById?: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+ *
+ *   public _id?: ObjectID; // tslint:disable-line
+ *   public id?: ObjectID;
+ *
  *   public create?: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
+ *
  *   public getCollection?: () => Collection;
  *   public getDb?: () => Db;
+ *
  *   public remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
  *   public save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
+ *
  *   public toDb?: (changeSet?: object) => any;
  *   public toJson?: () => any;
  *   public toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
@@ -58,7 +70,7 @@ export abstract class SakuraApiModel {
   public static fromDb?: <T>(this: { new(): T }, json: object, ...constructorArgs: any[]) => T;
   // tslint:disable-next-line:variable-name
   public static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
-  public static fromJsonAsChangeSet?: (json: any) => any;
+  public static fromJsonToDb?: (json: any) => any;
 
   public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs) => T[];
   public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];

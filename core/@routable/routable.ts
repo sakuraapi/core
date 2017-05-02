@@ -5,7 +5,7 @@ import {
 import {modelSymbols} from '../@model/model';
 import {addDefaultInstanceMethods} from '../helpers/defaultMethodHelpers';
 import {SakuraApi} from '../sakura-api';
-import {SanitizeMongoDB as Sanitize} from '../security';
+import {SanitizeMongoDB as Sanitize} from '../security/mongo-db';
 
 import * as path from 'path';
 import 'reflect-metadata';
@@ -302,7 +302,10 @@ function getRouteHandler(req: Request, res: Response) {
  * * skip=#
  * * limit=#
  *
- * For example: `http://localhost/someModelName?where={fn:'John', ln:'Doe'}&fields={*:false, fn:true}&limit=1&skip=0`
+ * Where and fields must be valid json strings.
+ *
+ * For example:
+ * `http://localhost/someModelName?where={"fn":"John", "ln":"Doe"}&fields={"*":false, "fn":true}&limit=1&skip=0`
  *
  * This would return all documents where `fn` is 'John' and `ln` is 'Doe'. It would further limit the resulting fields
  * to just `fn` and it would only return 1 result, after skipping 0 of the results.
@@ -322,24 +325,71 @@ function getRouteHandler(req: Request, res: Response) {
  */
 function getAllRouteHandler(req: Request, res: Response) {
 
-  const where = Sanitize.remove$where(req.params.where) || {};
-  const fields = req.params.fields || {};
-  const skip = req.params.recurse || null;
-  const limit = req.params.limit || null;
+  let where = null;
+
+  // validate query string parameters
+  try {
+
+    jsonToObj(() =>
+      where = this.fromJsonToDb(Sanitize.remove$where(req.query.where), this)
+        || null, 'invalid_where_clause');
+
+    const fields = req.query.fields || {};
+    const skip = req.query.recurse || null;
+    const limit = req.query.limit || null;
+
+  } catch (err) {
+    // TODO some kind of error logging here
+    if (err.status === 500) {
+      console.log(err); // tslint:disable-line:no-console
+    }
+    return;
+  }
 
   this
-    .get()
+    .get(where)
     .then((results) => {
+
       const response = [];
+
       for (const result of results) {
         response.push(result.toJson());
       }
-      res.status(200).json(response);
+
+      res
+        .status(200)
+        .json(response);
     })
     .catch((err) => {
       // TODO add logging system here
-      res.sendStatus(500);
+      console.log(err); // tslint:disable-line:no-console
     });
+
+  //////////
+  function jsonToObj(fn: () => any, errMessage) {
+    try {
+      fn();
+    } catch (err) {
+      if (err instanceof SyntaxError && err.message && err.message.startsWith('Unexpected token')) {
+        res
+          .status(400)
+          .json({
+            details: err.message,
+            error: errMessage
+          });
+
+        (err as any).status = 400;
+      } else {
+        res
+          .status(500)
+          .json({
+            error: 'internal_server_error'
+          });
+        (err as any).status = 500;
+      }
+      throw err;
+    }
+  }
 }
 
 function putRouteHandler(req: Request, res: Response) {

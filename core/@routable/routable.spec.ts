@@ -261,6 +261,13 @@ describe('core/Routable', function() {
   });
 
   describe('takes an @Model class in IRoutableOptions', function() {
+
+    class Contact {
+      @Db()
+      @Json()
+      phone = '000-000-0000';
+    }
+
     @Model(sapi, {
       dbConfig: {
         collection: 'usersRoutableTests',
@@ -268,10 +275,14 @@ describe('core/Routable', function() {
       }
     })
     class User extends SakuraApiModel {
-      @Db() @Json('fn')
+      @Db('fname') @Json('fn')
       firstName: string = 'George';
-      @Db() @Json('ln')
+      @Db('lname') @Json('ln')
       lastName: string = 'Washington';
+
+      @Db({model: Contact})
+      @Json()
+      contact = new Contact();
     }
 
     @Model(sapi, {
@@ -390,7 +401,8 @@ describe('core/Routable', function() {
           request(sapi.app)
             .get(this.uri('/user'))
             .expect(200)
-            .end((err) => err ? done.fail(err) : done());
+            .then(done)
+            .catch(done.fail);
         });
       });
 
@@ -403,12 +415,14 @@ describe('core/Routable', function() {
     });
 
     describe('GET ./model', function() {
+
       beforeEach(function(done) {
         User
           .removeAll({})
           .then(() => {
             const user1 = new User();
             const user2 = new User();
+            user1.contact.phone = '111-111-1111';
             user2.firstName = 'Martha';
 
             const wait = [];
@@ -459,12 +473,112 @@ describe('core/Routable', function() {
 
       describe('supports a where query', function() {
 
-        it('takes @Json mapped fields', function() {
-          pending('needs #59 to be finished first');
+        it('returns 400 with invalid json for where parameter', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?where={firstName:test}`))
+            .expect(400)
+            .then((res) => {
+              expect(res.body).toBeDefined('There should have been a body returned with the error');
+              expect(res.body.error).toBe('invalid_where_clause');
+              expect(res.body.details).toBe('Unexpected token f in JSON at position 1');
+            })
+            .then(done)
+            .catch(done.fail);
         });
 
-        it('does not allow for NoSQL injection', function() {
-          pending('needs #59 to be finished first');
+        it('returns 200 with empty array when there is a valid where query with no matching entities', function(done) {
+          const json = {
+            fn: 'Zorg, Commander of the Raylon Empire'
+          };
+
+          request(sapi.app)
+            .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .then((res) => {
+              expect(res.body).toBeDefined();
+              expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
+              expect(res.body.length).toBe(0);
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns the expected objects', function(done) {
+          const json = {
+            fn: 'George'
+          };
+
+          request(sapi.app)
+            .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+            .expect(200)
+            .expect('Content-Type', /json/)
+            .then((res) => {
+
+              expect(res.body).toBeDefined();
+              expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
+              expect(res.body.length).toBe(1, 'The where query parameter should have limited the results to one ' +
+                'matching object');
+
+              expect(res.body[0].fn).toBe(this.user1.firstName);
+              expect(res.body[0].ln).toBe(this.user1.lastName);
+
+              expect(res.body[0].id.toString()).toBe(this.user1._id.toString());
+              expect(res.body[0].contact).toBeDefined('contact should have been defined');
+              expect(res.body[0].contact.phone).toBe('111-111-1111');
+
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        describe('supports deep where', function() {
+          const json = {
+            contact: {
+              phone: '123'
+            },
+            fn: 'George'
+          };
+
+          it('with no results expected', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+              .expect(200)
+              .expect('Content-Type', /json/)
+              .then((res) => {
+                expect(res.body).toBeDefined();
+                expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
+                expect(res.body.length).toBe(0, 'no results should have matched the where query');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('with one result expected', function(done) {
+            json.contact.phone = '111-111-1111';
+
+            request(sapi.app)
+              .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+              .expect(200)
+              .expect('Content-Type', /json/)
+              .then((res) => {
+                expect(res.body).toBeDefined();
+                expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
+                expect(res.body.length).toBe(1, 'The where query parameter should have limited the results to one ' +
+                  'matching object');
+                expect(res.body[0].fn).toBe(this.user1.firstName);
+                expect(res.body[0].ln).toBe(this.user1.lastName);
+                expect(res.body[0].id.toString()).toBe(this.user1._id.toString());
+                expect(res.body[0].contact).toBeDefined('contact should have been defined');
+                expect(res.body[0].contact.phone).toBe('111-111-1111');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+        });
+
+        xit('does not allow for NoSQL injection', function() {
+
         });
 
       });

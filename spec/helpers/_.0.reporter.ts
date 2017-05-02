@@ -7,7 +7,7 @@ import SuiteInfo = jasmine.SuiteInfo;
 
 class CustomProcessor extends DisplayProcessor {
   public displayJasmineStarted(info: SuiteInfo, log: string): string {
-    return `Jasmine ${log}`.blue;
+    return `SakuraApi Jasmine ${log}`.blue;
   }
 }
 jasmine.getEnv().clearReporters();
@@ -16,10 +16,20 @@ jasmine.getEnv().addReporter(new SpecReporter({
   spec: {
     displayDuration: true,
     displayErrorMessages: true,
+    displayFailed: true,
     displayPending: true,
-    displayStacktrace: true
+    displayStacktrace: true,
+    displaySuccessful: true
   },
   suite: {
     displayNumber: true
+  },
+  summary: {
+    displayDuration: true,
+    displayErrorMessages: true,
+    displayFailed: true,
+    displayPending: true,
+    displayStacktrace: true,
+    displaySuccessful: false
   }
 }));

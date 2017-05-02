@@ -3,9 +3,9 @@
  * part of the API contract and may change or be removed without notice on patch releases.
  */
 export const jsonSymbols = {
-  propertyName: Symbol('sakuraApiJsonpropertyName'),
-  sakuraApiDbFieldToPropertyNames: Symbol('sakuraApiJsonFieldToPropertyNames'),
-  sakuraApiDbPropertyToFieldNames: Symbol('sakuraApiJsonPropertyToFieldNames')
+  jsonByFieldName: Symbol('jsonByFieldName'),
+  jsonByPropertyName: Symbol('jsonByPropertyName'),
+  propertyName: Symbol('jsonPropertyName')
 };
 
 export interface IJsonOptions {
@@ -75,8 +75,8 @@ export function Json(jsonOptions?: IJsonOptions | string): (target: any, key: st
   return (target: any, key: string) => {
     options[jsonSymbols.propertyName] = key;
 
-    const metaPropertyFieldMap = getMetaDataMap(target, jsonSymbols.sakuraApiDbPropertyToFieldNames);
-    const metaFieldPropertyMap = getMetaDataMap(target, jsonSymbols.sakuraApiDbFieldToPropertyNames);
+    const metaPropertyFieldMap = getMetaDataMap(target, jsonSymbols.jsonByPropertyName);
+    const metaFieldPropertyMap = getMetaDataMap(target, jsonSymbols.jsonByFieldName);
 
     metaPropertyFieldMap.set(key, options);
     metaFieldPropertyMap.set(options.field || key, options);
