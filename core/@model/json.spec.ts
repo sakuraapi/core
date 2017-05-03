@@ -207,6 +207,103 @@ describe('@Json', function() {
       expect(this.t.toJson()._id).toBeUndefined();
     });
 
+    it('handles falsy properties', function() {
+      class Deep {
+        @Json()
+        value = 0;
+      }
+
+      @Model(sapi)
+      class User extends SakuraApiModel {
+        @Json('fn')
+        firstName = 0;
+
+        @Json({model: Deep})
+        deep = new Deep();
+      }
+
+      const user = new User();
+
+      const result = user.toJson();
+      expect(result.fn).toBe(0);
+      expect(result.deep.value).toBe(0);
+    });
+
+    describe('integrates with fromDb in strict mode', function() {
+
+      class Contact {
+        @Db('ph') @Json()
+        phone = '321-321-3214';
+      }
+
+      @Model(sapi, {
+        dbConfig: {
+          collection: 'dbAndJsonIntegrationTest',
+          db: 'userDb'
+        }
+      })
+      class User extends SakuraApiModel {
+        @Db('fn') @Json('fName')
+        firstName = 'George';
+        @Db('ln') @Json('lName')
+        lastName = 'Washington';
+
+        @Db({field: 'cn', model: Contact}) @Json('cn')
+        contact = new Contact();
+      }
+
+      beforeEach(function(done) {
+        sapi
+          .dbConnections
+          .connectAll()
+          .then(() => User.removeAll({}))
+          .then(() => new User().create())
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('returns only projected fields', function(done) {
+        const project = {
+          _id: 0,
+          fn: 1
+        };
+
+        User
+          .get({}, project)
+          .then((results) => {
+            const result = results[0].toJson();
+            expect(result.fName).toBe('George', 'firstName should have projected to json');
+            expect(result.lName).toBeUndefined('lastName should not have projected to json');
+            expect(result._id).toBeUndefined('_id should not have projected to json');
+            expect(result.id).toBeUndefined('id should not have projected to json');
+            expect(result.cn).toBeUndefined('contact embedded document should not have projected to json');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('supports projecting into embedded documents', function(done) {
+        const project = {
+          'cn.ph': 1
+        };
+
+        User
+          .get({}, project)
+          .then((results) => {
+            const result = results[0].toJson();
+
+            expect(result.fName).toBeUndefined('firstName should not have projected to json');
+            expect(result.lName).toBeUndefined('lastName should not have projected to json');
+            expect(result._id).toBeUndefined('_id should not have projected to json');
+            expect(result.id).toBeDefined('id should have projected to json');
+            expect(result.cn).toBeDefined('contact embedded document should  have projected to json');
+            expect(result.cn.phone).toBeDefined('contact.phone should have projected to json');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+    });
+
     describe('when interacting with Db', function() {
       class Contact {
         phone = 123;
@@ -244,6 +341,7 @@ describe('@Json', function() {
           .then((result) => {
             expect(result._id).toBeDefined();
             expect(result.toJson().id.toString()).toBe(user._id.toString());
+
           })
           .then(done)
           .catch(done.fail);
@@ -570,6 +668,20 @@ describe('@Json', function() {
       expect(Test.fromJson(undefined)).toBe(null);
     });
 
+    it('handles falsy properties', function() {
+      const json = {
+        contact: {
+          phone: 0
+        },
+        ln: 0
+      };
+
+      const result = User.fromJson(json);
+
+      expect(result.lastName).toBe(0);
+      expect(result.contact.phone).toBe(0);
+    });
+
     describe('id behavior', function() {
 
       @Model(sapi)
@@ -683,6 +795,19 @@ describe('@Json', function() {
       };
 
       expect(() => ChangeSetTest.fromJsonToDb(json)).not.toThrow();
+    });
+
+    it('handles falsy properties', function() {
+      const json = {
+        ctac: {
+          phone: 0
+        },
+        ln: 0
+      };
+
+      const result = ChangeSetTest.fromJsonToDb(json);
+      expect(result.lastName).toBe(0);
+      expect(result.cn.p).toBe(0);
     });
   });
 

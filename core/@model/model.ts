@@ -33,6 +33,21 @@ import {privateSymbols} from './private';
 import debug = require('debug');
 
 /**
+ * Interface defining the valid properties for options passed to [[toDb]].
+ */
+export interface IFromDbOptions {
+  /**
+   * The array of parameters to be passed to the constructor of the Model
+   */
+  constructorArgs?: any[];
+  /**
+   * If set to true, the resulting model will only have the properties for fields present in the document returned from
+   * the database
+   */
+  strict?: boolean;
+}
+
+/**
  * Interface defining the properties for the `@`[[Model]]({})` decorator.
  */
 export interface IModelOptions {
@@ -155,6 +170,7 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
         // map _id to id
         newConstructor.prototype._id = null;
         Reflect.defineProperty(c, 'id', {
+          configurable: true,
           enumerable: false,
           get: () => c._id,
           set: (v) => c._id = v
@@ -329,11 +345,11 @@ function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpR
  * @static Creates an object from a MongoDb document with all of its fields properly mapped based on the [[Model]]'s
  * various decorators (see [[Db]]).
  * @param json The document returned from the Db.
- * @param constructorArgs A variadic set of parameters that are passed to the constructor of the [[Model]]'s class.
+ * @param options An optional [[IFromDbOptions]] object
  * @returns {object} Returns an instantiated object which is an instance of the [[Model]]'s class. Returns null
  * if the `json` parameter is null, undefined or not an object.
  */
-function fromDb(json: object, ...constructorArgs: any[]): object {
+function fromDb(json: any, options?: IFromDbOptions): object {
   const modelName = this.name;
   this.debug.normal(`.fromDb called, target '${modelName}'`);
 
@@ -341,28 +357,28 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
     return null;
   }
 
-  const obj = new this(...constructorArgs);
+  options = options || {};
 
-  // make sure the _id field is included as one of the properties
-  if (!obj._id && (json as any)._id) {
-    obj._id = (json as any)._id;
-  }
-
-  // make sure _id is ObjectID, if possible
-  if (obj._id && !(obj._id instanceof ObjectID) && ObjectID.isValid(obj._id)) {
-    obj._id = new ObjectID(obj._id.toString());
-  }
+  const obj = new this(...options.constructorArgs || []);
 
   const result = mapDbToModel(json, obj, keyMapper.bind(this));
 
   // make sure the _id field is included as one of the properties
-  if (!obj._id && (json as any)._id) {
-    obj._id = (json as any)._id;
+  if (!result._id && json._id) {
+    result._id = json._id;
   }
 
   // make sure _id is ObjectID, if possible
-  if (obj._id && !(obj._id instanceof ObjectID) && ObjectID.isValid(obj._id)) {
-    obj._id = new ObjectID(obj._id.toString());
+  if (result._id && !(result._id instanceof ObjectID) && ObjectID.isValid(result._id)) {
+    result._id = new ObjectID(result._id.toString());
+  }
+
+  if (options.strict) {
+    pruneNonDbProperties(json, result);
+  }
+
+  if (result._id === null) {
+    result._id = undefined;
   }
 
   return result;
@@ -380,8 +396,11 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
     // iterate over each property of the source json object
     for (const key of Object.getOwnPropertyNames(source)) {
 
+      const isObjectID = source[key] instanceof ObjectID
+        || ((source[key] || {}).constructor || {}).name === 'ObjectID';
+
       // if the property is an Object, but not an ObjectID
-      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID)) {
+      if (typeof source[key] === 'object' && !isObjectID) {
 
         // convert the DB key name to the Model key name
         const mapper = map(key, source[key], dbOptionsByFieldName);
@@ -427,6 +446,30 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
           : undefined
     };
   }
+
+  function pruneNonDbProperties(source, target) {
+    const dbOptionsByProperty: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, target);
+
+    for (const key of Object.getOwnPropertyNames(target)) {
+
+      const dbOptions = (dbOptionsByProperty) ? dbOptionsByProperty.get(key) || {} : null;
+      const fieldName = (dbOptions) ? dbOptions.field || key : key;
+
+      if (!source.hasOwnProperty(fieldName)) {
+        if (key === 'id' && source.hasOwnProperty('_id')) {
+          continue;
+        }
+
+        delete target[key];
+
+        continue;
+      }
+
+      if (typeof target[key] === 'object' && !(target[key] instanceof ObjectID) && target[key] !== null) {
+        pruneNonDbProperties(source[fieldName], target[key]);
+      }
+    }
+  }
 }
 
 /**
@@ -438,7 +481,7 @@ function fromDb(json: object, ...constructorArgs: any[]): object {
  * @returns {object[]} Returns an array of instantiated objects which are instances of the [[Model]]'s class. Returns
  * null if the `jsons` parameter is null, undefined, or not an Array.
  */
-function fromDbArray(jsons: object[], ...constructorArgs): object[] {
+function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
   this.debug.normal(`.fromDbArray called, target '${this.name}'`);
 
   if (!jsons || !Array.isArray(jsons)) {
@@ -447,7 +490,7 @@ function fromDbArray(jsons: object[], ...constructorArgs): object[] {
 
   const results: object[] = [];
   for (const json of jsons) {
-    const obj = this.fromDb(json, constructorArgs);
+    const obj = this.fromDb(json, options);
     if (obj) {
       results.push(obj);
     }
@@ -610,13 +653,15 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
       if (typeof model[key] === 'object' && !(model[key] instanceof ObjectID) && model[key] !== null) {
 
         const value = mapJsonToDb(model[key], jsonSrc[jsonMeta.field || key], result[dbMeta.field || key]);
+
         if (value && Object.keys(value).length > 0) {
           result[dbMeta.field || key] = value;
         }
       } else {
 
         const value = jsonSrc[jsonMeta.field || key];
-        if (value) {
+
+        if (value !== undefined && value !== null) {
           result[dbMeta.field || key] = value;
         }
       }
@@ -638,14 +683,17 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
 function get(filter: any, project?: any): Promise<object[]> {
   this.debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
   return new Promise((resolve, reject) => {
-    const cursor = this.getCursor(filter, project);
 
+    const cursor = this.getCursor(filter, project);
     cursor
       .toArray()
       .then((results) => {
+
+        const options = (project) ? {strict: true} : null;
+
         const objs = [];
         for (const result of results) {
-          const obj = this.fromDb(result);
+          const obj = this.fromDb(result, options);
           if (obj) {
             objs.push(obj);
           }
@@ -991,6 +1039,7 @@ function toDb(changeSet?: any): object {
 
 /**
  * @instance Returns the current object as json, respecting the various decorators like [[Db]]
+ * @param project is any valid MongoDB projection objected used to determine what fields are included.
  * @returns {{}}
  */
 function toJson(): any {
@@ -1029,7 +1078,9 @@ function toJson(): any {
       }
 
       if (dbOptionsByPropertyName) {
-        if ((dbOptionsByPropertyName.get(key) || {}).private) {
+        const dbOptions = dbOptionsByPropertyName.get(key);
+
+        if ((dbOptions || {}).private) {
           continue;
         }
       }

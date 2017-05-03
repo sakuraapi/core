@@ -291,6 +291,7 @@ function getRouteHandler(req: Request, res: Response) {
   throw new Error('Not Implemented');
 }
 
+// tslint:disable:max-line-length
 /**
  * By default, when you provide the optional `model` property to [[IRoutableOptions]] in the [[Routable]] parameters,
  * SakuraApi creates a route for GET `{modelName}/` that returns an array of documents for that model or
@@ -305,36 +306,40 @@ function getRouteHandler(req: Request, res: Response) {
  * Where and fields must be valid json strings.
  *
  * For example:
- * `http://localhost/someModelName?where={"fn":"John", "ln":"Doe"}&fields={"*":false, "fn":true}&limit=1&skip=0`
+ * `http://localhost/someModelName?where={"fn":"John", "ln":"Doe"}&fields={fn:0, ln:1}&limit=1&skip=0`
  *
  * This would return all documents where `fn` is 'John' and `ln` is 'Doe'. It would further limit the resulting fields
  * to just `fn` and it would only return 1 result, after skipping 0 of the results.
  *
  * The field names for `where` and `fields` are the @Json mapped names, so as to not expose internal names to the
- * client. You cannot fields to include fields that are marked `@Db(private:true)` since these will not be marshalled
+ * client. You cannot include fields that are marked `@Db(private:true)` since these will not be marshalled
  * to json for the results.
  *
- * `fields` gives you control over the results projection. It allows you to remove all fields or include all fields
- * by default. So, to include only `fn` while automatically excluding all other fields, you would use
- * `fields={*:false, fn:true}`. To exclude specific fields while excluding all other fields, you could explicitly query
- * `fields={*:true, ln:false}` which would include all fields except for `fn`. However, `*:true` is the default, so you
- * could more easily query for `fields={ln:false}.
+ * `fields` follows the same rules as (MongoDB field projection)[https://docs.mongodb.com/manual/reference/glossary/#term-projection]
  *
  * `where` queries are stripped of any `$where` fields. Giving the client the direct ability to define `$where`
  * queries is a bad idea. If you want to do this, you'll have to implement your own route handler.
  */
+// tslint:enable:max-line-length
 function getAllRouteHandler(req: Request, res: Response) {
 
   let where = null;
+  let dbProjection = null;
+  let jsonProjection = null;
 
   // validate query string parameters
   try {
 
-    jsonToObj(() =>
-      where = this.fromJsonToDb(Sanitize.remove$where(req.query.where), this)
-        || null, 'invalid_where_clause');
+    sanitizedUserInput('invalid_where_parameter',
+      () => where = this.fromJsonToDb(Sanitize.remove$where(req.query.where)));
 
-    const fields = req.query.fields || {};
+    const allowedFields$Keys = [];
+    sanitizedUserInput('invalid_fields_parameter',
+      () => jsonProjection = Sanitize.whiteList$Keys(req.query.fields, allowedFields$Keys));
+
+    sanitizedUserInput('invalid_fields_parameter',
+      () => dbProjection = this.fromJsonToDb(jsonProjection));
+
     const skip = req.query.recurse || null;
     const limit = req.query.limit || null;
 
@@ -347,7 +352,7 @@ function getAllRouteHandler(req: Request, res: Response) {
   }
 
   this
-    .get(where)
+    .get(where, dbProjection)
     .then((results) => {
 
       const response = [];
@@ -365,8 +370,8 @@ function getAllRouteHandler(req: Request, res: Response) {
       console.log(err); // tslint:disable-line:no-console
     });
 
-  //////////
-  function jsonToObj(fn: () => any, errMessage) {
+//////////
+  function sanitizedUserInput(errMessage: string, fn: () => any) {
     try {
       fn();
     } catch (err) {

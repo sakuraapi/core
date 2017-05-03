@@ -30,7 +30,8 @@ export class SanitizeMongoDB {
    * @param input string or object to be sanitized. Note: if input is a string, and it cannot be parsed with JSON.parse
    * a (SyntaxError)[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError]
    * will be thrown.
-   * @param filter the function that filters what's permitted in the resulting object
+   * @param filter the function that filters what's permitted in the resulting object. Returns true if the key should be
+   * removed.
    * @returns {any} if the input was a valid JSON string, the result will be a sanitized JSON object
    */
   public static sanitizeObject(input: any, filter: (key: any) => boolean): any {
@@ -53,10 +54,17 @@ export class SanitizeMongoDB {
 
         if (filter(key)) {
           delete targetObj[key];
-        } else if (field instanceof Object) {
+        } else if (typeof field === 'object') {
           sanitize(field);
         }
       }
     }
+  }
+
+  public static whiteList$Keys(input: any, whiteList: string[]): any {
+    whiteList = whiteList || [];
+    return SanitizeMongoDB.sanitizeObject(input, (key) => {
+      return /^\$/.test(key) && whiteList.indexOf(key) === -1;
+    });
   }
 }

@@ -11,6 +11,8 @@ import {
   UpdateWriteOpResult
 } from 'mongodb';
 
+import {IFromDbOptions} from './';
+
 /***
  * Integrators should extend their Model classes with this abstract class to get typing for the `@`[[Model]] mixin
  * functions that are injected. If you need to have a custom super class that cannot extend this abstract class,
@@ -23,7 +25,7 @@ import {
  * ### Example
  * <pre>
  * class SuperChicken extends SuperHeroBirds {
- *   public static fromDb?: <T>(this: { new(): T }, json: object, ...constructorArgs: any[]) => T;
+ *   public static fromDb?: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
  *
  *   public static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
  *   public static fromJsonToDb?: (json: any) => any;
@@ -56,7 +58,7 @@ import {
  *   public save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
  *
  *   public toDb?: (changeSet?: object) => any;
- *   public toJson?: () => any;
+ *   public toJson?: (projection?: any) => any;
  *   public toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
  *
  *   ///
@@ -67,12 +69,12 @@ import {
  * members.
  */
 export abstract class SakuraApiModel {
-  public static fromDb?: <T>(this: { new(): T }, json: object, ...constructorArgs: any[]) => T;
+  public static fromDb?: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
   // tslint:disable-next-line:variable-name
   public static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
   public static fromJsonToDb?: (json: any) => any;
 
-  public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs) => T[];
+  public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
   public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
 
   public static get?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T[]>;
@@ -100,6 +102,6 @@ export abstract class SakuraApiModel {
   public save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
 
   public toDb?: (changeSet?: object) => any;
-  public toJson?: () => any;
+  public toJson?: (projection?: any) => any;
   public toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
 }

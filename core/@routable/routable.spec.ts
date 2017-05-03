@@ -479,7 +479,7 @@ describe('core/Routable', function() {
             .expect(400)
             .then((res) => {
               expect(res.body).toBeDefined('There should have been a body returned with the error');
-              expect(res.body.error).toBe('invalid_where_clause');
+              expect(res.body.error).toBe('invalid_where_parameter');
               expect(res.body.details).toBe('Unexpected token f in JSON at position 1');
             })
             .then(done)
@@ -579,6 +579,40 @@ describe('core/Routable', function() {
 
         xit('does not allow for NoSQL injection', function() {
 
+        });
+
+      });
+
+      describe('supports fields projection', function() {
+
+        it('returns 400 with invalid json for fields parameter', function(done) {
+          request(sapi.app)
+            .get(this.uri('/user?fields={blah}'))
+            .expect(400)
+            .then((res) => {
+              expect(res.body).toBeDefined('There should been a body returned with the error');
+              expect(res.body.error).toBe('invalid_fields_parameter');
+              expect(res.body.details).toBe('Unexpected token b in JSON at position 1');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        xit('returns results with excluded fields', function(done) {
+          const fields = {
+            ln: 0
+          };
+
+          request(sapi.app)
+            .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
+            .expect(200)
+            .then((res) => {
+              expect(res.body.length).toBe(2);
+              expect(res.body[0].ln).toBeUndefined();
+              expect(res.body[1].ln).toBeUndefined();
+            })
+            .then(done)
+            .catch(done.fail);
         });
 
       });

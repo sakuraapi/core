@@ -1,6 +1,7 @@
 import {
   Db,
-  dbSymbols
+  dbSymbols,
+  Json
 } from './';
 import {Model} from './model';
 
@@ -35,6 +36,43 @@ describe('@Db', function() {
       expect(Test.fromDb).toBeDefined();
     });
 
+    it('handles falsy properties', function() {
+
+      class Deep {
+        @Db()
+        deepValue;
+      }
+
+      @Model(sapi)
+      class User extends SakuraApiModel {
+        @Db()
+        value;
+
+        @Db()
+        value2;
+
+        @Db({model: Deep})
+        deep = new Deep();
+      }
+
+      const db = {
+        deep: {
+          deepValue: false
+        },
+        value: 0,
+        value2: false
+      };
+
+      const result = User.fromDb(db);
+
+      expect(result.value).toBe(0);
+      expect(result.value2).toBeDefined();
+      expect(result.value2).toBeFalsy();
+      expect(result.deep.deepValue).toBeDefined();
+      expect(result.deep.deepValue).toBeFalsy();
+
+    });
+
     describe('constructor', function() {
 
       @Model(sapi)
@@ -50,8 +88,8 @@ describe('@Db', function() {
         expect(result).toBeNull();
       });
 
-      it('properly constructs a new target object, passing along the constructor fields', function() {
-        const result = Test.fromDb({}, 777);
+      it('constructs a new target object, passing along the constructor fields', function() {
+        const result = Test.fromDb({}, {constructorArgs: [777]});
         expect(result.constructorTest).toBe(777);
       });
 
@@ -166,7 +204,7 @@ describe('@Db', function() {
 
       });
 
-      it('properly throws when IDbOptions.model is invalid constructor function', function() {
+      it('throws when IDbOptions.model is invalid constructor function', function() {
         @Model(sapi)
         class TestModelOptionFail extends SakuraApiModel {
           @Db({model: {}})
@@ -283,8 +321,7 @@ describe('@Db', function() {
           expect((result as any).lastName).toBe(dbResult.lastName);
           expect(result.phone).toBe(dbResult.ph);
           expect(result._id.toString()).toBe(dbResult._id.toString());
-          expect(((result._id instanceof ObjectID) ? 'is' : 'is not') + ' instance of ObjectID')
-            .toBe('is instance of ObjectID');
+          expect(result._id instanceof ObjectID).toBeTruthy('result._id should have been an instance of ObjectID');
         });
       });
 
@@ -308,6 +345,103 @@ describe('@Db', function() {
         expect((test.id || 'missing id').toString()).toBe(data._id.toString());
         done();
       });
+    });
+
+    describe('prunes model fields missing from db document in strict mode', function() {
+
+      class Contact {
+        @Db('ph')
+        phone = '123-123-1234';
+
+      }
+
+      @Model(sapi, {
+        dbConfig: {
+          collection: 'fromDbStrictMode',
+          db: 'userDb'
+        }
+      })
+      class User extends SakuraApiModel {
+
+        @Db('fn') @Json('f')
+        firstName: string = 'George';
+
+        @Db('ln') @Json('l')
+        lastName: string = 'Washington';
+
+        @Db({model: Contact}) @Json()
+        contact = new Contact();
+
+      }
+
+      beforeEach(function(done) {
+        sapi
+          .dbConnections
+          .connectAll()
+          .then(() => User.removeAll({}))
+          .then(() => {
+            this.user = new User();
+            return this.user.create();
+          })
+          .then(() => sapi.listen())
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('via projection', function(done) {
+        const projection = {
+          ln: 0
+        };
+
+        User
+          .get({}, projection)
+          .then((results) => {
+            expect(results.length).toBe(1);
+            expect(results[0].firstName).toBeDefined();
+            expect(results[0].lastName).toBeUndefined('lastName should not have been included because projection ' +
+              'excluded that field from the db results and the request was in strict mode');
+            expect(results[0]._id).toBeDefined('There should have been an _id property');
+            expect(results[0]._id.toString()).toBe(results[0].id.toString(), 'id property should be included if _id ' +
+              'has a value');
+            expect(results[0].contact.phone).toBe('123-123-1234');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('doesn\'t include id property if there\'s no _id', function(done) {
+        const projection = {
+          _id: 0
+        };
+
+        User
+          .get({}, projection)
+          .then((results) => {
+            expect(results.length).toBe(1);
+            expect(results[0]._id)
+              .toBeUndefined('Projection should have prevented this field from being returned from the db');
+            expect(results[0].id).toBeUndefined('id should not be present if _id is excluded from the db results');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('works with specifying projects for embedded documents', function(done) {
+        const projection = {
+          'contact.ph': 1
+        };
+
+        User.get({}, projection)
+            .then((results) => {
+              expect(results[0]._id instanceof ObjectID).toBeTruthy('Should be an instance of ObjectID');
+              expect(results[0].firstName).toBeUndefined('Projection should have excluded this');
+              expect(results[0].lastName).toBeUndefined('Projection should have excluded this');
+              expect(results[0].contact.phone).toBe('123-123-1234');
+            })
+            .then(done)
+            .catch(done.fail);
+      });
+
     });
   });
 
@@ -390,7 +524,7 @@ describe('@Db', function() {
         promiscuous: false // default
       }
     })
-    class ChasteModelTest {
+    class ChasteModelTest extends SakuraApiModel {
 
       @Db('fn')
       firstName = 'George';
@@ -424,6 +558,17 @@ describe('@Db', function() {
 
       this.chasteModel = new ChasteModelTest();
       this.chasteModel.id = new ObjectID();
+    });
+
+    it('handles falsy properties', function() {
+      const model = new ChasteModelTest();
+      (model as any)['firstName'] = 0;
+      (model as any)['lastName'] = false;
+
+      const result = model.toDb();
+      expect(result.fn).toBe(0);
+      expect(result.lastName).toBeDefined();
+      expect(result.lastName).toBeFalsy();
     });
 
     describe('Chaste Mode', function() {
@@ -464,5 +609,6 @@ describe('@Db', function() {
         expect(result.id).toBeUndefined();
       });
     });
+
   });
 });

@@ -183,4 +183,38 @@ describe('core/security/mongo-db', function() {
       });
     });
   });
+
+  describe('whiteList$key', function() {
+    it('only includes $ keys that are white listed', function() {
+      const input = {
+        $notOk: true,
+        $ok: true,
+        deep: {
+          $notOk: true,
+          $ok: true,
+          deeper: {
+            $notOk: true,
+            $ok: true,
+            ok: true
+          },
+          ok: true
+        },
+        ok: true
+      };
+
+      const result = SanitizeMongoDB.whiteList$Keys(input, ['$ok']);
+
+      expect(result).toBeDefined('A result object should have been retruned');
+      expect(result.ok).toBeTruthy('A none $ property should not have been filtered');
+      expect(result.$ok).toBeTruthy('$ok field should not have be stripped');
+      expect(result.$notOk).toBeUndefined('$notOk field should not have been included');
+      expect(result.deep).toBeDefined('deep should have been defined');
+      expect(result.deep.ok).toBeTruthy('A none $ property should not have been filtered');
+      expect(result.deep.$ok).toBeTruthy('$ok field should not have be stripped');
+      expect(result.deep.$notOk).toBeUndefined('$notOk field should not have been included');
+      expect(result.deep.deeper.ok).toBeTruthy('A none $ property should not have been filtered');
+      expect(result.deep.deeper.$ok).toBeTruthy('$ok field should not have be stripped');
+      expect(result.deep.deeper.$notOk).toBeUndefined('$notOk field should not have been included');
+    });
+  });
 });
