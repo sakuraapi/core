@@ -266,6 +266,10 @@ describe('core/Routable', function() {
       @Db()
       @Json()
       phone = '000-000-0000';
+
+      @Db()
+      @Json()
+      mobile = '111-111-1111';
     }
 
     @Model(sapi, {
@@ -421,23 +425,17 @@ describe('core/Routable', function() {
           .removeAll({})
           .then(() => {
             const user1 = new User();
-            const user2 = new User();
             user1.contact.phone = '111-111-1111';
-            user2.firstName = 'Martha';
-
-            const wait = [];
-            wait.push(user1.create());
-            wait.push(user2.create());
-
-            Promise
-              .all(wait)
-              .then(() => {
-                this.user1 = user1;
-                this.user2 = user2;
-                done();
-              })
-              .catch(done.fail);
+            this.user1 = user1;
+            return user1.create();
           })
+          .then(() => {
+            const user2 = new User();
+            user2.firstName = 'Martha';
+            this.user2 = user2;
+            return user2.create();
+          })
+          .then(done)
           .catch(done.fail);
       });
 
@@ -586,6 +584,7 @@ describe('core/Routable', function() {
       describe('supports fields projection', function() {
 
         it('returns 400 with invalid json for fields parameter', function(done) {
+
           request(sapi.app)
             .get(this.uri('/user?fields={blah}'))
             .expect(400)
@@ -598,7 +597,7 @@ describe('core/Routable', function() {
             .catch(done.fail);
         });
 
-        xit('returns results with excluded fields', function(done) {
+        it('returns results with excluded fields', function(done) {
           const fields = {
             ln: 0
           };
@@ -608,13 +607,44 @@ describe('core/Routable', function() {
             .expect(200)
             .then((res) => {
               expect(res.body.length).toBe(2);
-              expect(res.body[0].ln).toBeUndefined();
+              expect(res.body[0].ln).toBeUndefined('lastName should have been excluded');
+              expect(res.body[0].contact).toBeDefined('contact should not have been excluded');
+              expect(res.body[0].contact.phone).toBe(this.user1.contact.phone);
+              expect(res.body[0].contact.mobile).toBe(this.user1.contact.mobile);
+
               expect(res.body[1].ln).toBeUndefined();
+              expect(res.body[1].contact).toBeDefined('contact should not have been excluded');
+              expect(res.body[1].contact.phone).toBe(this.user2.contact.phone);
+              expect(res.body[1].contact.mobile).toBe(this.user2.contact.mobile);
             })
             .then(done)
             .catch(done.fail);
         });
 
+        it('returns results with embedded document excluded fields', function(done) {
+          const fields = {
+            contact: {mobile: 0}
+          };
+
+          request(sapi.app)
+            .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
+            .expect(200)
+            .then((res) => {
+              expect(res.body.length).toBe(2);
+              expect(res.body[0].fn).toBe(this.user1.firstName);
+              expect(res.body[0].ln).toBe(this.user1.lastName);
+              expect(res.body[0].contact).toBeDefined('contact should not have been excluded');
+              expect(res.body[0].contact.phone).toBe(this.user1.contact.phone);
+              expect(res.body[0].contact.mobile).toBeUndefined('mobile should not have been included');
+              expect(res.body[1].fn).toBe(this.user2.firstName);
+              expect(res.body[1].ln).toBe(this.user2.lastName);
+              expect(res.body[1].contact).toBeDefined('contact should not have been excluded');
+              expect(res.body[1].contact.phone).toBe(this.user2.contact.phone);
+              expect(res.body[1].contact.mobile).toBeUndefined('mobile should not have been included');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
       });
     });
   });

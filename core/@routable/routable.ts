@@ -324,21 +324,18 @@ function getRouteHandler(req: Request, res: Response) {
 function getAllRouteHandler(req: Request, res: Response) {
 
   let where = null;
-  let dbProjection = null;
-  let jsonProjection = null;
+  let projection = null;
 
   // validate query string parameters
   try {
 
     sanitizedUserInput('invalid_where_parameter',
-      () => where = this.fromJsonToDb(Sanitize.remove$where(req.query.where)));
+      () => where = Sanitize.flattenObj(this.fromJsonToDb(Sanitize.remove$where(req.query.where))));
 
     const allowedFields$Keys = [];
     sanitizedUserInput('invalid_fields_parameter',
-      () => jsonProjection = Sanitize.whiteList$Keys(req.query.fields, allowedFields$Keys));
-
-    sanitizedUserInput('invalid_fields_parameter',
-      () => dbProjection = this.fromJsonToDb(jsonProjection));
+      () => projection
+        = Sanitize.flattenObj(this.fromJsonToDb(Sanitize.whiteList$Keys(req.query.fields, allowedFields$Keys))));
 
     const skip = req.query.recurse || null;
     const limit = req.query.limit || null;
@@ -352,7 +349,7 @@ function getAllRouteHandler(req: Request, res: Response) {
   }
 
   this
-    .get(where, dbProjection)
+    .get(where, projection)
     .then((results) => {
 
       const response = [];

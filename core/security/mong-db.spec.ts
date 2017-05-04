@@ -217,4 +217,34 @@ describe('core/security/mongo-db', function() {
       expect(result.deep.deeper.$notOk).toBeUndefined('$notOk field should not have been included');
     });
   });
+
+  describe('flattenObj', function() {
+    const obj = {
+      contact: {
+        phones: {
+          direct: '2',
+          mobile: '1'
+        }
+      },
+      name: 'George Washington'
+    };
+
+    it('returns the input if it\'s not an object', function() {
+      expect(SanitizeMongoDB.flattenObj('test')).toBe('test');
+      expect(SanitizeMongoDB.flattenObj(1)).toBe(1);
+      expect(SanitizeMongoDB.flattenObj(null)).toBe(null);
+      expect(SanitizeMongoDB.flattenObj(undefined)).toBe(undefined);
+    });
+
+    it('handles an object with multiple layers of embedded objects', function() {
+      const result = SanitizeMongoDB.flattenObj(obj);
+
+      expect(result).toBeDefined('Some object should have been returned');
+      expect(result.name).toBe(obj.name);
+      expect(result.contact).toBeUndefined('contact should have been mutated');
+      expect(result['contact.phones.mobile']).toBe(obj.contact.phones.mobile);
+      expect(result['contact.phones.direct']).toBe(obj.contact.phones.direct);
+
+    });
+  });
 });

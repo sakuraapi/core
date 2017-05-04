@@ -1,3 +1,4 @@
+import {ObjectID} from 'MongoDB';
 /**
  * SanitizeMongoDB is a set of utility functions to help sanitize user input to make it safe to
  * pass to MongoDB. Remember, security is always the integrators' ultimate responsibility - SakuraApi is here to
@@ -61,10 +62,63 @@ export class SanitizeMongoDB {
     }
   }
 
+  /**
+   * Excludes any properties that have $ fields that aren't in the white list
+   * @param input the user provided content that requires sanitization
+   * @param whiteList the string array of $keys to allow
+   * @returns {any}
+   */
   public static whiteList$Keys(input: any, whiteList: string[]): any {
     whiteList = whiteList || [];
     return SanitizeMongoDB.sanitizeObject(input, (key) => {
       return /^\$/.test(key) && whiteList.indexOf(key) === -1;
     });
+  }
+
+  /**
+   * Takes a deeply nested object and flattens it to a mongoDB compatible query object. For example:
+   * <pre>
+   * const json = {
+   *    name: 'George Washington',
+   *    contact : {
+   *      phones: {
+   *        mobile: '1',
+   *        direct: '2'
+   *      }c
+   *    }
+   * }
+   * </pre>
+   * Would be transformed to:
+   * <pre>
+   * {
+   *    name: 'George Washington',
+   *    'contact.phones.mobile': 1
+   *    'contact.phones.direct': 2
+   * }
+   * </pre>
+   * @param input the deeply nested object that requires flattening
+   */
+  public static flattenObj(input: any): any {
+    if (typeof input !== 'object' || input === null) {
+      return input;
+    }
+
+    const target = {};
+    transform.call(target, input);
+    return target;
+
+    //////////
+    function transform(source, parentKey?) {
+      for (const key of Object.getOwnPropertyNames(source)) {
+        const isObjectID = source[key] instanceof ObjectID || (source[key].constructor || {}).name === 'ObjectID';
+        const fieldName = ((parentKey) ? [parentKey, key] : [key]).join('.');
+
+        if (typeof source[key] === 'object' && !isObjectID && source[key] !== null) {
+          transform.call(this, source[key], fieldName);
+        } else {
+          this[fieldName] = source[key];
+        }
+      }
+    }
   }
 }
