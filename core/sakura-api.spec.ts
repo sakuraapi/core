@@ -37,6 +37,7 @@ describe('core/SakuraApi', function() {
     this.config = {} as ServerConfig;
     this.config.port = 9000;
     this.config.address = '127.0.0.1';
+    this.config.bootMessage = '';
 
     spyOn(sapi.server, 'listen').and.callThrough();
     spyOn(console, 'log');
@@ -124,7 +125,6 @@ describe('core/SakuraApi', function() {
         .listen()
         .then(() => {
           expect(sapi.server.listen).toHaveBeenCalledTimes(1);
-          expect(console.log).toHaveBeenCalledTimes(1);
           expect(sapi.port).toBeGreaterThanOrEqual(1000);
           expect(sapi.address).toEqual('127.0.0.1');
           done();

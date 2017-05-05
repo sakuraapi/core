@@ -326,20 +326,14 @@ function getAllRouteHandler(req: Request, res: Response) {
   let where = null;
   let projection = null;
 
+  const params = {
+    limit: null,
+    skip: null
+  };
+
   // validate query string parameters
   try {
-
-    sanitizedUserInput('invalid_where_parameter',
-      () => where = Sanitize.flattenObj(this.fromJsonToDb(Sanitize.remove$where(req.query.where))));
-
-    const allowedFields$Keys = [];
-    sanitizedUserInput('invalid_fields_parameter',
-      () => projection
-        = Sanitize.flattenObj(this.fromJsonToDb(Sanitize.whiteList$Keys(req.query.fields, allowedFields$Keys))));
-
-    const skip = req.query.recurse || null;
-    const limit = req.query.limit || null;
-
+    assignParameters.call(this);
   } catch (err) {
     // TODO some kind of error logging here
     if (err.status === 500) {
@@ -349,7 +343,7 @@ function getAllRouteHandler(req: Request, res: Response) {
   }
 
   this
-    .get(where, projection)
+    .get(where, projection, params)
     .then((results) => {
 
       const response = [];
@@ -367,7 +361,43 @@ function getAllRouteHandler(req: Request, res: Response) {
       console.log(err); // tslint:disable-line:no-console
     });
 
-//////////
+  //////////
+  function assignParameters() {
+    sanitizedUserInput('invalid_where_parameter', () =>
+      where = Sanitize.flattenObj(
+        this.fromJsonToDb(
+          Sanitize.remove$where(req.query.where)
+        )));
+
+    const allowedFields$Keys = [];
+    sanitizedUserInput('invalid_fields_parameter', () =>
+      projection = Sanitize.flattenObj(
+        this.fromJsonToDb(
+          Sanitize.whiteList$Keys(
+            req.query.fields, allowedFields$Keys)
+        )));
+
+    if (req.query.skip !== undefined) {
+      sanitizedUserInput('invalid_skip_parameter', () => {
+        params.skip = Number.parseInt(req.query.skip);
+        if (Number.isNaN(params.skip)) {
+          throw new SyntaxError('Unexpected token');
+        }
+      });
+    }
+
+    if (req.query.limit !== undefined) {
+      sanitizedUserInput('invalid_limit_parameter', () => {
+        params.limit = Number.parseInt(req.query.limit);
+        if (Number.isNaN(params.limit)) {
+          throw new SyntaxError('Unexpected token');
+        }
+      });
+    }
+
+    const limit = req.query.limit || null;
+  }
+
   function sanitizedUserInput(errMessage: string, fn: () => any) {
     try {
       fn();

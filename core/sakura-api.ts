@@ -256,8 +256,11 @@ export class SakuraApi {
               this.debug.normal('.listen error', err);
               return reject(err);
             }
-            let msg = listenProperties.bootMessage || `SakuraAPI started on: ${this.address}:${this.port}`;
-            console.log(colors.green(msg));
+            let msg = listenProperties.bootMessage || (listenProperties.bootMessage === '')
+              ? ''
+              : `SakuraAPI started on: ${this.address}:${this.port}\n`;
+
+            process.stdout.write(colors.green(msg));
             this.debug.normal(`.listen server started '%s'`, msg);
             return resolve();
           });

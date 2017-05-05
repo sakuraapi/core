@@ -33,6 +33,14 @@ import {privateSymbols} from './private';
 import debug = require('debug');
 
 /**
+ * Interface defining the properties used for retrieving records from the DB
+ */
+interface IDbGetParams {
+  skip?: number;
+  limit?: number;
+}
+
+/**
  * Interface defining the valid properties for options passed to [[toDb]].
  */
 export interface IFromDbOptions {
@@ -680,11 +688,22 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
  * documents returned from the database using MongoDB's find method. Returns an empty array if no matches are found
  * in the database.
  */
-function get(filter: any, project?: any): Promise<object[]> {
+function get(filter: any, project?: any, params?: IDbGetParams): Promise<object[]> {
   this.debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
   return new Promise((resolve, reject) => {
 
     const cursor = this.getCursor(filter, project);
+
+    if (params) {
+      if (params.skip) {
+        cursor.skip(params.skip);
+      }
+
+      if (params.limit) {
+        cursor.limit(params.limit);
+      }
+    }
+
     cursor
       .toArray()
       .then((results) => {

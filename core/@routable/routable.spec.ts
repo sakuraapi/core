@@ -74,8 +74,6 @@ describe('core/Routable', function() {
   beforeEach(function() {
     this.t = new Test(777);
     this.sakuraApiClassRoutes = this.t[routableSymbols.sakuraApiClassRoutes];
-
-    spyOn(console, 'log');
   });
 
   describe('IRoutableOptions', function() {
@@ -138,7 +136,7 @@ describe('core/Routable', function() {
       }
 
       sapi
-        .listen()
+        .listen({bootMessage: ''})
         .then(function() {
           request(sapi.app)
             .get('/autoRoutingFalseTest')
@@ -242,7 +240,7 @@ describe('core/Routable', function() {
     }
 
     sapi
-      .listen()
+      .listen({bootMessage: ''})
       .then(() => {
         request(sapi.app)
           .get(this.uri('/someMethodTest5'))
@@ -325,7 +323,7 @@ describe('core/Routable', function() {
 
     beforeEach(function(done) {
       sapi
-        .listen()
+        .listen({bootMessage: ''})
         .then(done)
         .catch(done.fail);
     });
@@ -435,6 +433,24 @@ describe('core/Routable', function() {
             this.user2 = user2;
             return user2.create();
           })
+          .then(() => {
+            const user3 = new User();
+            user3.firstName = 'Matthew';
+            this.user3 = user3;
+            return user3.create();
+          })
+          .then(() => {
+            const user4 = new User();
+            user4.firstName = 'Mark';
+            this.user4 = user4;
+            return user4.create();
+          })
+          .then(() => {
+            const user5 = new User();
+            user5.firstName = 'Luke';
+            this.user5 = user5;
+            return user5.create();
+          })
           .then(done)
           .catch(done.fail);
       });
@@ -446,7 +462,7 @@ describe('core/Routable', function() {
           .expect(200)
           .then((res) => {
             expect(Array.isArray(res.body)).toBeTruthy();
-            expect(res.body.length).toBe(2);
+            expect(res.body.length).toBe(5);
             expect(res.body[0].fn).toBe(this.user1.firstName);
             expect(res.body[0].ln).toBe(this.user1.lastName);
             expect(res.body[1].fn).toBe(this.user2.firstName);
@@ -606,7 +622,7 @@ describe('core/Routable', function() {
             .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
             .expect(200)
             .then((res) => {
-              expect(res.body.length).toBe(2);
+              expect(res.body.length).toBe(5);
               expect(res.body[0].ln).toBeUndefined('lastName should have been excluded');
               expect(res.body[0].contact).toBeDefined('contact should not have been excluded');
               expect(res.body[0].contact.phone).toBe(this.user1.contact.phone);
@@ -630,7 +646,7 @@ describe('core/Routable', function() {
             .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
             .expect(200)
             .then((res) => {
-              expect(res.body.length).toBe(2);
+              expect(res.body.length).toBe(5);
               expect(res.body[0].fn).toBe(this.user1.firstName);
               expect(res.body[0].ln).toBe(this.user1.lastName);
               expect(res.body[0].contact).toBeDefined('contact should not have been excluded');
@@ -645,6 +661,102 @@ describe('core/Routable', function() {
             .then(done)
             .catch(done.fail);
         });
+      });
+
+      describe('supports skip', function() {
+        it('with valid values', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?skip=4`))
+            .expect(200)
+            .then((res) => {
+              expect(res.body.length).toBe(1, 'should have skipped to last entry');
+              expect(res.body[0].id).toBe(this.user5.id.toString());
+              expect(res.body[0].fn).toBe(this.user5.firstName);
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('with valid values greater than records available', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?skip=100`))
+            .expect(200)
+            .then((res) => {
+              expect(Array.isArray(res.body)).toBeTruthy('Expected an empty array');
+              expect(res.body.length).toBe(0, 'An empty array should have been retruned');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns 400 with no values', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?skip=`))
+            .expect(400)
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns 400 with invalid values', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?skip=aaa`))
+            .expect(400)
+            .then(done)
+            .catch(done.fail);
+        });
+      });
+
+      describe('supports limit', function() {
+        it('with valid values', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?limit=2`))
+            .expect(200)
+            .then((res) => {
+              expect(res.body.length).toBe(2, 'should have been limited');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('limit=0 is the same as unlimited', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?limit=0`))
+            .expect(200)
+            .then((res) => {
+              expect(res.body.length).toBe(5, 'All results should have been returned');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns 400 with no values', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?limit=`))
+            .expect(400)
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns 400 with invalid values', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?limit=aaa`))
+            .expect(400)
+            .then(done)
+            .catch(done.fail);
+        });
+      });
+
+      it('supports limit + skip', function(done) {
+        request(sapi.app)
+          .get(this.uri(`/user?limit=2&skip=2`))
+          .expect(200)
+          .then((res) => {
+            expect(res.body.length).toBe(2, 'should have been limited to 2 entries');
+            expect(res.body[0].id).toBe(this.user3.id.toString(), 'Unexpected skip result');
+            expect(res.body[1].id).toBe(this.user4.id.toString(), 'Unexpected skip result');
+          })
+          .then(done)
+          .catch(done.fail);
       });
     });
   });
