@@ -286,7 +286,7 @@ describe('@Model', function() {
                 expect(createdResult.insertedCount).toBe(1);
 
                 TestDefaultMethods
-                  .get({_id: this.tdm.id})
+                  .get({filter: {_id: this.tdm.id}})
                   .then((results) => {
                     expect(results.length).toBe(1);
                     expect(results[0]._id.toString()).toBe(this.tdm.id.toString());

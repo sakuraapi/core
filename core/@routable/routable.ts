@@ -2,7 +2,10 @@ import {
   Request,
   Response
 } from 'express';
-import {modelSymbols} from '../@model/model';
+import {
+  IDbGetParams,
+  modelSymbols
+} from '../@model/model';
 import {addDefaultInstanceMethods} from '../helpers/defaultMethodHelpers';
 import {SakuraApi} from '../sakura-api';
 import {SanitizeMongoDB as Sanitize} from '../security/mongo-db';
@@ -322,13 +325,12 @@ function getRouteHandler(req: Request, res: Response) {
  */
 // tslint:enable:max-line-length
 function getAllRouteHandler(req: Request, res: Response) {
-
-  let where = null;
-  let projection = null;
-
-  const params = {
+  
+  const params: IDbGetParams = {
     limit: null,
-    skip: null
+    project: null,
+    skip: null,
+    filter: null
   };
 
   // validate query string parameters
@@ -343,7 +345,7 @@ function getAllRouteHandler(req: Request, res: Response) {
   }
 
   this
-    .get(where, projection, params)
+    .get(params)
     .then((results) => {
 
       const response = [];
@@ -364,14 +366,14 @@ function getAllRouteHandler(req: Request, res: Response) {
   //////////
   function assignParameters() {
     sanitizedUserInput('invalid_where_parameter', () =>
-      where = Sanitize.flattenObj(
+      params.filter = Sanitize.flattenObj(
         this.fromJsonToDb(
           Sanitize.remove$where(req.query.where)
         )));
 
     const allowedFields$Keys = [];
     sanitizedUserInput('invalid_fields_parameter', () =>
-      projection = Sanitize.flattenObj(
+      params.project = Sanitize.flattenObj(
         this.fromJsonToDb(
           Sanitize.whiteList$Keys(
             req.query.fields, allowedFields$Keys)

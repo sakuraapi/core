@@ -35,9 +35,11 @@ import debug = require('debug');
 /**
  * Interface defining the properties used for retrieving records from the DB
  */
-interface IDbGetParams {
-  skip?: number;
+export interface IDbGetParams {
+  filter: any;
   limit?: number;
+  project?: any;
+  skip?: number;
 }
 
 /**
@@ -688,11 +690,11 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
  * documents returned from the database using MongoDB's find method. Returns an empty array if no matches are found
  * in the database.
  */
-function get(filter: any, project?: any, params?: IDbGetParams): Promise<object[]> {
+function get(params?: IDbGetParams): Promise<object[]> {
   this.debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
   return new Promise((resolve, reject) => {
 
-    const cursor = this.getCursor(filter, project);
+    const cursor = this.getCursor(params.filter, params.project);
 
     if (params) {
       if (params.skip) {
@@ -708,7 +710,7 @@ function get(filter: any, project?: any, params?: IDbGetParams): Promise<object[
       .toArray()
       .then((results) => {
 
-        const options = (project) ? {strict: true} : null;
+        const options = (params.project) ? {strict: true} : null;
 
         const objs = [];
         for (const result of results) {

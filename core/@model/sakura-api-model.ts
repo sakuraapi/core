@@ -11,7 +11,10 @@ import {
   UpdateWriteOpResult
 } from 'mongodb';
 
-import {IFromDbOptions} from './';
+import {
+  IDbGetParams,
+  IFromDbOptions
+} from './';
 
 /***
  * Integrators should extend their Model classes with this abstract class to get typing for the `@`[[Model]] mixin
@@ -33,7 +36,7 @@ import {IFromDbOptions} from './';
  *   public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs) => T[];
  *   public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
  *
- *   public static get?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T[]>;
+ *   public static get?: <T>(this: { new (): T }, params: IDbGetParams) => Promise<T[]>;
  *   public static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
  *   public static getCollection?: () => Collection;
  *   public static getCursor?: (filter: any, project?: any) => Cursor<any>;
@@ -77,7 +80,7 @@ export abstract class SakuraApiModel {
   public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
   public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
 
-  public static get?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T[]>;
+  public static get?: <T>(this: { new (): T }, params: IDbGetParams) => Promise<T[]>;
   public static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
   public static getCollection?: () => Collection;
   public static getCursor?: (filter: any, project?: any) => Cursor<any>;

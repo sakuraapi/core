@@ -394,7 +394,7 @@ describe('@Db', function() {
         };
 
         User
-          .get({}, projection)
+          .get({filter: {}, project: projection})
           .then((results) => {
             expect(results.length).toBe(1);
             expect(results[0].firstName).toBeDefined();
@@ -415,7 +415,7 @@ describe('@Db', function() {
         };
 
         User
-          .get({}, projection)
+          .get({filter: {}, project: projection})
           .then((results) => {
             expect(results.length).toBe(1);
             expect(results[0]._id)
@@ -431,7 +431,7 @@ describe('@Db', function() {
           'contact.ph': 1
         };
 
-        User.get({}, projection)
+        User.get({filter: {}, project: projection})
             .then((results) => {
               expect(results[0]._id instanceof ObjectID).toBeTruthy('Should be an instance of ObjectID');
               expect(results[0].firstName).toBeUndefined('Projection should have excluded this');

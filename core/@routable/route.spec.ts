@@ -124,7 +124,7 @@ describe('core/Route', function() {
 
     it('at the end of the path', function(done) {
       sapi
-        .listen()
+        .listen({bootMessage: ''})
         .then(() => {
           request(sapi.app)
             .get(this.uri('/route/parameter/777'))
@@ -144,7 +144,7 @@ describe('core/Route', function() {
 
     it('at the end of the path', function(done) {
       sapi
-        .listen()
+        .listen({bootMessage: ''})
         .then(() => {
           request(sapi.app)
             .get(this.uri('/route2/888/test'))
