@@ -383,7 +383,7 @@ describe('@Db', function() {
             this.user = new User();
             return this.user.create();
           })
-          .then(() => sapi.listen())
+          .then(() => sapi.listen({bootMessage: ''}))
           .then(done)
           .catch(done.fail);
       });

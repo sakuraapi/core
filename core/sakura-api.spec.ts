@@ -99,7 +99,7 @@ describe('core/SakuraApi', function() {
         });
 
       sak
-        .listen()
+        .listen({bootMessage: ''})
         .then(() => {
           request(sak.app)
             .get(this.uri('/middleware/test'))
@@ -122,7 +122,7 @@ describe('core/SakuraApi', function() {
   describe('listen(...)', function() {
     it('bootstraps Express with defaulting settings when no parameters are provided', function(done) {
       sapi
-        .listen()
+        .listen({bootMessage: ''})
         .then(() => {
           expect(sapi.server.listen).toHaveBeenCalledTimes(1);
           expect(sapi.port).toBeGreaterThanOrEqual(1000);
@@ -246,7 +246,7 @@ describe('core/SakuraApi', function() {
   describe('close(...)', function() {
     it('closes the port when told to', function(done) {
       sapi
-        .listen()
+        .listen({bootMessage: ''})
         .then(() => {
           expect(sapi.server.listening).toBe(true);
           sapi

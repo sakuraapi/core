@@ -736,11 +736,13 @@ function getById(id: string | ObjectID, project?: any): Promise<any> {
   this.debug.normal(`.getById called, dbName '${this[modelSymbols.dbName]}'`);
   const cursor = this.getCursorById(id, project);
 
+  const options = (project) ? {strict: true} : null;
+
   return new Promise((resolve, reject) => {
     cursor
       .next()
       .then((result) => {
-        const obj = this.fromDb(result);
+        const obj = this.fromDb(result, options);
         resolve(obj);
       })
       .catch(reject);
@@ -807,6 +809,7 @@ function getCursor(filter: any, project?: any): Cursor<any> {
  */
 function getCursorById(id, project?: any): Cursor<any> {
   this.debug.normal(`.getCursorById called, dbName '${this[modelSymbols.dbName]}'`);
+
   return this
     .getCursor({
       _id: (id instanceof ObjectID) ? id : id.toString() || `${id}`
@@ -894,8 +897,12 @@ function removeAll(filter: any, options?: CollectionOptions): Promise<DeleteWrit
  * @param options CollectionOptions
  * @returns {DeleteWriteOpResultObject}
  */
-function removeById(id: ObjectID, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
+function removeById(id: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
   const col = this.getCollection();
+
+  if (!(id instanceof ObjectID)) {
+    id = (ObjectID.isValid(id)) ? new ObjectID(id) : id;
+  }
 
   this
     .debug

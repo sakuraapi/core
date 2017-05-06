@@ -759,5 +759,191 @@ describe('core/Routable', function() {
           .catch(done.fail);
       });
     });
+
+    describe('GET ./model/:id', function() {
+
+      beforeEach(function(done) {
+        User
+          .removeAll({})
+          .then(() => {
+            const user = new User();
+            this.user1 = user;
+            return user.create();
+          })
+          .then(() => {
+            const user = new User();
+            user.firstName = 'Martha';
+            this.user2 = user;
+            return user.create();
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('returns a specific document with all fields properly mapped by @Json', function(done) {
+        request(sapi.app)
+          .get(this.uri(`/user/${this.user1.id}`))
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .then((res) => {
+            const result = res.body;
+            expect(Array.isArray(result)).toBeFalsy('Should have returned a single document');
+            expect(result.id).toBe(this.user1.id.toString());
+            expect(result.fn).toBe(this.user1.firstName);
+            expect(result.ln).toBe(this.user1.lastName);
+            expect(result.contact).toBeDefined();
+            expect(result.contact.phone).toBe(this.user1.contact.phone);
+            expect(result.contact.mobile).toBe(this.user1.contact.mobile);
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('returns null with no result', function(done) {
+        request(sapi.app)
+          .get(this.uri(`/user/123`))
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .then((res) => {
+            expect(res.body).toBe(null);
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      describe('supports fields projection', function() {
+
+        it('returns 400 with invalid json for fields parameter', function(done) {
+
+          request(sapi.app)
+            .get(this.uri(`/user/${this.user1.id.toString()}?fields={blah}`))
+            .expect(400)
+            .then((res) => {
+              expect(res.body).toBeDefined('There should been a body returned with the error');
+              expect(res.body.error).toBe('invalid_fields_parameter');
+              expect(res.body.details).toBe('Unexpected token b in JSON at position 1');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns results with excluded fields', function(done) {
+          const fields = {
+            ln: 0
+          };
+
+          request(sapi.app)
+            .get(this.uri(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
+            .expect(200)
+            .then((res) => {
+              expect(res.body.fn).toBeDefined('firstName should not have been excluded');
+              expect(res.body.ln).toBeUndefined('lastName should have been excluded');
+              expect(res.body.contact).toBeDefined('contact should not have been excluded');
+              expect(res.body.contact.phone).toBe(this.user1.contact.phone);
+              expect(res.body.contact.mobile).toBe(this.user1.contact.mobile);
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns results with embedded document excluded fields', function(done) {
+          const fields = {
+            contact: {mobile: 0}
+          };
+
+          request(sapi.app)
+            .get(this.uri(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
+            .expect(200)
+            .then((res) => {
+              expect(res.body.fn).toBe(this.user1.firstName);
+              expect(res.body.ln).toBe(this.user1.lastName);
+              expect(res.body.contact).toBeDefined('contact should not have been excluded');
+              expect(res.body.contact.phone).toBe(this.user1.contact.phone);
+              expect(res.body.contact.mobile).toBeUndefined('mobile should not have been included');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+      });
+    });
+
+    fdescribe('POST ./model', function() {
+
+      beforeEach(function(done) {
+        User
+          .removeAll({})
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('returns 400 if the body is missing', function(done) {
+        request(sapi.app)
+          .post(this.uri(`/user`))
+          .expect(400)
+          .then(done)
+          .catch(done.fail);
+      });
+
+      fit('returns 400 if the body is not an object', function(done) {
+        const body = {test: 'test'};
+
+        request(sapi.app)
+          .post(this.uri(`/user`))
+          .type('application/json')
+          .send(JSON.stringify({test: 'test'}))
+          .expect(400)
+          .then(done)
+          .catch(done.fail);
+      });
+    });
+
+    describe('DELETE ./mode/:id', function() {
+
+      beforeEach(function(done) {
+        User
+          .removeAll({})
+          .then(() => {
+            const user = new User();
+            this.user1 = user;
+            return user.create();
+          })
+          .then(() => {
+            const user = new User();
+            this.user2 = user;
+            return user.create();
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('removes the document from the db if a matching id is found', function(done) {
+        request(sapi.app)
+          .delete(this.uri(`/user/${this.user1.id.toString()}`))
+          .then((result: any) => {
+            expect(result.body.n).toBe(1, 'one record should have been removed');
+            return User
+              .getCollection()
+              .find({_id: this.user1.id})
+              .limit(1)
+              .next();
+          })
+          .then((result) => {
+            expect(result).toBeNull(`User ${this.user1.id} should have been deleted`);
+          })
+          .then(() => {
+            return User
+              .getCollection()
+              .find({_id: this.user2.id})
+              .limit(1)
+              .next();
+          })
+          .then((result: any) => {
+            expect(result._id.toString())
+              .toBe(this.user2.id.toString(), 'Other documents should not have been removed');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+    });
   });
 });

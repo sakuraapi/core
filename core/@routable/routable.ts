@@ -217,7 +217,7 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
           addRouteHandler('get', getRouteHandler, c, metaData);
           addRouteHandler('getAll', getAllRouteHandler, c, metaData);
           addRouteHandler('put', putRouteHandler, c, metaData);
-          addRouteHandler('post', putRouteHandler, c, metaData);
+          addRouteHandler('post', postRouteHandler, c, metaData);
           addRouteHandler('delete', deleteRouteHandler, c, metaData);
         }
 
@@ -290,8 +290,55 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
   };
 }
 
+// tslint:disable:max-line-length
+/**
+ * By default, when you provide the optional `model` property to [[IRoutableOptions]] in the [[Routable]] parameters,
+ * SakuraApi creates a route for GET `{modelName}/:id` that returns an either that document as a model or null if nothing
+ * is found.
+ *
+ * You an constrain the results by providing a `fields` query string parameter.
+ *
+ * `fields` follows the same rules as (MongoDB field projection)[https://docs.mongodb.com/manual/reference/glossary/#term-projection]
+ */
+// tslint:enable:max-line-length
 function getRouteHandler(req: Request, res: Response) {
-  throw new Error('Not Implemented');
+  const id = req.params.id;
+
+  let project = null;
+
+  // validate query string parameters
+  try {
+    assignParameters.call(this);
+  } catch (err) {
+    return;
+  }
+
+  this
+    .getById(id, project)
+    .then((result) => {
+      let response = (result) ? result.toJson() : null;
+
+      res
+        .status(200)
+        .json(response);
+
+    })
+    .catch((err) => {
+      // TODO add logging system here
+      console.log(err); // tslint:disable-line:no-console
+    });
+
+  //////////
+  function assignParameters() {
+    const allowedFields$Keys = [];
+    sanitizedUserInput(res, 'invalid_fields_parameter', () =>
+      project = Sanitize.flattenObj(
+        this.fromJsonToDb(
+          Sanitize.whiteList$Keys(
+            req.query.fields, allowedFields$Keys)
+        )));
+  }
+
 }
 
 // tslint:disable:max-line-length
@@ -306,7 +353,7 @@ function getRouteHandler(req: Request, res: Response) {
  * * skip=#
  * * limit=#
  *
- * Where and fields must be valid json strings.
+ * `where` and `fields` must be valid json strings.
  *
  * For example:
  * `http://localhost/someModelName?where={"fn":"John", "ln":"Doe"}&fields={fn:0, ln:1}&limit=1&skip=0`
@@ -325,7 +372,7 @@ function getRouteHandler(req: Request, res: Response) {
  */
 // tslint:enable:max-line-length
 function getAllRouteHandler(req: Request, res: Response) {
-  
+
   const params: IDbGetParams = {
     limit: null,
     project: null,
@@ -337,10 +384,6 @@ function getAllRouteHandler(req: Request, res: Response) {
   try {
     assignParameters.call(this);
   } catch (err) {
-    // TODO some kind of error logging here
-    if (err.status === 500) {
-      console.log(err); // tslint:disable-line:no-console
-    }
     return;
   }
 
@@ -365,14 +408,14 @@ function getAllRouteHandler(req: Request, res: Response) {
 
   //////////
   function assignParameters() {
-    sanitizedUserInput('invalid_where_parameter', () =>
+    sanitizedUserInput(res, 'invalid_where_parameter', () =>
       params.filter = Sanitize.flattenObj(
         this.fromJsonToDb(
           Sanitize.remove$where(req.query.where)
         )));
 
     const allowedFields$Keys = [];
-    sanitizedUserInput('invalid_fields_parameter', () =>
+    sanitizedUserInput(res, 'invalid_fields_parameter', () =>
       params.project = Sanitize.flattenObj(
         this.fromJsonToDb(
           Sanitize.whiteList$Keys(
@@ -380,7 +423,7 @@ function getAllRouteHandler(req: Request, res: Response) {
         )));
 
     if (req.query.skip !== undefined) {
-      sanitizedUserInput('invalid_skip_parameter', () => {
+      sanitizedUserInput(res, 'invalid_skip_parameter', () => {
         params.skip = Number.parseInt(req.query.skip);
         if (Number.isNaN(params.skip)) {
           throw new SyntaxError('Unexpected token');
@@ -389,7 +432,7 @@ function getAllRouteHandler(req: Request, res: Response) {
     }
 
     if (req.query.limit !== undefined) {
-      sanitizedUserInput('invalid_limit_parameter', () => {
+      sanitizedUserInput(res, 'invalid_limit_parameter', () => {
         params.limit = Number.parseInt(req.query.limit);
         if (Number.isNaN(params.limit)) {
           throw new SyntaxError('Unexpected token');
@@ -399,31 +442,6 @@ function getAllRouteHandler(req: Request, res: Response) {
 
     const limit = req.query.limit || null;
   }
-
-  function sanitizedUserInput(errMessage: string, fn: () => any) {
-    try {
-      fn();
-    } catch (err) {
-      if (err instanceof SyntaxError && err.message && err.message.startsWith('Unexpected token')) {
-        res
-          .status(400)
-          .json({
-            details: err.message,
-            error: errMessage
-          });
-
-        (err as any).status = 400;
-      } else {
-        res
-          .status(500)
-          .json({
-            error: 'internal_server_error'
-          });
-        (err as any).status = 500;
-      }
-      throw err;
-    }
-  }
 }
 
 function putRouteHandler(req: Request, res: Response) {
@@ -431,9 +449,85 @@ function putRouteHandler(req: Request, res: Response) {
 }
 
 function postRouteHandler(req: Request, res: Response) {
-  throw new Error('Not Implemented');
+
+  console.log('↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓: routeable.ts/postRouteHandler'.america);
+  console.log(req.body);
+  console.log('------------------------'.yellow);
+  console.log(req.headers);
+  console.log('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑'.america);
+
+
+  if (!req.body || typeof req.body !== 'object') {
+    res
+      .status(400)
+      .json({
+        error: 'invalid_body',
+        body: req.body
+      });
+    return;
+  }
+
+  if (Array.isArray(req.body)) {
+
+  }
+
+  //////////
+  function post(obj) {
+
+  }
 }
 
 function deleteRouteHandler(req: Request, res: Response) {
-  throw new Error('Not Implemented');
+
+  this
+    .removeById(req.params.id)
+    .then((result) => {
+      res
+        .status(200)
+        .json({
+          n: (result.result || {}).n || 0
+        });
+    })
+    .catch((err) => {
+      err.status = 500;
+      res
+        .status(500)
+        .json({
+          error: 'internal_server_error'
+        });
+      // TODO add logging here
+      console.log(err); // tslint:disable-line:no-console
+    });
+}
+
+/**
+ * @internal Do not use - may change without notice.
+ */
+function sanitizedUserInput(res: Response, errMessage: string, fn: () => any) {
+  try {
+    fn();
+  } catch (err) {
+    if (err instanceof SyntaxError && err.message && err.message.startsWith('Unexpected token')) {
+      res
+        .status(400)
+        .json({
+          details: err.message,
+          error: errMessage
+        });
+
+      (err as any).status = 400;
+    } else {
+      res
+        .status(500)
+        .json({
+          error: 'internal_server_error'
+        });
+      (err as any).status = 500;
+
+      // TODO some kind of error logging here
+      console.log(err); // tslint:disable-line:no-console
+
+    }
+    throw err;
+  }
 }
