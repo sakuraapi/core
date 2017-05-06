@@ -316,7 +316,7 @@ function getRouteHandler(req: Request, res: Response) {
   this
     .getById(id, project)
     .then((result) => {
-      let response = (result) ? result.toJson() : null;
+      const response = (result) ? result.toJson() : null;
 
       res
         .status(200)
@@ -374,10 +374,10 @@ function getRouteHandler(req: Request, res: Response) {
 function getAllRouteHandler(req: Request, res: Response) {
 
   const params: IDbGetParams = {
+    filter: null,
     limit: null,
     project: null,
-    skip: null,
-    filter: null
+    skip: null
   };
 
   // validate query string parameters
@@ -450,31 +450,31 @@ function putRouteHandler(req: Request, res: Response) {
 
 function postRouteHandler(req: Request, res: Response) {
 
-  console.log('↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓: routeable.ts/postRouteHandler'.america);
-  console.log(req.body);
-  console.log('------------------------'.yellow);
-  console.log(req.headers);
-  console.log('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑'.america);
-
-
   if (!req.body || typeof req.body !== 'object') {
     res
       .status(400)
       .json({
-        error: 'invalid_body',
-        body: req.body
+        body: req.body,
+        error: 'invalid_body'
       });
     return;
   }
 
-  if (Array.isArray(req.body)) {
-
-  }
-
-  //////////
-  function post(obj) {
-
-  }
+  const obj = this.fromJson(req.body);
+  obj
+    .create()
+    .then((result) => {
+      res
+        .status(200)
+        .json({
+          count: result.insertedCount,
+          id: result.insertedId
+        });
+    })
+    .catch((err) => {
+      // TODO add some kind of error handling
+      console.log(err); // tslint:disable-line:no-console
+    });
 }
 
 function deleteRouteHandler(req: Request, res: Response) {

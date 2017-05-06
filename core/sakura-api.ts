@@ -220,7 +220,7 @@ export class SakuraApi {
       this._address = listenProperties.address || this._address;
       this._port = listenProperties.port || this._port;
 
-      // Bind the routes
+      // Bind the routes -----------------------------------------------------------------------------------------------
       let router = express.Router();
 
       this
@@ -232,7 +232,20 @@ export class SakuraApi {
       this.debug.normal(`.listen setting baseUri to ${this.baseUri}`);
       this.app.use(this.baseUri, router);
 
-      // Open the connections
+      // Body Parser json hack -----------------------------------------------------------------------------------------
+      // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
+      this.app.use(function(err, req, res, next) {
+        if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
+          res.status(400).send({
+            error: 'invalid_body',
+            body: req.body
+          });
+        } else {
+          next(err);
+        }
+      });
+
+      // Open the connections ------------------------------------------------------------------------------------------
       if (this.dbConnections) {
         this
           .dbConnections
@@ -247,7 +260,7 @@ export class SakuraApi {
         listen.bind(this)();
       }
 
-      // Start the server
+      // Start the server ----------------------------------------------------------------------------------------------
       function listen() {
         this
           .server
@@ -256,6 +269,7 @@ export class SakuraApi {
               this.debug.normal('.listen error', err);
               return reject(err);
             }
+
             let msg = listenProperties.bootMessage || (listenProperties.bootMessage === '')
               ? ''
               : `SakuraAPI started on: ${this.address}:${this.port}\n`;
@@ -266,7 +280,7 @@ export class SakuraApi {
           });
       }
 
-      // Release the Kraken.
+      // Release the Kraken... or some other cliché...
     });
   }
 

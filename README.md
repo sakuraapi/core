@@ -115,14 +115,23 @@ Where `{env}` is replaced by what's set in the environmental variable `NODE_ENV`
 
 ## config
 
-There are some properties in the environmental config that are used by the system if they're present:
+There are some properties in the environmental config that are used by the system if they're present. For example, consider this possible `environment.json`:
 
 ```
 {
-  server: {
-    address: string,      // '127.0.0.1'
-    port: number          // 3000
-  }
+  "server": {
+    "address": "127.0.0.1"
+    "port": 3000
+  },
+  
+  "dbConnections": [
+    {
+      "mongoClientOptions": {},       // any options to pass to MongoDB
+      "name": "userDb",               // the key used to reference this
+                                      // connection.
+      "url": "mongodb://..."          // MongoDB connection string
+    }
+  ]
 }
 ```
 Naturally, anything you define is available to you. You get access to the configuration through `SakuraApi.instsance.config`.

@@ -1,3 +1,4 @@
+import {ObjectID} from 'bson';
 import * as express from 'express';
 import * as request from 'supertest';
 import {sapi} from '../../spec/helpers/sakuraapi';
@@ -867,7 +868,7 @@ describe('core/Routable', function() {
       });
     });
 
-    fdescribe('POST ./model', function() {
+    describe('POST ./model', function() {
 
       beforeEach(function(done) {
         User
@@ -876,25 +877,60 @@ describe('core/Routable', function() {
           .catch(done.fail);
       });
 
-      it('returns 400 if the body is missing', function(done) {
-        request(sapi.app)
-          .post(this.uri(`/user`))
-          .expect(400)
-          .then(done)
-          .catch(done.fail);
-      });
-
-      fit('returns 400 if the body is not an object', function(done) {
-        const body = {test: 'test'};
+      it('returns 400 if the body is not an object', function(done) {
+        // Note: this test assumes that bodyparser middleware is installed... if it is, then there's a default
+        // top level error handler setup on the `.listen` method of SakuraApi that will catch a bodyparser parsing
+        // error and it should inject the 'invalid_body' error property.
 
         request(sapi.app)
           .post(this.uri(`/user`))
           .type('application/json')
-          .send(JSON.stringify({test: 'test'}))
+          .send(`{test:}`)
           .expect(400)
+          .then((res) => {
+            expect(res.body.error).toBe('invalid_body');
+          })
           .then(done)
           .catch(done.fail);
       });
+
+      it('takes a json object and creates it', function(done) {
+        const obj = {
+          contact: {
+            phone: 'not invented yet'
+          },
+          fn: 'Abraham',
+          ln: 'Lincoln'
+        };
+
+        request(sapi.app)
+          .post(this.uri('/user'))
+          .type('application/json')
+          .send(JSON.stringify(obj))
+          .expect(200)
+          .then((res) => {
+            expect(res.body.count).toBe(1, 'One document should have been inserted into the db');
+            expect(ObjectID.isValid(res.body.id)).toBeTruthy('A valid ObjectID should have been returned');
+            return res.body.id;
+          })
+          .then((id) => {
+            return User
+              .getCollection()
+              .find({_id: new ObjectID(id)})
+              .limit(1)
+              .next()
+              .then((result) => {
+                expect(result.fname).toBe(obj.fn);
+                expect(result.lname).toBe(obj.ln);
+                expect(result.contact).toBeDefined('contact embedded document should have been created');
+                expect(result.contact.phone).toBe(obj.contact.phone);
+                expect(result.contact.mobile).toBe('111-111-1111', 'Default value should have been saved');
+              });
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
     });
 
     describe('DELETE ./mode/:id', function() {

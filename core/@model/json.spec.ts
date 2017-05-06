@@ -269,7 +269,7 @@ describe('@Json', function() {
         };
 
         User
-          .get({filter: {}, project: project})
+          .get({filter: {}, project})
           .then((results) => {
             const result = results[0].toJson();
             expect(result.fName).toBe('George', 'firstName should have projected to json');
@@ -288,7 +288,7 @@ describe('@Json', function() {
         };
 
         User
-          .get({filter: {}, project: project})
+          .get({filter: {}, project})
           .then((results) => {
             const result = results[0].toJson();
 
