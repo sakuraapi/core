@@ -921,14 +921,15 @@ function removeById(id: any, options?: CollectionOptions): Promise<DeleteWriteOp
 
 /**
  * @instance Performs a MongoDB updateOne if the current [[Model]] has an Id.
- * @param changeSet The change set. For example:
+ * @param changeSet Expects properties to already be mapped to db field names. Limits the update to just
+ * the fields included in the changeset. For example a changeset of:
  * <pre>
  * {
  *     firstName: "George"
  * }
  * </pre>
- * This change set would cause only the `firstName` field to be updated. If the `set` parameter is not provided,
- * `save` will assume the entire [[Model]] is the change set (obeying the various decorators like [[Db]]).
+ * would cause only the `firstName` field to be updated. If the `changeSet` parameter is not provided,
+ * `save` will assume the entire [[Model]] is the changeset (obeying the various decorators like [[Db]]).
  * @param options The MongoDB ReplaceOneOptions. If you want to set this, but not the `set`, then pass null into `set`.
  * @returns {any}
  */
@@ -948,7 +949,7 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
     return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
   }
 
-  const dbObj = this.toDb(changeSet || this);
+  const dbObj = changeSet || this.toDb(this);
   delete dbObj._id;
   delete dbObj.id;
 
@@ -957,8 +958,12 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
       .updateOne({_id: this.id}, {$set: dbObj}, options)
       .then((result) => {
         if (changeSet) {
-          for (const prop of Object.getOwnPropertyNames(changeSet)) {
-            this[prop] = changeSet[prop];
+          const modelMappedChangeSet = this.constructor.fromDb(changeSet, {strict: true});
+          for (const key of Object.getOwnPropertyNames(modelMappedChangeSet)) {
+            if (key === '_id' || key === 'id') {
+              continue;
+            }
+            this[key] = modelMappedChangeSet[key];
           }
         }
         return resolve(result);

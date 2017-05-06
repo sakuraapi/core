@@ -933,6 +933,94 @@ describe('core/Routable', function() {
 
     });
 
+    describe('PUT ./model', function() {
+      beforeEach(function(done) {
+        User
+          .removeAll({})
+          .then(() => {
+            const user = new User();
+            this.user1 = user;
+            return user.create();
+          })
+          .then(() => {
+            const user = new User();
+            user.firstName = 'Abraham';
+            user.lastName = 'Lincoln';
+            this.user2 = user;
+            return user.create();
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('returns 400 if the body is not an object', function(done) {
+        // Note: this test assumes that bodyparser middleware is installed... if it is, then there's a default
+        // top level error handler setup on the `.listen` method of SakuraApi that will catch a bodyparser parsing
+        // error and it should inject the 'invalid_body' error property.
+
+        request(sapi.app)
+          .put(this.uri(`/user/${this.user1.id.toString()}`))
+          .type('application/json')
+          .send(`{test:}`)
+          .expect(400)
+          .then((res) => {
+            expect(res.body.error).toBe('invalid_body');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('returns 404 if the document to be updated is not found', function(done) {
+        request(sapi.app)
+          .put(this.uri(`/user/aaa`))
+          .type('application/json')
+          .send(JSON.stringify({}))
+          .expect(404)
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('takes a json object and updates it', function(done) {
+        const obj = {
+          contact: {
+            mobile: '888',
+            phone: '777'
+          },
+          fn: 'Abe',
+          id: 1234321,
+          ln: 'Speed',
+          tall: true
+        };
+
+        request(sapi.app)
+          .put(this.uri(`/user/${this.user2.id.toString()}`))
+          .type('application/json')
+          .send(JSON.stringify(obj))
+          .expect(200)
+          .then((res) => {
+            expect(res.body.modified).toBe(1, 'One record should have been modified');
+          })
+          .then(() => {
+            return User
+              .getCollection()
+              .find({_id: this.user2.id})
+              .next();
+          })
+          .then((updated: any) => {
+            expect(updated.fname).toBe(obj.fn);
+            expect(updated.lname).toBe(obj.ln);
+            expect(updated.contact).toBeDefined('contact should exist after update');
+            expect(updated.contact.phone).toBe(obj.contact.phone);
+            expect(updated.contact.mobile).toBe(obj.contact.mobile);
+            expect(updated._id.toString()).toBe(this.user2.id.toString());
+            expect(updated.tall).toBeUndefined('arbitrary fields should not be included in the changeset');
+          })
+          .then(done)
+          .catch(done.fail);
+
+      });
+    });
+
     describe('DELETE ./mode/:id', function() {
 
       beforeEach(function(done) {

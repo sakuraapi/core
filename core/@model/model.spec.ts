@@ -577,15 +577,12 @@ describe('@Model', function() {
                 }
               })
               class PartialUpdateTest extends SakuraApiModel {
-                @Db({
-                  field: 'fn'
-                })
+                @Db('fn')
                 firstName = 'George';
+
                 lastName = 'Washington';
-                @Db({
-                  field: 'pw',
-                  private: true
-                })
+
+                @Db({field: 'pw', private: true})
                 password = '';
               }
 
@@ -593,7 +590,7 @@ describe('@Model', function() {
                 const pud = new PartialUpdateTest();
 
                 const updateSet = {
-                  firstName: 'updated'
+                  fn: 'updated'
                 };
 
                 pud
@@ -605,7 +602,7 @@ describe('@Model', function() {
                   .then(() => pud.save(updateSet))
                   .then((result: UpdateWriteOpResult) => {
                     expect(result.modifiedCount).toBe(1);
-                    expect(pud.firstName).toBe(updateSet.firstName);
+                    expect(pud.firstName).toBe(updateSet.fn);
 
                     return pud
                       .getCollection()
@@ -617,7 +614,7 @@ describe('@Model', function() {
                     expect(updated._id instanceof ObjectID || updated._id.constructor.name === 'ObjectID')
                       .toBe(true);
                     expect(updated.fn).toBeDefined();
-                    expect(updated.fn).toBe(updateSet.firstName);
+                    expect(updated.fn).toBe(updateSet.fn);
                   })
                   .then(done)
                   .catch(done.fail);

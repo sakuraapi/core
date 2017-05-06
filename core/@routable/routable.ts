@@ -4,8 +4,10 @@ import {
 } from 'express';
 import {
   IDbGetParams,
-  modelSymbols
-} from '../@model/model';
+  modelSymbols,
+  SakuraApiModel
+} from '../@model';
+
 import {addDefaultInstanceMethods} from '../helpers/defaultMethodHelpers';
 import {SakuraApi} from '../sakura-api';
 import {SanitizeMongoDB as Sanitize} from '../security/mongo-db';
@@ -445,7 +447,49 @@ function getAllRouteHandler(req: Request, res: Response) {
 }
 
 function putRouteHandler(req: Request, res: Response) {
-  throw new Error('Not Implemented');
+  const id = req.params.id;
+
+  if (!req.body || typeof req.body !== 'object') {
+    res
+      .status(400)
+      .json({
+        body: req.body,
+        error: 'invalid_body'
+      });
+    return;
+  }
+
+  if (!id) {
+    res
+      .status(400)
+      .json({
+        body: req.body,
+        error: 'invalid_body_missing_id'
+      });
+    return;
+  }
+
+  const changeSet = this.fromJsonToDb(req.body);
+
+  this
+    .getById(id)
+    .then((obj: SakuraApiModel) => {
+      if (!obj) {
+        return res.sendStatus(404);
+      }
+      return obj.save(changeSet);
+    })
+    .then((result) => {
+      res
+        .status(200)
+        .json({
+          modified: result.result.nModified
+        });
+    })
+    .catch((err) => {
+      // TODO add some kind of error handling
+      console.log(err); // tslint:disable-line:no-console
+    });
 }
 
 function postRouteHandler(req: Request, res: Response) {
