@@ -65,12 +65,26 @@ export interface IRoutableOptions {
   baseUrl?: string;
 
   /**
-   * An array of strings of which APIs to expose. Valid values include:
+   * An array of strings for which APIs to expose. Valid values include:
+   * - get
+   * - getAll
+   * - put
+   * - post
+   * - delete
+   *
+   * If `suppressApi` is set, `exposeApi` will throw an error.
    */
   exposeApi?: HttpMethod[];
 
   /**
+   * An array of strings for which APIs to suppress. Valid values include:
+   * - get
+   * - getAll
+   * - put
+   * - post
+   * - delete
    *
+   * If `exposeApi` is set, `suppressApi` will throw an error.
    */
   suppressApi?: HttpMethod[];
 
@@ -307,7 +321,7 @@ function getRouteHandler(req: Request, res: Response) {
   const id = req.params.id;
 
   let project = null;
-  
+
   // validate query string parameters
   try {
     assignParameters.call(this);
