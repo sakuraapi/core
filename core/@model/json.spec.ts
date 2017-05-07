@@ -758,7 +758,8 @@ describe('@Json', function() {
 
       @Db('first')
       @Json('fn')
-      firstName: string = '';
+      firstName: string;
+
       @Json('ln')
       @Db()
       lastName: string = '';
@@ -769,10 +770,9 @@ describe('@Json', function() {
 
       @Db('cn2')
       contact2 = new Contact();
-
     }
 
-    it('a json object and returns an object literal with the json fields mapped to db fields', function() {
+    it('returns an object literal with json fields mapped to db fields', function() {
       const json = {
         ctac: {
           phone: '000'
@@ -783,10 +783,38 @@ describe('@Json', function() {
 
       const dbObj = ChangeSetTest.fromJsonToDb(json);
       expect(dbObj instanceof ChangeSetTest).toBe(false);
-      expect(dbObj.first).toBe(json.fn);
+      expect(dbObj.first).toBe(json.fn, 'should have been able to handle a property without any value');
       expect(dbObj.lastName).toBe(json.ln);
       expect(dbObj.cn).toBeDefined('contact should have been included');
       expect(dbObj.cn.p).toBe('000');
+    });
+
+    it('converts id to _id', function() {
+      const json = {
+        ctac: {
+          phone: '000'
+        },
+        fn: 'George',
+        ln: 'Washington',
+        id: new ObjectID().toString()
+      };
+
+      const dbObj = ChangeSetTest.fromJsonToDb(json);
+      expect(dbObj._id).toBe(json.id, 'json.id was not converted to _id');
+    });
+
+    it('converts id = 0 to _id', function() {
+      const json = {
+        ctac: {
+          phone: '000'
+        },
+        fn: 'George',
+        ln: 'Washington',
+        id: 0
+      };
+
+      const dbObj = ChangeSetTest.fromJsonToDb(json);
+      expect(dbObj._id).toBe(json.id, 'json.id was not converted to _id');
     });
 
     it(`handles properties accidentally defined like \`wrong: '123'\` instead of \`wrong = '123'\``, function() {

@@ -307,13 +307,15 @@ function getRouteHandler(req: Request, res: Response) {
   const id = req.params.id;
 
   let project = null;
-
+  
   // validate query string parameters
   try {
     assignParameters.call(this);
   } catch (err) {
     return;
   }
+
+  debug('sapi:Routable')(`getRouteHandler called with id:'${id}', fields:${JSON.stringify(project)}`);
 
   this
     .getById(id, project)
@@ -388,6 +390,8 @@ function getAllRouteHandler(req: Request, res: Response) {
   } catch (err) {
     return;
   }
+
+  debug('sapi:Routable')(`.getAllRouteHandler called with params: ${JSON.stringify(params)}`);
 
   this
     .get(params)
@@ -551,7 +555,9 @@ function sanitizedUserInput(res: Response, errMessage: string, fn: () => any) {
   try {
     fn();
   } catch (err) {
-    if (err instanceof SyntaxError && err.message && err.message.startsWith('Unexpected token')) {
+    if (err instanceof SyntaxError
+      && err.message
+      && (err.message.startsWith('Unexpected token') || err.message.startsWith('Unexpected end of JSON input'))) {
       res
         .status(400)
         .json({

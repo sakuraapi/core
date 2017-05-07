@@ -614,6 +614,20 @@ describe('core/Routable', function() {
             .catch(done.fail);
         });
 
+        it('returns 400 with invalid json for fields=', function(done) {
+
+          request(sapi.app)
+            .get(this.uri('/user?fields='))
+            .expect(400)
+            .then((res) => {
+              expect(res.body).toBeDefined('There should been a body returned with the error');
+              expect(res.body.error).toBe('invalid_fields_parameter');
+              expect(res.body.details).toBe('Unexpected end of JSON input');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
         it('returns results with excluded fields', function(done) {
           const fields = {
             ln: 0
@@ -823,6 +837,20 @@ describe('core/Routable', function() {
               expect(res.body).toBeDefined('There should been a body returned with the error');
               expect(res.body.error).toBe('invalid_fields_parameter');
               expect(res.body.details).toBe('Unexpected token b in JSON at position 1');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns 400 with invalid json for fields=', function(done) {
+
+          request(sapi.app)
+            .get(this.uri(`/user/${this.user1.id.toString()}?fields=`))
+            .expect(400)
+            .then((res) => {
+              expect(res.body).toBeDefined('There should been a body returned with the error');
+              expect(res.body.error).toBe('invalid_fields_parameter');
+              expect(res.body.details).toBe('Unexpected end of JSON input');
             })
             .then(done)
             .catch(done.fail);

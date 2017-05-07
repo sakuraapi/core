@@ -637,22 +637,32 @@ function fromJsonArray(json: object[], ...constructorArgs: any[]): object[] {
  */
 function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
   const modelName = this.name;
-  this.debug.normal(`.fromJsonAsChangeSet called, target '${modelName}'`);
+  this.debug.normal(`.fromJsonToDb called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
     return null;
   }
 
-  return mapJsonToDb(new this(...constructorArgs), json);
+  const result = mapJsonToDb(new this(...constructorArgs), json);
+
+  return result;
 
   //////////
   function mapJsonToDb(model, jsonSrc, result?) {
 
-    const dbByPropertyName = Reflect.getMetadata(dbSymbols.dbByPropertyName, model);
-    const jsonByPropertyName = Reflect.getMetadata(jsonSymbols.jsonByPropertyName, model);
+    const dbByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, model);
+    const jsonByPropertyName: Map<string, IJsonOptions> = Reflect.getMetadata(jsonSymbols.jsonByPropertyName, model);
 
+    const isRoot = !!result;
     result = result || {};
-    for (const key of Object.getOwnPropertyNames(model)) {
+
+    // map id to _id at root
+    if (jsonSrc && jsonSrc.id !== undefined && !isRoot) {
+      result._id = jsonSrc.id;
+    }
+
+    //for (const key of Object.getOwnPropertyNames(model)) {
+    for (const key of jsonByPropertyName.keys()) {
       const dbMeta = (dbByPropertyName) ? dbByPropertyName.get(key) : null;
       const jsonMeta = (jsonByPropertyName) ? jsonByPropertyName.get(key) : null;
 
