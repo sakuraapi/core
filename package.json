@@ -70,7 +70,6 @@
     "jasmine": "^2.6.0",
     "jasmine-spec-reporter": "^3.3.0",
     "nodemon": "^1.11.0",
-    "npm": "^4.5.0",
     "nsp": "^2.6.3",
     "source-map-support": "^0.4.14",
     "supertest": "^3.0.0",

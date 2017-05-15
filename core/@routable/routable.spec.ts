@@ -1,265 +1,317 @@
-import {ObjectID} from 'bson';
-import * as express from 'express';
-import * as request from 'supertest';
-import {sapi} from '../../spec/helpers/sakuraapi';
 import {
-  Db,
-  Json,
-  Model,
-  SakuraApiModel
-} from '../@model';
+  NextFunction,
+  Request,
+  Response
+} from 'express';
+import {Sapi} from '../../spec/helpers/sakuraapi';
 import {
   Routable,
   routableSymbols,
   Route
 } from './';
 
+import {ObjectID} from 'mongodb';
+import {
+  Db,
+  Json,
+  Model,
+  SakuraApiModel
+} from '../@model';
+
 import method = require('lodash/method');
 import before = require('lodash/before');
+import uuid = require('uuid/v4');
+import request = require('supertest');
 
 describe('core/Routable', function() {
+  describe('general functionality', function() {
+    const sapi = Sapi();
 
-  @Routable(sapi, {
-    baseUrl: 'test',
-    blackList: ['someBlacklistedMethod']
-  })
-  class Test {
+    describe('IRoutableOptions', function() {
 
-    constructor(public someProperty?: number) {
-    }
-
-    @Route({
-      method: 'get',
-      path: '/'
-    })
-    someMethod(req: express.Request, res: express.Response) {
-      res
-        .status(200)
-        .send({someMethodCalled: true});
-    }
-
-    @Route({
-      method: 'post',
-      path: 'someOtherMethod/'
-    })
-    someOtherMethod(req: express.Request, res: express.Response) {
-      res
-        .status(200)
-        .send({someOtherMethodCalled: true});
-    }
-
-    @Route({
-      method: 'post',
-      path: 'someBlacklistedMethod/'
-    })
-    someBlacklistedMethod(req: express.Request, res: express.Response) {
-      res
-        .status(200)
-        .send({someOtherMethodCalled: true});
-    }
-
-    @Route({
-      method: 'post',
-      path: 'methodStillWorks/'
-    })
-    methodStillWorks() {
-      return 'it works';
-    }
-
-    @Route()
-    emptyRouteDecorator() {
-
-    }
-  }
-
-  beforeEach(function() {
-    this.t = new Test(777);
-    this.sakuraApiClassRoutes = this.t[routableSymbols.sakuraApiClassRoutes];
-  });
-
-  describe('IRoutableOptions', function() {
-    it('add a baseUrl to the path of an @Route, if provided', function() {
-      expect(this.sakuraApiClassRoutes[0].path).toBe('/test');
-    });
-
-    it('ignore @Route methods that are listed in the @Routable(blacklist)', function() {
-      expect(this.sakuraApiClassRoutes).toBeDefined();
-      expect(this.sakuraApiClassRoutes.length).toBe(4);
-      let found = false;
-      this.sakuraApiClassRoutes.forEach((route) => {
-        found = route.method === 'someBlacklistedMethod';
-      });
-      expect(found)
-        .toBe(false);
-    });
-
-    it('handle the lack of a baseUrl gracefully', function() {
-      @Routable(sapi)
-      class Test2 {
-        @Route({
-          method: 'get',
-          path: '/'
+      it('add a baseUrl to the path of an @Route, if provided', function() {
+        @Routable(sapi, {
+          autoRoute: false,
+          baseUrl: 'coreRoutableAddBaseUrlTest'
         })
-        someMethodTest2(req: express.Request, res: express.Response) {
-          res
-            .status(200)
-            .send({someMethodCalled: true});
+        class CoreRoutableAddBaseUrlTest {
+          @Route()
+          aRouteMethod() {
+          }
         }
 
-        @Route({
-          method: 'get',
-          path: 'someOtherMethodTest2'
+        const router = new CoreRoutableAddBaseUrlTest();
+        const routes = router[routableSymbols.sakuraApiClassRoutes];
+        expect(routes).toBeDefined('@Routable class should have had route metadata');
+        expect(routes.length).toBe(1, 'There should have been one route defined');
+        expect(routes[0].path).toBe('/coreRoutableAddBaseUrlTest', 'baseUrl was not properly set by @Routable');
+      });
+
+      it('ignore @Route methods that are listed in the @Routable(blacklist)', function() {
+        @Routable(sapi, {
+          autoRoute: false,
+          blackList: ['bRouteMethod']
         })
-        someOtherMethodTest2(req: express.Request, res: express.Response) {
-          res
-            .status(200)
-            .send({someMethodCalled: true});
+        class CoreRoutableIgnoreRoutableBlacklisted {
+          @Route()
+          aRouteMethod() {
+          }
+
+          @Route()
+          bRouteMethod() {
+          }
+        }
+
+        const router = new CoreRoutableIgnoreRoutableBlacklisted();
+        const routes = router[routableSymbols.sakuraApiClassRoutes];
+        expect(routes).toBeDefined('@Routable class should have had route metadata');
+
+        let found = false;
+        for (const route of routes) {
+          found = route.method === 'bRouteMethod';
+        }
+
+        expect(found).toBeFalsy('black listed path should not have been included in the routes');
+      });
+
+      it('handle the lack of a baseUrl gracefully', function() {
+        @Routable(sapi, {autoRoute: false})
+        class CoreRoutableNoBaseMethodWorks {
+          @Route({
+            path: '/'
+          })
+          aRouteMethod() {
+          }
+
+          @Route({
+            path: 'bRouteMethod'
+          })
+          bRouteMethod() {
+          }
+        }
+
+        const router = new CoreRoutableNoBaseMethodWorks();
+        const routes = router[routableSymbols.sakuraApiClassRoutes];
+        expect(routes).toBeDefined('@Routable class should have had route metadata');
+        expect(routes.length).toBe(2, 'There should have been one route defined');
+        expect(routes[0].path).toBe('/', 'baseUrl was not properly set by @Routable');
+        expect(routes[1].path).toBe('/bRouteMethod', 'baseUrl was not properly set by @Routable');
+      });
+
+      it('suppress autoRouting if options.autoRoute = false', function(done) {
+        @Routable(sapi, {autoRoute: false})
+        class CoreRoutableSuppressRoutesWithAutoRouteFalse {
+          @Route({
+            path: 'autoRoutingFalseTest'
+          })
+          aRouteMethod(req, res) {
+            res.status(200);
+          }
+        }
+
+        sapi
+          .listen({bootMessage: ''})
+          .then(function() {
+            return request(sapi.app)
+              .get('/autoRoutingFalseTest')
+              .expect(404);
+          })
+          .then(() => sapi.close())
+          .then(done)
+          .catch(done.fail);
+      });
+    });
+
+    it('drops the traling / on a path', function() {
+      @Routable(sapi, {
+        autoRoute: false,
+        baseUrl: 'CoreRoutableTrailingSlashDropTest'
+
+      })
+      class CoreRoutableTrailingSlashDropTest {
+        @Route({
+          path: '/dropThatTrailingSlash/'
+        })
+        aRouteMethod() {
         }
       }
 
-      const t2 = new Test2();
-      expect(t2[routableSymbols.sakuraApiClassRoutes][0].path).toBe('/');
-      expect(t2[routableSymbols.sakuraApiClassRoutes][1].path).toBe('/someOtherMethodTest2');
+      const router = new CoreRoutableTrailingSlashDropTest();
+      const routes = router[routableSymbols.sakuraApiClassRoutes];
+      expect(routes).toBeDefined('@Routable class should have had route metadata');
+      expect(routes.length).toBe(1, 'There should have been one route defined');
+      expect(routes[0].path)
+        .toBe('/CoreRoutableTrailingSlashDropTest/dropThatTrailingSlash', 'trailing slash was not added');
     });
 
-    it('suppress autoRouting if options.autoRoute = false', function(done) {
-
+    it('adds the leading / on a path if its missing', function() {
       @Routable(sapi, {
-        autoRoute: false
+        autoRoute: false,
+        baseUrl: 'CoreRoutableTrailingSlashAddTest'
+
       })
-      class Test {
+      class CoreRoutableTrailingSlashAddTest {
         @Route({
-          path: 'autoRoutingFalseTest'
+          path: 'addThatTrailingSlash/'
         })
-        handle(req, res) {
-          res.status(200);
+        aRouteMethod() {
+        }
+      }
+
+      const router = new CoreRoutableTrailingSlashAddTest();
+      const routes = router[routableSymbols.sakuraApiClassRoutes];
+      expect(routes).toBeDefined('@Routable class should have had route metadata');
+      expect(routes.length).toBe(1, 'There should have been one route defined');
+      expect(routes[0].path)
+        .toBe('/CoreRoutableTrailingSlashAddTest/addThatTrailingSlash', 'trailing slash was not added');
+    });
+
+    it('reads metadata from @Route and properly injects sakuraApiClassRoutes[] into the @Routable class', function() {
+      @Routable(sapi, {
+        autoRoute: false,
+        baseUrl: 'CoreRoutableRoutesWork'
+      })
+      class CoreRoutableRoutesWork {
+        @Route({
+          method: 'get',
+          path: 'a'
+        })
+        aRouteMethod() {
+        }
+
+        @Route({
+          method: 'put',
+          path: 'b'
+        })
+        bRouteMethod() {
+        }
+      }
+
+      const router = new CoreRoutableRoutesWork();
+      const routes = router[routableSymbols.sakuraApiClassRoutes];
+      expect(routes).toBeDefined('@Routable class should have had route metadata');
+      expect(routes.length).toBe(2, 'There should have been one route defined');
+      expect(routes[0].path).toBe('/CoreRoutableRoutesWork/a');
+      expect(routes[1].path).toBe('/CoreRoutableRoutesWork/b');
+      expect(routes[0].method).toBe('aRouteMethod');
+      expect(routes[1].method).toBe('bRouteMethod');
+      expect(routes[0].httpMethod).toBe('get');
+      expect(routes[1].httpMethod).toBe('put');
+      expect(routes[0].name).toBe('CoreRoutableRoutesWork');
+      expect(routes[1].name).toBe('CoreRoutableRoutesWork');
+      expect(typeof routes[0].f).toBe('function');
+      expect(typeof routes[1].f).toBe('function');
+
+    });
+
+    it('properly passes the constructor parameters', function() {
+      @Routable(sapi, {autoRoute: false})
+      class CoreRoutableProxiedConstructorWorks {
+
+        constructor(public v: number) {
+        }
+
+        @Route({
+          method: 'get',
+          path: 'a'
+        })
+        aRouteMethod(req, res) {
+        }
+      }
+
+      const result = new CoreRoutableProxiedConstructorWorks(777);
+      expect(result.v).toBe(777, 'Constructor value was not passed to the instantiated object');
+    });
+
+    it('maintains the prototype chain', function() {
+      @Routable(sapi, {autoRoute: false})
+      class CoreRoutableInstanceOfWorks {
+
+        constructor(public v: number) {
+        }
+
+        @Route({
+          method: 'get',
+          path: 'a'
+        })
+        aRouteMethod(req, res) {
+        }
+      }
+
+      expect(new CoreRoutableInstanceOfWorks(777) instanceof CoreRoutableInstanceOfWorks)
+        .toBeTruthy('the prototype chain should have been maintained');
+    });
+
+    it('binds the instantiated class as the context of this for each route method', function() {
+      @Routable(sapi, {autoRoute: false})
+      class CoreRoutableContextOfRouteMethod {
+        someProperty = 'instance';
+
+        @Route()
+        someMethodTest4() {
+          return this.someProperty;
+        }
+      }
+
+      const obj = new CoreRoutableContextOfRouteMethod();
+
+      expect(obj.someMethodTest4()).toBe(obj.someProperty);
+      expect(obj[routableSymbols.sakuraApiClassRoutes][0].f()).toBe(obj.someProperty);
+    });
+
+    it('automatically instantiates its class and adds it to SakuraApi.route(...)', function(done) {
+      @Routable(sapi)
+      class CoreRouteAutoRouteTest {
+        @Route({
+          path: 'someMethodTest5'
+        })
+        someMethodTest5(req, res) {
+          res
+            .status(200)
+            .json({someMethodTest5: 'testRouterGet worked'});
+        }
+
+        @Route({
+          path: 'route/parameter/:test'
+        })
+        routeParameterTest(req: Request, res: Response) {
+          const test = req.params.test;
+
+          res
+            .status(200)
+            .json({result: test});
+        }
+
+        @Route({
+          path: 'route2/:parameter/test'
+        })
+        routeParameterTest2(req: Request, res: Response) {
+          const test = req.params.parameter;
+
+          res
+            .status(200)
+            .json({result: test});
         }
       }
 
       sapi
         .listen({bootMessage: ''})
-        .then(function() {
-          request(sapi.app)
-            .get('/autoRoutingFalseTest')
-            .expect(404)
-            .end(function(err, res) {
-              if (err) {
-                return done.fail(err);
-              }
-              sapi
-                .close()
-                .then(done)
-                .catch(done.fail);
-            });
+        .then(() => {
+          return request(sapi.app)
+            .get(this.uri('/someMethodTest5'))
+            .expect('Content-Type', /json/)
+            .expect('Content-Length', '42')
+            .expect('{"someMethodTest5":"testRouterGet worked"}')
+            .expect(200);
         })
+        .then(() => sapi.close())
+        .then(done)
         .catch(done.fail);
     });
   });
 
-  it('drops the traling / on a path', function() {
-    expect(this.sakuraApiClassRoutes[1].path).toBe('/test/someOtherMethod');
-  });
-
-  it('adds the leading / on a path if its missing', function() {
-    expect(this.sakuraApiClassRoutes[1].path).toBe('/test/someOtherMethod');
-  });
-
-  it('reads metadata from @Route and properly injects sakuraApiClassRoutes[] into the @Routable class', function() {
-    expect(this.sakuraApiClassRoutes).toBeDefined();
-    expect(this.sakuraApiClassRoutes.length).toBe(4);
-    expect(this.sakuraApiClassRoutes[0].path).toBe('/test');
-    expect(typeof this.sakuraApiClassRoutes[0].f).toBe('function');
-    expect(this.sakuraApiClassRoutes[0].httpMethod).toBe('get');
-    expect(this.sakuraApiClassRoutes[0].method).toBe('someMethod');
-    expect(this.sakuraApiClassRoutes[1].path).toBe('/test/someOtherMethod');
-    expect(typeof this.sakuraApiClassRoutes[1].f).toBe('function');
-    expect(this.sakuraApiClassRoutes[1].httpMethod).toBe('post');
-    expect(this.sakuraApiClassRoutes[1].method).toBe('someOtherMethod');
-  });
-
-  it('properly passes the constructor parameters', function() {
-    expect(this.t.someProperty).toBe(777);
-  });
-
-  it('maintains the prototype chain', function() {
-    expect(this.t instanceof Test).toBe(true);
-  });
-
-  it('binds the instantiated class as the context of this for each route method', function() {
-    @Routable(sapi)
-    class Test4 {
-      someProperty = 'instance';
-
-      @Route()
-      someMethodTest4() {
-        return this.someProperty;
-      }
-    }
-
-    const c = new Test4();
-
-    expect(c.someMethodTest4()).toBe(c.someProperty);
-    expect(c[routableSymbols.sakuraApiClassRoutes][0].f()).toBe(c.someProperty);
-  });
-
-  it('automatically instantiates its class and adds it to SakuraApi.instance.route(...)', function(done) {
-
-    @Routable(sapi)
-    class Test5 {
-
-      @Route({
-        path: 'someMethodTest5'
-      })
-      someMethodTest5(req, res) {
-        res
-          .status(200)
-          .json({someMethodTest5: 'testRouterGet worked'});
-      }
-
-      @Route({
-        path: 'route/parameter/:test'
-      })
-      routeParameterTest(req: express.Request, res: express.Response) {
-        const test = req.params.test;
-
-        res
-          .status(200)
-          .json({result: test});
-      }
-
-      @Route({
-        path: 'route2/:parameter/test'
-      })
-      routeParameterTest2(req: express.Request, res: express.Response) {
-        const test = req.params.parameter;
-
-        res
-          .status(200)
-          .json({result: test});
-      }
-
-    }
-
-    sapi
-      .listen({bootMessage: ''})
-      .then(() => {
-        request(sapi.app)
-          .get(this.uri('/someMethodTest5'))
-          .expect('Content-Type', /json/)
-          .expect('Content-Length', '42')
-          .expect('{"someMethodTest5":"testRouterGet worked"}')
-          .expect(200)
-          .end(function(err, res) {
-            (err)
-              ? done.fail(err)
-              : done();
-            return;
-          });
-      })
-      .catch(done.fail);
-  });
-
   describe('takes an @Model class in IRoutableOptions', function() {
+    const sapi = Sapi();
 
     class Contact {
       @Db()
@@ -322,14 +374,14 @@ describe('core/Routable', function() {
       }
     }
 
-    beforeEach(function(done) {
+    beforeAll(function(done) {
       sapi
         .listen({bootMessage: ''})
         .then(done)
         .catch(done.fail);
     });
 
-    afterEach(function(done) {
+    afterAll(function(done) {
       sapi
         .close()
         .then(done)
@@ -413,7 +465,8 @@ describe('core/Routable', function() {
         request(sapi.app)
           .get(this.uri('/testUserApi2'))
           .expect(200)
-          .end((err) => err ? done.fail(err) : done());
+          .then(done)
+          .catch(done.fail);
       });
     });
 
@@ -457,6 +510,7 @@ describe('core/Routable', function() {
       });
 
       it('returns all documents with all fields properly mapped by @Json', function(done) {
+
         request(sapi.app)
           .get(this.uri('/user'))
           .expect('Content-Type', /json/)
@@ -592,8 +646,8 @@ describe('core/Routable', function() {
           });
         });
 
-        xit('does not allow for NoSQL injection', function() {
-
+        it('does not allow for NoSQL injection', function() {
+          pending('not implemented');
         });
 
       });
@@ -601,7 +655,6 @@ describe('core/Routable', function() {
       describe('supports fields projection', function() {
 
         it('returns 400 with invalid json for fields parameter', function(done) {
-
           request(sapi.app)
             .get(this.uri('/user?fields={blah}'))
             .expect(400)
@@ -615,7 +668,6 @@ describe('core/Routable', function() {
         });
 
         it('returns 400 with invalid json for fields=', function(done) {
-
           request(sapi.app)
             .get(this.uri('/user?fields='))
             .expect(400)
@@ -829,7 +881,6 @@ describe('core/Routable', function() {
       describe('supports fields projection', function() {
 
         it('returns 400 with invalid json for fields parameter', function(done) {
-
           request(sapi.app)
             .get(this.uri(`/user/${this.user1.id.toString()}?fields={blah}`))
             .expect(400)
@@ -843,7 +894,6 @@ describe('core/Routable', function() {
         });
 
         it('returns 400 with invalid json for fields=', function(done) {
-
           request(sapi.app)
             .get(this.uri(`/user/${this.user1.id.toString()}?fields=`))
             .expect(400)
@@ -1045,12 +1095,10 @@ describe('core/Routable', function() {
           })
           .then(done)
           .catch(done.fail);
-
       });
     });
 
     describe('DELETE ./mode/:id', function() {
-
       beforeEach(function(done) {
         User
           .removeAll({})
@@ -1097,5 +1145,113 @@ describe('core/Routable', function() {
           .catch(done.fail);
       });
     });
+  });
+
+  describe('beforeAll handlers', function() {
+
+    const sapi = Sapi();
+
+    @Model(sapi, {
+      dbConfig: {
+        collection: 'users',
+        db: 'userDb'
+      }
+    })
+    class UserBeforeAllHandlers extends SakuraApiModel {
+      @Db() @Json()
+      firstName = 'George';
+      @Db() @Json()
+      lastName = 'Washington';
+      @Db() @Json()
+      handlerWasRightInstanceOf = false;
+      @Db() @Json()
+      order = '';
+    }
+
+    @Routable(sapi, {
+      beforeAll: [UserBeforeAllHandlersApi.beforeHandler, testHandler],
+      model: UserBeforeAllHandlers
+    })
+    class UserBeforeAllHandlersApi {
+      static beforeHandler(req: Request, res: Response, next: NextFunction): any {
+        req.body.firstName = 'Abe';
+        req.body.handlerWasRightInstanceOf = this instanceof UserBeforeAllHandlersApi;
+        req.body.order += '1';
+        next();
+      }
+    }
+
+    beforeAll(function(done) {
+      sapi
+        .listen({bootMessage: ''})
+        .then(() => UserBeforeAllHandlers.removeAll({}))
+        .then(done)
+        .catch(done.fail);
+    });
+
+    afterAll(function(done) {
+      sapi
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('run before each @Route method', function(done) {
+      request(sapi.app)
+        .post(this.uri('/userbeforeallhandlers'))
+        .type('application/json')
+        .send({
+          firstName: 'Ben',
+          lastName: 'Franklin'
+        })
+        .expect(200)
+        .then((res) => {
+          return UserBeforeAllHandlers
+            .getCollection()
+            .find({_id: new ObjectID(res.body.id)})
+            .next();
+        })
+        .then((res: any) => {
+          expect(res.firstName).toBe('Abe');
+          expect(res.lastName).toBe('Lincoln');
+          expect(res.handlerWasRightInstanceOf).toBeTruthy('UserBeforeAllHandlersApi.beforeHandler should have set' +
+            'this value to true if the handler was bound to the proper context (the handler\'s @Routable class)');
+        })
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('run in the correct order', function(done) {
+      request(sapi.app)
+        .post(this.uri('/userbeforeallhandlers'))
+        .type('application/json')
+        .send({
+          firstName: 'Ben',
+          lastName: 'Franklin',
+          order: '0'
+        })
+        .expect(200)
+        .then((res) => {
+          return UserBeforeAllHandlers
+            .getCollection()
+            .find({_id: new ObjectID(res.body.id)})
+            .next();
+        })
+        .then((res: any) => {
+          expect(res.order).toBe('012', 'The beforeAll handlers have run out of order');
+        })
+        .then(done)
+        .catch(done.fail);
+    });
+
+    function testHandler(req: Request, res: Response, next: NextFunction) {
+      req.body.lastName = 'Lincoln';
+      req.body.order += '2';
+      next();
+    }
+  });
+
+  describe('afterAll handlers', function() {
+    pending('not implemented yet');
   });
 });

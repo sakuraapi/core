@@ -8,12 +8,14 @@ import {
 } from './@routable/';
 import {MongoClient} from 'mongodb';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
-import {sapi} from '../spec/helpers/sakuraapi';
+import {Sapi} from '../spec/helpers/sakuraapi';
 
 import * as request from 'supertest';
 import Spy = jasmine.Spy;
 
 describe('core/SakuraApi', function() {
+  const sapi = Sapi();
+
   @Routable(sapi)
   class RoutableTest {
     response = 'testRouterGet worked';
@@ -107,11 +109,11 @@ describe('core/SakuraApi', function() {
             .expect('Content-Length', '14')
             .expect('{"result":778}')
             .expect(200)
-            .end(function(err, res) {
-              if (err) {
-                return done.fail(err);
-              }
-              done();
+            .then(() => {
+              sak
+                .close()
+                .then(done)
+                .catch(done.fail);
             });
         })
         .catch(done.fail);
@@ -127,12 +129,14 @@ describe('core/SakuraApi', function() {
           expect(sapi.server.listen).toHaveBeenCalledTimes(1);
           expect(sapi.port).toBeGreaterThanOrEqual(1000);
           expect(sapi.address).toEqual('127.0.0.1');
-          done();
         })
-        .catch((err) => {
-          expect(err).toBeUndefined();
-          done();
-        });
+        .then(() => {
+          sapi
+            .close()
+            .then(done)
+            .catch(done.fail);
+        })
+        .catch(done.fail);
     });
 
     it('sets the port, when provided', function(done) {
@@ -144,7 +148,12 @@ describe('core/SakuraApi', function() {
           expect(sapi.port).toEqual(this.config.port);
           expect(sapi.server.listening).toEqual(true);
           expect(sapi.server.address().port).toEqual(this.config.port);
-          done();
+        })
+        .then(() => {
+          sapi
+            .close()
+            .then(done)
+            .catch(done.fail);
         })
         .catch(done.fail);
     });
@@ -158,7 +167,12 @@ describe('core/SakuraApi', function() {
           expect(sapi.port).toEqual(this.config.port);
           expect(sapi.server.listening).toEqual(true);
           expect(sapi.server.address().address).toEqual('127.0.0.1');
-          done();
+        })
+        .then(() => {
+          sapi
+            .close()
+            .then(done)
+            .catch(done.fail);
         })
         .catch(done.fail);
     });
@@ -167,6 +181,7 @@ describe('core/SakuraApi', function() {
       sapi
         .listen(this.config)
         .then(() => {
+          // setup middleware
           sapi
             .app
             .get('/middleWareTest', function(req, res) {
@@ -175,18 +190,20 @@ describe('core/SakuraApi', function() {
                 .json({isTest: true});
             });
 
+          // test it
           request(sapi.app)
             .get('/middleWareTest')
             .expect('Content-Type', /json/)
             .expect('Content-Length', '15')
             .expect('{"isTest":true}')
             .expect(200)
-            .end(function(err, res) {
-              if (err) {
-                return done.fail(err);
-              }
-              done();
-            });
+            .then(() => {
+              sapi
+                .close()
+                .then(done)
+                .catch(done.fail);
+            })
+            .catch(done.fail);
         })
         .catch(done.fail);
     });
@@ -198,7 +215,7 @@ describe('core/SakuraApi', function() {
         dbConnections: [
           {
             name: 'testDb',
-            url: `${this.mongoDbBaseUri}/testDb`
+            url: `${this.mongoDbBaseUri(sapi)}/testDb`
           }
         ]
       });
@@ -220,13 +237,9 @@ describe('core/SakuraApi', function() {
             .expect('Content-Length', '15')
             .expect('{"isTest":true}')
             .expect(200)
-            .end((err, res) => {
-              if (err) {
-                return done.fail(err);
-              }
+            .then(() => {
+              expect(MongoClient.connect).toHaveBeenCalledTimes(1);
 
-              expect(MongoClient.connect)
-                .toHaveBeenCalledTimes(1);
               sapi
                 .dbConnections
                 .getDb('testDb')
@@ -234,10 +247,16 @@ describe('core/SakuraApi', function() {
                 .insertOne({someValue: 777})
                 .then((results) => {
                   expect(results.insertedCount).toBe(1);
-                  done();
                 })
-                .catch(done.fail);
-            });
+                .then(() => {
+                  sapi
+                    .close()
+                    .then(done)
+                    .catch(done.fail);
+                })
+                .catch(done.fail)
+            })
+            .catch(done.fail)
         })
         .catch(done.fail);
     });
@@ -274,12 +293,13 @@ describe('core/SakuraApi', function() {
             .expect('Content-Length', '40')
             .expect('{"testRouterGet":"testRouterGet worked"}')
             .expect(200)
-            .end(function(err, res) {
-              if (err) {
-                return done.fail(err);
-              }
-              done();
-            });
+            .then(() => {
+              sapi
+                .close()
+                .then(done)
+                .catch(done.fail);
+            })
+            .catch(done.fail);
         })
         .catch(done.fail);
     });

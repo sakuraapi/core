@@ -8,9 +8,11 @@ import {Model} from './model';
 import {ObjectID} from 'mongodb';
 import {SakuraApiModel} from './sakura-api-model';
 
-import {sapi} from '../../spec/helpers/sakuraapi';
+import {Sapi} from '../../spec/helpers/sakuraapi';
 
 describe('@Db', function() {
+
+  const sapi = Sapi();
 
   it('takes a string for the fieldname or an IDbOptions if other options are needed', function() {
     class DbTestStringField {
@@ -384,7 +386,12 @@ describe('@Db', function() {
             return this.user.create();
           })
           .then(() => sapi.listen({bootMessage: ''}))
-          .then(done)
+          .then(() => {
+            sapi
+              .close()
+              .then(done)
+              .catch(done.fail);
+          })
           .catch(done.fail);
       });
 

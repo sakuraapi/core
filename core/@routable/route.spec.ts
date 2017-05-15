@@ -6,18 +6,20 @@ import {
   Route
 } from './';
 
-import {sapi} from '../../spec/helpers/sakuraapi';
+import {Sapi} from '../../spec/helpers/sakuraapi';
 
 import method = require('lodash/method');
 import before = require('lodash/before');
 
 describe('core/Route', function() {
+  const sapi = Sapi();
 
   @Routable(sapi, {
-    baseUrl: 'test',
+    autoRoute: false,
+    baseUrl: 'testCoreRoute',
     blackList: ['someBlacklistedMethod']
   })
-  class Test {
+  class TestCoreRoute {
 
     constructor(public someProperty?: number) {
     }
@@ -67,7 +69,7 @@ describe('core/Route', function() {
   }
 
   beforeEach(function() {
-    this.t = new Test(777);
+    this.t = new TestCoreRoute(777);
     this.sakuraApiClassRoutes = this.t[routableSymbols.sakuraApiClassRoutes];
   });
 
@@ -75,7 +77,7 @@ describe('core/Route', function() {
     // if these expectations pass, the blackList was properly defaulted to false since
     // the route wouldn't be in sakuraApiClassRoutes if blackList had been true.
     expect(this.sakuraApiClassRoutes.length).toBe(4);
-    expect(this.sakuraApiClassRoutes[3].path).toBe('/test');
+    expect(this.sakuraApiClassRoutes[3].path).toBe('/testCoreRoute');
     expect(this.sakuraApiClassRoutes[3].httpMethod).toBe('get');
     expect(this.sakuraApiClassRoutes[3].method).toBe('emptyRouteDecorator');
   });
@@ -115,29 +117,48 @@ describe('core/Route', function() {
 
   describe('handles route parameters', function() {
 
-    afterEach(function(done) {
-      sapi
-        .close()
-        .then(done)
-        .catch(done.fail);
-    });
+    @Routable(sapi, {
+      baseUrl: 'handlesRouteParamtersTest'
+    })
+    class HandlesRouteParamtersTest {
+      @Route({
+        method: 'get',
+        path: '/route/parameter/:id'
+      })
+      testA(req, res) {
+        res
+          .status(200)
+          .json({result: req.params.id.toString()});
+      }
+
+      @Route({
+        method: 'get',
+        path: '/route2/:id/test'
+      })
+      testB(req, res) {
+        res
+          .status(200)
+          .json({result: req.params.id.toString()});
+      }
+    }
 
     it('at the end of the path', function(done) {
       sapi
         .listen({bootMessage: ''})
         .then(() => {
           request(sapi.app)
-            .get(this.uri('/route/parameter/777'))
+            .get(this.uri('/handlesRouteParamtersTest/route/parameter/777'))
             .expect('Content-Type', /json/)
             .expect('Content-Length', '16')
             .expect('{"result":"777"}')
             .expect(200)
-            .end(function(err, res) {
-              if (err) {
-                return done.fail(err);
-              }
-              done();
-            });
+            .then(() => {
+              sapi
+                .close()
+                .then(done)
+                .catch(done.fail);
+            })
+            .catch(done.fail);
         })
         .catch(done.fail);
     });
@@ -147,17 +168,18 @@ describe('core/Route', function() {
         .listen({bootMessage: ''})
         .then(() => {
           request(sapi.app)
-            .get(this.uri('/route2/888/test'))
+            .get(this.uri('/handlesRouteParamtersTest/route2/888/test'))
             .expect('Content-Type', /json/)
             .expect('Content-Length', '16')
             .expect('{"result":"888"}')
             .expect(200)
-            .end(function(err, res) {
-              if (err) {
-                return done.fail(err);
-              }
-              done();
-            });
+            .then(() => {
+              sapi
+                .close()
+                .then(done)
+                .catch(done.fail);
+            })
+            .catch(done.fail);
         })
         .catch(done.fail);
     });

@@ -1,11 +1,15 @@
-import {Json} from './json';
-import {Model} from './model';
-import {Private} from './private';
-import {SakuraApiModel} from './sakura-api-model';
+import {
+  Json,
+  Model,
+  Private,
+  SakuraApiModel
+} from './';
 
-import {sapi} from '../../spec/helpers/sakuraapi';
+import {Sapi} from '../../spec/helpers/sakuraapi';
 
 describe('@Private', function() {
+  const sapi = Sapi();
+
   @Model(sapi)
   class Test implements SakuraApiModel {
 
