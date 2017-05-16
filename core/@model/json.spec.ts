@@ -7,9 +7,11 @@ import {
 } from './model';
 import {SakuraApiModel} from './sakura-api-model';
 
-import {sapi} from '../../spec/helpers/sakuraapi';
+import {Sapi} from '../../spec/helpers/sakuraapi';
 
 describe('@Json', function() {
+
+  const sapi = Sapi();
 
   @Model(sapi, {
     dbConfig: {
@@ -795,8 +797,8 @@ describe('@Json', function() {
           phone: '000'
         },
         fn: 'George',
-        ln: 'Washington',
-        id: new ObjectID().toString()
+        id: new ObjectID().toString(),
+        ln: 'Washington'
       };
 
       const dbObj = ChangeSetTest.fromJsonToDb(json);
@@ -809,8 +811,8 @@ describe('@Json', function() {
           phone: '000'
         },
         fn: 'George',
-        ln: 'Washington',
-        id: 0
+        id: 0,
+        ln: 'Washington'
       };
 
       const dbObj = ChangeSetTest.fromJsonToDb(json);

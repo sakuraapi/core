@@ -16,9 +16,11 @@ import {
   UpdateWriteOpResult
 } from 'mongodb';
 
-import {sapi} from '../../spec/helpers/sakuraapi';
+import {Sapi} from '../../spec/helpers/sakuraapi';
 
 describe('@Model', function() {
+
+  const sapi = Sapi();
 
   @Model(sapi)
   class Test extends SakuraApiModel {

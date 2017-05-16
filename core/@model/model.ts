@@ -643,9 +643,7 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
     return null;
   }
 
-  const result = mapJsonToDb(new this(...constructorArgs), json);
-
-  return result;
+  return mapJsonToDb(new this(...constructorArgs), json);
 
   //////////
   function mapJsonToDb(model, jsonSrc, result?) {
@@ -661,7 +659,6 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
       result._id = jsonSrc.id;
     }
 
-    //for (const key of Object.getOwnPropertyNames(model)) {
     for (const key of jsonByPropertyName.keys()) {
       const dbMeta = (dbByPropertyName) ? dbByPropertyName.get(key) : null;
       const jsonMeta = (jsonByPropertyName) ? jsonByPropertyName.get(key) : null;

@@ -1,4 +1,6 @@
 import {
+  Handler,
+  NextFunction,
   Request,
   Response
 } from 'express';
@@ -7,14 +9,12 @@ import {
   modelSymbols,
   SakuraApiModel
 } from '../@model';
-
 import {addDefaultInstanceMethods} from '../helpers/defaultMethodHelpers';
 import {SakuraApi} from '../sakura-api';
 import {SanitizeMongoDB as Sanitize} from '../security/mongo-db';
 
 import * as path from 'path';
 import 'reflect-metadata';
-
 import debug = require('debug');
 
 export type HttpMethod = 'get' | 'getAll' | 'put' | 'post' | 'delete';
@@ -93,17 +93,32 @@ export interface IRoutableOptions {
    * route handlers.
    */
   model?: object;
+
+  /**
+   * Takes an array of Express Handlers or a single Express Handler. The handler(s) will be called before
+   * each `@Route` method in the `@Routable` class.
+   */
+  beforeAll?: Handler[] | Handler;
+
+  /**
+   * Takes an array of Express Handlers or a single Express Handler. The handler(s) will be called after
+   * each `@Route` method in the `@Routable` class.
+   */
+  afterAll?: Handler[] | Handler;
 }
 
 /**
  * Internal to SakuraApi's [[Routable]]. This can change without notice since it's not an official part of the API.
  */
-interface ISakuraApiClassRoutes {
-  path: string;       // the class's baseUrl (if any) + the route's path
-                      // tslint:disable-next-line: variable-name
-  f: (any) => any;    // the function that handles the route in Express.use
-  httpMethod: string; // the http verb (e.g., GET, PUT, POST, DELETE)
-  method: string;     // the classes's method name that handles the route (the name of f)
+export interface ISakuraApiClassRoutes {
+  path: string;                    // the class's baseUrl (if any) + the route's path
+                                   // tslint:disable-next-line: variable-name
+  f: Handler;                      // the function that handles the route in Express.use
+  httpMethod: string;              // the http verb (e.g., GET, PUT, POST, DELETE)
+  method: string;                  // the classes's method name that handles the route (the name of f)
+  beforeAll: Handler[] | Handler;  // route handlers that run before all routes for an @Routable Class
+  afterAll: Handler[] | Handler;   // route handlers that run after all routes for an @Routable Class
+  name: string;                    // the name of the constructor that added this route
 }
 
 /**
@@ -196,10 +211,14 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
 
         const c = Reflect.construct(t, args, nt);
 
-        const metaData: ISakuraApiClassRoutes[] = [];
+        const routes: ISakuraApiClassRoutes[] = [];
+
+        const beforeAll = bindHandlers(c, options.beforeAll);
+        const afterAll = bindHandlers(c, options.afterAll);
 
         // add routes decorated with @Route (integrator's custom routes)
         for (const methodName of Object.getOwnPropertyNames(Object.getPrototypeOf(c))) {
+
           if (!Reflect.getMetadata(`hasRoute.${methodName}`, c)) {
             continue;
           }
@@ -216,28 +235,31 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
             endPoint = '/' + endPoint;
           }
 
-          const data: ISakuraApiClassRoutes = {
+          const routerData: ISakuraApiClassRoutes = {
+            afterAll,
+            beforeAll,
             f: Reflect
               .getMetadata(`function.${methodName}`, c)
               .bind(c),
             httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, c),
             method: methodName,
+            name: target.name,
             path: endPoint
           };
 
-          metaData.push(data);
+          routes.push(routerData);
         }
 
         // add generated routes for Model
         if (options.model) {
-          addRouteHandler('get', getRouteHandler, c, metaData);
-          addRouteHandler('getAll', getAllRouteHandler, c, metaData);
-          addRouteHandler('put', putRouteHandler, c, metaData);
-          addRouteHandler('post', postRouteHandler, c, metaData);
-          addRouteHandler('delete', deleteRouteHandler, c, metaData);
+          addRouteHandler('get', getRouteHandler, routes, beforeAll, afterAll);
+          addRouteHandler('getAll', getAllRouteHandler, routes, beforeAll, afterAll);
+          addRouteHandler('put', putRouteHandler, routes, beforeAll, afterAll);
+          addRouteHandler('post', postRouteHandler, routes, beforeAll, afterAll);
+          addRouteHandler('delete', deleteRouteHandler, routes, beforeAll, afterAll);
         }
 
-        c[routableSymbols.sakuraApiClassRoutes] = metaData;
+        c[routableSymbols.sakuraApiClassRoutes] = routes;
 
         if (options.autoRoute) {
           sapi.route(c);
@@ -266,42 +288,71 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
 
     return newConstructor;
 
-    /////
+    //////////
     function addRouteHandler(method: HttpMethod,
-                             handler: (req: Express.Request, res: Express.Response) => void,
-                             c: any,
-                             metaData: ISakuraApiClassRoutes[]) {
+                             handler: Handler,
+                             routes: ISakuraApiClassRoutes[],
+                             beforeAll: Handler[],
+                             afterAll: Handler[]) {
 
       if (!options.suppressApi && !options.exposeApi) {
-        metaData.push(generateRoute(method, handler, c));
+        routes.push(generateRoute(method, handler, beforeAll, afterAll));
+        return;
       }
 
       if (options.suppressApi && options.suppressApi.indexOf(method) > -1) {
-        metaData.push(generateRoute(method, handler, c));
+        routes.push(generateRoute(method, handler, beforeAll, afterAll));
+        return;
       }
 
       if (options.exposeApi && options.exposeApi.indexOf(method) > -1) {
-        metaData.push(generateRoute(method, handler, c));
+        routes.push(generateRoute(method, handler, beforeAll, afterAll));
+        return;
       }
     }
 
     function generateRoute(method: HttpMethod,
-                           handler: (req: Express.Request, res: Express.Response) => void,
-                           c: any): ISakuraApiClassRoutes {
+                           handler: Handler,
+                           beforeAll: Handler[],
+                           afterAll: Handler[]): ISakuraApiClassRoutes {
 
       const path = ((method === 'get' || method === 'put' || method === 'delete')
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
-      const data: ISakuraApiClassRoutes = {
+      const routerData: ISakuraApiClassRoutes = {
+        afterAll,
+        beforeAll,
         f: handler.bind(options.model),
         httpMethod: httpMethodMap[method],
         method: handler.name,
-        path
+        path,
+        name: target.name
       };
 
+      // add the method to the @Routable class
       addDefaultInstanceMethods(newConstructor, handler.name, handler);
-      return data;
+      return routerData;
+    }
+
+    // Make sure that each handler is bound to the context of the @Routable class - this makes it possible to have
+    // static methods in the @Routable class that still have access to the `this` context of the instsantiated
+    // @Routable class
+    function bindHandlers(c: any, handlers: Handler[] | Handler): Handler[] {
+
+      if (!handlers) {
+        return;
+      }
+
+      if (!Array.isArray(handlers)) {
+        handlers = [handlers];
+      }
+
+      const boundHandlers = [];
+      for (const handler of handlers) {
+        boundHandlers.push(handler.bind(c));
+      }
+      return boundHandlers;
     }
   };
 }
@@ -389,7 +440,7 @@ function getRouteHandler(req: Request, res: Response) {
  * queries is a bad idea. If you want to do this, you'll have to implement your own route handler.
  */
 // tslint:enable:max-line-length
-function getAllRouteHandler(req: Request, res: Response) {
+function getAllRouteHandler(req: Request, res: Response, next: NextFunction) {
 
   const params: IDbGetParams = {
     filter: null,
@@ -402,7 +453,7 @@ function getAllRouteHandler(req: Request, res: Response) {
   try {
     assignParameters.call(this);
   } catch (err) {
-    return;
+    return next();
   }
 
   debug('sapi:Routable')(`.getAllRouteHandler called with params: ${JSON.stringify(params)}`);
@@ -420,10 +471,13 @@ function getAllRouteHandler(req: Request, res: Response) {
       res
         .status(200)
         .json(response);
+
+      next();
     })
     .catch((err) => {
       // TODO add logging system here
       console.log(err); // tslint:disable-line:no-console
+      next(err);
     });
 
   //////////
@@ -459,8 +513,6 @@ function getAllRouteHandler(req: Request, res: Response) {
         }
       });
     }
-
-    const limit = req.query.limit || null;
   }
 }
 
@@ -495,13 +547,14 @@ function putRouteHandler(req: Request, res: Response) {
       if (!obj) {
         return res.sendStatus(404);
       }
-      return obj.save(changeSet);
-    })
-    .then((result) => {
-      res
-        .status(200)
-        .json({
-          modified: result.result.nModified
+      obj
+        .save(changeSet)
+        .then((result) => {
+          res
+            .status(200)
+            .json({
+              modified: (result.result || {} as any).nModified
+            });
         });
     })
     .catch((err) => {
@@ -510,7 +563,7 @@ function putRouteHandler(req: Request, res: Response) {
     });
 }
 
-function postRouteHandler(req: Request, res: Response) {
+function postRouteHandler(req: Request, res: Response, next: NextFunction) {
 
   if (!req.body || typeof req.body !== 'object') {
     res
@@ -532,6 +585,8 @@ function postRouteHandler(req: Request, res: Response) {
           count: result.insertedCount,
           id: result.insertedId
         });
+
+      next();
     })
     .catch((err) => {
       // TODO add some kind of error handling

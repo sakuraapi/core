@@ -1,10 +1,15 @@
 import {MongoClient} from 'mongodb';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 
+import {Sapi} from '../spec/helpers/sakuraapi';
+
 describe('core/sakura-mongo-db', function() {
 
+  const sapi = Sapi();
+
   beforeEach(function() {
-    this.dbUrl = `${this.mongoDbBaseUri}/test`;
+
+    this.dbUrl = `${this.mongoDbBaseUri(sapi)}/test`;
     this.sapiDb = new SakuraMongoDbConnection();
   });
 
@@ -26,6 +31,7 @@ describe('core/sakura-mongo-db', function() {
 
   describe('connect', function() {
     it('registers a db and connects to it', function(done) {
+
       this
         .sapiDb
         .connect('test', this.dbUrl)
