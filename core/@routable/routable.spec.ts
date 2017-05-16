@@ -20,7 +20,6 @@ import {
 
 import method = require('lodash/method');
 import before = require('lodash/before');
-import uuid = require('uuid/v4');
 import request = require('supertest');
 
 describe('core/Routable', function() {
