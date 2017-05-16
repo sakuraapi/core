@@ -16,8 +16,8 @@ export interface IJsonOptions {
   model?: any;
 
   /**
-   * The json field name that is mapped to and from this property when marshalled to and from json with [[Model]].[[toJson]] or
-   * [[Model]].[[fromJson]].
+   * The json field name that is mapped to and from this property when marshalled to and from json with
+   * [[Model]].[[toJson]] or [[Model]].[[fromJson]].
    *
    * ### Example
    * <pre>
