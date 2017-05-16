@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SapiMissingIdErr | SakuraApi</title>
+	<title>IFromDbOptions | SakuraApi</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -54,13 +54,13 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_core__model_errors_.html">&quot;core/@model/errors&quot;</a>
+					<a href="../modules/_core__model_model_.html">&quot;core/@model/model&quot;</a>
 				</li>
 				<li>
-					<a href="_core__model_errors_.sapimissingiderr.html">SapiMissingIdErr</a>
+					<a href="_core__model_model_.ifromdboptions.html">IFromDbOptions</a>
 				</li>
 			</ul>
-			<h1>Class SapiMissingIdErr</h1>
+			<h1>Interface IFromDbOptions</h1>
 		</div>
 	</div>
 </header>
@@ -70,7 +70,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Thrown when an Id field is required by the database, but is missing.</p>
+						<p>Interface defining the valid properties for options passed to <a href="../modules/_core__model_model_.html#todb">toDb</a>.</p>
 					</div>
 				</div>
 			</section>
@@ -78,12 +78,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="tsd-signature-type">Error</span>
-						<ul class="tsd-hierarchy">
-							<li>
-								<span class="target">SapiMissingIdErr</span>
-							</li>
-						</ul>
+						<span class="target">IFromDbOptions</span>
 					</li>
 				</ul>
 			</section>
@@ -92,125 +87,47 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Constructors</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="_core__model_errors_.sapimissingiderr.html#constructor" class="tsd-kind-icon">constructor</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_core__model_errors_.sapimissingiderr.html#target" class="tsd-kind-icon">target</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><a href="_core__model_errors_.sapimissingiderr.html#error" class="tsd-kind-icon">Error</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static"><a href="_core__model_errors_.sapimissingiderr.html#message" class="tsd-kind-icon">message</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static"><a href="_core__model_errors_.sapimissingiderr.html#name" class="tsd-kind-icon">name</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited tsd-is-static"><a href="_core__model_errors_.sapimissingiderr.html#stack" class="tsd-kind-icon">stack</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_model_.ifromdboptions.html#constructorargs" class="tsd-kind-icon">constructor<wbr>Args</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_model_.ifromdboptions.html#strict" class="tsd-kind-icon">strict</a></li>
 							</ul>
 						</section>
 					</div>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Constructors</h2>
-				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
-					<a name="constructor" class="tsd-anchor"></a>
-					<h3>constructor</h3>
-					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">new <wbr>Sapi<wbr>Missing<wbr>IdErr<span class="tsd-signature-symbol">(</span>msg<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, target<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_core__model_errors_.sapimissingiderr.html" class="tsd-signature-type">SapiMissingIdErr</a></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/errors.ts#L23">core/@model/errors.ts:23</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>msg: <span class="tsd-signature-type">string</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<div class="lead">
-											<p>The message to be thrown.</p>
-										</div>
-									</div>
-								</li>
-								<li>
-									<h5>target: <span class="tsd-signature-type">any</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<div class="lead">
-											<p>The target that&#39;s throwing the error.</p>
-										</div>
-									</div>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="_core__model_errors_.sapimissingiderr.html" class="tsd-signature-type">SapiMissingIdErr</a></h4>
-						</li>
-					</ul>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="target" class="tsd-anchor"></a>
-					<h3>target</h3>
-					<div class="tsd-signature tsd-kind-icon">target<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="constructorargs" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> constructor<wbr>Args</h3>
+					<div class="tsd-signature tsd-kind-icon">constructor<wbr>Args<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/errors.ts#L29">core/@model/errors.ts:29</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L52">core/@model/model.ts:52</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The target that&#39;s throwing the error.</p>
+							<p>The array of parameters to be passed to the constructor of the Model</p>
 						</div>
 					</div>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-static">
-					<a name="error" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagStatic">Static</span> Error</h3>
-					<div class="tsd-signature tsd-kind-icon">Error<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ErrorConstructor</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="strict" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> strict</h3>
+					<div class="tsd-signature tsd-kind-icon">strict<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in node_modules/typedoc/node_modules/typescript/lib/lib.es6.d.ts:917</li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L57">core/@model/model.ts:57</a></li>
 						</ul>
 					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static">
-					<a name="message" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagStatic">Static</span> message</h3>
-					<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<p>Inherited from Error.message</p>
-						<ul>
-							<li>Defined in node_modules/typedoc/node_modules/typescript/lib/lib.es6.d.ts:907</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static">
-					<a name="name" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagStatic">Static</span> name</h3>
-					<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<p>Inherited from Error.name</p>
-						<ul>
-							<li>Defined in node_modules/typedoc/node_modules/typescript/lib/lib.es6.d.ts:906</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited tsd-is-static">
-					<a name="stack" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagStatic">Static</span> <span class="tsd-flag ts-flagOptional">Optional</span> stack</h3>
-					<div class="tsd-signature tsd-kind-icon">stack<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
-					<aside class="tsd-sources">
-						<p>Inherited from Error.stack</p>
-						<p>Overrides Error.stack</p>
-						<ul>
-							<li>Defined in node_modules/typedoc/node_modules/typescript/lib/lib.es6.d.ts:908</li>
-						</ul>
-					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If set to true, the resulting model will only have the properties for fields present in the document returned from
+							the database</p>
+						</div>
+					</div>
 				</section>
 			</section>
 		</div>
@@ -226,13 +143,13 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__model_db_.html">"core/@model/db"</a>
 					</li>
-					<li class="current tsd-kind-external-module">
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__model_errors_.html">"core/@model/errors"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__model_json_.html">"core/@model/json"</a>
 					</li>
-					<li class=" tsd-kind-external-module">
+					<li class="current tsd-kind-external-module">
 						<a href="../modules/_core__model_model_.html">"core/@model/model"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -263,39 +180,93 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="_core__model_errors_.sapidbformodelnotfound.html" class="tsd-kind-icon">Sapi<wbr>DbFor<wbr>Model<wbr>Not<wbr>Found</a>
-					</li>
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="_core__model_errors_.sapiinvalidmodelobject.html" class="tsd-kind-icon">Sapi<wbr>Invalid<wbr>Model<wbr>Object</a>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core__model_model_.idbgetparams.html" class="tsd-kind-icon">IDb<wbr>Get<wbr>Params</a>
 					</li>
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-class tsd-parent-kind-external-module">
-						<a href="_core__model_errors_.sapimissingiderr.html" class="tsd-kind-icon">Sapi<wbr>Missing<wbr>IdErr</a>
+					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core__model_model_.ifromdboptions.html" class="tsd-kind-icon">IFrom<wbr>DbOptions</a>
 						<ul>
-							<li class=" tsd-kind-constructor tsd-parent-kind-class">
-								<a href="_core__model_errors_.sapimissingiderr.html#constructor" class="tsd-kind-icon">constructor</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__model_model_.ifromdboptions.html#constructorargs" class="tsd-kind-icon">constructor<wbr>Args</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="_core__model_errors_.sapimissingiderr.html#target" class="tsd-kind-icon">target</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-static">
-								<a href="_core__model_errors_.sapimissingiderr.html#error" class="tsd-kind-icon">Error</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static">
-								<a href="_core__model_errors_.sapimissingiderr.html#message" class="tsd-kind-icon">message</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-static">
-								<a href="_core__model_errors_.sapimissingiderr.html#name" class="tsd-kind-icon">name</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited tsd-is-static">
-								<a href="_core__model_errors_.sapimissingiderr.html#stack" class="tsd-kind-icon">stack</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__model_model_.ifromdboptions.html#strict" class="tsd-kind-icon">strict</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core__model_model_.imodeloptions.html" class="tsd-kind-icon">IModel<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/_core__model_model_.html#model" class="tsd-kind-icon">Model</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#create" class="tsd-kind-icon">create</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#fromdb" class="tsd-kind-icon">from<wbr>Db</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#fromdbarray" class="tsd-kind-icon">from<wbr>DbArray</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#fromjson" class="tsd-kind-icon">from<wbr>Json</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#fromjsonarray" class="tsd-kind-icon">from<wbr>Json<wbr>Array</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#fromjsontodb" class="tsd-kind-icon">from<wbr>Json<wbr>ToDb</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#get" class="tsd-kind-icon">get</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#getbyid" class="tsd-kind-icon">get<wbr>ById</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#getcollection" class="tsd-kind-icon">get<wbr>Collection</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#getcursor" class="tsd-kind-icon">get<wbr>Cursor</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#getcursorbyid" class="tsd-kind-icon">get<wbr>Cursor<wbr>ById</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#getdb" class="tsd-kind-icon">get<wbr>Db</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#getone" class="tsd-kind-icon">get<wbr>One</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#remove" class="tsd-kind-icon">remove</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#removeall" class="tsd-kind-icon">remove<wbr>All</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#removebyid" class="tsd-kind-icon">remove<wbr>ById</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#save" class="tsd-kind-icon">save</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#todb" class="tsd-kind-icon">to<wbr>Db</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#tojson" class="tsd-kind-icon">to<wbr>Json</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__model_model_.html#tojsonstring" class="tsd-kind-icon">to<wbr>Json<wbr>String</a>
+					</li>
+					<li class=" tsd-kind-object-literal tsd-parent-kind-external-module">
+						<a href="../modules/_core__model_model_.html#modelsymbols" class="tsd-kind-icon">model<wbr>Symbols</a>
+					</li>
 				</ul>
 			</nav>
 		</div>

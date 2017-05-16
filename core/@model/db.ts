@@ -11,15 +11,12 @@ export const dbSymbols = {
 
 export interface IDbOptions {
   /**
-   * An optional constructor function (ES6 Class) that is used to instantiate a property if nothing
-   * comes back from the DB and if the property isn't assigned a default instance of that object
-   * upon construction.
+   * An optional constructor function (ES6 Class) that is used to instantiate the property.
    */
   model?: any;
 
   /**
-   * The name of the field in the database that is mapped to this property when retrieving this document from the
-   * database and persisting this document back to the database.
+   * The database field name that is mapped to and from this property by [[Model]].[[toDb]] and [[Model]].[[fromDb]].
    *
    * ### Example
    * <pre>
@@ -52,14 +49,14 @@ export interface IDbOptions {
    * </pre>
    *
    * Explanation: the `firstName` property will be mapped to the `firstName` property of a database document, but
-   * it will not be included in the output of `someModel.toJson()`. [[Model.modelsymbols]]
+   * it will not be included in the output of `someModel.toJson()`.
    */
   private?: boolean;
 }
 
 /**
  * @decorator `@Db` decorates fields in a class decorated by `@`[[Model]].
- * @param options Sets the database options for the property.
+ * @param dbOptions When a string is provided, this sets the [[IDbOptions.field]].
  * @returns Used by the framework to reflect on the `@Db` properties defined.
  */
 export function Db(dbOptions?: IDbOptions | string): (target: any, key: string) => void {

@@ -11,14 +11,13 @@ export const jsonSymbols = {
 export interface IJsonOptions {
 
   /**
-   * An optional constructor function (ES6 Class) that is used to instantiate a property if nothing
-   * is defined in the json object and if the property isn't assigned a default instance of that object
-   * upon construction.
+   * An optional constructor function (ES6 Class) that is used to instantiate the property.
    */
   model?: any;
 
   /**
-   * What this property should be called when marshalling it to or from a json object.
+   * The json field name that is mapped to and from this property when marshalled to and from json with [[Model]].[[toJson]] or
+   * [[Model]].[[fromJson]].
    *
    * ### Example
    * <pre>
@@ -39,11 +38,11 @@ export interface IJsonOptions {
 
 /**
  * Decorates properties in an `@`[[Model]] class to describe how a property will be marshaled to json
- * (`ModelObject.toJson()`) and from json (`modelObject.fromJson(json)`).
+ * ([[Model]].[[toJson]]) and from json ([[Model]].[[fromJson]]).
  *
  * ### Example
  * <pre>
- * import {Model, Json} from 'sakuraapi';
+ * import {Model, Json} from '@sakuraapi/api';
  * <span/>
  * <span>@</span>Model()
  * class User {
@@ -64,7 +63,7 @@ export interface IJsonOptions {
  *
  * And `User.fromJson(json)` will map the json object back to an instantiated `User`.
  *
- * @param fieldName The alias you want to use instead of the property name when marshalling to json.
+ * @param jsonOptions sets [[IJsonOptions.field]] when a string is passed.
  * @returns Returns a function that is used internally by the framework.
  */
 export function Json(jsonOptions?: IJsonOptions | string): (target: any, key: string) => void {

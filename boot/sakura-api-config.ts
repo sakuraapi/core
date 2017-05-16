@@ -38,12 +38,12 @@ export class SakuraApiConfig {
    *         {
    *           "name": "someDb1",
    *           "url": "mongodb://localhost:1234/somedb1",
-   *           "mongoClientOptions: {}
+   *           "mongoClientOptions": {}
    *         },
    *         {
    *           "name": "someDb2",
    *           "url": "mongodb://localhost:1234/somedb2",
-   *           "mongoClientOptions: {}
+   *           "mongoClientOptions": {}
    *         }
    *     ]
    * }

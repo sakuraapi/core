@@ -4,6 +4,11 @@
  * `dbConnections: [{name:''}]` array.
  */
 export class SapiDbForModelNotFound extends Error {
+
+  /**
+   * @param modelName
+   * @param dbName
+   */
   constructor(modelName: string, dbName: string) {
 
     super(`getDb for model '${modelName}' failed because database name '${dbName}'`
@@ -27,7 +32,14 @@ export class SapiMissingIdErr extends Error {
 
 }
 
+/**
+ * Thrown when provided a class that isn't decorated with `@`[[Model]].
+ */
 export class SapiInvalidModelObject extends Error {
+  /**
+   * @param msg The message to be thrown.
+   * @param target The target that's throwing the error.
+   */
   constructor(msg: string, target: any) {
     super(`${msg}; target ${(target) ? target.name || target.constructor.name : `${target}`}`);
   }

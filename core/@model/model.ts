@@ -131,6 +131,7 @@ export const modelSymbols = {
  *   * [[fromDbArray]]
  *   * [[fromJson]]
  *   * [[fromJsonArray]]
+ *   * [[fromJsonToDb]]
  *   * [[get]]
  *   * [[getById]]
  *   * [[getCursor]]
