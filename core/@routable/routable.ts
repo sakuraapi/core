@@ -103,6 +103,7 @@ export interface ISakuraApiClassRoutes {
   httpMethod: string;              // the http verb (e.g., GET, PUT, POST, DELETE)
   method: string;                  // the classes's method name that handles the route (the name of f)
   beforeAll: Handler[] | Handler;  // route handlers that run before all routes for an @Routable Class
+  afterAll: Handler[] | Handler;   // route handlers that run after all routes for an @Routable Class
   name: string;                    // the name of the constructor that added this route
 }
 
@@ -199,6 +200,7 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
         const routes: ISakuraApiClassRoutes[] = [];
 
         const beforeAll = bindHandlers(c, options.beforeAll);
+        const afterAll = bindHandlers(c, options.afterAll);
 
         // add routes decorated with @Route (integrator's custom routes)
         for (const methodName of Object.getOwnPropertyNames(Object.getPrototypeOf(c))) {
@@ -220,6 +222,7 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
           }
 
           const routerData: ISakuraApiClassRoutes = {
+            afterAll,
             beforeAll,
             f: Reflect
               .getMetadata(`function.${methodName}`, c)
@@ -235,11 +238,11 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
 
         // add generated routes for Model
         if (options.model) {
-          addRouteHandler('get', getRouteHandler, routes, beforeAll);
-          addRouteHandler('getAll', getAllRouteHandler, routes, beforeAll);
-          addRouteHandler('put', putRouteHandler, routes, beforeAll);
-          addRouteHandler('post', postRouteHandler, routes, beforeAll);
-          addRouteHandler('delete', deleteRouteHandler, routes, beforeAll);
+          addRouteHandler('get', getRouteHandler, routes, beforeAll, afterAll);
+          addRouteHandler('getAll', getAllRouteHandler, routes, beforeAll, afterAll);
+          addRouteHandler('put', putRouteHandler, routes, beforeAll, afterAll);
+          addRouteHandler('post', postRouteHandler, routes, beforeAll, afterAll);
+          addRouteHandler('delete', deleteRouteHandler, routes, beforeAll, afterAll);
         }
 
         c[routableSymbols.sakuraApiClassRoutes] = routes;
@@ -275,36 +278,41 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
     function addRouteHandler(method: HttpMethod,
                              handler: Handler,
                              routes: ISakuraApiClassRoutes[],
-                             beforeAll: Handler[]) {
+                             beforeAll: Handler[],
+                             afterAll: Handler[]) {
 
       if (!options.suppressApi && !options.exposeApi) {
-        routes.push(generateRoute(method, handler, beforeAll));
+        routes.push(generateRoute(method, handler, beforeAll, afterAll));
         return;
       }
 
       if (options.suppressApi && options.suppressApi.indexOf(method) > -1) {
-        routes.push(generateRoute(method, handler, beforeAll));
+        routes.push(generateRoute(method, handler, beforeAll, afterAll));
         return;
       }
 
       if (options.exposeApi && options.exposeApi.indexOf(method) > -1) {
-        routes.push(generateRoute(method, handler, beforeAll));
+        routes.push(generateRoute(method, handler, beforeAll, afterAll));
         return;
       }
     }
 
-    function generateRoute(method: HttpMethod, handler: Handler, beforeAll: Handler[]): ISakuraApiClassRoutes {
+    function generateRoute(method: HttpMethod,
+                           handler: Handler,
+                           beforeAll: Handler[],
+                           afterAll: Handler[]): ISakuraApiClassRoutes {
 
       const path = ((method === 'get' || method === 'put' || method === 'delete')
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
       const routerData: ISakuraApiClassRoutes = {
+        afterAll,
+        beforeAll,
         f: handler.bind(options.model),
         httpMethod: httpMethodMap[method],
         method: handler.name,
         path,
-        beforeAll,
         name: target.name
       };
 
@@ -525,13 +533,14 @@ function putRouteHandler(req: Request, res: Response) {
       if (!obj) {
         return res.sendStatus(404);
       }
-      return obj.save(changeSet);
-    })
-    .then((result) => {
-      res
-        .status(200)
-        .json({
-          modified: result.result.nModified
+      obj
+        .save(changeSet)
+        .then((result) => {
+          res
+            .status(200)
+            .json({
+              modified: (result.result || {} as any).nModified
+            });
         });
     })
     .catch((err) => {
@@ -540,7 +549,7 @@ function putRouteHandler(req: Request, res: Response) {
     });
 }
 
-function postRouteHandler(req: Request, res: Response) {
+function postRouteHandler(req: Request, res: Response, next: NextFunction) {
 
   if (!req.body || typeof req.body !== 'object') {
     res
@@ -562,6 +571,8 @@ function postRouteHandler(req: Request, res: Response) {
           count: result.insertedCount,
           id: result.insertedId
         });
+
+      next();
     })
     .catch((err) => {
       // TODO add some kind of error handling

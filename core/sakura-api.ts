@@ -274,8 +274,7 @@ export class SakuraApi {
 
         this.debug.normal(`.listen setting baseUri to ${this.baseUri}`);
         this.app.use(this.baseUri, function(req, res, next) {
-          // hook whatever the current router is
-          router(req, res, next);
+          router(req, res, next); // hook whatever the current router is
         });
 
         router = express.Router();
@@ -284,16 +283,22 @@ export class SakuraApi {
           let routeHandlers: Handler[] = [];
 
           if (route.beforeAll) {
-            routeHandlers = routeHandlers.concat(routeHandlers, route.beforeAll);
+            routeHandlers = routeHandlers.concat(route.beforeAll);
           }
 
           routeHandlers.push(route.f);
+
+          if (route.afterAll) {
+            routeHandlers = routeHandlers.concat(route.afterAll);
+          }
 
           router[route.httpMethod](route.path, routeHandlers);
         }
 
         if (this.lastErrorHandlers) {
-          //this.app.use(this.lastErrorHandlers);
+          for (let handler of this.lastErrorHandlers) {
+            this.app.use(handler);
+          }
         }
       }
 

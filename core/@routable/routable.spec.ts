@@ -647,7 +647,7 @@ describe('core/Routable', function() {
         });
 
         it('does not allow for NoSQL injection', function() {
-          pending('not implemented');
+          pending('not implemented: https://github.com/sakuraapi/api/issues/65');
         });
 
       });
@@ -1148,6 +1148,7 @@ describe('core/Routable', function() {
   });
 
   describe('beforeAll handlers', function() {
+    pending('Do not use, in development');
 
     const sapi = Sapi();
 
@@ -1252,6 +1253,73 @@ describe('core/Routable', function() {
   });
 
   describe('afterAll handlers', function() {
-    pending('not implemented yet');
+    pending('Do not use, in development');
+
+    const sapi = Sapi();
+
+    @Model(sapi, {
+      dbConfig: {
+        collection: 'users',
+        db: 'userDb'
+      }
+    })
+    class UserAfterAllHandlers extends SakuraApiModel {
+      @Db() @Json()
+      firstName = 'George';
+      @Db() @Json()
+      lastName = 'Washington';
+      @Db() @Json()
+      handlerWasRightInstanceOf = false;
+      @Db() @Json()
+      order = '1';
+    }
+
+    @Routable(sapi, {
+      afterAll: [UserAfterAllHandlersApi.afterHandler, testHandler],
+      model: UserAfterAllHandlers
+    })
+    class UserAfterAllHandlersApi {
+
+      static afterHandler(req: Request, res: Response, next: NextFunction): any {
+        next();
+      }
+    }
+
+    beforeAll(function(done) {
+      sapi
+        .listen({bootMessage: ''})
+        .then(() => UserAfterAllHandlers.removeAll({}))
+        .then(done)
+        .catch(done.fail);
+    });
+
+    afterAll(function(done) {
+      sapi
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('run after each @Route method', function(done) {
+
+      request(sapi.app)
+        .post(this.uri('/UserAfterAllHandlers'))
+        .type('application/json')
+        .send({
+          firstName: 'Ben',
+          lastName: 'Franklin'
+        })
+        .expect(200)
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('run in the correct order', function(done) {
+      pending('not implemented');
+    });
+
+    function testHandler(req: Request, res: Response, next: NextFunction) {
+      next();
+    }
   });
 });
