@@ -85,26 +85,30 @@ export class SakuraApiConfig {
 
     let config = {};
     let baseConfig = {};
-    let baseTsConfig = {};
+    let baseJsConfig = {};
 
     // environment.json
+    this.debug.normal(`loading environment.json`);
     try {
       baseConfig = JSON.parse(fs.readFileSync(path, {encoding: 'utf8'}));
+      this.debug.normal(`loaded environment.json`);
     } catch (err) {
       handleLoadError(err, path, false);
     }
 
     // environment.ts
-    let tsPath = changeFileExtension(path, 'ts');
+    let jsPath = changeFileExtension(path, 'js');
+    this.debug.normal(`loading ${jsPath}`);
     try {
-      baseTsConfig = require(`${process.cwd()}/${tsPath}`);
+      baseJsConfig = require(`${process.cwd()}/${jsPath}`);
+      this.debug.normal(`loaded ${jsPath}`);
     } catch (err) {
       handleLoadError(err, path, true);
     }
 
     let env = process.env.NODE_ENV;
     let envConfig = {};
-    let envTsConfig = {};
+    let envJsConfig = {};
     if (env && env.NODE_ENV !== '') {
       // environment.{env}.json
       let pathParts = path.split('/');
@@ -114,26 +118,30 @@ export class SakuraApiConfig {
       pathParts[pathParts.length - 1] = fileParts.join('.');
       path = pathParts.join('/');
 
+      this.debug.normal(`loading ${path}`);
       try {
         envConfig = JSON.parse(fs.readFileSync(path, {encoding: 'utf8'}));
+        this.debug.normal(`loaded ${path}`);
       } catch (err) {
         handleLoadError(err, path, true);
       }
 
-      path = changeFileExtension(path, 'ts');
+      path = changeFileExtension(path, 'js');
 
       // environment.{env}.ts
+      this.debug.normal(`loading ${process.cwd()}/${path}`);
       try {
-        envTsConfig = require(`${process.cwd()}/${path}`);
+        envJsConfig = require(`${process.cwd()}/${path}`);
+        this.debug.normal(`loaded ${process.cwd()}/${path}`);
       } catch (err) {
         handleLoadError(err, path, true);
       }
     }
 
-    _.merge(config, baseConfig, baseTsConfig, envConfig, envTsConfig, process.env);
+    _.merge(config, baseConfig, baseJsConfig, envConfig, envJsConfig, process.env);
     this.config = config;
 
-    this.debug.verbose('.load %O', config);
+    this.debug.verbose('.load:\n%O', config);
     return config;
 
     //////////

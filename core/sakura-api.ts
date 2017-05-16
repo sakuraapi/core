@@ -311,12 +311,19 @@ export class SakuraApi {
               return reject(err);
             }
 
-            let msg = listenProperties.bootMessage || (listenProperties.bootMessage === '')
-              ? ''
-              : `SakuraAPI started on: ${this.address}:${this.port}\n`;
+            if (listenProperties.bootMessage === undefined) {
+              console.log(`SakuraAPI started on: ${this.address}:${this.port}`.green);
+            } else {
+              let msg = (listenProperties.bootMessage === '')
+                ? false
+                : listenProperties.bootMessage;
 
-            process.stdout.write(`${msg}`.green);
-            this.debug.normal(`.listen server started '%s'`, msg);
+              if (msg) {
+                process.stdout.write(`${msg}`.green);
+              }
+            }
+
+            this.debug.normal(`.listen server started ${this.address}:${this.port}`);
             return resolve();
           });
       }
