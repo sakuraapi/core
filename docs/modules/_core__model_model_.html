@@ -71,6 +71,8 @@
 						<section class="tsd-index-section ">
 							<h3>Interfaces</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_core__model_model_.idbgetparams.html" class="tsd-kind-icon">IDb<wbr>Get<wbr>Params</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_core__model_model_.ifromdboptions.html" class="tsd-kind-icon">IFrom<wbr>DbOptions</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_core__model_model_.imodeloptions.html" class="tsd-kind-icon">IModel<wbr>Options</a></li>
 							</ul>
 						</section>
@@ -83,7 +85,7 @@
 								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_core__model_model_.html#fromdbarray" class="tsd-kind-icon">from<wbr>DbArray</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_core__model_model_.html#fromjson" class="tsd-kind-icon">from<wbr>Json</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_core__model_model_.html#fromjsonarray" class="tsd-kind-icon">from<wbr>Json<wbr>Array</a></li>
-								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_core__model_model_.html#fromjsonaschangeset" class="tsd-kind-icon">from<wbr>Json<wbr>AsChange<wbr>Set</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_core__model_model_.html#fromjsontodb" class="tsd-kind-icon">from<wbr>Json<wbr>ToDb</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_core__model_model_.html#get" class="tsd-kind-icon">get</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_core__model_model_.html#getbyid" class="tsd-kind-icon">get<wbr>ById</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_core__model_model_.html#getcollection" class="tsd-kind-icon">get<wbr>Collection</a></li>
@@ -115,13 +117,13 @@
 					<a name="model" class="tsd-anchor"></a>
 					<h3>Model</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
-						<li class="tsd-signature tsd-kind-icon">Model<span class="tsd-signature-symbol">(</span>modelOptions<span class="tsd-signature-symbol">?: </span><a href="../interfaces/_core__model_model_.imodeloptions.html" class="tsd-signature-type">IModelOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span></li>
+						<li class="tsd-signature tsd-kind-icon">Model<span class="tsd-signature-symbol">(</span>sapi<span class="tsd-signature-symbol">: </span><a href="../classes/_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a>, modelOptions<span class="tsd-signature-symbol">?: </span><a href="../interfaces/_core__model_model_.imodeloptions.html" class="tsd-signature-type">IModelOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L122">core/@model/model.ts:122</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L154">core/@model/model.ts:154</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -130,6 +132,8 @@
 								</div>
 								<h3 id="example">Example</h3>
 								<pre>
+import sapi from '../index'; // your app's reference to its instance of SakuraApi
+
 <span>@</span>Model()
 class User {
    firstName: string = '';
@@ -145,6 +149,7 @@ class User {
 											<li><a href="_core__model_model_.html#fromdbarray">fromDbArray</a></li>
 											<li><a href="_core__model_model_.html#fromjson">fromJson</a></li>
 											<li><a href="_core__model_model_.html#fromjsonarray">fromJsonArray</a></li>
+											<li><a href="_core__model_model_.html#fromjsontodb">fromJsonToDb</a></li>
 											<li><a href="_core__model_model_.html#get">get</a></li>
 											<li><a href="_core__model_model_.html#getbyid">getById</a></li>
 											<li><a href="_core__model_model_.html#getcursor">getCursor</a></li>
@@ -164,12 +169,15 @@ class User {
 										</ul>
 									</li>
 								</ul>
-								<p>Injected unctions can be changed to point to a custom function references without breaking SakuraApi. They&#39;re
+								<p>Injected functions can be changed to point to a custom function references without breaking SakuraApi. They&#39;re
 									mapped for the integrators convenience. If the integrator wants to actually change the underlying behavior that
 								SakuraApi uses, then the new function should be assigned to the appropriate symbol (<a href="_core__model_model_.html#modelsymbols">modelSymbols</a>).</p>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
+								<li>
+									<h5>sapi: <a href="../classes/_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a></h5>
+								</li>
 								<li>
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> modelOptions: <a href="../interfaces/_core__model_model_.imodeloptions.html" class="tsd-signature-type">IModelOptions</a></h5>
 								</li>
@@ -206,7 +214,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L280">core/@model/model.ts:280</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L329">core/@model/model.ts:329</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -237,13 +245,13 @@ class User {
 					<a name="fromdb" class="tsd-anchor"></a>
 					<h3>from<wbr>Db</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">from<wbr>Db<span class="tsd-signature-symbol">(</span>json<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span>, <span class="tsd-signature-symbol">...</span>constructorArgs<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></li>
+						<li class="tsd-signature tsd-kind-icon">from<wbr>Db<span class="tsd-signature-symbol">(</span>json<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/_core__model_model_.ifromdboptions.html" class="tsd-signature-type">IFromDbOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L314">core/@model/model.ts:314</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L363">core/@model/model.ts:363</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -257,15 +265,15 @@ class User {
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>json: <span class="tsd-signature-type">object</span></h5>
+									<h5>json: <span class="tsd-signature-type">any</span></h5>
 									<div class="tsd-comment tsd-typography">
 										<p>The document returned from the Db.</p>
 									</div>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>constructorArgs: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/_core__model_model_.ifromdboptions.html" class="tsd-signature-type">IFromDbOptions</a></h5>
 									<div class="tsd-comment tsd-typography">
-										<p>A variadic set of parameters that are passed to the constructor of the <a href="_core__model_model_.html#model">Model</a>&#39;s class.</p>
+										<p>An optional <a href="../interfaces/_core__model_model_.ifromdboptions.html">IFromDbOptions</a> object</p>
 									</div>
 								</li>
 							</ul>
@@ -279,13 +287,13 @@ class User {
 					<a name="fromdbarray" class="tsd-anchor"></a>
 					<h3>from<wbr>DbArray</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">from<wbr>DbArray<span class="tsd-signature-symbol">(</span>jsons<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span>, <span class="tsd-signature-symbol">...</span>constructorArgs<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></li>
+						<li class="tsd-signature tsd-kind-icon">from<wbr>DbArray<span class="tsd-signature-symbol">(</span>jsons<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span>, options<span class="tsd-signature-symbol">?: </span><a href="../interfaces/_core__model_model_.ifromdboptions.html" class="tsd-signature-type">IFromDbOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L358">core/@model/model.ts:358</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L495">core/@model/model.ts:495</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -305,11 +313,7 @@ class User {
 									</div>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>constructorArgs: <span class="tsd-signature-type">Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>A variadic set of parameters that are passed to the constructor of the <a href="_core__model_model_.html#model">Model</a>&#39;s class.
-										All of the resulting constructed objects will share the same constructor parameters.</p>
-									</div>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <a href="../interfaces/_core__model_model_.ifromdboptions.html" class="tsd-signature-type">IFromDbOptions</a></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h4>
@@ -328,7 +332,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L384">core/@model/model.ts:384</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L521">core/@model/model.ts:521</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -370,7 +374,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L404">core/@model/model.ts:404</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L617">core/@model/model.ts:617</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -403,44 +407,42 @@ class User {
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-					<a name="fromjsonaschangeset" class="tsd-anchor"></a>
-					<h3>from<wbr>Json<wbr>AsChange<wbr>Set</h3>
+					<a name="fromjsontodb" class="tsd-anchor"></a>
+					<h3>from<wbr>Json<wbr>ToDb</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">from<wbr>Json<wbr>AsChange<wbr>Set<span class="tsd-signature-symbol">(</span>json<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span>, dest<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+						<li class="tsd-signature tsd-kind-icon">from<wbr>Json<wbr>ToDb<span class="tsd-signature-symbol">(</span>json<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, <span class="tsd-signature-symbol">...</span>constructorArgs<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L426">core/@model/model.ts:426</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L639">core/@model/model.ts:639</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<dl class="tsd-comment-tags">
 									<dt>static</dt>
-									<dd><p>Takes a json object (probably from something like req.body) and applies the various mappings defined by the
-											decorators and returns a change set object that can be used for any of the methods that take projection objections.
-										For example <a href="_core__model_model_.html#save">save</a>.</p>
+									<dd><p>Takes a json object (probably from something like req.body) and maps its fields to db field names.</p>
+									</dd>
+									<dt>throws</dt>
+									<dd><p>SapiInvalidModelObject if the provided model does not have .fromJson and .toDb methods</p>
 									</dd>
 								</dl>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>json: <span class="tsd-signature-type">object</span></h5>
+									<h5>json: <span class="tsd-signature-type">any</span></h5>
 									<div class="tsd-comment tsd-typography">
-										<p>The json object to be transformed into a change set object.</p>
+										<p>The json object to be transformed.</p>
 									</div>
 								</li>
 								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> dest: <span class="tsd-signature-type">any</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>The target object to apply the properties to. This is used by <a href="_core__model_model_.html#fromjson">fromJson</a> and is not considered part of
-										the API contract; thus, it is subject to change without notice.</p>
-									</div>
+									<h5><span class="tsd-flag ts-flagRest">Rest</span> <span class="tsd-signature-symbol">...</span>constructorArgs: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+							<p>json object with fields mapped from json fields to db fields.</p>
 						</li>
 					</ul>
 				</section>
@@ -448,13 +450,13 @@ class User {
 					<a name="get" class="tsd-anchor"></a>
 					<h3>get</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">get<span class="tsd-signature-symbol">(</span>filter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, project<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">get<span class="tsd-signature-symbol">(</span>params<span class="tsd-signature-symbol">?: </span><a href="../interfaces/_core__model_model_.idbgetparams.html" class="tsd-signature-type">IDbGetParams</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L468">core/@model/model.ts:468</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L701">core/@model/model.ts:701</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -468,16 +470,7 @@ class User {
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>filter: <span class="tsd-signature-type">any</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>A MongoDb query</p>
-									</div>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> project: <span class="tsd-signature-type">any</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>The fields to project (all if not supplied)</p>
-									</div>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> params: <a href="../interfaces/_core__model_model_.idbgetparams.html" class="tsd-signature-type">IDbGetParams</a></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4>
@@ -497,7 +490,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L496">core/@model/model.ts:496</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L743">core/@model/model.ts:743</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -538,7 +531,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L518">core/@model/model.ts:518</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L766">core/@model/model.ts:766</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -566,7 +559,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L544">core/@model/model.ts:544</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L792">core/@model/model.ts:792</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -607,7 +600,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L568">core/@model/model.ts:568</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L818">core/@model/model.ts:818</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -646,7 +639,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L578">core/@model/model.ts:578</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L833">core/@model/model.ts:833</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -673,7 +666,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L599">core/@model/model.ts:599</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L854">core/@model/model.ts:854</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -714,7 +707,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L620">core/@model/model.ts:620</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L875">core/@model/model.ts:875</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -747,7 +740,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L633">core/@model/model.ts:633</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L888">core/@model/model.ts:888</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -780,13 +773,13 @@ class User {
 					<a name="removebyid" class="tsd-anchor"></a>
 					<h3>remove<wbr>ById</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">remove<wbr>ById<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ObjectID</span>, options<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">CollectionOptions</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">DeleteWriteOpResultObject</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">remove<wbr>ById<span class="tsd-signature-symbol">(</span>id<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, options<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">CollectionOptions</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">DeleteWriteOpResultObject</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L653">core/@model/model.ts:653</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L908">core/@model/model.ts:908</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -799,7 +792,7 @@ class User {
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>id: <span class="tsd-signature-type">ObjectID</span></h5>
+									<h5>id: <span class="tsd-signature-type">any</span></h5>
 								</li>
 								<li>
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> options: <span class="tsd-signature-type">CollectionOptions</span></h5>
@@ -822,7 +815,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L684">core/@model/model.ts:684</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L944">core/@model/model.ts:944</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -837,14 +830,15 @@ class User {
 								<li>
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> changeSet: <span class="tsd-signature-type">object</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></h5>
 									<div class="tsd-comment tsd-typography">
-										<p>The change set. For example:</p>
+										<p>Expects properties to already be mapped to db field names. Limits the update to just
+										the fields included in the changeset. For example a changeset of:</p>
 										<p><pre>
 {
     firstName: &quot;George&quot;
 }
 </pre>
-											This change set would cause only the <code>firstName</code> field to be updated. If the <code>set</code> parameter is not provided,
-										<code>save</code> will assume the entire <a href="_core__model_model_.html#model">Model</a> is the change set (obeying the various decorators like <a href="_core__model_db_.html#db">Db</a>).</p>
+											would cause only the <code>firstName</code> field to be updated. If the <code>changeSet</code> parameter is not provided,
+										<code>save</code> will assume the entire <a href="_core__model_model_.html#model">Model</a> is the changeset (obeying the various decorators like <a href="_core__model_db_.html#db">Db</a>).</p>
 									</div>
 								</li>
 								<li>
@@ -862,27 +856,27 @@ class User {
 					<a name="todb" class="tsd-anchor"></a>
 					<h3>to<wbr>Db</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">to<wbr>Db<span class="tsd-signature-symbol">(</span>changeSet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></li>
+						<li class="tsd-signature tsd-kind-icon">to<wbr>Db<span class="tsd-signature-symbol">(</span>changeSet<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L730">core/@model/model.ts:730</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L1001">core/@model/model.ts:1001</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<dl class="tsd-comment-tags">
 									<dt>instance</dt>
-									<dd><p>Builds and returns a change set object that properly obeys the various decorators (like <a href="_core__model_db_.html#db">Db</a>). The
-										resulting object is what&#39;s persisted to the database.</p>
+									<dd><p>Builds and returns a change set object with its fields mapped based on decorators like <a href="_core__model_db_.html#db">Db</a>. The
+										resulting change set object is what&#39;s persisted to the database.</p>
 									</dd>
 								</dl>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> changeSet: <span class="tsd-signature-type">object</span></h5>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> changeSet: <span class="tsd-signature-type">any</span></h5>
 									<div class="tsd-comment tsd-typography">
 										<p>The change set. For example:</p>
 										<p><pre>
@@ -892,6 +886,9 @@ class User {
 </pre>
 											This change set would cause only the <code>firstName</code> field to be updated. If the <code>set</code> parameter is not provided,
 										<code>toDb</code> will assume the entire <a href="_core__model_model_.html#model">Model</a> is the change set (obeying the various decorators like <a href="_core__model_db_.html#db">Db</a>).</p>
+										<p>Nested objects are supported. Each property that is an object (except for ObjectID properties) needs to have its
+											own class declared. The properties classes that represent sub-documents, obey the <code>@</code><a href="_core__model_db_.html#db">Db</a> and <code>@</code><a href="_core__model_json_.html#json">Json</a> decorator
+										rules.</p>
 									</div>
 								</li>
 							</ul>
@@ -903,13 +900,13 @@ class User {
 					<a name="tojson" class="tsd-anchor"></a>
 					<h3>to<wbr>Json</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">to<wbr>Json<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></li>
+						<li class="tsd-signature tsd-kind-icon">to<wbr>Json<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L767">core/@model/model.ts:767</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L1086">core/@model/model.ts:1086</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -919,7 +916,7 @@ class User {
 									</dd>
 								</dl>
 							</div>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">object</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -933,7 +930,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L818">core/@model/model.ts:818</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L1171">core/@model/model.ts:1171</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -986,7 +983,7 @@ class User {
 					<div class="tsd-signature tsd-kind-icon">model<wbr>Symbols<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L67">core/@model/model.ts:67</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L95">core/@model/model.ts:95</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -995,12 +992,22 @@ class User {
 						</div>
 					</div>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
+						<a name="modelsymbols.constructor" class="tsd-anchor"></a>
+						<h3>constructor</h3>
+						<div class="tsd-signature tsd-kind-icon">constructor<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;constructor&#x27;)</span></div>
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L96">core/@model/model.ts:96</a></li>
+							</ul>
+						</aside>
+					</section>
+					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
 						<a name="modelsymbols.dbcollection" class="tsd-anchor"></a>
 						<h3>db<wbr>Collection</h3>
 						<div class="tsd-signature tsd-kind-icon">db<wbr>Collection<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;dbCollection&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L68">core/@model/model.ts:68</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L97">core/@model/model.ts:97</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1010,7 +1017,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">db<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;dbName&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L69">core/@model/model.ts:69</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L98">core/@model/model.ts:98</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1020,7 +1027,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">from<wbr>Db<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;fromDb&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L70">core/@model/model.ts:70</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L99">core/@model/model.ts:99</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1030,7 +1037,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">from<wbr>DbArray<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;fromDbArray&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L71">core/@model/model.ts:71</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L100">core/@model/model.ts:100</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1040,7 +1047,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">from<wbr>Json<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;fromJson&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L72">core/@model/model.ts:72</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L101">core/@model/model.ts:101</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1050,17 +1057,17 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">from<wbr>Json<wbr>Array<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;fromJsonArray&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L73">core/@model/model.ts:73</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L102">core/@model/model.ts:102</a></li>
 							</ul>
 						</aside>
 					</section>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
-						<a name="modelsymbols.fromjsonaschangeset-1" class="tsd-anchor"></a>
-						<h3>from<wbr>Json<wbr>AsChange<wbr>Set</h3>
-						<div class="tsd-signature tsd-kind-icon">from<wbr>Json<wbr>AsChange<wbr>Set<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;fromJsonAsChangeSet&#x27;)</span></div>
+						<a name="modelsymbols.fromjsontodb-1" class="tsd-anchor"></a>
+						<h3>from<wbr>Json<wbr>ToDb</h3>
+						<div class="tsd-signature tsd-kind-icon">from<wbr>Json<wbr>ToDb<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;fromJsonToDb&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L74">core/@model/model.ts:74</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L103">core/@model/model.ts:103</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1070,7 +1077,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">is<wbr>Sakura<wbr>Api<wbr>Model<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;isSakuraApiModel&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L75">core/@model/model.ts:75</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L104">core/@model/model.ts:104</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1080,17 +1087,17 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">model<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;modelOptions&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L76">core/@model/model.ts:76</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L105">core/@model/model.ts:105</a></li>
 							</ul>
 						</aside>
 					</section>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
-						<a name="modelsymbols.target" class="tsd-anchor"></a>
-						<h3>target</h3>
-						<div class="tsd-signature tsd-kind-icon">target<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;target&#x27;)</span></div>
+						<a name="modelsymbols.sapi" class="tsd-anchor"></a>
+						<h3>sapi</h3>
+						<div class="tsd-signature tsd-kind-icon">sapi<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;sapi&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L77">core/@model/model.ts:77</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L106">core/@model/model.ts:106</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1100,7 +1107,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">to<wbr>Db<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;toDb&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L78">core/@model/model.ts:78</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L107">core/@model/model.ts:107</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1110,7 +1117,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">to<wbr>Json<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;toJson&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L79">core/@model/model.ts:79</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L108">core/@model/model.ts:108</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1120,7 +1127,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">to<wbr>Json<wbr>String<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;toJsonString&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/@model/model.ts#L80">core/@model/model.ts:80</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@model/model.ts#L109">core/@model/model.ts:109</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -1158,6 +1165,9 @@ class User {
 						<a href="_core__routable_routable_.html">"core/@routable/routable"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
+						<a href="_core__routable_route_.html">"core/@routable/route"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
 						<a href="_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -1166,10 +1176,19 @@ class User {
 					<li class=" tsd-kind-external-module">
 						<a href="_core_sakura_mongo_db_connection_.html">"core/sakura-<wbr>mongo-<wbr>db-<wbr>connection"</a>
 					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="_core_security_mongo_db_.html">"core/security/mongo-<wbr>db"</a>
+					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/_core__model_model_.idbgetparams.html" class="tsd-kind-icon">IDb<wbr>Get<wbr>Params</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/_core__model_model_.ifromdboptions.html" class="tsd-kind-icon">IFrom<wbr>DbOptions</a>
+					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 						<a href="../interfaces/_core__model_model_.imodeloptions.html" class="tsd-kind-icon">IModel<wbr>Options</a>
 					</li>
@@ -1192,7 +1211,7 @@ class User {
 						<a href="_core__model_model_.html#fromjsonarray" class="tsd-kind-icon">from<wbr>Json<wbr>Array</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="_core__model_model_.html#fromjsonaschangeset" class="tsd-kind-icon">from<wbr>Json<wbr>AsChange<wbr>Set</a>
+						<a href="_core__model_model_.html#fromjsontodb" class="tsd-kind-icon">from<wbr>Json<wbr>ToDb</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
 						<a href="_core__model_model_.html#get" class="tsd-kind-icon">get</a>

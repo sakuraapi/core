@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SakuraApiConfig | SakuraApi</title>
+	<title>SanitizeMongoDB | SakuraApi</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -54,13 +54,13 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_boot_sakura_api_config_.html">&quot;boot/sakura-api-config&quot;</a>
+					<a href="../modules/_core_security_mongo_db_.html">&quot;core/security/mongo-db&quot;</a>
 				</li>
 				<li>
-					<a href="_boot_sakura_api_config_.sakuraapiconfig.html">SakuraApiConfig</a>
+					<a href="_core_security_mongo_db_.sanitizemongodb.html">SanitizeMongoDB</a>
 				</li>
 			</ul>
-			<h1>Class SakuraApiConfig</h1>
+			<h1>Class SanitizeMongoDB</h1>
 		</div>
 	</div>
 </header>
@@ -70,7 +70,9 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>SakuraApiConfig loads and manages the cascading configuration files of SakuraApi.</p>
+						<p>SanitizeMongoDB is a set of utility functions to help sanitize user input to make it safe to
+							pass to MongoDB. Remember, security is always the integrators&#39; ultimate responsibility - SakuraApi is here to
+						help you with security, not replace you.</p>
 					</div>
 				</div>
 			</section>
@@ -78,7 +80,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">SakuraApiConfig</span>
+						<span class="target">SanitizeMongoDB</span>
 					</li>
 				</ul>
 			</section>
@@ -87,161 +89,64 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Constructors</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="_boot_sakura_api_config_.sakuraapiconfig.html#constructor" class="tsd-kind-icon">constructor</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section ">
-							<h3>Properties</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_boot_sakura_api_config_.sakuraapiconfig.html#config" class="tsd-kind-icon">config</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_boot_sakura_api_config_.sakuraapiconfig.html#datasources" class="tsd-kind-icon">data<wbr>Sources</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_boot_sakura_api_config_.sakuraapiconfig.html#load" class="tsd-kind-icon">load</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="_boot_sakura_api_config_.sakuraapiconfig.html#datasources-1" class="tsd-kind-icon">data<wbr>Sources</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="_core_security_mongo_db_.sanitizemongodb.html#flattenobj" class="tsd-kind-icon">flatten<wbr>Obj</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="_core_security_mongo_db_.sanitizemongodb.html#remove_where" class="tsd-kind-icon">remove$where</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="_core_security_mongo_db_.sanitizemongodb.html#removeall_keys" class="tsd-kind-icon">remove<wbr>All$<wbr>Keys</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="_core_security_mongo_db_.sanitizemongodb.html#sanitizeobject" class="tsd-kind-icon">sanitize<wbr>Object</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="_core_security_mongo_db_.sanitizemongodb.html#whitelist_keys" class="tsd-kind-icon">white<wbr>List$<wbr>Keys</a></li>
 							</ul>
 						</section>
-					</div>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Constructors</h2>
-				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
-					<a name="constructor" class="tsd-anchor"></a>
-					<h3>constructor</h3>
-					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">new <wbr>Sakura<wbr>Api<wbr>Config<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_boot_sakura_api_config_.sakuraapiconfig.html" class="tsd-signature-type">SakuraApiConfig</a></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/boot/sakura-api-config.ts#L23">boot/sakura-api-config.ts:23</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Instantiate SakuraApiConfig.</p>
-								</div>
-							</div>
-							<h4 class="tsd-returns-title">Returns <a href="_boot_sakura_api_config_.sakuraapiconfig.html" class="tsd-signature-type">SakuraApiConfig</a></h4>
-						</li>
-					</ul>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
-					<a name="config" class="tsd-anchor"></a>
-					<h3>config</h3>
-					<div class="tsd-signature tsd-kind-icon">config<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/boot/sakura-api-config.ts#L17">boot/sakura-api-config.ts:17</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>The configuration that was loaded from the various json and ts files and the environmental
-							variables that were set at the time the configuration was last loaded.</p>
-						</div>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Methods</h2>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="datasources" class="tsd-anchor"></a>
-					<h3>data<wbr>Sources</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">data<wbr>Sources<span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-signature-type">SakuraMongoDbConnection</a></li>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="flattenobj" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> flatten<wbr>Obj</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">flatten<wbr>Obj<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/boot/sakura-api-config.ts#L54">boot/sakura-api-config.ts:54</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/security/mongo-db.ts#L101">core/security/mongo-db.ts:101</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Looks for a <code>dbConnections</code> property in the root of config. If one is found, it expects the
-									following:</p>
-									<p><pre>
-{
-    &quot;dbConnections&quot;: [
-        {
-          &quot;name&quot;: &quot;someDb1&quot;,
-          &quot;url&quot;: &quot;mongodb://localhost:1234/somedb1&quot;,
-          &quot;mongoClientOptions&quot;: {}
-        },
-        {
-          &quot;name&quot;: &quot;someDb2&quot;,
-          &quot;url&quot;: &quot;mongodb://localhost:1234/somedb2&quot;,
-          &quot;mongoClientOptions&quot;: {}
-        }
-    ]
+									<p>Takes a deeply nested object and flattens it to a mongoDB compatible query object. For example:</p>
+									<pre>
+const json = {
+   name: 'George Washington',
+   contact : {
+     phones: {
+       mobile: '1',
+       direct: '2'
+     }c
+   }
 }
 </pre>
-										Where <code>someDb1</code> is the name of the connection that you can use for retrieving the connection with
-									<a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#getdb">SakuraMongoDbConnection.getDb</a>(&#39;someDb1&#39;).</p>
+									Would be transformed to:
+									<pre>
+{
+   name: 'George Washington',
+   'contact.phones.mobile': 1
+   'contact.phones.direct': 2
+}
+</pre>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> config: <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol"> =&nbsp;this.config</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-signature-type">SakuraMongoDbConnection</a></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
-					<a name="load" class="tsd-anchor"></a>
-					<h3>load</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">load<span class="tsd-signature-symbol">(</span>path<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/boot/sakura-api-config.ts#L82">boot/sakura-api-config.ts:82</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>loads the config file specified by path. If no path is provided, load the path/filename defined in environmental variable SAKURA_API_CONFIG,
-									otherwise load <code>config/environment.json</code> from the root of the project.</p>
-								</div>
-								<p> SakuraApi looks for a config/ folder in the root of your api project.
-								It cascades the values found in the following order (the last taking precedence over the former):</p>
-								<ul>
-									<li>environment.json</li>
-									<li>environment.ts</li>
-									<li>environment.{env}.json</li>
-									<li>environment.{env}.ts</li>
-									<li>system environmental variables</li>
-								</ul>
-								<p>Where <code>{env}</code> is replaced by what&#39;s set in the environmental variable <code>NODE_ENV</code>. For example, if your set <code>NODE_ENV=dev</code> when you start your server, the system will load:</p>
-								<ul>
-									<li>environment.json</li>
-									<li>environment.ts</li>
-									<li>environment.dev.json</li>
-									<li>environment.dev.ts</li>
-									<li>system environmental variables</li>
-								</ul>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> path: <span class="tsd-signature-type">string</span></h5>
+									<h5>input: <span class="tsd-signature-type">any</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>the deeply nested object that requires flattening</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
@@ -249,36 +154,156 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
-					<a name="datasources-1" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagStatic">Static</span> data<wbr>Sources</h3>
+					<a name="remove_where" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> remove$where</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
-						<li class="tsd-signature tsd-kind-icon">data<wbr>Sources<span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-signature-type">SakuraMongoDbConnection</a></li>
+						<li class="tsd-signature tsd-kind-icon">remove$where<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/boot/sakura-api-config.ts#L181">boot/sakura-api-config.ts:181</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/security/mongo-db.ts#L23">core/security/mongo-db.ts:23</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
-									<p>Same as the instance method, but static, and it won&#39;t try to use the last loaded config since that
-									requires an instance.</p>
+									<p>Deep inspects the input for any $where keys and deletes them. If the input is not
+									an object, the original input will be returned.</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>config: <span class="tsd-signature-type">object</span></h5>
+									<h5>input: <span class="tsd-signature-type">any</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="removeall_keys" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> remove<wbr>All$<wbr>Keys</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">remove<wbr>All$<wbr>Keys<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/security/mongo-db.ts#L13">core/security/mongo-db.ts:13</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Deep inspects the input for any keys that start with $ and deletes them. If the input is not
+									an object, the original input will be returned.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>input: <span class="tsd-signature-type">any</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="sanitizeobject" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> sanitize<wbr>Object</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">sanitize<wbr>Object<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, filter<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/security/mongo-db.ts#L38">core/security/mongo-db.ts:38</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Takes a json string, or an object, and sanitizes it with the provided filter function.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>input: <span class="tsd-signature-type">any</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>string or object to be sanitized. Note: if input is a string, and it cannot be parsed with JSON.parse
+											a (SyntaxError)[<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError">https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError</a>]
+										will be thrown.</p>
+									</div>
+								</li>
+								<li>
+									<h5>filter: <span class="tsd-signature-type">function</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>the function that filters what&#39;s permitted in the resulting object. Returns true if the key should be
+										removed.</p>
+									</div>
 									<ul class="tsd-parameters">
-										<li class="tsd-parameter">
-											<h5>db<wbr>Connections<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></h5>
+										<li class="tsd-parameter-siganture">
+											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
+											</ul>
+											<ul class="tsd-descriptions">
+												<li class="tsd-description">
+													<h4 class="tsd-parameters-title">Parameters</h4>
+													<ul class="tsd-parameters">
+														<li>
+															<h5>key: <span class="tsd-signature-type">any</span></h5>
+														</li>
+													</ul>
+													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
+												</li>
+											</ul>
 										</li>
 									</ul>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-signature-type">SakuraMongoDbConnection</a></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+							<p>if the input was a valid JSON string, the result will be a sanitized JSON object</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
+					<a name="whitelist_keys" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagStatic">Static</span> white<wbr>List$<wbr>Keys</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
+						<li class="tsd-signature tsd-kind-icon">white<wbr>List$<wbr>Keys<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, whiteList<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/security/mongo-db.ts#L71">core/security/mongo-db.ts:71</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Excludes any properties that have $ fields that aren&#39;t in the white list</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>input: <span class="tsd-signature-type">any</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>the user provided content that requires sanitization</p>
+									</div>
+								</li>
+								<li>
+									<h5>whiteList: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>the string array of $keys to allow</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -290,7 +315,7 @@
 					<li class="globals  ">
 						<a href="../globals.html"><em>Globals</em></a>
 					</li>
-					<li class="current tsd-kind-external-module">
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_boot_sakura_api_config_.html">"boot/sakura-<wbr>api-<wbr>config"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -326,7 +351,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_sakura_mongo_db_connection_.html">"core/sakura-<wbr>mongo-<wbr>db-<wbr>connection"</a>
 					</li>
-					<li class=" tsd-kind-external-module">
+					<li class="current tsd-kind-external-module">
 						<a href="../modules/_core_security_mongo_db_.html">"core/security/mongo-<wbr>db"</a>
 					</li>
 				</ul>
@@ -336,22 +361,22 @@
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-class tsd-parent-kind-external-module">
-						<a href="_boot_sakura_api_config_.sakuraapiconfig.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Config</a>
+						<a href="_core_security_mongo_db_.sanitizemongodb.html" class="tsd-kind-icon">Sanitize<wbr>MongoDB</a>
 						<ul>
-							<li class=" tsd-kind-constructor tsd-parent-kind-class">
-								<a href="_boot_sakura_api_config_.sakuraapiconfig.html#constructor" class="tsd-kind-icon">constructor</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-class">
-								<a href="_boot_sakura_api_config_.sakuraapiconfig.html#config" class="tsd-kind-icon">config</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="_boot_sakura_api_config_.sakuraapiconfig.html#datasources" class="tsd-kind-icon">data<wbr>Sources</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class">
-								<a href="_boot_sakura_api_config_.sakuraapiconfig.html#load" class="tsd-kind-icon">load</a>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="_core_security_mongo_db_.sanitizemongodb.html#flattenobj" class="tsd-kind-icon">flatten<wbr>Obj</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
-								<a href="_boot_sakura_api_config_.sakuraapiconfig.html#datasources-1" class="tsd-kind-icon">data<wbr>Sources</a>
+								<a href="_core_security_mongo_db_.sanitizemongodb.html#remove_where" class="tsd-kind-icon">remove$where</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="_core_security_mongo_db_.sanitizemongodb.html#removeall_keys" class="tsd-kind-icon">remove<wbr>All$<wbr>Keys</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="_core_security_mongo_db_.sanitizemongodb.html#sanitizeobject" class="tsd-kind-icon">sanitize<wbr>Object</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
+								<a href="_core_security_mongo_db_.sanitizemongodb.html#whitelist_keys" class="tsd-kind-icon">white<wbr>List$<wbr>Keys</a>
 							</li>
 						</ul>
 					</li>

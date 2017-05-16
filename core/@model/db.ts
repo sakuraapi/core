@@ -3,15 +3,20 @@
  * part of the API contract and may change or be removed without notice on patch releases.
  */
 export const dbSymbols = {
-  optionsPropertyName: Symbol('sakuraApiDbOptionsPropertyName'),
-  sakuraApiDbByFieldName: Symbol('sakuraApiDbByFieldName'),
-  sakuraApiDbByPropertyName: Symbol('sakuraApiDbByPropertyName')
+  dbByFieldName: Symbol('sakuraApiDbByFieldName'),
+  dbByPropertyName: Symbol('sakuraApiDbByPropertyName'),
+  hasNewChildOption: Symbol('sakuraApiHasNewChildOption'),
+  propertyName: Symbol('sakuraApiDbOptionsPropertyName')
 };
 
 export interface IDbOptions {
   /**
-   * The name of the field in the database that is mapped to this property when retrieving this document from the
-   * database and persisting this document back to the database.
+   * An optional constructor function (ES6 Class) that is used to instantiate the property.
+   */
+  model?: any;
+
+  /**
+   * The database field name that is mapped to and from this property by [[Model]].[[toDb]] and [[Model]].[[fromDb]].
    *
    * ### Example
    * <pre>
@@ -27,6 +32,7 @@ export interface IDbOptions {
    * Explanation: `firstName` property of the `@Model` is mapped to the `fn` field of the database.
    */
   field?: string;
+
   /**
    * Prevents this property from being marshaled to json by the built in `toJson` method that is attached to
    * `@Model` decorated classes.
@@ -43,37 +49,44 @@ export interface IDbOptions {
    * </pre>
    *
    * Explanation: the `firstName` property will be mapped to the `firstName` property of a database document, but
-   * it will not be included in the output of `someModel.toJson()`. [[Model.modelsymbols]]
+   * it will not be included in the output of `someModel.toJson()`.
    */
   private?: boolean;
 }
 
 /**
  * @decorator `@Db` decorates fields in a class decorated by `@`[[Model]].
- * @param options Sets the database options for the property.
+ * @param dbOptions When a string is provided, this sets the [[IDbOptions.field]].
  * @returns Used by the framework to reflect on the `@Db` properties defined.
  */
-export function Db(options?: IDbOptions): (target: any, key: string) => void {
-  options = options || {};
+export function Db(dbOptions?: IDbOptions | string): (target: any, key: string) => void {
+  const options = (typeof dbOptions === 'string')
+    ? {field: dbOptions}
+    : (!dbOptions) ? {} : dbOptions;
 
   return (target: any, key: string) => {
-    options[dbSymbols.optionsPropertyName] = key;
+    options[dbSymbols.propertyName] = key;
 
-    let metaMapByPropertyName: Map<string, IDbOptions>
-      = Reflect.getMetadata(dbSymbols.sakuraApiDbByPropertyName, target);
+    const mapByPropertyName = getMetaDataMap(target, dbSymbols.dbByPropertyName);
+    const mapByFieldName = getMetaDataMap(target, dbSymbols.dbByFieldName);
 
-    if (!metaMapByPropertyName) {
-      metaMapByPropertyName = new Map<string, IDbOptions>();
-      Reflect.defineMetadata(dbSymbols.sakuraApiDbByPropertyName, metaMapByPropertyName, target);
-    }
-
-    let metaMapByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.sakuraApiDbByFieldName, target);
-    if (!metaMapByFieldName) {
-      metaMapByFieldName = new Map<string, IDbOptions>();
-      Reflect.defineMetadata(dbSymbols.sakuraApiDbByFieldName, metaMapByFieldName, target);
-    }
-
-    metaMapByPropertyName.set(key, options);
-    metaMapByFieldName.set(options.field || key, options);
+    mapByPropertyName.set(key, options);
+    mapByFieldName.set(options.field || key, options);
   };
+
+  //////////
+
+  // Lazy adds the metadata map to the object if it's missing then returns it, otherwise, it returns the existing map
+  function getMetaDataMap(target, symbol): Map<string, IDbOptions> {
+
+    let map: Map<string, IDbOptions> = Reflect.getMetadata(symbol, target);
+
+    if (!map) {
+      map = new Map<string, IDbOptions>();
+      Reflect.defineMetadata(symbol, map, target);
+      target.constructor[symbol] = map;
+    }
+
+    return map;
+  }
 }

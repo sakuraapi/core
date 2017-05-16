@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>&quot;core/sakura-mongo-db-connection&quot; | SakuraApi</title>
+	<title>IRoutableMethodOptions | SakuraApi</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -54,26 +54,115 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="_core_sakura_mongo_db_connection_.html">&quot;core/sakura-mongo-db-connection&quot;</a>
+					<a href="../modules/_core__routable_route_.html">&quot;core/@routable/route&quot;</a>
+				</li>
+				<li>
+					<a href="_core__routable_route_.iroutablemethodoptions.html">IRoutableMethodOptions</a>
 				</li>
 			</ul>
-			<h1>External module &quot;core/sakura-mongo-db-connection&quot;</h1>
+			<h1>Interface IRoutableMethodOptions</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>Interface defining the valid properties for the <code>@Route({})</code> decorator (<a href="../modules/_core__routable_route_.html#route">Route</a>).</p>
+					</div>
+				</div>
+			</section>
+			<section class="tsd-panel tsd-hierarchy">
+				<h3>Hierarchy</h3>
+				<ul class="tsd-hierarchy">
+					<li>
+						<span class="target">IRoutableMethodOptions</span>
+					</li>
+				</ul>
+			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Classes</h3>
+							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-class tsd-parent-kind-external-module"><a href="../classes/_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-kind-icon">Sakura<wbr>Mongo<wbr>DbConnection</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_route_.iroutablemethodoptions.html#blacklist" class="tsd-kind-icon">black<wbr>List</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_route_.iroutablemethodoptions.html#method" class="tsd-kind-icon">method</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_route_.iroutablemethodoptions.html#path" class="tsd-kind-icon">path</a></li>
 							</ul>
 						</section>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="blacklist" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> black<wbr>List</h3>
+					<div class="tsd-signature tsd-kind-icon">black<wbr>List<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@routable/route.ts#L42">core/@routable/route.ts:42</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Boolean value that sets this route to blacklisted when set to true. This is a quick way to turn off a route when
+							testing. The default value is false.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="method" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> method</h3>
+					<div class="tsd-signature tsd-kind-icon">method<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@routable/route.ts#L37">core/@routable/route.ts:37</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>String defining the HTTP method for which this route handler will respond. See the example for
+							[[RoutableMethodOptions.path]].</p>
+						</div>
+						<p>Valid methods are: <code>[&#39;get&#39;, &#39;post&#39;, &#39;put&#39;, &#39;delete&#39;, &#39;head&#39;]</code>.</p>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="path" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> path</h3>
+					<div class="tsd-signature tsd-kind-icon">path<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/@routable/route.ts#L30">core/@routable/route.ts:30</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>String defining the endpoint of the route after the baseUrl set in [[RoutableClassOptions.baseUrl]]. The default
+							is <code>&#39;&#39;</code>.</p>
+						</div>
+						<h3 id="example">Example</h3>
+						<pre>
+<span>@</span>Routable({
+   baseUrl: 'user'
+})
+class User {
+ <span>@</span>Route({
+   path: '/:useId',
+   method: 'get'
+ })
+ postNewUser(req, res) {
+   res.sendStatus(200);
+ }
+}
+</pre>
+						<p>The above example binds the <code>postNewUser</code> route handler to respond to <code>GET</code> requests directed to the <code>/user/123</code>
+						endpoint (assuming the <code>:userId</code> was passed in as <code>123</code>).</p>
 					</div>
 				</section>
 			</section>
@@ -85,50 +174,68 @@
 						<a href="../globals.html"><em>Globals</em></a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="_boot_sakura_api_config_.html">"boot/sakura-<wbr>api-<wbr>config"</a>
+						<a href="../modules/_boot_sakura_api_config_.html">"boot/sakura-<wbr>api-<wbr>config"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="_core__model_db_.html">"core/@model/db"</a>
+						<a href="../modules/_core__model_db_.html">"core/@model/db"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="_core__model_errors_.html">"core/@model/errors"</a>
+						<a href="../modules/_core__model_errors_.html">"core/@model/errors"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="_core__model_json_.html">"core/@model/json"</a>
+						<a href="../modules/_core__model_json_.html">"core/@model/json"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="_core__model_model_.html">"core/@model/model"</a>
+						<a href="../modules/_core__model_model_.html">"core/@model/model"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="_core__model_private_.html">"core/@model/private"</a>
+						<a href="../modules/_core__model_private_.html">"core/@model/private"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="_core__model_sakura_api_model_.html">"core/@model/sakura-<wbr>api-<wbr>model"</a>
+						<a href="../modules/_core__model_sakura_api_model_.html">"core/@model/sakura-<wbr>api-<wbr>model"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="_core__routable_routable_.html">"core/@routable/routable"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_core__routable_route_.html">"core/@routable/route"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
+						<a href="../modules/_core__routable_routable_.html">"core/@routable/routable"</a>
 					</li>
 					<li class="current tsd-kind-external-module">
-						<a href="_core_sakura_mongo_db_connection_.html">"core/sakura-<wbr>mongo-<wbr>db-<wbr>connection"</a>
+						<a href="../modules/_core__routable_route_.html">"core/@routable/route"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="_core_security_mongo_db_.html">"core/security/mongo-<wbr>db"</a>
+						<a href="../modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_sakura_mongo_db_connection_.html">"core/sakura-<wbr>mongo-<wbr>db-<wbr>connection"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_security_mongo_db_.html">"core/security/mongo-<wbr>db"</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-kind-icon">Sakura<wbr>Mongo<wbr>DbConnection</a>
+				</ul>
+				<ul class="current">
+					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core__routable_route_.iroutablemethodoptions.html" class="tsd-kind-icon">IRoutable<wbr>Method<wbr>Options</a>
+						<ul>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__routable_route_.iroutablemethodoptions.html#blacklist" class="tsd-kind-icon">black<wbr>List</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__routable_route_.iroutablemethodoptions.html#method" class="tsd-kind-icon">method</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__routable_route_.iroutablemethodoptions.html#path" class="tsd-kind-icon">path</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="after-current">
+					<li class=" tsd-kind-function tsd-parent-kind-external-module">
+						<a href="../modules/_core__routable_route_.html#route" class="tsd-kind-icon">Route</a>
 					</li>
 				</ul>
 			</nav>

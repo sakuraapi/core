@@ -1,10 +1,19 @@
-import {routableSymbols} from './@routable/routable';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
-import * as colors from 'colors';
 import * as express from 'express';
+import {
+  ErrorRequestHandler,
+  Express,
+  Handler,
+  NextFunction,
+  Request,
+  Response
+} from 'express';
+import {
+  ISakuraApiClassRoutes,
+  routableSymbols
+} from './@routable';
 import * as http from 'http';
-
 import debug = require('debug');
 
 /**
@@ -32,9 +41,8 @@ export interface ServerConfig {
  * 3. Taking routes from `@Routable` decorated classes ([[Routable]]) and binding those routes to Express.
  * 4. Starting and stopping the server.
  *
- * SakuraApi is a singleton, so all you have to do is use [[SakuraApi.instance]] to get access to the server's instance.
- * This is important, but the `@Routable` classes and be auto binding their routes to Express and you'll want a way to get
- * a reference to the same instance of SakuraApi that they used.
+ * You'll want to instantiate SakuraApi and export SakuraApi then import that to anywhere that requires a reference
+ * to that instance (for example [[Model]] or [[Routable]]).
  *
  * ### Example
  * <pre>
@@ -43,13 +51,14 @@ export interface ServerConfig {
  * import                   'colors';
  * import * as bodyParser   from 'body-parser'
  *
+ * export const sapi = new SakuraApi();
+ *
  * class Server {
- *    sapi = SakuraApi.instance;
  *
  *    constructor() {}
  *
  *    start() {
- *        this.sapi.addMiddleware(bodyParser.json());
+ *        sapi.addMiddleware(bodyParser.json());
  *        sapi
  *          .listen()
  *          .catch((err) => {
@@ -66,8 +75,6 @@ export interface ServerConfig {
  */
 export class SakuraApi {
 
-  private static _instance: SakuraApi;
-
   private static debug = {
     normal: debug('sapi:SakuraApi'),
     route: debug('sapi:route')
@@ -75,29 +82,20 @@ export class SakuraApi {
   private debug = SakuraApi.debug;
 
   private _address: string = '127.0.0.1';
-  private _app: express.Express;
+  private _app: Express;
   private _config: any;
+  private _dbConnections: SakuraMongoDbConnection;
   private _port: number = 3000;
   private _server: http.Server;
-  private _dbConnections: SakuraMongoDbConnection;
-  private routes = [];
-
-  /**
-   * SakuraApi is a singleton. You get a reference to the instance with [[SakuraApi.instance]].
-   */
-  static get instance(): SakuraApi {
-    if (!this._instance) {
-      this._instance = new SakuraApi();
-    }
-    return this._instance;
-  }
+  private lastErrorHandlers: ErrorRequestHandler[] = [];
+  private routes = new Map<string, ISakuraApiClassRoutes>();
 
   /**
    * Sets the baseUri for the entire application.
    *
    * ### Example
    * <pre>
-   * SakuraApi.instance.baseUri = 'api';
+   * sakuraApi.baseUri = '/api';
    * </pre>
    *
    * This will cause SakuraApi to expect all routes to have `api` at their base (e.g., `http://localhost:8080/api/user`).
@@ -114,7 +112,7 @@ export class SakuraApi {
   /**
    * Returns an reference to SakuraApi's instance of Express.
    */
-  get app(): express.Express {
+  get app(): Express {
     return this._app;
   }
 
@@ -154,7 +152,7 @@ export class SakuraApi {
     return this._server;
   }
 
-  private constructor(app?: express.Express, config?: any, dbConfig?: SakuraMongoDbConnection) {
+  constructor(app?: Express, config?: any, dbConfig?: SakuraMongoDbConnection) {
     this.debug.normal('.constructor started');
 
     if (!app) {
@@ -180,24 +178,19 @@ export class SakuraApi {
   }
 
   /**
-   * A static helper method to make it easier to add middleware. See [[SakuraApi]] for an example of its use. You could also
-   * use [[SakuraApi.app]] to get a reference to Express then add your middleware with that reference directly.
-   *
-   * This uses `express.use(...)` internally.
-   */
-  static addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
-    SakuraApi.debug.normal('.addMiddleware called');
-    SakuraApi.instance.app.use(fn);
-  }
-
-  /**
    * A helper method to make it easier to add middleware. See [[SakuraApi]] for an example of its use. You could also
    * use [[SakuraApi.app]] to get a reference to Express then add your middleware with that reference directly.
    *
    * This uses `express.use(...)` internally.
    */
-  addMiddleware(fn: (req: express.Request, res: express.Response, next: express.NextFunction) => void) {
-    SakuraApi.addMiddleware(fn);
+  addMiddleware(fn: (req: Request, res: Response, next: NextFunction) => void) {
+    SakuraApi.debug.normal('.addMiddleware called');
+    this.app.use(fn);
+  }
+
+  addLastErrorHandlers(fn: ErrorRequestHandler) {
+    SakuraApi.debug.normal('.addMiddleware called');
+    this.lastErrorHandlers.push(fn);
   }
 
   /**
@@ -224,23 +217,6 @@ export class SakuraApi {
   }
 
   /**
-   * Manually instantiate the [[SakuraApi]] singleton with your own `express.Express` and [[SakuraApiConfig]].
-   * If either parameter is null or undefined, then the defaults are used as if you can called
-   * [[SakuraApi.instance]]. Note that you can only call this if the [[SakuraApi]] singleton has not already been
-   * instantiated. Otherwise, it will throw `new Error('ALREADY_INSTANTIATED')`.
-   */
-  static instantiate(app?: express.Express, config?: SakuraApiConfig, dbConfig?: SakuraMongoDbConnection): SakuraApi {
-    SakuraApi.debug.normal(`.instantiate called`);
-
-    if (this._instance) {
-      throw new Error('ALREADY_INSTANTIATED');
-    }
-
-    this._instance = new SakuraApi(app, config, dbConfig);
-    return this.instance;
-  }
-
-  /**
    * Starts the server. You can override the settings loaded by [[SakuraApiConfig]] by passing in
    * an object that implements [[ServerConfig]].
    *
@@ -251,25 +227,17 @@ export class SakuraApi {
    * to manually define Db connections.
    */
   listen(listenProperties?: ServerConfig): Promise<null> {
-    listenProperties = listenProperties || {};
-
     this.debug.normal(`.listen called with serverConfig:`, listenProperties);
 
+    listenProperties = listenProperties || {};
+    this._address = listenProperties.address || this._address;
+    this._port = listenProperties.port || this._port;
+
     return new Promise((resolve, reject) => {
-      this._address = listenProperties.address || this._address;
-      this._port = listenProperties.port || this._port;
 
-      // Bind the routes
-      let router = express.Router();
-      this
-        .routes
-        .forEach((route) => {
-          router[route.httpMethod](route.path, route.f);
-        });
+      handlerErrors.bind(this)();
+      setupRoutes.bind(this)();
 
-      this.app.use(this.baseUri, router);
-
-      // Open the connections
       if (this.dbConnections) {
         this
           .dbConnections
@@ -284,7 +252,56 @@ export class SakuraApi {
         listen.bind(this)();
       }
 
-      // Start the server
+      //////////
+      function handlerErrors() {
+        this.app.use(function(err, req, res, next) {
+          // Body Parser json error hack
+          // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
+          if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
+            res.status(400).send({
+              error: 'invalid_body',
+              body: req.body
+            });
+          } else {
+            next(err);
+          }
+        });
+      }
+
+      function setupRoutes() {
+        // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
+        let router = undefined;
+
+        this.debug.normal(`.listen setting baseUri to ${this.baseUri}`);
+        this.app.use(this.baseUri, function(req, res, next) {
+          router(req, res, next); // hook whatever the current router is
+        });
+
+        router = express.Router();
+
+        for (let route of this.routes.values()) {
+          let routeHandlers: Handler[] = [];
+
+          if (route.beforeAll) {
+            routeHandlers = routeHandlers.concat(route.beforeAll);
+          }
+
+          routeHandlers.push(route.f);
+
+          if (route.afterAll) {
+            routeHandlers = routeHandlers.concat(route.afterAll);
+          }
+
+          router[route.httpMethod](route.path, routeHandlers);
+        }
+
+        if (this.lastErrorHandlers) {
+          for (let handler of this.lastErrorHandlers) {
+            this.app.use(handler);
+          }
+        }
+      }
+
       function listen() {
         this
           .server
@@ -293,14 +310,16 @@ export class SakuraApi {
               this.debug.normal('.listen error', err);
               return reject(err);
             }
-            let msg = listenProperties.bootMessage || `SakuraAPI started on: ${this.address}:${this.port}`;
-            console.log(colors.green(msg));
+
+            let msg = listenProperties.bootMessage || (listenProperties.bootMessage === '')
+              ? ''
+              : `SakuraAPI started on: ${this.address}:${this.port}\n`;
+
+            process.stdout.write(`${msg}`.green);
             this.debug.normal(`.listen server started '%s'`, msg);
             return resolve();
           });
       }
-
-      // Release the Kraken.
     });
   }
 
@@ -310,6 +329,7 @@ export class SakuraApi {
    * bound.
    */
   route(target: any) {
+
     this.debug.route(`SakuraApi.route called for %o`, target);
 
     if (!target[routableSymbols.sakuraApiClassRoutes]) {
@@ -317,11 +337,16 @@ export class SakuraApi {
       return;
     }
 
-    target
-      [routableSymbols.sakuraApiClassRoutes]
-      .forEach((route) => {
-        this.debug.route(`\tadded '${JSON.stringify(route)}'`);
-        this.routes.push(route);
-      });
+    for (const route of target[routableSymbols.sakuraApiClassRoutes]) {
+      this.debug.route(`\tadded '${JSON.stringify(route)}'`);
+
+      const routeSignature = `${route.httpMethod}:${route.path}`;
+      if (this.routes.get(routeSignature)) {
+        throw new Error(`Duplicate route (${routeSignature}) registered by ${target.name || target.constructor.name}.`);
+      }
+
+      // used by this.listen
+      this.routes.set(routeSignature, route);
+    }
   }
 }

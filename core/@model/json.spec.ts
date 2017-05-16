@@ -7,9 +7,13 @@ import {
 } from './model';
 import {SakuraApiModel} from './sakura-api-model';
 
+import {Sapi} from '../../spec/helpers/sakuraapi';
+
 describe('@Json', function() {
 
-  @Model({
+  const sapi = Sapi();
+
+  @Model(sapi, {
     dbConfig: {
       collection: 'users',
       db: 'userDb',
@@ -35,7 +39,7 @@ describe('@Json', function() {
     }
   }
 
-  @Model()
+  @Model(sapi)
   class Test2 {
     aProperty: string = 'test';
     anotherProperty: string;
@@ -45,35 +49,9 @@ describe('@Json', function() {
     }
   }
 
-  @Model()
-  class TestDbFieldPrivate {
-    aProperty: string = 'test';
-    anotherProperty: string;
-    aThirdProperty: number = 777;
-
-    @Db({private: true})
-    hasDbButNotJson: string = 'test';
-
-    @Json('hasDbAndJson')
-    @Db({private: true})
-    hasDbAndJson: string = 'test';
-
-    @Json('marshallsWithJsonAndDb')
-    @Db()
-    marshallsWithJsonAndDb: boolean = true;
-
-    @Json('marshallsWithDb')
-    @Db()
-    marshallsWithDb: boolean = true;
-
-    aFunction() {
-    }
-  }
-
   beforeEach(function() {
     this.t = new Test();
     this.t2 = new Test2();
-    this.dbPrivate = new TestDbFieldPrivate();
   });
 
   it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
@@ -100,86 +78,350 @@ describe('@Json', function() {
 
   describe('toJson', function() {
     it('function is injected into the prototype of the model by default', function() {
-      expect(this.t.toJson).toBeDefined();
+      @Model(sapi)
+      class User extends SakuraApiModel {
+        firstName = 'George';
+        lastName: string;
+      }
+
+      expect(new User().toJson).toBeDefined();
     });
 
     it('transforms a defined property to the designated fieldName in the output of toJson', function() {
-      expect(this.t.toJson().ap).toBe('test');
-      expect(this.t.toJson().anp).toBeUndefined();
-      expect(this.t.toJson().aThirdProperty).toBe(777);
-      expect(this.t.toJson().aFunction).toBeUndefined();
 
-      expect(this.t.aProperty).toBe('test');
-      expect(this.t.anotherProperty).toBeUndefined();
-      expect(this.t.aThirdProperty).toBe(777);
+      class Address {
+        @Db('st')
+        street = '1600 Pennsylvania Ave NW';
+
+        @Db('c')
+        @Json('cy')
+        city = 'Washington';
+
+        state = 'DC';
+
+        @Json('z')
+        zipCode = '20500';
+      }
+
+      class Contact {
+        @Db('ph')
+        phone = '123-123-1234';
+
+        @Db({field: 'a', model: Address})
+        @Json('addr')
+        address = new Address();
+      }
+
+      @Model(sapi, {})
+      class User extends SakuraApiModel {
+        @Db('fn')
+        @Json('fn')
+        firstName = 'George';
+        @Db('ln')
+        @Json('ln')
+        lastName = 'Washington';
+
+        @Db({field: 'c', model: Contact})
+        contact = new Contact();
+      }
+
+      const db = {
+        c: {
+          a: {
+            st: '1'
+          },
+          ph: 'abc'
+        },
+        fn: 'John',
+        ln: 'Doe'
+      };
+
+      const user = User.fromDb(db);
+      const json = (user.toJson() as any);
+
+      expect(json.fn).toBe(db.fn);
+      expect(json.ln).toBe(db.ln);
+      expect(json.contact).toBeDefined('A property not decorated with @Json should still be marshalled to Json');
+      expect(json.contact.phone).toBe(db.c.ph);
+      expect(json.contact.addr).toBeDefined('A deeply nested property should be marshalled to Json');
+      expect(json.contact.addr.street).toBe(db.c.a.st);
+      expect(json.contact.addr.cy).toBe(user.contact.address.city);
+      expect(json.contact.addr.state).toBe(user.contact.address.state);
+      expect(json.contact.addr.z).toBe(user.contact.address.zipCode);
     });
 
     it('properties are marshalled when not decorated with @Json properties', function() {
-      expect(this.t2.toJson().aProperty).toBe('test');
-      expect(this.t2.toJson().anotherProperty).toBeUndefined();
-      expect(this.t2.toJson().aThirdProperty).toBe(777);
-      expect(this.t2.toJson().aFunction).toBeUndefined();
+
+      class Contact {
+        static test() {
+          // methods should be marshalled to the resulting json object
+        }
+
+        phone = 123;
+        address = '123 Main St.';
+
+        test() {
+          // methods should be marshalled to the resulting json object
+        }
+      }
+
+      @Model(sapi, {})
+      class User extends SakuraApiModel {
+        firstName = 'George';
+        lastName: string;
+        contact = new Contact();
+      }
+
+      const user = new User();
+      const json = (user.toJson() as any);
+
+      expect(json.firstName).toBe(user.firstName);
+      expect(json.lastname).toBeUndefined('properties without assigned values and no default values do not actually' +
+        ' exist in the resulting transpiled js output, so they cannot be marshalled to json');
+      expect(json.contact).toBeDefined('A property defining a child object should be included in the resulting json');
+      expect(json.contact.phone).toBe(user.contact.phone);
+      expect(json.contact.address).toBe(user.contact.address);
+
+      expect(json.contact.test).toBeUndefined('instance methods should not be included in the resulting json');
     });
 
     it('does not return _id', function() {
-      this.t._id = new ObjectID();
+      class Contact {
+        phone = 123;
+        address = '123 Main St.';
+      }
 
-      expect(this.t._id).toBeDefined();
+      @Model(sapi, {})
+      class User extends SakuraApiModel {
+        firstName = 'George';
+        lastName: string;
+        contact = new Contact();
+      }
+
+      const user = new User();
+      user.id = new ObjectID();
+      const json = user.toJson();
+
+      expect(user._id).toBeDefined('The test user should have a valid _id for this test to be meaningful');
+      expect(user.id).toBeDefined('The test user should have a valid id for this test to be meaningful');
+      expect(json._id).toBeUndefined('_id should not be included because id maps to the same value');
+      expect(json.id).toBe(user.id, 'id should be included and should be the same as the model\'s _id');
       expect(this.t.toJson()._id).toBeUndefined();
     });
 
-    describe('when interacting with Db', function() {
+    it('handles falsy properties', function() {
+      class Deep {
+        @Json()
+        value = 0;
+      }
+
+      @Model(sapi)
+      class User extends SakuraApiModel {
+        @Json('fn')
+        firstName = 0;
+
+        @Json({model: Deep})
+        deep = new Deep();
+      }
+
+      const user = new User();
+
+      const result = user.toJson();
+      expect(result.fn).toBe(0);
+      expect(result.deep.value).toBe(0);
+    });
+
+    describe('integrates with fromDb in strict mode', function() {
+
+      class Contact {
+        @Db('ph') @Json()
+        phone = '321-321-3214';
+      }
+
+      @Model(sapi, {
+        dbConfig: {
+          collection: 'dbAndJsonIntegrationTest',
+          db: 'userDb'
+        }
+      })
+      class User extends SakuraApiModel {
+        @Db('fn') @Json('fName')
+        firstName = 'George';
+        @Db('ln') @Json('lName')
+        lastName = 'Washington';
+
+        @Db({field: 'cn', model: Contact}) @Json('cn')
+        contact = new Contact();
+      }
+
       beforeEach(function(done) {
-        this
-          .sapi
+        sapi
           .dbConnections
           .connectAll()
+          .then(() => User.removeAll({}))
+          .then(() => new User().create())
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('returns only projected fields', function(done) {
+        const project = {
+          _id: 0,
+          fn: 1
+        };
+
+        User
+          .get({filter: {}, project})
+          .then((results) => {
+            const result = results[0].toJson();
+            expect(result.fName).toBe('George', 'firstName should have projected to json');
+            expect(result.lName).toBeUndefined('lastName should not have projected to json');
+            expect(result._id).toBeUndefined('_id should not have projected to json');
+            expect(result.id).toBeUndefined('id should not have projected to json');
+            expect(result.cn).toBeUndefined('contact embedded document should not have projected to json');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('supports projecting into embedded documents', function(done) {
+        const project = {
+          'cn.ph': 1
+        };
+
+        User
+          .get({filter: {}, project})
+          .then((results) => {
+            const result = results[0].toJson();
+
+            expect(result.fName).toBeUndefined('firstName should not have projected to json');
+            expect(result.lName).toBeUndefined('lastName should not have projected to json');
+            expect(result._id).toBeUndefined('_id should not have projected to json');
+            expect(result.id).toBeDefined('id should have projected to json');
+            expect(result.cn).toBeDefined('contact embedded document should  have projected to json');
+            expect(result.cn.phone).toBeDefined('contact.phone should have projected to json');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+    });
+
+    describe('when interacting with Db', function() {
+      class Contact {
+        phone = 123;
+        address = '123 Main St.';
+      }
+
+      @Model(sapi, {
+        dbConfig: {
+          collection: 'users',
+          db: 'userDb',
+          promiscuous: true
+        }
+      })
+      class User extends SakuraApiModel {
+        firstName = 'George';
+        lastName: string;
+        contact = new Contact();
+      }
+
+      beforeEach(function(done) {
+        sapi
+          .dbConnections
+          .connectAll()
+          .then(() => User.removeAll({}))
           .then(done)
           .catch(done.fail);
       });
 
       it('returns id when _id is not null', function(done) {
-        this
-          .t
-          .create()
-          .then(() => {
+        const user = new User();
 
-            Test
-              .getById(this.t._id)
-              .then((result) => {
-                expect(result._id).toBeDefined();
-                expect(result.toJson()['id'].toString()).toBe(this.t._id.toString());
-                done();
-              })
-              .catch(done.fail);
+        user
+          .create()
+          .then(() => User.getById(user._id))
+          .then((result) => {
+            expect(result._id).toBeDefined();
+            expect(result.toJson().id.toString()).toBe(user._id.toString());
+
           })
+          .then(done)
           .catch(done.fail);
       });
     });
 
     describe('obeys @Db:{private:true} by not including that field when marshalling object to json', function() {
-      it('does not change expected toJson behavior', function() {
-        expect(this.dbPrivate.toJson().aProperty).toBe('test');
-        expect(this.dbPrivate.toJson().anotherProperty).toBeUndefined();
-        expect(this.dbPrivate.toJson().aThirdProperty).toBe(777);
-        expect(this.dbPrivate.toJson().aFunction).toBeUndefined();
-      });
+      class Address {
+        @Db({private: true})
+        state = 'DC';
+
+        @Db({private: true})
+        @Json('t')
+        test = 'test';
+      }
+
+      class Contact {
+        @Db({field: 'a', model: Address})
+        @Json('addr')
+        address = new Address();
+      }
+
+      @Model(sapi, {})
+      class User extends SakuraApiModel {
+        @Db({field: 'fn', private: true})
+        firstName = 'George';
+
+        @Db({field: 'ln', private: true})
+        @Json('ln')
+        lastName = 'Washington';
+
+        @Db({field: 'c', model: Contact})
+        contact = new Contact();
+
+        @Db({private: true, model: Contact})
+        testObj = new Contact();
+      }
 
       it('when a private @Db field is not decorated with @Json', function() {
-        expect(this.dbPrivate.toJson().hasDbButNotJson).toBeUndefined();
+        const user = new User();
+        const json = user.toJson();
+
+        expect(user.firstName).toBeDefined('This property must be defined for the test to be meaningful');
+        expect(json.firstName).toBeUndefined('A property with @Db({private:true}) should not include that property ' +
+          'in the result json object');
+
+        expect(user.contact.address.state).toBeDefined('This property must be defined for the test to be meaningful');
+        expect(json.contact.addr.state)
+          .toBeUndefined('A property with @Db({private:true}) should not include that property ' +
+            'in the result json object');
+
       });
 
-      it('when a private @Db fiels is also decordated with @Json', function() {
-        expect(this.dbPrivate.toJson().hasDbAndJson).toBeUndefined();
+      it('when a private @Db fields is also decordated with @Json', function() {
+        const user = new User();
+        const json = user.toJson();
+
+        expect(user.lastName).toBeDefined('this test is not meaningful if not defined');
+        expect(json.ln).toBeUndefined('this property should not have been marshalled to json because it has ' +
+          '@Db({private:true}');
+        expect(json.lastName).toBeUndefined('this property should not have been marshalled to json because it has ' +
+          '@Db({private:true}');
+
+        expect(user.contact.address.test).toBeDefined('this test is not meaningful is not defined');
+        expect(json.contact.addr.t).toBeUndefined('A property decorated with @Db({private:true}) should not be ' +
+          'marshalled to json');
+        expect(json.contact.addr.test).toBeUndefined('A property decorated with @Db({private:true}) should not be ' +
+          'marshalled to json');
       });
 
-      it('works as expected when there is an non private @Db decorator and @Json', function() {
-        expect(this.dbPrivate.toJson().marshallsWithJsonAndDb).toBeTruthy();
+      it('@Db({private:true} on an @Json property that\'s an object is respected', function() {
+        const user = new User();
+        const json = user.toJson();
+
+        expect(user.testObj).toBeDefined('this test is not meaningful is this is not defined');
+        expect(json.testObj).toBeUndefined('@Db({private:true}) properties should not be marshalled to json');
       });
 
-      it('works as expected when there is an non private @Db decorator and no @Json', function() {
-        expect(this.dbPrivate.toJson().marshallsWithDb).toBeTruthy();
-      });
     });
   });
 
@@ -199,12 +441,61 @@ describe('@Json', function() {
   });
 
   describe('fromJson', function() {
+
+    class Address {
+      @Db('st')
+      street = '1600 Pennsylvania Ave NW';
+
+      @Db('c')
+      @Json('cy')
+      city = 'Washington';
+
+      state = 'DC';
+
+      @Json('z')
+      zipCode = '20500';
+    }
+
+    class Contact {
+      @Db('ph')
+      phone = '123-123-1234';
+
+      @Db({field: 'a', model: Address})
+      @Json('addr')
+      address = new Address();
+    }
+
+    @Model(sapi, {})
+    class User extends SakuraApiModel {
+      @Db('fn')
+      @Json('fn')
+      firstName = 'George';
+      @Db('ln')
+      @Json('ln')
+      lastName = 'Washington';
+
+      @Db({field: 'c', model: Contact})
+      contact = new Contact();
+
+      @Json({field: 'c2', model: Contact})
+      contact2 = new Contact();
+
+      constructedPropertyX: number;
+      constructedPropertyY: number;
+
+      constructor(x, y) {
+        super();
+        this.constructedPropertyX = x;
+        this.constructedPropertyY = y;
+      }
+    }
+
     it('from is injected into the model as a static member by default', function() {
-      expect(Test.fromJson).toBeDefined();
+      expect(User.fromJson).toBeDefined();
     });
 
     it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
-      @Model()
+      @Model(sapi)
       class SymbolTest extends SakuraApiModel {
         @Json('ap')
         aProperty: number;
@@ -217,24 +508,25 @@ describe('@Json', function() {
       const obj = SymbolTest[modelSymbols.fromJson]({
         ap: 1
       });
+
       expect(obj.aProperty).toBe(1);
     });
 
     it('maintains proper instanceOf', function() {
-      const obj = Test.fromJson({});
+      const obj = User.fromJson({});
 
-      expect(obj instanceof Test).toBe(true);
+      expect(obj instanceof User).toBe(true);
     });
 
     it('passes on constructor arguments to the @Model target being returned', function() {
-      const obj = Test.fromJson({}, 888, 999);
+      const user = User.fromJson({}, 888, 999);
 
-      expect(obj.constructedProperty).toBe(888);
-      expect(obj.constructedProperty2).toBe(999);
+      expect(user.constructedPropertyX).toBe(888);
+      expect(user.constructedPropertyY).toBe(999);
     });
 
     it('does not throw if there are no @Json decorators', function() {
-      @Model()
+      @Model(sapi)
       class C extends SakuraApiModel {
         someProperty = 777;
       }
@@ -243,11 +535,74 @@ describe('@Json', function() {
       expect(C.fromJson({someProperty: 888}).someProperty).toBe(888);
     });
 
-    it('maps an @Json fieldname to an @Model property', function() {
-      const obj = Test.fromJson({
-        ap: 1
-      });
-      expect(obj.aProperty).toBe(1);
+    it('maps an @Json field name to an @Model property', function() {
+      const json = {
+        c2: {
+          addr: {
+            cy: 'test2',
+            foreignField: true,
+            street: 'test'
+          },
+          foreignField: true,
+          phone: 'aaa'
+        },
+        contact: {
+          addr: {
+            cy: 'Los Angeles',
+            foreignField: true
+          },
+          foreignField: true,
+          phone: 'a'
+        },
+        fn: 'Arturo',
+        foreignField: true,
+        ln: 'Fuente'
+      };
+
+      const user = User.fromJson(json);
+
+      // user object
+      expect(user.firstName).toBe(json.fn);
+      expect(user.lastName).toBe(json.ln);
+      expect((user as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+
+      // user.contact object
+      expect(user.contact).toBeDefined('user.contact should be defined');
+      expect(user.contact instanceof Contact).toBeTruthy(`user.contact should have been instance of Contact but was ` +
+        `instance of '${user.contact.constructor.name}' instead`);
+      expect(user.contact.phone).toBe(json.contact.phone);
+      expect((user.contact as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+
+      // user.contact.address object
+      expect(user.contact.address).toBeDefined('user.contact.address should have been defined');
+      expect(user.contact.address instanceof Address).toBeTruthy('user.contact.address should be and instance of' +
+        ` Address, but was an instance of '${user.contact.address.constructor.name}' instead`);
+      expect(user.contact.address.street).toBe('1600 Pennsylvania Ave NW');
+      expect(user.contact.address.city).toBe(json.contact.addr.cy);
+      expect((user.contact as any).addr).toBeUndefined('addr from the json object should not have made it to the ' +
+        ' resulting user object');
+      expect((user.contact.address as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+
+      // user.contact2 object
+      expect(user.contact2).toBeDefined('contact2 should be a property on the resulting user object');
+      expect(user.contact2 instanceof Contact).toBeTruthy(`user.contact should have been instance of Contact but was ` +
+        `instance of '${user.contact2.constructor.name}' instead`);
+      expect(user.contact2.phone).toBe(json.c2.phone);
+      expect((user.contact2 as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+
+      // user.contact2.address object
+      expect(user.contact2.address).toBeDefined('user.contact2.address should have been defined');
+      expect(user.contact2.address instanceof Address).toBeTruthy('user.contact2.address should be and instance of' +
+        ` Address, but was an instance of '${user.contact2.address.constructor.name}' instead`);
+      expect((user.contact2.address as any).foreignField).toBeUndefined('A foreign field should not map to the ' +
+        'resulting model');
+      expect(user.contact2.address.street).toBe(json.c2.addr.street);
+      expect(user.contact2.address.city).toBe(json.c2.addr.cy);
+
     });
 
     describe('allows multiple @json decorators', function() {
@@ -273,7 +628,7 @@ describe('@Json', function() {
     });
 
     it('maps a model property that has no @Json property, but does have a default value', function() {
-      @Model()
+      @Model(sapi)
       class TestDefaults extends SakuraApiModel {
         firstName: string = 'George';
         lastName: string = 'Washington';
@@ -315,16 +670,37 @@ describe('@Json', function() {
       expect(Test.fromJson(undefined)).toBe(null);
     });
 
+    it('handles falsy properties', function() {
+      const json = {
+        contact: {
+          phone: 0
+        },
+        ln: 0
+      };
+
+      const result = User.fromJson(json);
+
+      expect(result.lastName).toBe(0);
+      expect(result.contact.phone).toBe(0);
+    });
+
     describe('id behavior', function() {
+
+      @Model(sapi)
+      class User extends SakuraApiModel {
+      }
+
       it('unmarshalls id as an ObjectID when it is a valid ObjectID', function() {
         const data = {
           id: new ObjectID().toString()
         };
 
-        const test = Test.fromJson(data);
+        const user = User.fromJson(data);
 
-        expect(test.id instanceof ObjectID).toBeTruthy();
-        expect(test._id instanceof ObjectID).toBeTruthy();
+        expect(new User().id).toBeDefined('nope');
+        expect(user instanceof User).toBeTruthy('Should have gotten back an instance of User');
+        expect(user.id instanceof ObjectID).toBeTruthy();
+        expect(user._id instanceof ObjectID).toBeTruthy();
       });
 
       it('unmarshalls id as a string when it not a vlaid ObjectID', function() {
@@ -363,29 +739,105 @@ describe('@Json', function() {
 
   });
 
-  describe('fromJsonAsChangeSet', function() {
+  describe('fromJsonToDb', function() {
 
-    @Model()
-    class ChangeSetTest extends SakuraApiModel {
+    class Contact {
+      @Db('p')
+      @Json()
+      phone = '111-111-1111';
 
-      @Json('fn')
-      firstName: string = '';
-      @Json('ln')
-      lastName: string = '';
+      @Db()
+      @Json()
+      nullTest = null; // leave this here, it tests to make sure that model[key] === null isn't recursed into
 
+      @Db()
+      @Json()
+      wrong: '123'; // leave this here, it tests to make sure that !jsonSrc results in a continue
     }
 
-    it('takes a json object and transforms it to a change set object', function() {
-      const body = {
+    @Model(sapi)
+    class ChangeSetTest extends SakuraApiModel {
+
+      @Db('first')
+      @Json('fn')
+      firstName: string;
+
+      @Json('ln')
+      @Db()
+      lastName: string = '';
+
+      @Db('cn')
+      @Json({field: 'ctac', model: Contact})
+      contact = new Contact();
+
+      @Db('cn2')
+      contact2 = new Contact();
+    }
+
+    it('returns an object literal with json fields mapped to db fields', function() {
+      const json = {
+        ctac: {
+          phone: '000'
+        },
         fn: 'George',
         ln: 'Washington'
       };
 
-      const result = ChangeSetTest.fromJsonAsChangeSet(body);
+      const dbObj = ChangeSetTest.fromJsonToDb(json);
+      expect(dbObj instanceof ChangeSetTest).toBe(false);
+      expect(dbObj.first).toBe(json.fn, 'should have been able to handle a property without any value');
+      expect(dbObj.lastName).toBe(json.ln);
+      expect(dbObj.cn).toBeDefined('contact should have been included');
+      expect(dbObj.cn.p).toBe('000');
+    });
 
-      expect(result.firstName).toBe(body.fn);
-      expect(result.lastName).toBe(body.ln);
-      expect(result instanceof ChangeSetTest).toBe(false);
+    it('converts id to _id', function() {
+      const json = {
+        ctac: {
+          phone: '000'
+        },
+        fn: 'George',
+        id: new ObjectID().toString(),
+        ln: 'Washington'
+      };
+
+      const dbObj = ChangeSetTest.fromJsonToDb(json);
+      expect(dbObj._id).toBe(json.id, 'json.id was not converted to _id');
+    });
+
+    it('converts id = 0 to _id', function() {
+      const json = {
+        ctac: {
+          phone: '000'
+        },
+        fn: 'George',
+        id: 0,
+        ln: 'Washington'
+      };
+
+      const dbObj = ChangeSetTest.fromJsonToDb(json);
+      expect(dbObj._id).toBe(json.id, 'json.id was not converted to _id');
+    });
+
+    it(`handles properties accidentally defined like \`wrong: '123'\` instead of \`wrong = '123'\``, function() {
+      const json = {
+        fn: 'George'
+      };
+
+      expect(() => ChangeSetTest.fromJsonToDb(json)).not.toThrow();
+    });
+
+    it('handles falsy properties', function() {
+      const json = {
+        ctac: {
+          phone: 0
+        },
+        ln: 0
+      };
+
+      const result = ChangeSetTest.fromJsonToDb(json);
+      expect(result.lastName).toBe(0);
+      expect(result.cn.p).toBe(0);
     });
   });
 
@@ -395,7 +847,7 @@ describe('@Json', function() {
     });
 
     it('allows the injected functions to be overridden without breaking the internal dependencies', function() {
-      @Model()
+      @Model(sapi)
       class SymbolTest extends SakuraApiModel {
         @Json('ap')
         aProperty: number;

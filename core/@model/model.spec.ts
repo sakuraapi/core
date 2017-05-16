@@ -1,13 +1,13 @@
-import {Db} from './db';
+import {
+  Db,
+  Model,
+  modelSymbols,
+  SakuraApiModel
+} from './';
 import {
   SapiDbForModelNotFound,
   SapiMissingIdErr
 } from './errors';
-import {
-  Model,
-  modelSymbols
-} from './model';
-import {SakuraApiModel} from './sakura-api-model';
 
 import {
   InsertOneWriteOpResult,
@@ -16,9 +16,13 @@ import {
   UpdateWriteOpResult
 } from 'mongodb';
 
+import {Sapi} from '../../spec/helpers/sakuraapi';
+
 describe('@Model', function() {
 
-  @Model()
+  const sapi = Sapi();
+
+  @Model(sapi)
   class Test extends SakuraApiModel {
 
     static getById(id: string, project?: any): Promise<string> {
@@ -66,6 +70,19 @@ describe('@Model', function() {
         .toThrowError(`Cannot assign to read only property 'Symbol(isSakuraApiModel)' of object '#<Test>'`);
     });
 
+    it(`throws when sapi parameter passed to @Model(sapi) is not valid`, function(done) {
+
+      try {
+        @Model(null)
+        class InvalidModelSakuraApiReferenceTest {
+        }
+        done.fail('@Model should have thrown with invalid sapi parameter');
+      } catch (err) {
+        done();
+      }
+
+    });
+
     it('maps _id to id without contaminating the object properties with the id accessor', function() {
       this.t.id = new ObjectID();
 
@@ -78,7 +95,7 @@ describe('@Model', function() {
 
     describe('ModelOptions.dbConfig', function() {
 
-      @Model({
+      @Model(sapi, {
         dbConfig: {
           collection: '',
           db: ''
@@ -94,7 +111,7 @@ describe('@Model', function() {
       });
 
       it('throws when dbConfig.collection is missing', function() {
-        @Model({
+        @Model(sapi, {
           dbConfig: {
             collection: '',
             db: 'test'
@@ -111,7 +128,7 @@ describe('@Model', function() {
 
     describe('injects default CRUD method', function() {
 
-      @Model({
+      @Model(sapi, {
         dbConfig: {
           collection: 'users',
           db: 'userDb',
@@ -131,7 +148,7 @@ describe('@Model', function() {
         password = '';
       }
 
-      @Model({
+      @Model(sapi, {
         dbConfig: {
           collection: 'users',
           db: 'userDb',
@@ -144,7 +161,7 @@ describe('@Model', function() {
         lastName = 'Washington';
       }
 
-      @Model({
+      @Model(sapi, {
         dbConfig: {
           collection: 'bad',
           db: 'bad'
@@ -162,8 +179,7 @@ describe('@Model', function() {
       describe('when CRUD not provided by integrator', function() {
 
         beforeEach(function(done) {
-          this
-            .sapi
+          sapi
             .dbConnections
             .connectAll()
             .then(done)
@@ -272,7 +288,7 @@ describe('@Model', function() {
                 expect(createdResult.insertedCount).toBe(1);
 
                 TestDefaultMethods
-                  .get({_id: this.tdm.id})
+                  .get({filter: {_id: this.tdm.id}})
                   .then((results) => {
                     expect(results.length).toBe(1);
                     expect(results[0]._id.toString()).toBe(this.tdm.id.toString());
@@ -408,6 +424,7 @@ describe('@Model', function() {
               .catch(done.fail);
 
           });
+
         });
 
         describe('instance method', function() {
@@ -469,6 +486,46 @@ describe('@Model', function() {
                     .catch(done.fail);
                 });
             });
+
+            it('persists deeply nested objects', function(done) {
+
+              class Contact {
+                @Db()
+                phone = '000-000-0000';
+              }
+
+              @Model(sapi, {
+                dbConfig: {
+                  collection: 'userCreateTest',
+                  db: 'userDb'
+                }
+              })
+              class UserCreateTest extends SakuraApiModel {
+                @Db()
+                firstName = 'George';
+                @Db()
+                lastName = 'Washington';
+
+                @Db({model: Contact})
+                contact = new Contact();
+              }
+
+              const user = new UserCreateTest();
+
+              user
+                .create()
+                .then(() => user.getCollection().find({_id: user.id}).limit(1).next())
+                .then((result: any) => {
+                  expect(result._id.toString()).toBe(user.id.toString());
+                  expect(result.firstName).toBe(user.firstName || 'firstName should have been defined');
+                  expect(result.lastName).toBe(user.lastName || 'lastName should have been defined');
+                  expect(result.contact).toBeDefined();
+                  expect(result.contact.phone).toBe('000-000-0000');
+                })
+                .then(done)
+                .catch(done.fail);
+
+            });
           });
 
           describe('getCollection', function() {
@@ -514,7 +571,7 @@ describe('@Model', function() {
             });
 
             describe('with projection', function() {
-              @Model({
+              @Model(sapi, {
                 dbConfig: {
                   collection: 'users',
                   db: 'userDb',
@@ -522,54 +579,47 @@ describe('@Model', function() {
                 }
               })
               class PartialUpdateTest extends SakuraApiModel {
-                @Db({
-                  field: 'fn'
-                })
+                @Db('fn')
                 firstName = 'George';
+
                 lastName = 'Washington';
-                @Db({
-                  field: 'pw',
-                  private: true
-                })
+
+                @Db({field: 'pw', private: true})
                 password = '';
               }
 
               it('sets the proper database level fields', function(done) {
                 const pud = new PartialUpdateTest();
 
+                const updateSet = {
+                  fn: 'updated'
+                };
+
                 pud
                   .create()
                   .then((createResult) => {
                     expect(createResult.insertedCount).toBe(1);
                     expect(pud.id).toBeTruthy();
+                  })
+                  .then(() => pud.save(updateSet))
+                  .then((result: UpdateWriteOpResult) => {
+                    expect(result.modifiedCount).toBe(1);
+                    expect(pud.firstName).toBe(updateSet.fn);
 
-                    const updateSet = {
-                      firstName: 'updated'
-                    };
-
-                    pud
-                      .save(updateSet)
-                      .then((result: UpdateWriteOpResult) => {
-                        expect(result.modifiedCount).toBe(1);
-                        expect(pud.firstName).toBe(updateSet.firstName);
-
-                        pud
-                          .getCollection()
-                          .find({_id: pud.id})
-                          .limit(1)
-                          .next()
-                          .then((updated) => {
-                            expect(updated._id instanceof ObjectID || updated._id.constructor.name === 'ObjectID')
-                              .toBe(true);
-                            expect(updated.fn).toBeDefined();
-
-                            expect(updated.fn).toBe(updateSet.firstName);
-                            done();
-                          })
-                          .catch(done.fail);
-                      })
-                      .catch(done.fail);
-                  });
+                    return pud
+                      .getCollection()
+                      .find({_id: pud.id})
+                      .limit(1)
+                      .next();
+                  })
+                  .then((updated: any) => {
+                    expect(updated._id instanceof ObjectID || updated._id.constructor.name === 'ObjectID')
+                      .toBe(true);
+                    expect(updated.fn).toBeDefined();
+                    expect(updated.fn).toBe(updateSet.fn);
+                  })
+                  .then(done)
+                  .catch(done.fail);
               });
 
               it('performs a partial update without disturbing other fields', function(done) {
@@ -706,7 +756,7 @@ describe('@Model', function() {
     });
 
     describe('allows integrator to exclude CRUD with suppressInjection: [] in ModelOptions', function() {
-      @Model({suppressInjection: ['get', 'save']})
+      @Model(sapi, {suppressInjection: ['get', 'save']})
       class TestSuppressedDefaultMethods extends SakuraApiModel {
       }
 
@@ -720,6 +770,70 @@ describe('@Model', function() {
 
       it('with instance defaults', function() {
         expect(this.suppressed.save).toBe(undefined);
+      });
+    });
+
+    describe('properties that are declared as object literals', function() {
+      // Integrator note: to persist complex models with deeply embedded objects, the embedded objects
+      // should be their own classes.
+
+      @Model(sapi, {
+        dbConfig: {
+          collection: 'users',
+          db: 'userDb',
+          promiscuous: true
+        }
+      })
+      class NestedModel extends SakuraApiModel {
+        @Db()
+        contact: {
+          firstName: string,
+          lastName: string
+        };
+
+        ignoreThis: {
+          level2: string
+        };
+      }
+
+      beforeEach(function(done) {
+        sapi
+          .dbConnections
+          .connectAll()
+          .then(() => NestedModel.removeAll({}))
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('require promiscuous mode', function(done) {
+        const nested = new NestedModel();
+
+        nested.contact = {
+          firstName: 'George',
+          lastName: 'Washington'
+        };
+
+        nested.ignoreThis = {
+          level2: 'test'
+        };
+
+        nested
+          .create()
+          .then(() => {
+
+            const x = NestedModel.getById(nested.id);
+
+            return x;
+          })
+          .then((obj) => {
+            expect(obj.id.toString()).toBe(nested.id.toString());
+            expect(obj.contact).toBeDefined();
+            expect(obj.contact.firstName).toBe(nested.contact.firstName);
+            expect(obj.contact.lastName).toBe(nested.contact.lastName);
+          })
+          .then(done)
+          .catch(done.fail);
+
       });
     });
   });

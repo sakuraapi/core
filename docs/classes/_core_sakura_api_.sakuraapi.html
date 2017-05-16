@@ -78,9 +78,8 @@
 							<li>Starting and stopping the server.</li>
 						</ol>
 					</div>
-					<p>SakuraApi is a singleton, so all you have to do is use <a href="_core_sakura_api_.sakuraapi.html#instance">SakuraApi.instance</a> to get access to the server&#39;s instance.
-						This is important, but the <code>@Routable</code> classes and be auto binding their routes to Express and you&#39;ll want a way to get
-					a reference to the same instance of SakuraApi that they used.</p>
+					<p>You&#39;ll want to instantiate SakuraApi and export SakuraApi then import that to anywhere that requires a reference
+					to that instance (for example <a href="../modules/_core__model_model_.html#model">Model</a> or <a href="../modules/_core__routable_routable_.html#routable">Routable</a>).</p>
 					<h3 id="example">Example</h3>
 					<pre>
 import {SakuraApi}       from 'sakuraapi';
@@ -88,13 +87,14 @@ import                   './model/user';
 import                   'colors';
 import * as bodyParser   from 'body-parser'
 
+export const sapi = new SakuraApi();
+
 class Server {
-   sapi = SakuraApi.instance;
 
    constructor() {}
 
    start() {
-       this.sapi.addMiddleware(bodyParser.json());
+       sapi.addMiddleware(bodyParser.json());
        sapi
          .listen()
          .catch((err) => {
@@ -122,6 +122,12 @@ new Server().start();
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#baseuri" class="tsd-kind-icon">base<wbr>Uri</a></li>
@@ -136,21 +142,51 @@ new Server().start();
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#dbconnections" class="tsd-kind-icon">db<wbr>Connections</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#port" class="tsd-kind-icon">port</a></li>
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#server" class="tsd-kind-icon">server</a></li>
-								<li class="tsd-kind-get-signature tsd-parent-kind-class tsd-is-static"><a href="_core_sakura_api_.sakuraapi.html#instance" class="tsd-kind-icon">instance</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Methods</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#addlasterrorhandlers" class="tsd-kind-icon">add<wbr>Last<wbr>Error<wbr>Handlers</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#addmiddleware" class="tsd-kind-icon">add<wbr>Middleware</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#close" class="tsd-kind-icon">close</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#listen" class="tsd-kind-icon">listen</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#route" class="tsd-kind-icon">route</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="_core_sakura_api_.sakuraapi.html#addmiddleware-1" class="tsd-kind-icon">add<wbr>Middleware</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><a href="_core_sakura_api_.sakuraapi.html#instantiate" class="tsd-kind-icon">instantiate</a></li>
 							</ul>
 						</section>
 					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Sakura<wbr>Api<span class="tsd-signature-symbol">(</span>app<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Express</span>, config<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span>, dbConfig<span class="tsd-signature-symbol">?: </span><a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-signature-type">SakuraMongoDbConnection</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L153">core/sakura-api.ts:153</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> app: <span class="tsd-signature-type">Express</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> config: <span class="tsd-signature-type">any</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> dbConfig: <a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-signature-type">SakuraMongoDbConnection</a></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a></h4>
+						</li>
+					</ul>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
@@ -161,7 +197,7 @@ new Server().start();
 					<div class="tsd-signature tsd-kind-icon">base<wbr>Uri<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;&quot;/&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L105">core/sakura-api.ts:105</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L103">core/sakura-api.ts:103</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -170,7 +206,7 @@ new Server().start();
 						</div>
 						<h3 id="example">Example</h3>
 						<pre>
-SakuraApi.instance.baseUri = 'api';
+sakuraApi.baseUri = '/api';
 </pre>
 						<p>This will cause SakuraApi to expect all routes to have <code>api</code> at their base (e.g., <code>http://localhost:8080/api/user</code>).</p>
 					</div>
@@ -188,7 +224,7 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L110">core/sakura-api.ts:110</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L108">core/sakura-api.ts:108</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -204,13 +240,13 @@ SakuraApi.instance.baseUri = 'api';
 					<a name="app" class="tsd-anchor"></a>
 					<h3>app</h3>
 					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> app<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">express.Express</span></li>
+						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> app<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Express</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L117">core/sakura-api.ts:117</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L115">core/sakura-api.ts:115</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -218,7 +254,7 @@ SakuraApi.instance.baseUri = 'api';
 									<p>Returns an reference to SakuraApi&#39;s instance of Express.</p>
 								</div>
 							</div>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">express.Express</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Express</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -233,7 +269,7 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L125">core/sakura-api.ts:125</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L123">core/sakura-api.ts:123</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -247,7 +283,7 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L129">core/sakura-api.ts:129</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L127">core/sakura-api.ts:127</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -276,14 +312,14 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L139">core/sakura-api.ts:139</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L137">core/sakura-api.ts:137</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
 									<p>The <a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html">SakuraMongoDbConnection</a> instance that was created when <a href="_core_sakura_api_.sakuraapi.html">SakuraApi</a> instantiated if
 										the &quot;dbConnections&quot; property was found in the config with the proper configuration options set, or
-										if <a href="_core_sakura_api_.sakuraapi.html#instantiate">SakuraApi.instantiate</a> was used to instantiate the <a href="_core_sakura_api_.sakuraapi.html">SakuraApi</a> singleton and the
+										if [[SakuraApi.instantiate]] was used to instantiate the <a href="_core_sakura_api_.sakuraapi.html">SakuraApi</a> singleton and the
 									<a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html">SakuraMongoDbConnection</a> was manually provided.</p>
 								</div>
 							</div>
@@ -301,7 +337,7 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L146">core/sakura-api.ts:146</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L144">core/sakura-api.ts:144</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -323,7 +359,7 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L153">core/sakura-api.ts:153</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L151">core/sakura-api.ts:151</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -335,31 +371,32 @@ SakuraApi.instance.baseUri = 'api';
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class tsd-is-static">
-					<a name="instance" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagStatic">Static</span> instance</h3>
-					<ul class="tsd-signatures tsd-kind-get-signature tsd-parent-kind-class tsd-is-static">
-						<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">get</span> instance<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a></li>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="addlasterrorhandlers" class="tsd-anchor"></a>
+					<h3>add<wbr>Last<wbr>Error<wbr>Handlers</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">add<wbr>Last<wbr>Error<wbr>Handlers<span class="tsd-signature-symbol">(</span>fn<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ErrorRequestHandler</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L88">core/sakura-api.ts:88</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L191">core/sakura-api.ts:191</a></li>
 								</ul>
 							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>SakuraApi is a singleton. You get a reference to the instance with <a href="_core_sakura_api_.sakuraapi.html#instance">SakuraApi.instance</a>.</p>
-								</div>
-							</div>
-							<h4 class="tsd-returns-title">Returns <a href="_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a></h4>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>fn: <span class="tsd-signature-type">ErrorRequestHandler</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
 						</li>
 					</ul>
 				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Methods</h2>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="addmiddleware" class="tsd-anchor"></a>
 					<h3>add<wbr>Middleware</h3>
@@ -370,7 +407,7 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L199">core/sakura-api.ts:199</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L186">core/sakura-api.ts:186</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -387,20 +424,20 @@ SakuraApi.instance.baseUri = 'api';
 									<ul class="tsd-parameters">
 										<li class="tsd-parameter-siganture">
 											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
-												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>req<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">express.Request</span>, res<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">express.Response</span>, next<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">express.NextFunction</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>req<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Request</span>, res<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Response</span>, next<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">NextFunction</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 											</ul>
 											<ul class="tsd-descriptions">
 												<li class="tsd-description">
 													<h4 class="tsd-parameters-title">Parameters</h4>
 													<ul class="tsd-parameters">
 														<li>
-															<h5>req: <span class="tsd-signature-type">express.Request</span></h5>
+															<h5>req: <span class="tsd-signature-type">Request</span></h5>
 														</li>
 														<li>
-															<h5>res: <span class="tsd-signature-type">express.Response</span></h5>
+															<h5>res: <span class="tsd-signature-type">Response</span></h5>
 														</li>
 														<li>
-															<h5>next: <span class="tsd-signature-type">express.NextFunction</span></h5>
+															<h5>next: <span class="tsd-signature-type">NextFunction</span></h5>
 														</li>
 													</ul>
 													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -424,7 +461,7 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L207">core/sakura-api.ts:207</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L200">core/sakura-api.ts:200</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -447,7 +484,7 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L253">core/sakura-api.ts:253</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L229">core/sakura-api.ts:229</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -481,7 +518,7 @@ SakuraApi.instance.baseUri = 'api';
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L312">core/sakura-api.ts:312</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/c0f4804/core/sakura-api.ts#L331">core/sakura-api.ts:331</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -498,97 +535,6 @@ SakuraApi.instance.baseUri = 'api';
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
-					<a name="addmiddleware-1" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagStatic">Static</span> add<wbr>Middleware</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
-						<li class="tsd-signature tsd-kind-icon">add<wbr>Middleware<span class="tsd-signature-symbol">(</span>fn<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L188">core/sakura-api.ts:188</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>A static helper method to make it easier to add middleware. See <a href="_core_sakura_api_.sakuraapi.html">SakuraApi</a> for an example of its use. You could also
-									use <a href="_core_sakura_api_.sakuraapi.html#app">SakuraApi.app</a> to get a reference to Express then add your middleware with that reference directly.</p>
-								</div>
-								<p>This uses <code>express.use(...)</code> internally.</p>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>fn: <span class="tsd-signature-type">function</span></h5>
-									<ul class="tsd-parameters">
-										<li class="tsd-parameter-siganture">
-											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
-												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>req<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">express.Request</span>, res<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">express.Response</span>, next<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">express.NextFunction</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-											</ul>
-											<ul class="tsd-descriptions">
-												<li class="tsd-description">
-													<h4 class="tsd-parameters-title">Parameters</h4>
-													<ul class="tsd-parameters">
-														<li>
-															<h5>req: <span class="tsd-signature-type">express.Request</span></h5>
-														</li>
-														<li>
-															<h5>res: <span class="tsd-signature-type">express.Response</span></h5>
-														</li>
-														<li>
-															<h5>next: <span class="tsd-signature-type">express.NextFunction</span></h5>
-														</li>
-													</ul>
-													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-												</li>
-											</ul>
-										</li>
-									</ul>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-static">
-					<a name="instantiate" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagStatic">Static</span> instantiate</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-static">
-						<li class="tsd-signature tsd-kind-icon">instantiate<span class="tsd-signature-symbol">(</span>app<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">express.Express</span>, config<span class="tsd-signature-symbol">?: </span><a href="_boot_sakura_api_config_.sakuraapiconfig.html" class="tsd-signature-type">SakuraApiConfig</a>, dbConfig<span class="tsd-signature-symbol">?: </span><a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-signature-type">SakuraMongoDbConnection</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a1893ef/core/sakura-api.ts#L232">core/sakura-api.ts:232</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Manually instantiate the <a href="_core_sakura_api_.sakuraapi.html">SakuraApi</a> singleton with your own <code>express.Express</code> and <a href="_boot_sakura_api_config_.sakuraapiconfig.html">SakuraApiConfig</a>.
-										If either parameter is null or undefined, then the defaults are used as if you can called
-										<a href="_core_sakura_api_.sakuraapi.html#instance">SakuraApi.instance</a>. Note that you can only call this if the <a href="_core_sakura_api_.sakuraapi.html">SakuraApi</a> singleton has not already been
-									instantiated. Otherwise, it will throw <code>new Error(&#39;ALREADY_INSTANTIATED&#39;)</code>.</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> app: <span class="tsd-signature-type">express.Express</span></h5>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> config: <a href="_boot_sakura_api_config_.sakuraapiconfig.html" class="tsd-signature-type">SakuraApiConfig</a></h5>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> dbConfig: <a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html" class="tsd-signature-type">SakuraMongoDbConnection</a></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a></h4>
 						</li>
 					</ul>
 				</section>
@@ -625,6 +571,9 @@ SakuraApi.instance.baseUri = 'api';
 						<a href="../modules/_core__routable_routable_.html">"core/@routable/routable"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core__routable_route_.html">"core/@routable/route"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
 					</li>
 					<li class="current tsd-kind-external-module">
@@ -632,6 +581,9 @@ SakuraApi.instance.baseUri = 'api';
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_sakura_mongo_db_connection_.html">"core/sakura-<wbr>mongo-<wbr>db-<wbr>connection"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_security_mongo_db_.html">"core/security/mongo-<wbr>db"</a>
 					</li>
 				</ul>
 			</nav>
@@ -642,6 +594,9 @@ SakuraApi.instance.baseUri = 'api';
 					<li class="current tsd-kind-class tsd-parent-kind-external-module">
 						<a href="_core_sakura_api_.sakuraapi.html" class="tsd-kind-icon">Sakura<wbr>Api</a>
 						<ul>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="_core_sakura_api_.sakuraapi.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class">
 								<a href="_core_sakura_api_.sakuraapi.html#baseuri" class="tsd-kind-icon">base<wbr>Uri</a>
 							</li>
@@ -663,8 +618,8 @@ SakuraApi.instance.baseUri = 'api';
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="_core_sakura_api_.sakuraapi.html#server" class="tsd-kind-icon">server</a>
 							</li>
-							<li class=" tsd-kind-get-signature tsd-parent-kind-class tsd-is-static">
-								<a href="_core_sakura_api_.sakuraapi.html#instance" class="tsd-kind-icon">instance</a>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_core_sakura_api_.sakuraapi.html#addlasterrorhandlers" class="tsd-kind-icon">add<wbr>Last<wbr>Error<wbr>Handlers</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="_core_sakura_api_.sakuraapi.html#addmiddleware" class="tsd-kind-icon">add<wbr>Middleware</a>
@@ -677,12 +632,6 @@ SakuraApi.instance.baseUri = 'api';
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="_core_sakura_api_.sakuraapi.html#route" class="tsd-kind-icon">route</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
-								<a href="_core_sakura_api_.sakuraapi.html#addmiddleware-1" class="tsd-kind-icon">add<wbr>Middleware</a>
-							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-static">
-								<a href="_core_sakura_api_.sakuraapi.html#instantiate" class="tsd-kind-icon">instantiate</a>
 							</li>
 						</ul>
 					</li>

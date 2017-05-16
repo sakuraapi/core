@@ -1,14 +1,19 @@
 import {MongoClient} from 'mongodb';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 
-describe('core/sakura-mongo-db', function () {
+import {Sapi} from '../spec/helpers/sakuraapi';
 
-  beforeEach(function () {
-    this.dbUrl = `${this.mongoDbBaseUri}/test`;
+describe('core/sakura-mongo-db', function() {
+
+  const sapi = Sapi();
+
+  beforeEach(function() {
+
+    this.dbUrl = `${this.mongoDbBaseUri(sapi)}/test`;
     this.sapiDb = new SakuraMongoDbConnection();
   });
 
-  afterEach(function (done) {
+  afterEach(function(done) {
     this
       .sapiDb
       .closeAll()
@@ -16,18 +21,17 @@ describe('core/sakura-mongo-db', function () {
       .catch(done.fail);
   });
 
-  describe('addConnection', function () {
-    it('records a connection, but doesn\'t open the connection', function () {
+  describe('addConnection', function() {
+    it('records a connection, but doesn\'t open the connection', function() {
       this.sapiDb.addConnection('test', this.dbUrl);
-      expect(this.sapiDb.getDb('test'))
-        .toBeUndefined();
-      expect(this.sapiDb.getConnection('test'))
-        .toBeDefined();
+      expect(this.sapiDb.getDb('test')).toBeUndefined();
+      expect(this.sapiDb.getConnection('test')).toBeDefined();
     })
   });
 
-  describe('connect', function () {
-    it('registers a db and connects to it', function (done) {
+  describe('connect', function() {
+    it('registers a db and connects to it', function(done) {
+
       this
         .sapiDb
         .connect('test', this.dbUrl)
@@ -39,7 +43,7 @@ describe('core/sakura-mongo-db', function () {
         .catch(done.fail);
     });
 
-    it('stores its parameters in its private connections map', function (done) {
+    it('stores its parameters in its private connections map', function(done) {
       this
         .sapiDb
         .connect('test', this.dbUrl)
@@ -51,8 +55,8 @@ describe('core/sakura-mongo-db', function () {
         .catch(done.fail);
     })
 
-    describe('does not reconnect to a Db that is already connected', function () {
-      it('serial scenario', function (done) {
+    describe('does not reconnect to a Db that is already connected', function() {
+      it('serial scenario', function(done) {
         spyOn(MongoClient, 'connect')
           .and
           .callThrough();
@@ -74,7 +78,7 @@ describe('core/sakura-mongo-db', function () {
           .catch(done.fail);
       });
 
-      it('parallel, possible race condition', function (done) {
+      it('parallel, possible race condition', function(done) {
         spyOn(MongoClient, 'connect')
           .and
           .callThrough();
@@ -94,8 +98,8 @@ describe('core/sakura-mongo-db', function () {
     });
   });
 
-  describe('close', function () {
-    it('closes a single db connection', function (done) {
+  describe('close', function() {
+    it('closes a single db connection', function(done) {
       this
         .sapiDb
         .connect('test', this.dbUrl)
@@ -113,7 +117,7 @@ describe('core/sakura-mongo-db', function () {
         .catch(done.fail);
     });
 
-    it('properly gracefully handles closing a non-existing connection', function (done) {
+    it('properly gracefully handles closing a non-existing connection', function(done) {
       this
         .sapiDb
         .close('xyxyxyx')
@@ -122,8 +126,8 @@ describe('core/sakura-mongo-db', function () {
     });
   });
 
-  describe('closeAll', function () {
-    it('closes all connections', function (done) {
+  describe('closeAll', function() {
+    it('closes all connections', function(done) {
       let wait = [];
       wait.push(this.sapiDb.connect('x1', this.dbUrl));
       wait.push(this.sapiDb.connect('x2', this.dbUrl));
@@ -152,8 +156,8 @@ describe('core/sakura-mongo-db', function () {
     });
   });
 
-  describe('getDb', function () {
-    it('retrieves a connected DB instance by name', function (done) {
+  describe('getDb', function() {
+    it('retrieves a connected DB instance by name', function(done) {
       this
         .sapiDb
         .connect('test', this.dbUrl)
@@ -166,8 +170,8 @@ describe('core/sakura-mongo-db', function () {
     });
   });
 
-  describe('getConnection', function () {
-    it('retrieves a connection by name', function () {
+  describe('getConnection', function() {
+    it('retrieves a connection by name', function() {
       this
         .sapiDb
         .addConnection('test', this.dbUrl);
