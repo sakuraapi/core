@@ -64,7 +64,6 @@
     "@types/node": "^7.0.14",
     "@types/supertest": "^2.0.0",
     "body-parser": "^1.17.1",
-    "express-mung": "^0.4.6",
     "helmet": "^3.6.0",
     "http-server": "^0.9.0",
     "istanbul": "^0.4.5",

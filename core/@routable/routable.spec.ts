@@ -17,6 +17,7 @@ import {
   Model,
   SakuraApiModel
 } from '../@model';
+import {IRoutableLocals} from './routable';
 
 import method = require('lodash/method');
 import before = require('lodash/before');
@@ -1147,8 +1148,6 @@ describe('core/Routable', function() {
   });
 
   describe('beforeAll handlers', function() {
-    pending('Do not use, in development');
-
     const sapi = Sapi();
 
     @Model(sapi, {
@@ -1252,9 +1251,9 @@ describe('core/Routable', function() {
   });
 
   describe('afterAll handlers', function() {
-    pending('Do not use, in development');
 
     const sapi = Sapi();
+    let test = 0;
 
     @Model(sapi, {
       dbConfig: {
@@ -1274,17 +1273,30 @@ describe('core/Routable', function() {
     }
 
     @Routable(sapi, {
-      afterAll: [UserAfterAllHandlersApi.afterHandler, testHandler],
+      afterAll: [UserAfterAllHandlersApi.afterHandler, testAfterHandler],
       model: UserAfterAllHandlers
     })
     class UserAfterAllHandlersApi {
-
       static afterHandler(req: Request, res: Response, next: NextFunction): any {
-        next();
+        let resLocal = res.locals as IRoutableLocals;
+        UserAfterAllHandlers
+          .getById(resLocal.data.id)
+          .then((result) => {
+            resLocal.data.order = '1';
+            resLocal.data.user = UserAfterAllHandlers.fromDb(result).toJson();
+            next();
+          })
+          .catch(next);
       }
     }
 
-    beforeAll(function(done) {
+    function testAfterHandler(req: Request, res: Response, next: NextFunction) {
+      let resLocal = res.locals as IRoutableLocals;
+      resLocal.data.order += '2';
+      next();
+    }
+
+    beforeEach(function(done) {
       sapi
         .listen({bootMessage: ''})
         .then(() => UserAfterAllHandlers.removeAll({}))
@@ -1292,7 +1304,98 @@ describe('core/Routable', function() {
         .catch(done.fail);
     });
 
-    afterAll(function(done) {
+    afterEach(function(done) {
+      sapi
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('run after each @Route method', function(done) {
+      request(sapi.app)
+        .post(this.uri(`/UserAfterAllHandlers?test=${++test}`))
+        .type('application/json')
+        .send({
+          firstName: 'Ben',
+          lastName: 'Franklin'
+        })
+        .expect(200)
+        .then((response) => {
+          const body = response.body;
+          expect(body.count).toBe(1);
+          expect(body.user).toBeDefined();
+          expect(body.user.firstName).toBe('Ben');
+          expect(body.user.lastName).toBe('Franklin');
+          expect(body.user.id).toBe(body.id);
+          expect(body.count).toBe(1);
+        })
+        .then(done)
+        .catch(done.fail);
+    });
+
+  });
+
+  describe('beforeAll and afterAll handlers play nice together', function() {
+
+    const sapi = Sapi();
+
+    @Model(sapi, {
+      dbConfig: {
+        collection: 'users',
+        db: 'userDb'
+      }
+    })
+    class UserAfterAllHandlersBeforeAllHandlers extends SakuraApiModel {
+      @Db() @Json()
+      firstName = 'George';
+      @Db() @Json()
+      lastName = 'Washington';
+      @Db() @Json()
+      handlerWasRightInstanceOf = false;
+      @Db() @Json()
+      order = '1';
+    }
+
+    @Routable(sapi, {
+      beforeAll: [UserAfterAllHandlersBeforeAllHandlersApi.beforeHandler, testBeforeHandler],
+      afterAll: [UserAfterAllHandlersBeforeAllHandlersApi.afterHandler, testAfterHandler],
+      model: UserAfterAllHandlersBeforeAllHandlers
+    })
+    class UserAfterAllHandlersBeforeAllHandlersApi {
+      static beforeHandler(req: Request, res: Response, next: NextFunction): any {
+        let resLocal = res.locals as IRoutableLocals;
+        resLocal.data.order = '1b';
+        next();
+      }
+
+      static afterHandler(req: Request, res: Response, next: NextFunction): any {
+        let resLocal = res.locals as IRoutableLocals;
+        resLocal.data.order += '1a';
+        next();
+      }
+    }
+
+    function testBeforeHandler(req: Request, res: Response, next: NextFunction) {
+      let resLocal = res.locals as IRoutableLocals;
+      resLocal.data.order += '2b';
+      next();
+    }
+
+    function testAfterHandler(req: Request, res: Response, next: NextFunction) {
+      let resLocal = res.locals as IRoutableLocals;
+      resLocal.data.order += '2a';
+      next();
+    }
+
+    beforeEach(function(done) {
+      sapi
+        .listen({bootMessage: ''})
+        .then(() => UserAfterAllHandlersBeforeAllHandlers.removeAll({}))
+        .then(done)
+        .catch(done.fail);
+    });
+
+    afterEach(function(done) {
       sapi
         .close()
         .then(done)
@@ -1302,23 +1405,20 @@ describe('core/Routable', function() {
     it('run after each @Route method', function(done) {
 
       request(sapi.app)
-        .post(this.uri('/UserAfterAllHandlers'))
+        .post(this.uri('/UserAfterAllHandlersBeforeAllHandlers'))
         .type('application/json')
         .send({
           firstName: 'Ben',
           lastName: 'Franklin'
         })
         .expect(200)
+        .then((response) => {
+          expect(response.body.order).toBe('1b2b1a2a');
+          expect(response.body.count).toBe(1);
+        })
         .then(done)
         .catch(done.fail);
     });
 
-    it('run in the correct order', function(done) {
-      pending('not implemented');
-    });
-
-    function testHandler(req: Request, res: Response, next: NextFunction) {
-      next();
-    }
   });
 });

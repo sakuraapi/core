@@ -11,7 +11,6 @@ import {SakuraApiModel} from './sakura-api-model';
 import {Sapi} from '../../spec/helpers/sakuraapi';
 
 describe('@Db', function() {
-
   const sapi = Sapi();
 
   it('takes a string for the fieldname or an IDbOptions if other options are needed', function() {
@@ -76,7 +75,6 @@ describe('@Db', function() {
     });
 
     describe('constructor', function() {
-
       @Model(sapi)
       class Test extends SakuraApiModel {
 
@@ -502,7 +500,6 @@ describe('@Db', function() {
   });
 
   describe('toDb', function() {
-
     class Address {
       @Db('st')
       street = '1600 Pennsylvania Ave NW';

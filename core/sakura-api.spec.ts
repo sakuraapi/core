@@ -36,13 +36,12 @@ describe('core/SakuraApi', function() {
   }
 
   beforeEach(function() {
-    this.config = {} as ServerConfig;
+    this.config = {bootMessage: ''} as ServerConfig;
     this.config.port = 9000;
     this.config.address = '127.0.0.1';
     this.config.bootMessage = '';
 
     spyOn(sapi.server, 'listen').and.callThrough();
-    spyOn(console, 'log');
   });
 
   afterEach(function(done) {
@@ -221,7 +220,7 @@ describe('core/SakuraApi', function() {
       });
 
       sapi
-        .listen()
+        .listen(this.config)
         .then(() => {
           sapi
             .app
@@ -287,20 +286,44 @@ describe('core/SakuraApi', function() {
       sapi
         .listen(this.config)
         .then(() => {
-          request(sapi.app)
+          return request(sapi.app)
             .get(this.uri('/testRouterGet'))
             .expect('Content-Type', /json/)
             .expect('Content-Length', '40')
             .expect('{"testRouterGet":"testRouterGet worked"}')
             .expect(200)
-            .then(() => {
-              sapi
-                .close()
-                .then(done)
-                .catch(done.fail);
-            })
-            .catch(done.fail);
         })
+        .then(() => sapi.close())
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('injects res.locals and sends a response', function(done) {
+
+      @Routable(sapi)
+      class InjectsResBodyDataTest {
+        @Route({
+          path: 'injectsResBodyDataTest',
+          method: 'get'
+        })
+        testRouterGet(req, res, next) {
+
+          res.locals.data.test = 'injected';
+          res.locals.status = 277;
+          next();
+        }
+      }
+
+      sapi
+        .listen(this.config)
+        .then(() => {
+          return request(sapi.app)
+            .get(this.uri('/injectsResBodyDataTest'))
+            .expect('{"test":"injected"}')
+            .expect(277);
+        })
+        .then(() => sapi.close())
+        .then(done)
         .catch(done.fail);
     });
   });

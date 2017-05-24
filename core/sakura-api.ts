@@ -14,6 +14,7 @@ import {
   routableSymbols
 } from './@routable';
 import * as http from 'http';
+import {IRoutableLocals} from './@routable/routable';
 import debug = require('debug');
 
 /**
@@ -88,7 +89,8 @@ export class SakuraApi {
   private _port: number = 3000;
   private _server: http.Server;
   private lastErrorHandlers: ErrorRequestHandler[] = [];
-  private routes = new Map<string, ISakuraApiClassRoutes>();
+  private routeQueue = new Map<string, ISakuraApiClassRoutes>();
+  private listenCalled = false;
 
   /**
    * Sets the baseUri for the entire application.
@@ -227,17 +229,100 @@ export class SakuraApi {
    * to manually define Db connections.
    */
   listen(listenProperties?: ServerConfig): Promise<null> {
-    this.debug.normal(`.listen called with serverConfig:`, listenProperties);
-
-    listenProperties = listenProperties || {};
-    this._address = listenProperties.address || this._address;
-    this._port = listenProperties.port || this._port;
-
     return new Promise((resolve, reject) => {
+      this.debug.normal(`.listen called with serverConfig:`, listenProperties);
+      this.debug.normal(`.listen setting baseUri to ${this.baseUri}`);
 
-      handlerErrors.bind(this)();
-      setupRoutes.bind(this)();
+      listenProperties = listenProperties || {};
+      this._address = listenProperties.address || this._address;
+      this._port = listenProperties.port || this._port;
 
+      // Add App Route Handlers ----------------------------------------------------------------------------------------
+      // but only once per instance of SakuraApi
+      if (!this.listenCalled) {
+        /**
+         * Catch BodyParser parse errors
+         */
+        this.app.use(function(err, req, res, next) {
+          // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
+          if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
+            res.status(400).send({
+              error: 'invalid_body',
+              body: req.body
+            });
+          } else {
+            next(err);
+          }
+        });
+
+        /**
+         * Handle Response.locals injection
+         */
+        this.app.use((req: Request, res: Response, next: NextFunction) => {
+          // inject Response.locals.body
+          // inject Response.locals.response
+
+          if (req.body && !res.locals.reqBody) {
+            res.locals.reqBody = req.body;
+          }
+          res.locals.data = {};
+          res.locals.status = 200;
+
+          res.locals.send = (status, data, r: Response): IRoutableLocals => {
+            r.locals.status = status;
+
+            if (!r.locals.data || Object.keys(r.locals.data || {}).length === 0) {
+              r.locals.data = data;
+              return r.locals;
+            }
+            
+            // shallow merge the two objects and make sure to de-reference data
+            r.locals.data = Object.assign(r.locals.data, JSON.parse(JSON.stringify(data)));
+            return r.locals;
+          };
+
+          next();
+        });
+
+        /**
+         * Add final error handlers
+         */
+        if (this.lastErrorHandlers) {
+          for (let handler of this.lastErrorHandlers) {
+            this.app.use(handler);
+          }
+        }
+      }
+
+      // Setup @Routable routes ----------------------------------------------------------------------------------------
+      let router;
+      this.app.use(this.baseUri, function(req, res, next) {
+        // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
+        // hook whatever the current router is
+        router(req, res, next);
+      });
+      router = express.Router();
+
+      // add routes
+      for (let route of this.routeQueue.values()) {
+
+        let routeHandlers: Handler[] = [];
+
+        if (route.beforeAll) {
+          routeHandlers = routeHandlers.concat(route.beforeAll);
+        }
+
+        routeHandlers.push(route.f);
+
+        if (route.afterAll) {
+          routeHandlers = routeHandlers.concat(route.afterAll);
+        }
+
+        routeHandlers.push(resLocalsHandler);
+        router[route.httpMethod](route.path, routeHandlers);
+      }
+
+      // Setup DB Connetions -------------------------------------------------------------------------------------------
       if (this.dbConnections) {
         this
           .dbConnections
@@ -252,56 +337,9 @@ export class SakuraApi {
         listen.bind(this)();
       }
 
+      this.listenCalled = true;
+
       //////////
-      function handlerErrors() {
-        this.app.use(function(err, req, res, next) {
-          // Body Parser json error hack
-          // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
-          if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
-            res.status(400).send({
-              error: 'invalid_body',
-              body: req.body
-            });
-          } else {
-            next(err);
-          }
-        });
-      }
-
-      function setupRoutes() {
-        // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
-        let router = undefined;
-
-        this.debug.normal(`.listen setting baseUri to ${this.baseUri}`);
-        this.app.use(this.baseUri, function(req, res, next) {
-          router(req, res, next); // hook whatever the current router is
-        });
-
-        router = express.Router();
-
-        for (let route of this.routes.values()) {
-          let routeHandlers: Handler[] = [];
-
-          if (route.beforeAll) {
-            routeHandlers = routeHandlers.concat(route.beforeAll);
-          }
-
-          routeHandlers.push(route.f);
-
-          if (route.afterAll) {
-            routeHandlers = routeHandlers.concat(route.afterAll);
-          }
-
-          router[route.httpMethod](route.path, routeHandlers);
-        }
-
-        if (this.lastErrorHandlers) {
-          for (let handler of this.lastErrorHandlers) {
-            this.app.use(handler);
-          }
-        }
-      }
-
       function listen() {
         this
           .server
@@ -327,6 +365,17 @@ export class SakuraApi {
             return resolve();
           });
       }
+
+      function resLocalsHandler(req: Request, res: Response, next: NextFunction) {
+        if (res.headersSent) {
+          return next();
+        }
+        res
+          .status(res.locals.status)
+          .json(res.locals.data);
+
+        next();
+      }
     });
   }
 
@@ -335,7 +384,7 @@ export class SakuraApi {
    * set to false, the integrator will have to pass that `@Routable` class in to this method manually if he wants to routes to be
    * bound.
    */
-  route(target: any) {
+  enqueueRoutes(target: any) {
 
     this.debug.route(`SakuraApi.route called for %o`, target);
 
@@ -348,12 +397,12 @@ export class SakuraApi {
       this.debug.route(`\tadded '${JSON.stringify(route)}'`);
 
       const routeSignature = `${route.httpMethod}:${route.path}`;
-      if (this.routes.get(routeSignature)) {
+      if (this.routeQueue.get(routeSignature)) {
         throw new Error(`Duplicate route (${routeSignature}) registered by ${target.name || target.constructor.name}.`);
       }
 
       // used by this.listen
-      this.routes.set(routeSignature, route);
+      this.routeQueue.set(routeSignature, route);
     }
   }
 }
