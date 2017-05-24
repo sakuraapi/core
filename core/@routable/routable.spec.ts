@@ -260,6 +260,8 @@ describe('core/Routable', function() {
     });
 
     it('automatically instantiates its class and adds it to SakuraApi.route(...)', function(done) {
+      const sapi = Sapi();
+
       @Routable(sapi)
       class CoreRouteAutoRouteTest {
         @Route({
@@ -374,14 +376,14 @@ describe('core/Routable', function() {
       }
     }
 
-    beforeAll(function(done) {
+    beforeEach(function(done) {
       sapi
         .listen({bootMessage: ''})
         .then(done)
         .catch(done.fail);
     });
 
-    afterAll(function(done) {
+    afterEach(function(done) {
       sapi
         .close()
         .then(done)
@@ -1278,7 +1280,7 @@ describe('core/Routable', function() {
     })
     class UserAfterAllHandlersApi {
       static afterHandler(req: Request, res: Response, next: NextFunction): any {
-        let resLocal = res.locals as IRoutableLocals;
+        const resLocal = res.locals as IRoutableLocals;
         UserAfterAllHandlers
           .getById(resLocal.data.id)
           .then((result) => {
@@ -1291,7 +1293,7 @@ describe('core/Routable', function() {
     }
 
     function testAfterHandler(req: Request, res: Response, next: NextFunction) {
-      let resLocal = res.locals as IRoutableLocals;
+      const resLocal = res.locals as IRoutableLocals;
       resLocal.data.order += '2';
       next();
     }
@@ -1357,32 +1359,32 @@ describe('core/Routable', function() {
     }
 
     @Routable(sapi, {
-      beforeAll: [UserAfterAllHandlersBeforeAllHandlersApi.beforeHandler, testBeforeHandler],
       afterAll: [UserAfterAllHandlersBeforeAllHandlersApi.afterHandler, testAfterHandler],
+      beforeAll: [UserAfterAllHandlersBeforeAllHandlersApi.beforeHandler, testBeforeHandler],
       model: UserAfterAllHandlersBeforeAllHandlers
     })
     class UserAfterAllHandlersBeforeAllHandlersApi {
       static beforeHandler(req: Request, res: Response, next: NextFunction): any {
-        let resLocal = res.locals as IRoutableLocals;
+        const resLocal = res.locals as IRoutableLocals;
         resLocal.data.order = '1b';
         next();
       }
 
       static afterHandler(req: Request, res: Response, next: NextFunction): any {
-        let resLocal = res.locals as IRoutableLocals;
+        const resLocal = res.locals as IRoutableLocals;
         resLocal.data.order += '1a';
         next();
       }
     }
 
     function testBeforeHandler(req: Request, res: Response, next: NextFunction) {
-      let resLocal = res.locals as IRoutableLocals;
+      const resLocal = res.locals as IRoutableLocals;
       resLocal.data.order += '2b';
       next();
     }
 
     function testAfterHandler(req: Request, res: Response, next: NextFunction) {
-      let resLocal = res.locals as IRoutableLocals;
+      const resLocal = res.locals as IRoutableLocals;
       resLocal.data.order += '2a';
       next();
     }

@@ -14,7 +14,9 @@
         "multiline": "never",
         "singleline": "never"
       }
-    ]
+    ],
+    "no-object-literal-type-assertion": false,
+    "prefer-object-spread": false
   },
   "jsRules": {
     "curly": true

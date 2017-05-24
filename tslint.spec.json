@@ -26,7 +26,8 @@
         "multiline": "never",
         "singleline": "never"
       }
-    ]
+    ],
+    "no-object-literal-type-assertion": false
   },
   "jsRules": {
     "curly": true

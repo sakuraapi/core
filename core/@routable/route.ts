@@ -1,3 +1,4 @@
+import {Handler} from 'express';
 import debug = require('debug');
 
 /**
@@ -40,6 +41,17 @@ export interface IRoutableMethodOptions {
    * testing. The default value is false.
    */
   blackList?: boolean;
+  /**
+   * Takes an array of Express Handlers or a single Express Handler. The handler(s) will be called before
+   * each `@Route` method in the `@Routable` class.
+   */
+  before?: Handler[] | Handler;
+
+  /**
+   * Takes an array of Express Handlers or a single Express Handler. The handler(s) will be called after
+   * each `@Route` method in the `@Routable` class.
+   */
+  after?: Handler[] | Handler;
 }
 
 /**
@@ -76,6 +88,8 @@ export function Route(options?: IRoutableMethodOptions) {
       Reflect.defineMetadata(`path.${key}`, options.path, target);
       Reflect.defineMetadata(`function.${key}`, f, target);
       Reflect.defineMetadata(`httpMethod.${key}`, options.method.toLowerCase(), target);
+      Reflect.defineMetadata(`before.${key}`, options.before, target);
+      Reflect.defineMetadata(`after.${key}`, options.after, target);
     }
 
     return {

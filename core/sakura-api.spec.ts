@@ -280,6 +280,7 @@ describe('core/SakuraApi', function() {
   });
 
   describe('route(...)', function() {
+
     it('takes a @Routable class and adds the proper routes to express', function(done) {
       // note: the @Routable decorator logic called the route(...) method and passed its Class instance
       // that it instantiated, which caused .route(...) to be called (magic)
@@ -299,6 +300,7 @@ describe('core/SakuraApi', function() {
     });
 
     it('injects res.locals and sends a response', function(done) {
+      let sapi = Sapi();
 
       @Routable(sapi)
       class InjectsResBodyDataTest {
@@ -307,9 +309,7 @@ describe('core/SakuraApi', function() {
           method: 'get'
         })
         testRouterGet(req, res, next) {
-
-          res.locals.data.test = 'injected';
-          res.locals.status = 277;
+          res.locals.send(277, {test: 'injected'}, res);
           next();
         }
       }

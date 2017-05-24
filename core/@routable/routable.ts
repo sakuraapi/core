@@ -121,7 +121,7 @@ export interface IRoutableOptions {
 /**
  * Internal to SakuraApi's [[Routable]]. This can change without notice since it's not an official part of the API.
  */
-export interface ISakuraApiClassRoutes {
+export interface ISakuraApiClassRoute {
   path: string;                    // the class's baseUrl (if any) + the route's path
                                    // tslint:disable-next-line: variable-name
   f: Handler;                      // the function that handles the route in Express.use
@@ -129,6 +129,8 @@ export interface ISakuraApiClassRoutes {
   method: string;                  // the classes's method name that handles the route (the name of f)
   beforeAll: Handler[] | Handler;  // route handlers that run before all routes for an @Routable Class
   afterAll: Handler[] | Handler;   // route handlers that run after all routes for an @Routable Class
+  before?: Handler[] | Handler;     // route handlers that run before this route for an @Route Method
+  after?: Handler[] | Handler;      // route handlers that run after this route for an @Route Method
   name: string;                    // the name of the constructor that added this route
 }
 
@@ -222,13 +224,16 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
 
         const c = Reflect.construct(t, args, nt);
 
-        const routes: ISakuraApiClassRoutes[] = [];
+        const routes: ISakuraApiClassRoute[] = [];
 
         const beforeAll = bindHandlers(c, options.beforeAll);
         const afterAll = bindHandlers(c, options.afterAll);
 
         // add routes decorated with @Route (integrator's custom routes)
         for (const methodName of Object.getOwnPropertyNames(Object.getPrototypeOf(c))) {
+
+          const before = bindHandlers(c, Reflect.getMetadata(`before.${methodName}`, c));
+          const after = bindHandlers(c, Reflect.getMetadata(`after.${methodName}`, c));
 
           if (!Reflect.getMetadata(`hasRoute.${methodName}`, c)) {
             continue;
@@ -246,8 +251,10 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
             endPoint = '/' + endPoint;
           }
 
-          const routerData: ISakuraApiClassRoutes = {
+          const routerData: ISakuraApiClassRoute = {
+            after,
             afterAll,
+            before,
             beforeAll,
             f: Reflect
               .getMetadata(`function.${methodName}`, c)
@@ -302,7 +309,7 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
     //////////
     function addRouteHandler(method: HttpMethod,
                              handler: Handler,
-                             routes: ISakuraApiClassRoutes[],
+                             routes: ISakuraApiClassRoute[],
                              beforeAll: Handler[],
                              afterAll: Handler[]) {
 
@@ -325,20 +332,20 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
     function generateRoute(method: HttpMethod,
                            handler: Handler,
                            beforeAll: Handler[],
-                           afterAll: Handler[]): ISakuraApiClassRoutes {
+                           afterAll: Handler[]): ISakuraApiClassRoute {
 
       const path = ((method === 'get' || method === 'put' || method === 'delete')
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
-      const routerData: ISakuraApiClassRoutes = {
+      const routerData: ISakuraApiClassRoute = {
         afterAll,
         beforeAll,
         f: handler.bind(options.model),
         httpMethod: httpMethodMap[method],
         method: handler.name,
-        path,
-        name: target.name
+        name: target.name,
+        path
       };
 
       // add the method to the @Routable class

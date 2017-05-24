@@ -10,7 +10,7 @@ import {
   Response
 } from 'express';
 import {
-  ISakuraApiClassRoutes,
+  ISakuraApiClassRoute,
   routableSymbols
 } from './@routable';
 import * as http from 'http';
@@ -89,7 +89,7 @@ export class SakuraApi {
   private _port: number = 3000;
   private _server: http.Server;
   private lastErrorHandlers: ErrorRequestHandler[] = [];
-  private routeQueue = new Map<string, ISakuraApiClassRoutes>();
+  private routeQueue = new Map<string, ISakuraApiClassRoute>();
   private listenCalled = false;
 
   /**
@@ -211,8 +211,8 @@ export class SakuraApi {
 
             return reject(err);
           }
-          this.debug.normal('.close done');
 
+          this.debug.normal('.close done');
           resolve();
         });
     });
@@ -229,6 +229,7 @@ export class SakuraApi {
    * to manually define Db connections.
    */
   listen(listenProperties?: ServerConfig): Promise<null> {
+
     return new Promise((resolve, reject) => {
       this.debug.normal(`.listen called with serverConfig:`, listenProperties);
       this.debug.normal(`.listen setting baseUri to ${this.baseUri}`);
@@ -237,6 +238,7 @@ export class SakuraApi {
       this._address = listenProperties.address || this._address;
       this._port = listenProperties.port || this._port;
 
+      let router;
       // Add App Route Handlers ----------------------------------------------------------------------------------------
       // but only once per instance of SakuraApi
       if (!this.listenCalled) {
@@ -275,7 +277,7 @@ export class SakuraApi {
               r.locals.data = data;
               return r.locals;
             }
-            
+
             // shallow merge the two objects and make sure to de-reference data
             r.locals.data = Object.assign(r.locals.data, JSON.parse(JSON.stringify(data)));
             return r.locals;
@@ -292,15 +294,19 @@ export class SakuraApi {
             this.app.use(handler);
           }
         }
+
+        /**
+         * Setup route handler so that each call to listen always overwrites the prior routes -- makes testing
+         * easier, there's really not a lot of reasons to be calling listen multiple times in a production app
+         */
+        this.app.use(this.baseUri, function(req, res, next) {
+          // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
+          // hook whatever the current router is
+          router(req, res, next);
+        });
       }
 
       // Setup @Routable routes ----------------------------------------------------------------------------------------
-      let router;
-      this.app.use(this.baseUri, function(req, res, next) {
-        // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
-        // hook whatever the current router is
-        router(req, res, next);
-      });
       router = express.Router();
 
       // add routes
@@ -312,7 +318,15 @@ export class SakuraApi {
           routeHandlers = routeHandlers.concat(route.beforeAll);
         }
 
+        if (route.before) {
+          routeHandlers = routeHandlers.concat(route.before);
+        }
+
         routeHandlers.push(route.f);
+
+        if (route.after) {
+          routeHandlers = routeHandlers.concat(route.after);
+        }
 
         if (route.afterAll) {
           routeHandlers = routeHandlers.concat(route.afterAll);
