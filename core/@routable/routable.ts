@@ -27,6 +27,17 @@ const httpMethodMap = {
 };
 
 /**
+ * Helper interface to apply to express.Request.locals. SakuraApi injects these properties (and the send function) in
+ * response.locals (express.Response).
+ */
+export interface IRoutableLocals {
+  reqBody: any;
+  data: any;
+  status: any;
+  send(status, data?, r?: Response): IRoutableLocals;
+}
+
+/**
  * Interface defining the valid properties for the `@Routable({})` decorator ([[Routable]]).
  */
 export interface IRoutableOptions {
@@ -110,7 +121,7 @@ export interface IRoutableOptions {
 /**
  * Internal to SakuraApi's [[Routable]]. This can change without notice since it's not an official part of the API.
  */
-export interface ISakuraApiClassRoutes {
+export interface ISakuraApiClassRoute {
   path: string;                    // the class's baseUrl (if any) + the route's path
                                    // tslint:disable-next-line: variable-name
   f: Handler;                      // the function that handles the route in Express.use
@@ -118,6 +129,8 @@ export interface ISakuraApiClassRoutes {
   method: string;                  // the classes's method name that handles the route (the name of f)
   beforeAll: Handler[] | Handler;  // route handlers that run before all routes for an @Routable Class
   afterAll: Handler[] | Handler;   // route handlers that run after all routes for an @Routable Class
+  before?: Handler[] | Handler;     // route handlers that run before this route for an @Route Method
+  after?: Handler[] | Handler;      // route handlers that run after this route for an @Route Method
   name: string;                    // the name of the constructor that added this route
 }
 
@@ -211,13 +224,16 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
 
         const c = Reflect.construct(t, args, nt);
 
-        const routes: ISakuraApiClassRoutes[] = [];
+        const routes: ISakuraApiClassRoute[] = [];
 
         const beforeAll = bindHandlers(c, options.beforeAll);
         const afterAll = bindHandlers(c, options.afterAll);
 
         // add routes decorated with @Route (integrator's custom routes)
         for (const methodName of Object.getOwnPropertyNames(Object.getPrototypeOf(c))) {
+
+          const before = bindHandlers(c, Reflect.getMetadata(`before.${methodName}`, c));
+          const after = bindHandlers(c, Reflect.getMetadata(`after.${methodName}`, c));
 
           if (!Reflect.getMetadata(`hasRoute.${methodName}`, c)) {
             continue;
@@ -235,8 +251,10 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
             endPoint = '/' + endPoint;
           }
 
-          const routerData: ISakuraApiClassRoutes = {
+          const routerData: ISakuraApiClassRoute = {
+            after,
             afterAll,
+            before,
             beforeAll,
             f: Reflect
               .getMetadata(`function.${methodName}`, c)
@@ -262,7 +280,7 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
         c[routableSymbols.sakuraApiClassRoutes] = routes;
 
         if (options.autoRoute) {
-          sapi.route(c);
+          sapi.enqueueRoutes(c);
         }
 
         return c;
@@ -291,7 +309,7 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
     //////////
     function addRouteHandler(method: HttpMethod,
                              handler: Handler,
-                             routes: ISakuraApiClassRoutes[],
+                             routes: ISakuraApiClassRoute[],
                              beforeAll: Handler[],
                              afterAll: Handler[]) {
 
@@ -314,20 +332,20 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
     function generateRoute(method: HttpMethod,
                            handler: Handler,
                            beforeAll: Handler[],
-                           afterAll: Handler[]): ISakuraApiClassRoutes {
+                           afterAll: Handler[]): ISakuraApiClassRoute {
 
       const path = ((method === 'get' || method === 'put' || method === 'delete')
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
-      const routerData: ISakuraApiClassRoutes = {
+      const routerData: ISakuraApiClassRoute = {
         afterAll,
         beforeAll,
         f: handler.bind(options.model),
         httpMethod: httpMethodMap[method],
         method: handler.name,
-        path,
-        name: target.name
+        name: target.name,
+        path
       };
 
       // add the method to the @Routable class
@@ -368,8 +386,9 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
  * `fields` follows the same rules as (MongoDB field projection)[https://docs.mongodb.com/manual/reference/glossary/#term-projection]
  */
 // tslint:enable:max-line-length
-function getRouteHandler(req: Request, res: Response) {
+function getRouteHandler(req: Request, res: Response, next: NextFunction) {
   const id = req.params.id;
+  const resLocals = res.locals as IRoutableLocals;
 
   let project = null;
 
@@ -377,7 +396,8 @@ function getRouteHandler(req: Request, res: Response) {
   try {
     assignParameters.call(this);
   } catch (err) {
-    return;
+    debug('sapi:Routable')(`getRouteHandler threw error: ${err}`);
+    return next();
   }
 
   debug('sapi:Routable')(`getRouteHandler called with id:'${id}', fields:${JSON.stringify(project)}`);
@@ -386,15 +406,14 @@ function getRouteHandler(req: Request, res: Response) {
     .getById(id, project)
     .then((result) => {
       const response = (result) ? result.toJson() : null;
-
-      res
-        .status(200)
-        .json(response);
-
+      resLocals.status = 200;
+      resLocals.data = response;
+      next();
     })
     .catch((err) => {
       // TODO add logging system here
       console.log(err); // tslint:disable-line:no-console
+      next(err);
     });
 
   //////////
@@ -407,7 +426,6 @@ function getRouteHandler(req: Request, res: Response) {
             req.query.fields, allowedFields$Keys)
         )));
   }
-
 }
 
 // tslint:disable:max-line-length
@@ -441,6 +459,7 @@ function getRouteHandler(req: Request, res: Response) {
  */
 // tslint:enable:max-line-length
 function getAllRouteHandler(req: Request, res: Response, next: NextFunction) {
+  const resLocals = res.locals as IRoutableLocals;
 
   const params: IDbGetParams = {
     filter: null,
@@ -453,6 +472,7 @@ function getAllRouteHandler(req: Request, res: Response, next: NextFunction) {
   try {
     assignParameters.call(this);
   } catch (err) {
+    debug('sapi:Routable')(`getAllRouteHandler threw error: ${err}`);
     return next();
   }
 
@@ -461,17 +481,13 @@ function getAllRouteHandler(req: Request, res: Response, next: NextFunction) {
   this
     .get(params)
     .then((results) => {
-
       const response = [];
 
       for (const result of results) {
         response.push(result.toJson());
       }
 
-      res
-        .status(200)
-        .json(response);
-
+      resLocals.send(200, response, res);
       next();
     })
     .catch((err) => {
@@ -516,27 +532,26 @@ function getAllRouteHandler(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-function putRouteHandler(req: Request, res: Response) {
+function putRouteHandler(req: Request, res: Response, next: NextFunction) {
   const id = req.params.id;
+  const resLocals = res.locals as IRoutableLocals;
 
   if (!req.body || typeof req.body !== 'object') {
-    res
-      .status(400)
-      .json({
+    resLocals
+      .send(400, {
         body: req.body,
         error: 'invalid_body'
-      });
-    return;
+      }, res);
+    return next();
   }
 
   if (!id) {
-    res
-      .status(400)
-      .json({
+    resLocals
+      .send(400, {
         body: req.body,
         error: 'invalid_body_missing_id'
-      });
-    return;
+      }, res);
+    return next();
   }
 
   const changeSet = this.fromJsonToDb(req.body);
@@ -545,16 +560,18 @@ function putRouteHandler(req: Request, res: Response) {
     .getById(id)
     .then((obj: SakuraApiModel) => {
       if (!obj) {
-        return res.sendStatus(404);
+        resLocals.status = 404;
+        return next();
       }
+
       obj
         .save(changeSet)
         .then((result) => {
-          res
-            .status(200)
-            .json({
+          resLocals
+            .send(200, {
               modified: (result.result || {} as any).nModified
-            });
+            }, res);
+          next();
         });
     })
     .catch((err) => {
@@ -564,28 +581,25 @@ function putRouteHandler(req: Request, res: Response) {
 }
 
 function postRouteHandler(req: Request, res: Response, next: NextFunction) {
-
+  const resLocals = res.locals as IRoutableLocals;
   if (!req.body || typeof req.body !== 'object') {
-    res
-      .status(400)
-      .json({
+    resLocals
+      .send(400, {
         body: req.body,
         error: 'invalid_body'
-      });
-    return;
+      }, res);
+    return next();
   }
 
   const obj = this.fromJson(req.body);
   obj
     .create()
     .then((result) => {
-      res
-        .status(200)
-        .json({
+      resLocals
+        .send(200, {
           count: result.insertedCount,
           id: result.insertedId
-        });
-
+        }, res);
       next();
     })
     .catch((err) => {
@@ -594,26 +608,25 @@ function postRouteHandler(req: Request, res: Response, next: NextFunction) {
     });
 }
 
-function deleteRouteHandler(req: Request, res: Response) {
+function deleteRouteHandler(req: Request, res: Response, next: NextFunction) {
+  const resLocals = res.locals as IRoutableLocals;
 
   this
     .removeById(req.params.id)
     .then((result) => {
-      res
-        .status(200)
-        .json({
-          n: (result.result || {}).n || 0
-        });
+      resLocals.send(200, {
+        n: (result.result || {}).n || 0
+      }, res);
+      next();
     })
     .catch((err) => {
       err.status = 500;
-      res
-        .status(500)
-        .json({
-          error: 'internal_server_error'
-        });
+      resLocals.send(500, {
+        error: 'internal_server_error'
+      }, res);
       // TODO add logging here
       console.log(err); // tslint:disable-line:no-console
+      next();
     });
 }
 
@@ -624,29 +637,28 @@ function sanitizedUserInput(res: Response, errMessage: string, fn: () => any) {
   try {
     fn();
   } catch (err) {
+
     if (err instanceof SyntaxError
       && err.message
       && (err.message.startsWith('Unexpected token') || err.message.startsWith('Unexpected end of JSON input'))) {
       res
-        .status(400)
-        .json({
+        .locals
+        .send(400, {
           details: err.message,
           error: errMessage
-        });
-
+        }, res);
       (err as any).status = 400;
     } else {
       res
-        .status(500)
-        .json({
+        .locals
+        .send(500, {
           error: 'internal_server_error'
-        });
+        }, res);
       (err as any).status = 500;
-
       // TODO some kind of error logging here
       console.log(err); // tslint:disable-line:no-console
-
     }
+
     throw err;
   }
 }

@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>IDbGetParams | SakuraApi</title>
+	<title>ISakuraApiClassRoute | SakuraApi</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -54,13 +54,13 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_core__model_model_.html">&quot;core/@model/model&quot;</a>
+					<a href="../modules/_core__routable_routable_.html">&quot;core/@routable/routable&quot;</a>
 				</li>
 				<li>
-					<a href="_core__model_model_.idbgetparams.html">IDbGetParams</a>
+					<a href="_core__routable_routable_.isakuraapiclassroute.html">ISakuraApiClassRoute</a>
 				</li>
 			</ul>
-			<h1>Interface IDbGetParams</h1>
+			<h1>Interface ISakuraApiClassRoute</h1>
 		</div>
 	</div>
 </header>
@@ -70,7 +70,7 @@
 			<section class="tsd-panel tsd-comment">
 				<div class="tsd-comment tsd-typography">
 					<div class="lead">
-						<p>Interface defining the properties used for retrieving records from the DB</p>
+						<p>Internal to SakuraApi&#39;s <a href="../modules/_core__routable_routable_.html#routable">Routable</a>. This can change without notice since it&#39;s not an official part of the API.</p>
 					</div>
 				</div>
 			</section>
@@ -78,7 +78,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">IDbGetParams</span>
+						<span class="target">ISakuraApiClassRoute</span>
 					</li>
 				</ul>
 			</section>
@@ -89,10 +89,15 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_model_.idbgetparams.html#filter" class="tsd-kind-icon">filter</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_model_.idbgetparams.html#limit" class="tsd-kind-icon">limit</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_model_.idbgetparams.html#project" class="tsd-kind-icon">project</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_model_.idbgetparams.html#skip" class="tsd-kind-icon">skip</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_routable_.isakuraapiclassroute.html#after" class="tsd-kind-icon">after</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_routable_.isakuraapiclassroute.html#afterall" class="tsd-kind-icon">after<wbr>All</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_routable_.isakuraapiclassroute.html#before" class="tsd-kind-icon">before</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_routable_.isakuraapiclassroute.html#beforeall" class="tsd-kind-icon">before<wbr>All</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_routable_.isakuraapiclassroute.html#f" class="tsd-kind-icon">f</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_routable_.isakuraapiclassroute.html#httpmethod" class="tsd-kind-icon">http<wbr>Method</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_routable_.isakuraapiclassroute.html#method" class="tsd-kind-icon">method</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_routable_.isakuraapiclassroute.html#name" class="tsd-kind-icon">name</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_routable_.isakuraapiclassroute.html#path" class="tsd-kind-icon">path</a></li>
 							</ul>
 						</section>
 					</div>
@@ -101,42 +106,92 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="filter" class="tsd-anchor"></a>
-					<h3>filter</h3>
-					<div class="tsd-signature tsd-kind-icon">filter<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div>
+					<a name="after" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> after</h3>
+					<div class="tsd-signature tsd-kind-icon">after<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Handler</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Handler</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@model/model.ts#L39">core/@model/model.ts:39</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L133">core/@routable/routable.ts:133</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="limit" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> limit</h3>
-					<div class="tsd-signature tsd-kind-icon">limit<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="afterall" class="tsd-anchor"></a>
+					<h3>after<wbr>All</h3>
+					<div class="tsd-signature tsd-kind-icon">after<wbr>All<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Handler</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Handler</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@model/model.ts#L40">core/@model/model.ts:40</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L131">core/@routable/routable.ts:131</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="project" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> project</h3>
-					<div class="tsd-signature tsd-kind-icon">project<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div>
+					<a name="before" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> before</h3>
+					<div class="tsd-signature tsd-kind-icon">before<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Handler</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Handler</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@model/model.ts#L41">core/@model/model.ts:41</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L132">core/@routable/routable.ts:132</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="skip" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> skip</h3>
-					<div class="tsd-signature tsd-kind-icon">skip<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="beforeall" class="tsd-anchor"></a>
+					<h3>before<wbr>All</h3>
+					<div class="tsd-signature tsd-kind-icon">before<wbr>All<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Handler</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Handler</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@model/model.ts#L42">core/@model/model.ts:42</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L130">core/@routable/routable.ts:130</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="f" class="tsd-anchor"></a>
+					<h3>f</h3>
+					<div class="tsd-signature tsd-kind-icon">f<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Handler</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L127">core/@routable/routable.ts:127</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="httpmethod" class="tsd-anchor"></a>
+					<h3>http<wbr>Method</h3>
+					<div class="tsd-signature tsd-kind-icon">http<wbr>Method<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L128">core/@routable/routable.ts:128</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="method" class="tsd-anchor"></a>
+					<h3>method</h3>
+					<div class="tsd-signature tsd-kind-icon">method<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L129">core/@routable/routable.ts:129</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="name" class="tsd-anchor"></a>
+					<h3>name</h3>
+					<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L134">core/@routable/routable.ts:134</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="path" class="tsd-anchor"></a>
+					<h3>path</h3>
+					<div class="tsd-signature tsd-kind-icon">path<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L125">core/@routable/routable.ts:125</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -160,7 +215,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__model_json_.html">"core/@model/json"</a>
 					</li>
-					<li class="current tsd-kind-external-module">
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__model_model_.html">"core/@model/model"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -169,7 +224,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__model_sakura_api_model_.html">"core/@model/sakura-<wbr>api-<wbr>model"</a>
 					</li>
-					<li class=" tsd-kind-external-module">
+					<li class="current tsd-kind-external-module">
 						<a href="../modules/_core__routable_routable_.html">"core/@routable/routable"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -191,98 +246,77 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core__routable_routable_.iroutablelocals.html" class="tsd-kind-icon">IRoutable<wbr>Locals</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core__routable_routable_.iroutableoptions.html" class="tsd-kind-icon">IRoutable<wbr>Options</a>
+					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_core__model_model_.idbgetparams.html" class="tsd-kind-icon">IDb<wbr>Get<wbr>Params</a>
+						<a href="_core__routable_routable_.isakuraapiclassroute.html" class="tsd-kind-icon">ISakura<wbr>Api<wbr>Class<wbr>Route</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_core__model_model_.idbgetparams.html#filter" class="tsd-kind-icon">filter</a>
+								<a href="_core__routable_routable_.isakuraapiclassroute.html#after" class="tsd-kind-icon">after</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_core__model_model_.idbgetparams.html#limit" class="tsd-kind-icon">limit</a>
+								<a href="_core__routable_routable_.isakuraapiclassroute.html#afterall" class="tsd-kind-icon">after<wbr>All</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_core__model_model_.idbgetparams.html#project" class="tsd-kind-icon">project</a>
+								<a href="_core__routable_routable_.isakuraapiclassroute.html#before" class="tsd-kind-icon">before</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_core__model_model_.idbgetparams.html#skip" class="tsd-kind-icon">skip</a>
+								<a href="_core__routable_routable_.isakuraapiclassroute.html#beforeall" class="tsd-kind-icon">before<wbr>All</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__routable_routable_.isakuraapiclassroute.html#f" class="tsd-kind-icon">f</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__routable_routable_.isakuraapiclassroute.html#httpmethod" class="tsd-kind-icon">http<wbr>Method</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__routable_routable_.isakuraapiclassroute.html#method" class="tsd-kind-icon">method</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__routable_routable_.isakuraapiclassroute.html#name" class="tsd-kind-icon">name</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__routable_routable_.isakuraapiclassroute.html#path" class="tsd-kind-icon">path</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_core__model_model_.ifromdboptions.html" class="tsd-kind-icon">IFrom<wbr>DbOptions</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_core__model_model_.imodeloptions.html" class="tsd-kind-icon">IModel<wbr>Options</a>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
+						<a href="../modules/_core__routable_routable_.html#httpmethod" class="tsd-kind-icon">Http<wbr>Method</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_core__model_model_.html#model" class="tsd-kind-icon">Model</a>
+						<a href="../modules/_core__routable_routable_.html#routable" class="tsd-kind-icon">Routable</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#create" class="tsd-kind-icon">create</a>
+						<a href="../modules/_core__routable_routable_.html#deleteroutehandler" class="tsd-kind-icon">delete<wbr>Route<wbr>Handler</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#fromdb" class="tsd-kind-icon">from<wbr>Db</a>
+						<a href="../modules/_core__routable_routable_.html#getallroutehandler" class="tsd-kind-icon">get<wbr>All<wbr>Route<wbr>Handler</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#fromdbarray" class="tsd-kind-icon">from<wbr>DbArray</a>
+						<a href="../modules/_core__routable_routable_.html#getroutehandler" class="tsd-kind-icon">get<wbr>Route<wbr>Handler</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#fromjson" class="tsd-kind-icon">from<wbr>Json</a>
+						<a href="../modules/_core__routable_routable_.html#postroutehandler" class="tsd-kind-icon">post<wbr>Route<wbr>Handler</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#fromjsonarray" class="tsd-kind-icon">from<wbr>Json<wbr>Array</a>
+						<a href="../modules/_core__routable_routable_.html#putroutehandler" class="tsd-kind-icon">put<wbr>Route<wbr>Handler</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#fromjsontodb" class="tsd-kind-icon">from<wbr>Json<wbr>ToDb</a>
+						<a href="../modules/_core__routable_routable_.html#sanitizeduserinput" class="tsd-kind-icon">sanitized<wbr>User<wbr>Input</a>
 					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#get" class="tsd-kind-icon">get</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#getbyid" class="tsd-kind-icon">get<wbr>ById</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#getcollection" class="tsd-kind-icon">get<wbr>Collection</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#getcursor" class="tsd-kind-icon">get<wbr>Cursor</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#getcursorbyid" class="tsd-kind-icon">get<wbr>Cursor<wbr>ById</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#getdb" class="tsd-kind-icon">get<wbr>Db</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#getone" class="tsd-kind-icon">get<wbr>One</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#remove" class="tsd-kind-icon">remove</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#removeall" class="tsd-kind-icon">remove<wbr>All</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#removebyid" class="tsd-kind-icon">remove<wbr>ById</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#save" class="tsd-kind-icon">save</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#todb" class="tsd-kind-icon">to<wbr>Db</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#tojson" class="tsd-kind-icon">to<wbr>Json</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core__model_model_.html#tojsonstring" class="tsd-kind-icon">to<wbr>Json<wbr>String</a>
+					<li class=" tsd-kind-object-literal tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core__routable_routable_.html#httpmethodmap" class="tsd-kind-icon">http<wbr>Method<wbr>Map</a>
 					</li>
 					<li class=" tsd-kind-object-literal tsd-parent-kind-external-module">
-						<a href="../modules/_core__model_model_.html#modelsymbols" class="tsd-kind-icon">model<wbr>Symbols</a>
+						<a href="../modules/_core__routable_routable_.html#routablesymbols" class="tsd-kind-icon">routable<wbr>Symbols</a>
 					</li>
 				</ul>
 			</nav>

@@ -12,6 +12,11 @@ SakuraAPI is a NodeJS API framework that utilizes modern and emerging webs stand
 
 At the moment, this project is an experiment to explore various ideas with my team.
 
+## Install
+```
+npm install @sakuraapi/api
+```
+
 ## Goals
 
 * Angular developers should find the conventions in SakuraApi to be familiar.

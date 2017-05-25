@@ -1,6 +1,18 @@
 import * as express from 'express';
+import {
+  NextFunction,
+  Request,
+  Response
+} from 'express';
 import * as request from 'supertest';
 import {
+  Db,
+  Json,
+  Model,
+  SakuraApiModel
+} from '../@model';
+import {
+  IRoutableLocals,
   Routable,
   routableSymbols,
   Route
@@ -181,6 +193,170 @@ describe('core/Route', function() {
             })
             .catch(done.fail);
         })
+        .catch(done.fail);
+    });
+  });
+
+  describe('before', function() {
+
+    @Routable(sapi, {
+      baseUrl: 'BeforeHandlerTests'
+    })
+    class BeforeHandlerTests {
+      @Route({
+        before: [(req, res, next) => {
+          const reqLocals = res.locals as IRoutableLocals;
+          reqLocals.send(200, {
+            order: '1b'
+          }, res);
+          next();
+        }]
+      })
+      testHandler(req: Request, res: Response, next: NextFunction) {
+        const reqLocals = res.locals as IRoutableLocals;
+        reqLocals.send(200, {
+          order: reqLocals.data.order + '2b'
+        }, res);
+        next();
+      }
+
+      @Route({
+        path: 'test2Handler'
+      })
+      test2Handler(req: Request, res: Response, next: NextFunction) {
+        next();
+      }
+    }
+
+    beforeEach(function(done) {
+      sapi
+        .listen({bootMessage: ''})
+        .then(done)
+        .catch(done.fail);
+    });
+
+    afterEach(function(done) {
+      sapi
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('runs before handler before route handler', function(done) {
+      request(sapi.app)
+        .get(this.uri('/BeforeHandlerTests'))
+        .expect(200)
+        .then((result) => {
+          expect(result.body.order).toBe('1b2b');
+        })
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('does not run before handlers without before route handlers', function(done) {
+      request(sapi.app)
+        .get(this.uri(`/BeforeHandlerTests/test2Handler`))
+        .expect(200)
+        .then((result) => {
+          expect(result.body.order).toBeUndefined();
+        })
+        .then(done)
+        .catch(done.fail);
+    });
+  });
+
+  describe('after', function() {
+    @Model(sapi, {
+      dbConfig: {
+        collection: 'afterHandlerTestModel',
+        db: 'userDb'
+      }
+    })
+    class AfterHandlerTestModel extends SakuraApiModel {
+      @Db() @Json()
+      firstName = 'George';
+
+      @Db() @Json()
+      lastName = 'Washinton';
+    }
+
+    @Routable(sapi, {
+      baseUrl: 'AfterHandlerTests'
+    })
+    class AfterHandlerTests {
+      @Route({
+        after: (req, res, next) => {
+          AfterHandlerTestModel
+            .getById(res.locals.data.id)
+            .then((result) => {
+              res.locals.send(200, {
+                dbObj: result,
+                order: 1
+              }, res);
+              next();
+            })
+            .catch(next);
+        }
+      })
+      testHandler(req: Request, res: Response, next: NextFunction) {
+        const model = new AfterHandlerTestModel();
+
+        model
+          .create()
+          .then((db: any) => {
+            res.locals.send(200, {
+              id: db.insertedId
+            }, res);
+            next();
+          })
+          .catch(next);
+      }
+
+      @Route({
+        path: '/test2Handler'
+      })
+      test2Handler(req: Request, res: Response, next: NextFunction) {
+        next();
+      }
+    }
+
+    beforeEach(function(done) {
+      sapi
+        .listen()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    afterEach(function(done) {
+      sapi
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('runs after handler after route handler', function(done) {
+      request(sapi.app)
+        .get(this.uri('/AfterHandlerTests'))
+        .expect(200)
+        .then((result) => {
+          const body = result.body;
+          expect(body.dbObj.firstName).toBe('George');
+          expect(body.dbObj.lastName).toBe('Washinton');
+          expect(body.dbObj._id).toBe(body.id);
+          expect(body.order).toBeDefined();
+        })
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('does not run after handler after other handlers', function(done) {
+      request(sapi.app)
+        .get(this.uri('/AfterHandlerTests/test2Handler'))
+        .expect(200)
+        .then((result) => {
+          expect(result.body.order).toBeUndefined();
+        })
+        .then(done)
         .catch(done.fail);
     });
   });
