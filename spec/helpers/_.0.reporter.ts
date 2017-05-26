@@ -10,6 +10,7 @@ class CustomProcessor extends DisplayProcessor {
     return `SakuraApi Jasmine ${log}`.blue;
   }
 }
+
 jasmine.getEnv().clearReporters();
 jasmine.getEnv().addReporter(new SpecReporter({
   customProcessors: [CustomProcessor],

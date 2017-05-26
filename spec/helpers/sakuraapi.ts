@@ -13,11 +13,14 @@ export function Sapi(): SakuraApi {
 
   sapi.addMiddleware(bodyParser.json());
 
-  // left here to make it easier to debug certain bugs - do not commit uncommented.
-  // sapi.addMiddleware((req, res, next) => {
-  //  console.log(`REQUEST: ${req.method}: ${req.url}`.blue);
-  //  next();
-  // });
+  if (process.env.TRACE_REQ) {
+    sapi.addMiddleware((req, res, next) => {
+      // tslint:disable:no-console
+      console.log(`REQUEST: ${req.method}: ${req.url}`.blue);
+      // tslint:enable:no-console
+      next();
+    });
+  }
 
   sapi.addLastErrorHandlers((err, req, res, next) => {
 

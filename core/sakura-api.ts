@@ -90,7 +90,7 @@ export class SakuraApi {
   private _server: http.Server;
   private lastErrorHandlers: ErrorRequestHandler[] = [];
   private routeQueue = new Map<string, ISakuraApiClassRoute>();
-  private listenCalled = false;
+  private appMiddlewareAdded = false;
 
   /**
    * Sets the baseUri for the entire application.
@@ -231,8 +231,8 @@ export class SakuraApi {
   listen(listenProperties?: ServerConfig): Promise<null> {
 
     return new Promise((resolve, reject) => {
-      this.debug.normal(`.listen called with serverConfig:`, listenProperties);
-      this.debug.normal(`.listen setting baseUri to ${this.baseUri}`);
+      this.debug.route(`.listen called with serverConfig:`, listenProperties);
+      this.debug.route(`.listen setting baseUri to ${this.baseUri}`);
 
       listenProperties = listenProperties || {};
       this._address = listenProperties.address || this._address;
@@ -241,7 +241,9 @@ export class SakuraApi {
       let router;
       // Add App Route Handlers ----------------------------------------------------------------------------------------
       // but only once per instance of SakuraApi
-      if (!this.listenCalled) {
+      if (!this.appMiddlewareAdded) {
+        this.debug.route(`\t.listen first time call, adding app middleware`);
+
         /**
          * Catch BodyParser parse errors
          */
@@ -304,13 +306,18 @@ export class SakuraApi {
           // hook whatever the current router is
           router(req, res, next);
         });
+
+        this.appMiddlewareAdded = true;
       }
 
       // Setup @Routable routes ----------------------------------------------------------------------------------------
       router = express.Router();
 
+      this.debug.route('\t.listen processing route queue');
       // add routes
       for (let route of this.routeQueue.values()) {
+
+        this.debug.route('\t\t.listen route %o', route);
 
         let routeHandlers: Handler[] = [];
 
@@ -333,6 +340,7 @@ export class SakuraApi {
         }
 
         routeHandlers.push(resLocalsHandler);
+
         router[route.httpMethod](route.path, routeHandlers);
       }
 
@@ -350,8 +358,6 @@ export class SakuraApi {
       } else {
         listen.bind(this)();
       }
-
-      this.listenCalled = true;
 
       //////////
       function listen() {
@@ -385,7 +391,7 @@ export class SakuraApi {
           return next();
         }
         res
-          .status(res.locals.status)
+          .status(res.locals.status || 200)
           .json(res.locals.data);
 
         next();
