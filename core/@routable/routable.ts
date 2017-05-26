@@ -9,7 +9,7 @@ import {
   modelSymbols,
   SakuraApiModel
 } from '../@model';
-import {addDefaultInstanceMethods} from '../helpers/defaultMethodHelpers';
+import {addDefaultStaticMethods} from '../helpers';
 import {SakuraApi} from '../sakura-api';
 import {SanitizeMongoDB as Sanitize} from '../security/mongo-db';
 
@@ -138,9 +138,31 @@ export interface ISakuraApiClassRoute {
  * The symbols used by `Reflect` to store `@Routeable` metadata.
  */
 export const routableSymbols = {
+  after: Symbol('after'),
+  afterAll: Symbol('afterAll'),
+  before: Symbol('before'),
+  beforeAll: Symbol('beforeAll'),
   debug: Symbol('debug'),
   sakuraApiClassRoutes: Symbol('sakuraApiClassRoutes')
 };
+
+/**
+ *
+ * A map of the valid built into [[Routable]].
+ * Key = handler name used in in before/beforeAll/after/afterAll
+ * Value = [
+ *    string,  // [[Routable]] function name (these are all static) - this is what you use in before/after options
+ *             // in [[Route]]
+ *    boolean, // true = throw error if option.Model missing
+ *    boolean  // skip bind (see: bindHandlers embedded function in [[Routable]]
+ */
+export const builtInHandlers = new Map<string, [string, boolean, boolean]>([
+  ['getHandler', ['getRouteHandler', true, true]],
+  ['getAllHandler', ['getAllRouteHandler', true, true]],
+  ['putHandler', ['putRouteHandler', true, true]],
+  ['postHandler', ['postRouteHandler', true, true]],
+  ['deleteHandler', ['deleteRouteHandler', true, true]]
+]);
 
 /**
  * Decorator applied to classes that represent routing logic for SakuraApi.
@@ -171,6 +193,7 @@ export const routableSymbols = {
  * unless you set the [[RoutableClassOptions.autoRoute]] to false.
  */
 export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
+
   options = options || {};
   options.blackList = options.blackList || [];
   options.baseUrl = options.baseUrl || '';
@@ -188,6 +211,9 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
   // to add a static member: newConstructor.newFunction = () => {}
   // ===================================================================================================================
   return (target: any) => {
+    debug('sapi:routable')(`@Routable decorating '${target.name}' with options: ${JSON.stringify(options)}`);
+    debug('sapi:routable')(`\t@Routable options.model set to ${(options.model || {} as any).name}`);
+
     if (!sapi) {
       throw new Error(`A valid instance of SakuraApi must be provided to the @Routable class '${target.name}'`);
     }
@@ -212,36 +238,53 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
         + ` option with a valid @Model must also be provided`);
     }
 
-    debug('sapi:Routable')(`@Routable decorated '${target.name}' with options ${JSON.stringify(options)}`);
-
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
     //
     // The constructor proxy implements logic that needs to take place upon constructions
     // =================================================================================================================
+    debug('sapi:routable')(`\tproxying constructor`);
     const newConstructor = new Proxy(target, {
       construct: (t, args, nt) => {
+        debug('sapi:routable')(`\tconstructing ${target.name}`);
 
         const c = Reflect.construct(t, args, nt);
 
         const routes: ISakuraApiClassRoute[] = [];
 
-        const beforeAll = bindHandlers(c, options.beforeAll);
-        const afterAll = bindHandlers(c, options.afterAll);
+        const beforeAll = bindHandlers(c, options.beforeAll, ['beforeAll']);
+        const afterAll = bindHandlers(c, options.afterAll, ['afterAll']);
 
+        // add the method to the @Routable class
+        if (options.model) {
+          debug('sapi:routable')(`\t\tbound to model, adding built in handlers`);
+
+          addDefaultStaticMethods(c, getRouteHandler.name, getRouteHandler, options);
+          addDefaultStaticMethods(c, getAllRouteHandler.name, getAllRouteHandler, options);
+          addDefaultStaticMethods(c, putRouteHandler.name, putRouteHandler, options);
+          addDefaultStaticMethods(c, postRouteHandler.name, postRouteHandler, options);
+          addDefaultStaticMethods(c, deleteRouteHandler.name, deleteRouteHandler, options);
+        }
+
+        debug('sapi:routable')(`\t\tprocessing methods for '${target.name}'`);
         // add routes decorated with @Route (integrator's custom routes)
         for (const methodName of Object.getOwnPropertyNames(Object.getPrototypeOf(c))) {
-
-          const before = bindHandlers(c, Reflect.getMetadata(`before.${methodName}`, c));
-          const after = bindHandlers(c, Reflect.getMetadata(`after.${methodName}`, c));
 
           if (!Reflect.getMetadata(`hasRoute.${methodName}`, c)) {
             continue;
           }
 
           if (options.blackList.indexOf(methodName) > -1) {
+            debug('sapi:routable')(`\t\t\t${methodName} is black listed; skipping`);
             continue;
           }
+
+          debug('sapi:routable')(`\t\t\t${methodName}`);
+          const beforeMeta = Reflect.getMetadata(`before.${methodName}`, c);
+          const afterMeta = Reflect.getMetadata(`after.${methodName}`, c);
+
+          const before = bindHandlers(c, beforeMeta, [methodName, 'before']);
+          const after = bindHandlers(c, afterMeta, [methodName, 'after']);
 
           let endPoint = path
             .join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, c))
@@ -265,11 +308,14 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
             path: endPoint
           };
 
+          debug('sapi:routable')(`\t\t\thandler added: '%o'`, routerData);
           routes.push(routerData);
         }
 
         // add generated routes for Model
         if (options.model) {
+          debug('sapi:routable')(`\t\tbound to model, adding default routes`);
+
           addRouteHandler('get', getRouteHandler, routes, beforeAll, afterAll);
           addRouteHandler('getAll', getAllRouteHandler, routes, beforeAll, afterAll);
           addRouteHandler('put', putRouteHandler, routes, beforeAll, afterAll);
@@ -277,9 +323,11 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
           addRouteHandler('delete', deleteRouteHandler, routes, beforeAll, afterAll);
         }
 
+        // set the routes property for the @Routable class
         c[routableSymbols.sakuraApiClassRoutes] = routes;
 
         if (options.autoRoute) {
+          debug('sapi:routable')('\tenqueuing routes: %o', routes);
           sapi.enqueueRoutes(c);
         }
 
@@ -288,7 +336,7 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
     });
 
     newConstructor[routableSymbols.debug] = {
-      normal: debug('sapi:Routable')
+      normal: debug('sapi:routable')
     };
     newConstructor.prototype[routableSymbols.debug] = newConstructor[routableSymbols.debug];
 
@@ -299,7 +347,7 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
     // classes on his or her own.
     // =================================================================================================================
     if (options.autoRoute) {
-      newConstructor[routableSymbols.debug].normal(`${target.name} instantiating`);
+      newConstructor[routableSymbols.debug].normal(`\t${target.name} autoRoute`);
       // tslint:disable-next-line: no-unused-expression
       new newConstructor();
     }
@@ -348,15 +396,17 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
         path
       };
 
-      // add the method to the @Routable class
-      addDefaultInstanceMethods(newConstructor, handler.name, handler);
+      debug('sapi:routable')(`\t\t\tbuiltin handler added: '%o'`, routerData);
       return routerData;
     }
 
     // Make sure that each handler is bound to the context of the @Routable class - this makes it possible to have
     // static methods in the @Routable class that still have access to the `this` context of the instsantiated
     // @Routable class
-    function bindHandlers(c: any, handlers: Handler[] | Handler): Handler[] {
+    //
+    // In the cases where the hander is a built in handler (e.g., getRouteHandler), the context is bound to
+    // options.model.
+    function bindHandlers(c: any, handlers: Handler[] | Handler, location: string[]): Handler[] {
 
       if (!handlers) {
         return;
@@ -366,11 +416,62 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
         handlers = [handlers];
       }
 
+      const skipBindNames = applyBuiltInHandlers(handlers, c);
+
       const boundHandlers = [];
+      let index = 0;
       for (const handler of handlers) {
-        boundHandlers.push(handler.bind(c));
+        try {
+
+          if (skipBindNames.indexOf(handler.name) === -1) {
+            boundHandlers.push(handler.bind(c));
+          } else {
+            boundHandlers.push(handler.bind(options.model));
+          }
+
+          index++;
+        } catch (err) {
+          if (err.message === `Cannot read property 'bind' of undefined`) {
+            throw new TypeError(`Unable to bind to undefined handler index ${index} in array `
+              + `${JSON.stringify(handlers)} in ${target.name}:${location.join('.')}`);
+          }
+          throw err;
+        }
       }
       return boundHandlers;
+    }
+
+    function applyBuiltInHandlers(handlers: any[], c: any): string[] {
+      if (!handlers) {
+        return;
+      }
+
+      const skipBindNames = [];
+      for (let x = 0; x < handlers.length; x++) {
+        if (typeof handlers[x] === 'string') {
+          const v = builtInHandlers.get(handlers[x]);
+          if (!v) {
+            throw new Error(`${target.name} is attempting to use an invalid built in handler ${handlers[x]}`);
+          }
+
+          const handlerName = v[0];
+          const modelRequired = v[1];
+          const skipBind = v[2];
+
+          if (modelRequired && !options.model) {
+            throw new Error(`${target.name} is attempting to use built in handler ${handlerName}, which requires `
+              + `${target.name} to be bound to a model`);
+          }
+
+          handlers[x] = c[handlerName];
+
+          if (skipBind) {
+            skipBindNames.push(handlerName);
+          }
+        }
+      }
+
+      return skipBindNames;
     }
   };
 }
@@ -396,11 +497,11 @@ function getRouteHandler(req: Request, res: Response, next: NextFunction) {
   try {
     assignParameters.call(this);
   } catch (err) {
-    debug('sapi:Routable')(`getRouteHandler threw error: ${err}`);
+    debug('sapi:routable')(`getRouteHandler threw error: ${err}`);
     return next();
   }
 
-  debug('sapi:Routable')(`getRouteHandler called with id:'${id}', fields:${JSON.stringify(project)}`);
+  debug('sapi:routable')(`getRouteHandler called with id:'%o', field projection: %o`, id, project);
 
   this
     .getById(id, project)
@@ -472,11 +573,11 @@ function getAllRouteHandler(req: Request, res: Response, next: NextFunction) {
   try {
     assignParameters.call(this);
   } catch (err) {
-    debug('sapi:Routable')(`getAllRouteHandler threw error: ${err}`);
+    debug('sapi:routable')(`getAllRouteHandler threw error: ${err}`);
     return next();
   }
 
-  debug('sapi:Routable')(`.getAllRouteHandler called with params: ${JSON.stringify(params)}`);
+  debug('sapi:routable')(`.getAllRouteHandler called with params: %o`, params);
 
   this
     .get(params)
@@ -556,6 +657,8 @@ function putRouteHandler(req: Request, res: Response, next: NextFunction) {
 
   const changeSet = this.fromJsonToDb(req.body);
 
+  debug('sapi:routable')(`.putRouteHandler called with id: '%o' changeSet: %o`, id, changeSet);
+
   this
     .getById(id)
     .then((obj: SakuraApiModel) => {
@@ -592,6 +695,9 @@ function postRouteHandler(req: Request, res: Response, next: NextFunction) {
   }
 
   const obj = this.fromJson(req.body);
+
+  debug('sapi:routable')(`.postRouteHandler called with obj: %o`, obj);
+
   obj
     .create()
     .then((result) => {
@@ -611,8 +717,12 @@ function postRouteHandler(req: Request, res: Response, next: NextFunction) {
 function deleteRouteHandler(req: Request, res: Response, next: NextFunction) {
   const resLocals = res.locals as IRoutableLocals;
 
+  const id = req.params.id;
+
+  debug('sapi:routable')(`.deleteRouteHandler called with id: '%o'`, id);
+
   this
-    .removeById(req.params.id)
+    .removeById(id)
     .then((result) => {
       resLocals.send(200, {
         n: (result.result || {}).n || 0

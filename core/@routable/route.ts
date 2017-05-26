@@ -44,14 +44,50 @@ export interface IRoutableMethodOptions {
   /**
    * Takes an array of Express Handlers or a single Express Handler. The handler(s) will be called before
    * each `@Route` method in the `@Routable` class.
+   *
+   * If you want to use a class method, it has to be static. Why? Because when the `@`[[Route]] decorator is executed,
+   * the instance of the `@`Routable class doesn't exist yet.
+   *
+   * NOTE: handlers are bound to the instance of `@`Routable at the time of execution, `this` is in the context of the
+   * instance. So... even though you have to use the `static` hack, you still have and 'instance' method.
+   *
+   * ### Example
+   * <pre>
+   * <span>@</span>Routable({
+   *    baseUrl: 'user'
+   * })
+   * class UserApi {
+   *    instanceValue = true;
+   *
+   *    <span>@</span>Route({
+   *    path: '/:useId',
+   *    method: 'get',
+   *    before: [UserApi.someHandler]
+   *  })
+   *  postNewUser(req, res, next) {
+   *    res.sendStatus(200);
+   *    next();
+   *  }
+   *
+   *  static someHandler(req, res, next) {
+   *    assert(this.instanceValue);
+   *  }
+   * }
+   * </pre>
+   *
+   * You can also use one of built in handlers. See [[builtInHandlers]]. In the case of built in handlers, their
+   * context is set to the model, but their functionality is private, so you don't have to worry about that.
+   *
    */
-  before?: Handler[] | Handler;
+  before?: [Handler | string] | Handler | string;
 
   /**
    * Takes an array of Express Handlers or a single Express Handler. The handler(s) will be called after
    * each `@Route` method in the `@Routable` class.
+   *
+   * See [[IRoutableMethodOptions.before]] for an explanation of how static and context work with after.
    */
-  after?: Handler[] | Handler;
+  after?: [Handler | string] | Handler | string ;
 }
 
 /**

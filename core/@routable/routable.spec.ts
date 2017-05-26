@@ -7,7 +7,8 @@ import {Sapi} from '../../spec/helpers/sakuraapi';
 import {
   Routable,
   routableSymbols,
-  Route
+  Route,
+  SakuraApiRoutable
 } from './';
 
 import {ObjectID} from 'mongodb';
@@ -1422,5 +1423,205 @@ describe('core/Routable', function() {
         .catch(done.fail);
     });
 
+    it('throws if built in handler is called with no model bound', function() {
+
+      try {
+        @Routable(sapi)
+        class RoutableWithInternalHandlerButNoModelTest {
+          @Route({
+            before: 'getAllHandler'
+          })
+          badJuju() {
+          }
+        }
+
+        fail('Should not have reached here');
+      } catch (err) {
+        expect(err.message).toBe('RoutableWithInternalHandlerButNoModelTest is attempting to use built in handler ' +
+          'getAllRouteHandler, which requires RoutableWithInternalHandlerButNoModelTest to be bound to a model');
+      }
+
+    });
+  });
+
+  describe('before and after handlers can utilize injected route handlers', function() {
+    const sapi = Sapi();
+
+    @Model(sapi, {
+      dbConfig: {
+        collection: 'BeforeAfterInjectRouteTestModel',
+        db: 'userDb'
+      }
+    })
+    class BeforeAfterInjectRouteTestModel extends SakuraApiModel {
+      @Db() @Json()
+      firstName = 'George';
+
+      @Db() @Json()
+      lastName = 'Washington';
+    }
+
+    afterEach(function(done) {
+      sapi
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    describe('getAllHandler', function() {
+      @Routable(sapi, {
+        baseUrl: 'GetAllRouteHandlerBeforeAfterTest',
+        model: BeforeAfterInjectRouteTestModel
+      })
+      class GetAllRouteHandlerBeforeAfterTest extends SakuraApiRoutable {
+        static getAfterTest(req: Request, res: Response, next: NextFunction) {
+
+          const resLocal = res.locals as IRoutableLocals;
+          if (Array.isArray(resLocal.data) && resLocal.data.length > 0) {
+            expect(resLocal.data[0].firstName).toBe('Georgie');
+            resLocal.data[0].firstName = 'Georgellio';
+          }
+
+          next();
+        }
+
+        @Route({
+          after: GetAllRouteHandlerBeforeAfterTest.getAfterTest,
+          before: ['getAllHandler'],
+          method: 'get',
+          path: 'beforeTest/get'
+        })
+        getBeforeTest(req: Request, res: Response, next: NextFunction) {
+
+          const resLocal = res.locals as IRoutableLocals;
+          if (Array.isArray(resLocal.data) && resLocal.data.length > 0) {
+            expect(resLocal.data[0].firstName).toBe('George');
+            resLocal.data[0].firstName = 'Georgie';
+          }
+
+          next();
+        }
+      }
+
+      it('with result', function(done) {
+        sapi
+          .listen({bootMessage: ''})
+          .then(() => new BeforeAfterInjectRouteTestModel().create())
+          .then(() => {
+            return request(sapi.app)
+              .get(this.uri('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
+              .expect(200)
+              .then((res) => {
+                const body = res.body;
+                expect(body.length).toBe(1);
+                expect(body[0].firstName).toBe('Georgellio');
+                expect(body[0].lastName).toBe('Washington');
+                expect(body[0].id).toBeDefined();
+              });
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('without results', function(done) {
+        sapi
+          .listen({bootMessage: ''})
+          .then(() => BeforeAfterInjectRouteTestModel.removeAll({}))
+          .then(() => {
+            return request(sapi.app)
+              .get(this.uri('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
+              .expect(200)
+              .then((res) => {
+                const body = res.body;
+                expect(Array.isArray(body)).toBeTruthy();
+                expect(body.length).toBe(0);
+              });
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+    });
+
+    describe('get handler', function() {
+      @Routable(sapi, {
+        baseUrl: 'GetRouteHandlerBeforeAfterTest',
+        model: BeforeAfterInjectRouteTestModel
+      })
+      class GetRouteHandlerBeforeAfterTest extends SakuraApiRoutable {
+        static getAfterTest(req: Request, res: Response, next: NextFunction) {
+          const resLocal = res.locals as IRoutableLocals;
+
+          if (resLocal.data !== null) {
+            expect(resLocal.data.firstName).toBe('Georgie');
+            resLocal.data.firstName = 'Georgellio';
+          } else {
+            resLocal.data = 'ok';
+          }
+
+          next();
+        }
+
+        @Route({
+          after: GetRouteHandlerBeforeAfterTest.getAfterTest,
+          before: ['getHandler'],
+          method: 'get',
+          path: 'beforeTest/get/:id'
+        })
+        getBeforeTest(req: Request, res: Response, next: NextFunction) {
+          const resLocal = res.locals as IRoutableLocals;
+          expect(resLocal.data.firstName).toBe('George');
+          resLocal.data.firstName = 'Georgie';
+          next();
+        }
+
+        @Route({
+          after: GetRouteHandlerBeforeAfterTest.getAfterTest,
+          before: ['getHandler'],
+          method: 'get',
+          path: 'beforeTest/get2/:id'
+        })
+        get2BeforeTest(req: Request, res: Response, next: NextFunction) {
+          const resLocal = res.locals as IRoutableLocals;
+          expect(resLocal.data).toBe(null);
+          next();
+        }
+
+      }
+
+      it('with valid id', function(done) {
+        sapi
+          .listen({bootMessage: ''})
+          .then(() => new BeforeAfterInjectRouteTestModel().create())
+          .then((db) => {
+            return request(sapi.app)
+              .get(this.uri(`/GetRouteHandlerBeforeAfterTest/beforeTest/get/${db.insertedId}`))
+              .expect(200)
+              .then((res) => {
+                const body = res.body;
+                expect(body.firstName).toBe('Georgellio');
+                expect(body.lastName).toBe('Washington');
+                expect(body.id).toBeDefined();
+              });
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('with invalid id', function(done) {
+        sapi
+          .listen({bootMessage: ''})
+          .then(() => {
+            return request(sapi.app)
+              .get(this.uri(`/GetRouteHandlerBeforeAfterTest/beforeTest/get2/123`))
+              .expect(200)
+              .then((res) => {
+                const body = res.body;
+                expect(body).toBe('ok');
+              });
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+    });
   });
 });

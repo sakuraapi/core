@@ -17,7 +17,7 @@ import {
 } from './';
 
 /***
- * Integrators should extend their Model classes with this abstract class to get typing for the `@`[[Model]] mixin
+ * Integrators should extend their [[Model]] classes with this abstract class to get typing for the `@`[[Model]] mixin
  * functions that are injected. If you need to have a custom super class that cannot extend this abstract class,
  * it's sufficient for you to copy and paste these type definitions into your super class to get the same typing.
  *
