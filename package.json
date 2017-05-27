@@ -1,6 +1,6 @@
 {
   "name": "@sakuraapi/api",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "MongoDB and TypeScript MEAN Stack Framework for NodeJS",
   "main": "index.js",
   "typings": "index.d.ts",
