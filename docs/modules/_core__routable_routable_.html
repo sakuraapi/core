@@ -83,6 +83,12 @@
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
+							<h3>Variables</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-variable tsd-parent-kind-external-module"><a href="_core__routable_routable_.html#builtinhandlers" class="tsd-kind-icon">built<wbr>InHandlers</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
 							<h3>Functions</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_core__routable_routable_.html#routable" class="tsd-kind-icon">Routable</a></li>
@@ -112,9 +118,33 @@
 					<div class="tsd-signature tsd-kind-icon">Http<wbr>Method<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">"get"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"getAll"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"put"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"post"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"delete"</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L20">core/@routable/routable.ts:20</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L20">core/@routable/routable.ts:20</a></li>
 						</ul>
 					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Variables</h2>
+				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-external-module">
+					<a name="builtinhandlers" class="tsd-anchor"></a>
+					<h3>built<wbr>InHandlers</h3>
+					<div class="tsd-signature tsd-kind-icon">built<wbr>InHandlers<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Object</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol"> =&nbsp;new Map&lt;string, [string, boolean, boolean]&gt;([[&#x27;getHandler&#x27;, [&#x27;getRouteHandler&#x27;, true, true]],[&#x27;getAllHandler&#x27;, [&#x27;getAllRouteHandler&#x27;, true, true]],[&#x27;putHandler&#x27;, [&#x27;putRouteHandler&#x27;, true, true]],[&#x27;postHandler&#x27;, [&#x27;postRouteHandler&#x27;, true, true]],[&#x27;deleteHandler&#x27;, [&#x27;deleteRouteHandler&#x27;, true, true]]])</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L163">core/@routable/routable.ts:163</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>A map of the valid built into <a href="_core__routable_routable_.html#routable">Routable</a>.
+								Key = handler name used in in before/beforeAll/after/afterAll
+								Value = [
+								string,  // <a href="_core__routable_routable_.html#routable">Routable</a> function name (these are all static) - this is what you use in before/after options
+								// in <a href="_core__routable_route_.html#route">Route</a>
+								boolean, // true = throw error if option.Model missing
+							boolean  // skip bind (see: bindHandlers embedded function in <a href="_core__routable_routable_.html#routable">Routable</a></p>
+						</div>
+					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
@@ -129,7 +159,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L173">core/@routable/routable.ts:173</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L199">core/@routable/routable.ts:199</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -182,7 +212,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L611">core/@routable/routable.ts:611</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L715">core/@routable/routable.ts:715</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -211,7 +241,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L461">core/@routable/routable.ts:461</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L560">core/@routable/routable.ts:560</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -265,7 +295,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L389">core/@routable/routable.ts:389</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L488">core/@routable/routable.ts:488</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -303,7 +333,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L583">core/@routable/routable.ts:583</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L684">core/@routable/routable.ts:684</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -332,7 +362,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L535">core/@routable/routable.ts:535</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L634">core/@routable/routable.ts:634</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -361,7 +391,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L636">core/@routable/routable.ts:636</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L744">core/@routable/routable.ts:744</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -408,7 +438,7 @@ class User {
 					<div class="tsd-signature tsd-kind-icon">http<wbr>Method<wbr>Map<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L21">core/@routable/routable.ts:21</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L21">core/@routable/routable.ts:21</a></li>
 						</ul>
 					</aside>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal tsd-is-not-exported">
@@ -417,7 +447,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">delete<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;&quot;delete&quot;</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L22">core/@routable/routable.ts:22</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L22">core/@routable/routable.ts:22</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -427,7 +457,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">get<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;&quot;get&quot;</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L23">core/@routable/routable.ts:23</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L23">core/@routable/routable.ts:23</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -437,7 +467,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">get<wbr>All<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;&quot;get&quot;</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L24">core/@routable/routable.ts:24</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L24">core/@routable/routable.ts:24</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -447,7 +477,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">post<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;&quot;post&quot;</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L25">core/@routable/routable.ts:25</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L25">core/@routable/routable.ts:25</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -457,7 +487,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">put<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;&quot;put&quot;</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L26">core/@routable/routable.ts:26</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L26">core/@routable/routable.ts:26</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -468,7 +498,7 @@ class User {
 					<div class="tsd-signature tsd-kind-icon">routable<wbr>Symbols<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L140">core/@routable/routable.ts:140</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L144">core/@routable/routable.ts:144</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -477,12 +507,52 @@ class User {
 						</div>
 					</div>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
+						<a name="routablesymbols.after" class="tsd-anchor"></a>
+						<h3>after</h3>
+						<div class="tsd-signature tsd-kind-icon">after<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;after&#x27;)</span></div>
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L145">core/@routable/routable.ts:145</a></li>
+							</ul>
+						</aside>
+					</section>
+					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
+						<a name="routablesymbols.afterall" class="tsd-anchor"></a>
+						<h3>after<wbr>All</h3>
+						<div class="tsd-signature tsd-kind-icon">after<wbr>All<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;afterAll&#x27;)</span></div>
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L146">core/@routable/routable.ts:146</a></li>
+							</ul>
+						</aside>
+					</section>
+					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
+						<a name="routablesymbols.before" class="tsd-anchor"></a>
+						<h3>before</h3>
+						<div class="tsd-signature tsd-kind-icon">before<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;before&#x27;)</span></div>
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L147">core/@routable/routable.ts:147</a></li>
+							</ul>
+						</aside>
+					</section>
+					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
+						<a name="routablesymbols.beforeall" class="tsd-anchor"></a>
+						<h3>before<wbr>All</h3>
+						<div class="tsd-signature tsd-kind-icon">before<wbr>All<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;beforeAll&#x27;)</span></div>
+						<aside class="tsd-sources">
+							<ul>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L148">core/@routable/routable.ts:148</a></li>
+							</ul>
+						</aside>
+					</section>
+					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
 						<a name="routablesymbols.debug" class="tsd-anchor"></a>
 						<h3>debug</h3>
 						<div class="tsd-signature tsd-kind-icon">debug<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;debug&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L141">core/@routable/routable.ts:141</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L149">core/@routable/routable.ts:149</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -492,7 +562,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">sakura<wbr>Api<wbr>Class<wbr>Routes<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;sakuraApiClassRoutes&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/1559806/core/@routable/routable.ts#L142">core/@routable/routable.ts:142</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@routable/routable.ts#L150">core/@routable/routable.ts:150</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -533,6 +603,9 @@ class User {
 						<a href="_core__routable_route_.html">"core/@routable/route"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
+						<a href="_core__routable_sakura_api_routable_.html">"core/@routable/sakura-<wbr>api-<wbr>routable"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
 						<a href="_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -559,6 +632,9 @@ class User {
 					</li>
 					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
 						<a href="_core__routable_routable_.html#httpmethod" class="tsd-kind-icon">Http<wbr>Method</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
+						<a href="_core__routable_routable_.html#builtinhandlers" class="tsd-kind-icon">built<wbr>InHandlers</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
 						<a href="_core__routable_routable_.html#routable" class="tsd-kind-icon">Routable</a>

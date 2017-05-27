@@ -407,30 +407,6 @@ describe('core/Routable', function() {
           + ` @Routable`));
       });
 
-      it('if provided an exposeApi option that is not an array', function() {
-        expect(() => {
-          @Routable(sapi, {
-            exposeApi: (1 as any),
-            model: User
-          })
-          class FailRoutableExposeApiOptionTest {
-          }
-        }).toThrow(new Error(`If @Routable 'FailRoutableExposeApiOptionTest' defines an 'exposeApi' option, that option`
-          + ` must be an array of valid strings`));
-      });
-
-      it('if provided a suppressApi option that is not an array', function() {
-        expect(() => {
-          @Routable(sapi, {
-            model: User,
-            suppressApi: (1 as any)
-          })
-          class FailRoutableSuppressApiOptionTest {
-          }
-        }).toThrow(new Error(`If @Routable 'FailRoutableSuppressApiOptionTest' defines a 'suppressApi' option, that`
-          + ` option must be an array of valid strings`));
-      });
-
       it('if provided either suppressApi or exposeApi options without a model', function() {
         expect(() => {
           @Routable(sapi, {
@@ -453,7 +429,7 @@ describe('core/Routable', function() {
       });
     });
 
-    describe('generates routes', function() {
+    describe('generates routes with built in handlers when provided a model', function() {
       describe('properly names routes', function() {
         it('uses the model\'s name if there is no baseUrl for the @Routable class', function(done) {
           request(sapi.app)
@@ -471,148 +447,97 @@ describe('core/Routable', function() {
           .then(done)
           .catch(done.fail);
       });
-    });
 
-    describe('GET ./model', function() {
+      describe('GET ./model', function() {
 
-      beforeEach(function(done) {
-        User
-          .removeAll({})
-          .then(() => {
-            const user1 = new User();
-            user1.contact.phone = '111-111-1111';
-            this.user1 = user1;
-            return user1.create();
-          })
-          .then(() => {
-            const user2 = new User();
-            user2.firstName = 'Martha';
-            this.user2 = user2;
-            return user2.create();
-          })
-          .then(() => {
-            const user3 = new User();
-            user3.firstName = 'Matthew';
-            this.user3 = user3;
-            return user3.create();
-          })
-          .then(() => {
-            const user4 = new User();
-            user4.firstName = 'Mark';
-            this.user4 = user4;
-            return user4.create();
-          })
-          .then(() => {
-            const user5 = new User();
-            user5.firstName = 'Luke';
-            this.user5 = user5;
-            return user5.create();
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('returns all documents with all fields properly mapped by @Json', function(done) {
-
-        request(sapi.app)
-          .get(this.uri('/user'))
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .then((res) => {
-            expect(Array.isArray(res.body)).toBeTruthy();
-            expect(res.body.length).toBe(5);
-            expect(res.body[0].fn).toBe(this.user1.firstName);
-            expect(res.body[0].ln).toBe(this.user1.lastName);
-            expect(res.body[1].fn).toBe(this.user2.firstName);
-            expect(res.body[1].ln).toBe(this.user2.lastName);
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('returns empty array with no results', function(done) {
-        request(sapi.app)
-          .get(this.uri('/testUserApi2'))
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .then((res) => {
-            expect(Array.isArray(res.body)).toBeTruthy();
-            expect(res.body.length).toBe(0);
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      describe('supports a where query', function() {
-
-        it('returns 400 with invalid json for where parameter', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user?where={firstName:test}`))
-            .expect(400)
-            .then((res) => {
-              expect(res.body).toBeDefined('There should have been a body returned with the error');
-              expect(res.body.error).toBe('invalid_where_parameter');
-              expect(res.body.details).toBe('Unexpected token f in JSON at position 1');
+        beforeEach(function(done) {
+          User
+            .removeAll({})
+            .then(() => {
+              const user1 = new User();
+              user1.contact.phone = '111-111-1111';
+              this.user1 = user1;
+              return user1.create();
+            })
+            .then(() => {
+              const user2 = new User();
+              user2.firstName = 'Martha';
+              this.user2 = user2;
+              return user2.create();
+            })
+            .then(() => {
+              const user3 = new User();
+              user3.firstName = 'Matthew';
+              this.user3 = user3;
+              return user3.create();
+            })
+            .then(() => {
+              const user4 = new User();
+              user4.firstName = 'Mark';
+              this.user4 = user4;
+              return user4.create();
+            })
+            .then(() => {
+              const user5 = new User();
+              user5.firstName = 'Luke';
+              this.user5 = user5;
+              return user5.create();
             })
             .then(done)
             .catch(done.fail);
         });
 
-        it('returns 200 with empty array when there is a valid where query with no matching entities', function(done) {
-          const json = {
-            fn: 'Zorg, Commander of the Raylon Empire'
-          };
+        it('returns all documents with all fields properly mapped by @Json', function(done) {
 
           request(sapi.app)
-            .get(this.uri(`/user?where=${JSON.stringify(json)}`))
-            .expect(200)
+            .get(this.uri('/user'))
             .expect('Content-Type', /json/)
+            .expect(200)
             .then((res) => {
-              expect(res.body).toBeDefined();
-              expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
+              expect(Array.isArray(res.body)).toBeTruthy();
+              expect(res.body.length).toBe(5);
+              expect(res.body[0].fn).toBe(this.user1.firstName);
+              expect(res.body[0].ln).toBe(this.user1.lastName);
+              expect(res.body[1].fn).toBe(this.user2.firstName);
+              expect(res.body[1].ln).toBe(this.user2.lastName);
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns empty array with no results', function(done) {
+          request(sapi.app)
+            .get(this.uri('/testUserApi2'))
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .then((res) => {
+              expect(Array.isArray(res.body)).toBeTruthy();
               expect(res.body.length).toBe(0);
             })
             .then(done)
             .catch(done.fail);
         });
 
-        it('returns the expected objects', function(done) {
-          const json = {
-            fn: 'George'
-          };
+        describe('supports a where query', function() {
 
-          request(sapi.app)
-            .get(this.uri(`/user?where=${JSON.stringify(json)}`))
-            .expect(200)
-            .expect('Content-Type', /json/)
-            .then((res) => {
+          it('returns 400 with invalid json for where parameter', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?where={firstName:test}`))
+              .expect(400)
+              .then((res) => {
+                expect(res.body).toBeDefined('There should have been a body returned with the error');
+                expect(res.body.error).toBe('invalid_where_parameter');
+                expect(res.body.details).toBe('Unexpected token f in JSON at position 1');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
 
-              expect(res.body).toBeDefined();
-              expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
-              expect(res.body.length).toBe(1, 'The where query parameter should have limited the results to one ' +
-                'matching object');
+          it('returns 200 with empty array when there is a valid where query with no matching entities', function(done) {
+            const json = {
+              fn: 'Zorg, Commander of the Raylon Empire'
+            };
 
-              expect(res.body[0].fn).toBe(this.user1.firstName);
-              expect(res.body[0].ln).toBe(this.user1.lastName);
-
-              expect(res.body[0].id.toString()).toBe(this.user1._id.toString());
-              expect(res.body[0].contact).toBeDefined('contact should have been defined');
-              expect(res.body[0].contact.phone).toBe('111-111-1111');
-
-            })
-            .then(done)
-            .catch(done.fail);
-        });
-
-        describe('supports deep where', function() {
-          const json = {
-            contact: {
-              phone: '123'
-            },
-            fn: 'George'
-          };
-
-          it('with no results expected', function(done) {
             request(sapi.app)
               .get(this.uri(`/user?where=${JSON.stringify(json)}`))
               .expect(200)
@@ -620,532 +545,609 @@ describe('core/Routable', function() {
               .then((res) => {
                 expect(res.body).toBeDefined();
                 expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
-                expect(res.body.length).toBe(0, 'no results should have matched the where query');
+                expect(res.body.length).toBe(0);
               })
               .then(done)
               .catch(done.fail);
           });
 
-          it('with one result expected', function(done) {
-            json.contact.phone = '111-111-1111';
+          it('returns the expected objects', function(done) {
+            const json = {
+              fn: 'George'
+            };
 
             request(sapi.app)
               .get(this.uri(`/user?where=${JSON.stringify(json)}`))
               .expect(200)
               .expect('Content-Type', /json/)
               .then((res) => {
+
                 expect(res.body).toBeDefined();
                 expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
                 expect(res.body.length).toBe(1, 'The where query parameter should have limited the results to one ' +
                   'matching object');
+
                 expect(res.body[0].fn).toBe(this.user1.firstName);
                 expect(res.body[0].ln).toBe(this.user1.lastName);
+
                 expect(res.body[0].id.toString()).toBe(this.user1._id.toString());
                 expect(res.body[0].contact).toBeDefined('contact should have been defined');
                 expect(res.body[0].contact.phone).toBe('111-111-1111');
+
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          describe('supports deep where', function() {
+            const json = {
+              contact: {
+                phone: '123'
+              },
+              fn: 'George'
+            };
+
+            it('with no results expected', function(done) {
+              request(sapi.app)
+                .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+                .expect(200)
+                .expect('Content-Type', /json/)
+                .then((res) => {
+                  expect(res.body).toBeDefined();
+                  expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
+                  expect(res.body.length).toBe(0, 'no results should have matched the where query');
+                })
+                .then(done)
+                .catch(done.fail);
+            });
+
+            it('with one result expected', function(done) {
+              json.contact.phone = '111-111-1111';
+
+              request(sapi.app)
+                .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+                .expect(200)
+                .expect('Content-Type', /json/)
+                .then((res) => {
+                  expect(res.body).toBeDefined();
+                  expect(Array.isArray(res.body)).toBeTruthy('response body should be an array');
+                  expect(res.body.length).toBe(1, 'The where query parameter should have limited the results to one ' +
+                    'matching object');
+                  expect(res.body[0].fn).toBe(this.user1.firstName);
+                  expect(res.body[0].ln).toBe(this.user1.lastName);
+                  expect(res.body[0].id.toString()).toBe(this.user1._id.toString());
+                  expect(res.body[0].contact).toBeDefined('contact should have been defined');
+                  expect(res.body[0].contact.phone).toBe('111-111-1111');
+                })
+                .then(done)
+                .catch(done.fail);
+            });
+          });
+
+          it('does not allow for NoSQL injection', function() {
+            pending('not implemented: https://github.com/sakuraapi/api/issues/65');
+          });
+
+        });
+
+        describe('supports fields projection', function() {
+
+          it('returns 400 with invalid json for fields parameter', function(done) {
+            request(sapi.app)
+              .get(this.uri('/user?fields={blah}'))
+              .expect(400)
+              .then((res) => {
+                expect(res.body).toBeDefined('There should been a body returned with the error');
+                expect(res.body.error).toBe('invalid_fields_parameter');
+                expect(res.body.details).toBe('Unexpected token b in JSON at position 1');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns 400 with invalid json for fields=', function(done) {
+            request(sapi.app)
+              .get(this.uri('/user?fields='))
+              .expect(400)
+              .then((res) => {
+                expect(res.body).toBeDefined('There should been a body returned with the error');
+                expect(res.body.error).toBe('invalid_fields_parameter');
+                expect(res.body.details).toBe('Unexpected end of JSON input');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns results with excluded fields', function(done) {
+            const fields = {
+              ln: 0
+            };
+
+            request(sapi.app)
+              .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
+              .expect(200)
+              .then((res) => {
+                expect(res.body.length).toBe(5);
+                expect(res.body[0].ln).toBeUndefined('lastName should have been excluded');
+                expect(res.body[0].contact).toBeDefined('contact should not have been excluded');
+                expect(res.body[0].contact.phone).toBe(this.user1.contact.phone);
+                expect(res.body[0].contact.mobile).toBe(this.user1.contact.mobile);
+
+                expect(res.body[1].ln).toBeUndefined();
+                expect(res.body[1].contact).toBeDefined('contact should not have been excluded');
+                expect(res.body[1].contact.phone).toBe(this.user2.contact.phone);
+                expect(res.body[1].contact.mobile).toBe(this.user2.contact.mobile);
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns results with embedded document excluded fields', function(done) {
+            const fields = {
+              contact: {mobile: 0}
+            };
+
+            request(sapi.app)
+              .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
+              .expect(200)
+              .then((res) => {
+                expect(res.body.length).toBe(5);
+                expect(res.body[0].fn).toBe(this.user1.firstName);
+                expect(res.body[0].ln).toBe(this.user1.lastName);
+                expect(res.body[0].contact).toBeDefined('contact should not have been excluded');
+                expect(res.body[0].contact.phone).toBe(this.user1.contact.phone);
+                expect(res.body[0].contact.mobile).toBeUndefined('mobile should not have been included');
+                expect(res.body[1].fn).toBe(this.user2.firstName);
+                expect(res.body[1].ln).toBe(this.user2.lastName);
+                expect(res.body[1].contact).toBeDefined('contact should not have been excluded');
+                expect(res.body[1].contact.phone).toBe(this.user2.contact.phone);
+                expect(res.body[1].contact.mobile).toBeUndefined('mobile should not have been included');
               })
               .then(done)
               .catch(done.fail);
           });
         });
 
-        it('does not allow for NoSQL injection', function() {
-          pending('not implemented: https://github.com/sakuraapi/api/issues/65');
+        describe('supports skip', function() {
+          it('with valid values', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?skip=4`))
+              .expect(200)
+              .then((res) => {
+                expect(res.body.length).toBe(1, 'should have skipped to last entry');
+                expect(res.body[0].id).toBe(this.user5.id.toString());
+                expect(res.body[0].fn).toBe(this.user5.firstName);
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('with valid values greater than records available', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?skip=100`))
+              .expect(200)
+              .then((res) => {
+                expect(Array.isArray(res.body)).toBeTruthy('Expected an empty array');
+                expect(res.body.length).toBe(0, 'An empty array should have been retruned');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns 400 with no values', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?skip=`))
+              .expect(400)
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns 400 with invalid values', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?skip=aaa`))
+              .expect(400)
+              .then(done)
+              .catch(done.fail);
+          });
         });
 
+        describe('supports limit', function() {
+          it('with valid values', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?limit=2`))
+              .expect(200)
+              .then((res) => {
+                expect(res.body.length).toBe(2, 'should have been limited');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('limit=0 is the same as unlimited', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?limit=0`))
+              .expect(200)
+              .then((res) => {
+                expect(res.body.length).toBe(5, 'All results should have been returned');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns 400 with no values', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?limit=`))
+              .expect(400)
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns 400 with invalid values', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user?limit=aaa`))
+              .expect(400)
+              .then(done)
+              .catch(done.fail);
+          });
+        });
+
+        it('supports limit + skip', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user?limit=2&skip=2`))
+            .expect(200)
+            .then((res) => {
+              expect(res.body.length).toBe(2, 'should have been limited to 2 entries');
+              expect(res.body[0].id).toBe(this.user3.id.toString(), 'Unexpected skip result');
+              expect(res.body[1].id).toBe(this.user4.id.toString(), 'Unexpected skip result');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
       });
 
-      describe('supports fields projection', function() {
+      describe('GET ./model/:id', function() {
 
-        it('returns 400 with invalid json for fields parameter', function(done) {
-          request(sapi.app)
-            .get(this.uri('/user?fields={blah}'))
-            .expect(400)
-            .then((res) => {
-              expect(res.body).toBeDefined('There should been a body returned with the error');
-              expect(res.body.error).toBe('invalid_fields_parameter');
-              expect(res.body.details).toBe('Unexpected token b in JSON at position 1');
+        beforeEach(function(done) {
+          User
+            .removeAll({})
+            .then(() => {
+              const user = new User();
+              this.user1 = user;
+              return user.create();
+            })
+            .then(() => {
+              const user = new User();
+              user.firstName = 'Martha';
+              this.user2 = user;
+              return user.create();
             })
             .then(done)
             .catch(done.fail);
         });
 
-        it('returns 400 with invalid json for fields=', function(done) {
+        it('returns a specific document with all fields properly mapped by @Json', function(done) {
           request(sapi.app)
-            .get(this.uri('/user?fields='))
-            .expect(400)
+            .get(this.uri(`/user/${this.user1.id}`))
+            .expect('Content-Type', /json/)
+            .expect(200)
             .then((res) => {
-              expect(res.body).toBeDefined('There should been a body returned with the error');
-              expect(res.body.error).toBe('invalid_fields_parameter');
-              expect(res.body.details).toBe('Unexpected end of JSON input');
+              const result = res.body;
+              expect(Array.isArray(result)).toBeFalsy('Should have returned a single document');
+              expect(result.id).toBe(this.user1.id.toString());
+              expect(result.fn).toBe(this.user1.firstName);
+              expect(result.ln).toBe(this.user1.lastName);
+              expect(result.contact).toBeDefined();
+              expect(result.contact.phone).toBe(this.user1.contact.phone);
+              expect(result.contact.mobile).toBe(this.user1.contact.mobile);
             })
             .then(done)
             .catch(done.fail);
         });
 
-        it('returns results with excluded fields', function(done) {
-          const fields = {
-            ln: 0
+        it('returns null with no result', function(done) {
+          request(sapi.app)
+            .get(this.uri(`/user/123`))
+            .expect('Content-Type', /json/)
+            .expect(200)
+            .then((res) => {
+              expect(res.body).toBe(null);
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        describe('supports fields projection', function() {
+
+          it('returns 400 with invalid json for fields parameter', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user/${this.user1.id.toString()}?fields={blah}`))
+              .expect(400)
+              .then((res) => {
+                expect(res.body).toBeDefined('There should been a body returned with the error');
+                expect(res.body.error).toBe('invalid_fields_parameter');
+                expect(res.body.details).toBe('Unexpected token b in JSON at position 1');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns 400 with invalid json for fields=', function(done) {
+            request(sapi.app)
+              .get(this.uri(`/user/${this.user1.id.toString()}?fields=`))
+              .expect(400)
+              .then((res) => {
+                expect(res.body).toBeDefined('There should been a body returned with the error');
+                expect(res.body.error).toBe('invalid_fields_parameter');
+                expect(res.body.details).toBe('Unexpected end of JSON input');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns results with excluded fields', function(done) {
+            const fields = {
+              ln: 0
+            };
+
+            request(sapi.app)
+              .get(this.uri(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
+              .expect(200)
+              .then((res) => {
+                expect(res.body.fn).toBeDefined('firstName should not have been excluded');
+                expect(res.body.ln).toBeUndefined('lastName should have been excluded');
+                expect(res.body.contact).toBeDefined('contact should not have been excluded');
+                expect(res.body.contact.phone).toBe(this.user1.contact.phone);
+                expect(res.body.contact.mobile).toBe(this.user1.contact.mobile);
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+
+          it('returns results with embedded document excluded fields', function(done) {
+            const fields = {
+              contact: {mobile: 0}
+            };
+
+            request(sapi.app)
+              .get(this.uri(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
+              .expect(200)
+              .then((res) => {
+                expect(res.body.fn).toBe(this.user1.firstName);
+                expect(res.body.ln).toBe(this.user1.lastName);
+                expect(res.body.contact).toBeDefined('contact should not have been excluded');
+                expect(res.body.contact.phone).toBe(this.user1.contact.phone);
+                expect(res.body.contact.mobile).toBeUndefined('mobile should not have been included');
+              })
+              .then(done)
+              .catch(done.fail);
+          });
+        });
+      });
+
+      describe('POST ./model', function() {
+
+        beforeEach(function(done) {
+          User
+            .removeAll({})
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns 400 if the body is not an object', function(done) {
+          // Note: this test assumes that bodyparser middleware is installed... if it is, then there's a default
+          // top level error handler setup on the `.listen` method of SakuraApi that will catch a bodyparser parsing
+          // error and it should inject the 'invalid_body' error property.
+
+          request(sapi.app)
+            .post(this.uri(`/user`))
+            .type('application/json')
+            .send(`{test:}`)
+            .expect(400)
+            .then((res) => {
+              expect(res.body.error).toBe('invalid_body');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('takes a json object and creates it', function(done) {
+          const obj = {
+            contact: {
+              phone: 'not invented yet'
+            },
+            fn: 'Abraham',
+            ln: 'Lincoln'
           };
 
           request(sapi.app)
-            .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
+            .post(this.uri('/user'))
+            .type('application/json')
+            .send(JSON.stringify(obj))
             .expect(200)
             .then((res) => {
-              expect(res.body.length).toBe(5);
-              expect(res.body[0].ln).toBeUndefined('lastName should have been excluded');
-              expect(res.body[0].contact).toBeDefined('contact should not have been excluded');
-              expect(res.body[0].contact.phone).toBe(this.user1.contact.phone);
-              expect(res.body[0].contact.mobile).toBe(this.user1.contact.mobile);
-
-              expect(res.body[1].ln).toBeUndefined();
-              expect(res.body[1].contact).toBeDefined('contact should not have been excluded');
-              expect(res.body[1].contact.phone).toBe(this.user2.contact.phone);
-              expect(res.body[1].contact.mobile).toBe(this.user2.contact.mobile);
+              expect(res.body.count).toBe(1, 'One document should have been inserted into the db');
+              expect(ObjectID.isValid(res.body.id)).toBeTruthy('A valid ObjectID should have been returned');
+              return res.body.id;
+            })
+            .then((id) => {
+              return User
+                .getCollection()
+                .find({_id: new ObjectID(id)})
+                .limit(1)
+                .next()
+                .then((result) => {
+                  expect(result.fname).toBe(obj.fn);
+                  expect(result.lname).toBe(obj.ln);
+                  expect(result.contact).toBeDefined('contact embedded document should have been created');
+                  expect(result.contact.phone).toBe(obj.contact.phone);
+                  expect(result.contact.mobile).toBe('111-111-1111', 'Default value should have been saved');
+                });
             })
             .then(done)
             .catch(done.fail);
         });
 
-        it('returns results with embedded document excluded fields', function(done) {
-          const fields = {
-            contact: {mobile: 0}
+      });
+
+      describe('PUT ./model', function() {
+        beforeEach(function(done) {
+          User
+            .removeAll({})
+            .then(() => {
+              const user = new User();
+              this.user1 = user;
+              return user.create();
+            })
+            .then(() => {
+              const user = new User();
+              user.firstName = 'Abraham';
+              user.lastName = 'Lincoln';
+              this.user2 = user;
+              return user.create();
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns 400 if the body is not an object', function(done) {
+          // Note: this test assumes that bodyparser middleware is installed... if it is, then there's a default
+          // top level error handler setup on the `.listen` method of SakuraApi that will catch a bodyparser parsing
+          // error and it should inject the 'invalid_body' error property.
+
+          request(sapi.app)
+            .put(this.uri(`/user/${this.user1.id.toString()}`))
+            .type('application/json')
+            .send(`{test:}`)
+            .expect(400)
+            .then((res) => {
+              expect(res.body.error).toBe('invalid_body');
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('returns 404 if the document to be updated is not found', function(done) {
+          request(sapi.app)
+            .put(this.uri(`/user/aaa`))
+            .type('application/json')
+            .send(JSON.stringify({}))
+            .expect(404)
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('takes a json object and updates it', function(done) {
+          const obj = {
+            contact: {
+              mobile: '888',
+              phone: '777'
+            },
+            fn: 'Abe',
+            id: 1234321,
+            ln: 'Speed',
+            tall: true
           };
 
           request(sapi.app)
-            .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
+            .put(this.uri(`/user/${this.user2.id.toString()}`))
+            .type('application/json')
+            .send(JSON.stringify(obj))
             .expect(200)
             .then((res) => {
-              expect(res.body.length).toBe(5);
-              expect(res.body[0].fn).toBe(this.user1.firstName);
-              expect(res.body[0].ln).toBe(this.user1.lastName);
-              expect(res.body[0].contact).toBeDefined('contact should not have been excluded');
-              expect(res.body[0].contact.phone).toBe(this.user1.contact.phone);
-              expect(res.body[0].contact.mobile).toBeUndefined('mobile should not have been included');
-              expect(res.body[1].fn).toBe(this.user2.firstName);
-              expect(res.body[1].ln).toBe(this.user2.lastName);
-              expect(res.body[1].contact).toBeDefined('contact should not have been excluded');
-              expect(res.body[1].contact.phone).toBe(this.user2.contact.phone);
-              expect(res.body[1].contact.mobile).toBeUndefined('mobile should not have been included');
+              expect(res.body.modified).toBe(1, 'One record should have been modified');
+            })
+            .then(() => {
+              return User
+                .getCollection()
+                .find({_id: this.user2.id})
+                .next();
+            })
+            .then((updated: any) => {
+              expect(updated.fname).toBe(obj.fn);
+              expect(updated.lname).toBe(obj.ln);
+              expect(updated.contact).toBeDefined('contact should exist after update');
+              expect(updated.contact.phone).toBe(obj.contact.phone);
+              expect(updated.contact.mobile).toBe(obj.contact.mobile);
+              expect(updated._id.toString()).toBe(this.user2.id.toString());
+              expect(updated.tall).toBeUndefined('arbitrary fields should not be included in the changeset');
             })
             .then(done)
             .catch(done.fail);
         });
       });
 
-      describe('supports skip', function() {
-        it('with valid values', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user?skip=4`))
-            .expect(200)
-            .then((res) => {
-              expect(res.body.length).toBe(1, 'should have skipped to last entry');
-              expect(res.body[0].id).toBe(this.user5.id.toString());
-              expect(res.body[0].fn).toBe(this.user5.firstName);
+      describe('DELETE ./mode/:id', function() {
+        beforeEach(function(done) {
+          User
+            .removeAll({})
+            .then(() => {
+              const user = new User();
+              this.user1 = user;
+              return user.create();
+            })
+            .then(() => {
+              const user = new User();
+              this.user2 = user;
+              return user.create();
             })
             .then(done)
             .catch(done.fail);
         });
 
-        it('with valid values greater than records available', function(done) {
+        it('removes the document from the db if a matching id is found', function(done) {
           request(sapi.app)
-            .get(this.uri(`/user?skip=100`))
-            .expect(200)
-            .then((res) => {
-              expect(Array.isArray(res.body)).toBeTruthy('Expected an empty array');
-              expect(res.body.length).toBe(0, 'An empty array should have been retruned');
+            .delete(this.uri(`/user/${this.user1.id.toString()}`))
+            .then((result: any) => {
+              expect(result.body.n).toBe(1, 'one record should have been removed');
+              return User
+                .getCollection()
+                .find({_id: this.user1.id})
+                .limit(1)
+                .next();
             })
-            .then(done)
-            .catch(done.fail);
-        });
-
-        it('returns 400 with no values', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user?skip=`))
-            .expect(400)
-            .then(done)
-            .catch(done.fail);
-        });
-
-        it('returns 400 with invalid values', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user?skip=aaa`))
-            .expect(400)
-            .then(done)
-            .catch(done.fail);
-        });
-      });
-
-      describe('supports limit', function() {
-        it('with valid values', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user?limit=2`))
-            .expect(200)
-            .then((res) => {
-              expect(res.body.length).toBe(2, 'should have been limited');
+            .then((result) => {
+              expect(result).toBeNull(`User ${this.user1.id} should have been deleted`);
             })
-            .then(done)
-            .catch(done.fail);
-        });
-
-        it('limit=0 is the same as unlimited', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user?limit=0`))
-            .expect(200)
-            .then((res) => {
-              expect(res.body.length).toBe(5, 'All results should have been returned');
+            .then(() => {
+              return User
+                .getCollection()
+                .find({_id: this.user2.id})
+                .limit(1)
+                .next();
             })
-            .then(done)
-            .catch(done.fail);
-        });
-
-        it('returns 400 with no values', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user?limit=`))
-            .expect(400)
-            .then(done)
-            .catch(done.fail);
-        });
-
-        it('returns 400 with invalid values', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user?limit=aaa`))
-            .expect(400)
-            .then(done)
-            .catch(done.fail);
-        });
-      });
-
-      it('supports limit + skip', function(done) {
-        request(sapi.app)
-          .get(this.uri(`/user?limit=2&skip=2`))
-          .expect(200)
-          .then((res) => {
-            expect(res.body.length).toBe(2, 'should have been limited to 2 entries');
-            expect(res.body[0].id).toBe(this.user3.id.toString(), 'Unexpected skip result');
-            expect(res.body[1].id).toBe(this.user4.id.toString(), 'Unexpected skip result');
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-    });
-
-    describe('GET ./model/:id', function() {
-
-      beforeEach(function(done) {
-        User
-          .removeAll({})
-          .then(() => {
-            const user = new User();
-            this.user1 = user;
-            return user.create();
-          })
-          .then(() => {
-            const user = new User();
-            user.firstName = 'Martha';
-            this.user2 = user;
-            return user.create();
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('returns a specific document with all fields properly mapped by @Json', function(done) {
-        request(sapi.app)
-          .get(this.uri(`/user/${this.user1.id}`))
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .then((res) => {
-            const result = res.body;
-            expect(Array.isArray(result)).toBeFalsy('Should have returned a single document');
-            expect(result.id).toBe(this.user1.id.toString());
-            expect(result.fn).toBe(this.user1.firstName);
-            expect(result.ln).toBe(this.user1.lastName);
-            expect(result.contact).toBeDefined();
-            expect(result.contact.phone).toBe(this.user1.contact.phone);
-            expect(result.contact.mobile).toBe(this.user1.contact.mobile);
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('returns null with no result', function(done) {
-        request(sapi.app)
-          .get(this.uri(`/user/123`))
-          .expect('Content-Type', /json/)
-          .expect(200)
-          .then((res) => {
-            expect(res.body).toBe(null);
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      describe('supports fields projection', function() {
-
-        it('returns 400 with invalid json for fields parameter', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user/${this.user1.id.toString()}?fields={blah}`))
-            .expect(400)
-            .then((res) => {
-              expect(res.body).toBeDefined('There should been a body returned with the error');
-              expect(res.body.error).toBe('invalid_fields_parameter');
-              expect(res.body.details).toBe('Unexpected token b in JSON at position 1');
-            })
-            .then(done)
-            .catch(done.fail);
-        });
-
-        it('returns 400 with invalid json for fields=', function(done) {
-          request(sapi.app)
-            .get(this.uri(`/user/${this.user1.id.toString()}?fields=`))
-            .expect(400)
-            .then((res) => {
-              expect(res.body).toBeDefined('There should been a body returned with the error');
-              expect(res.body.error).toBe('invalid_fields_parameter');
-              expect(res.body.details).toBe('Unexpected end of JSON input');
-            })
-            .then(done)
-            .catch(done.fail);
-        });
-
-        it('returns results with excluded fields', function(done) {
-          const fields = {
-            ln: 0
-          };
-
-          request(sapi.app)
-            .get(this.uri(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
-            .expect(200)
-            .then((res) => {
-              expect(res.body.fn).toBeDefined('firstName should not have been excluded');
-              expect(res.body.ln).toBeUndefined('lastName should have been excluded');
-              expect(res.body.contact).toBeDefined('contact should not have been excluded');
-              expect(res.body.contact.phone).toBe(this.user1.contact.phone);
-              expect(res.body.contact.mobile).toBe(this.user1.contact.mobile);
-            })
-            .then(done)
-            .catch(done.fail);
-        });
-
-        it('returns results with embedded document excluded fields', function(done) {
-          const fields = {
-            contact: {mobile: 0}
-          };
-
-          request(sapi.app)
-            .get(this.uri(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
-            .expect(200)
-            .then((res) => {
-              expect(res.body.fn).toBe(this.user1.firstName);
-              expect(res.body.ln).toBe(this.user1.lastName);
-              expect(res.body.contact).toBeDefined('contact should not have been excluded');
-              expect(res.body.contact.phone).toBe(this.user1.contact.phone);
-              expect(res.body.contact.mobile).toBeUndefined('mobile should not have been included');
+            .then((result: any) => {
+              expect(result._id.toString())
+                .toBe(this.user2.id.toString(), 'Other documents should not have been removed');
             })
             .then(done)
             .catch(done.fail);
         });
       });
-    });
 
-    describe('POST ./model', function() {
-
-      beforeEach(function(done) {
-        User
-          .removeAll({})
-          .then(done)
-          .catch(done.fail);
+      describe('exposeApi suppresses non exposed endpoints', function() {
+        pending('not implemented');
       });
 
-      it('returns 400 if the body is not an object', function(done) {
-        // Note: this test assumes that bodyparser middleware is installed... if it is, then there's a default
-        // top level error handler setup on the `.listen` method of SakuraApi that will catch a bodyparser parsing
-        // error and it should inject the 'invalid_body' error property.
+      describe('suppressApi exposes non suppressed endpoints', function() {
+        @Routable(sapi, {
+          baseUrl: 'RoutableSuppressApiTrueTest',
+          model: User,
+          suppressApi: true
+        })
+        class RoutableSuppressApiTrueTest {
+        }
 
-        request(sapi.app)
-          .post(this.uri(`/user`))
-          .type('application/json')
-          .send(`{test:}`)
-          .expect(400)
-          .then((res) => {
-            expect(res.body.error).toBe('invalid_body');
-          })
-          .then(done)
-          .catch(done.fail);
-      });
+        it('suppressess all model generated endpoints when suppressApi is set to true rather than an array', function(done) {
+          request(sapi.app)
+            .get(this.uri('/RoutableSuppressApiTrueTest'))
+            .expect(404)
+            .then(done)
+            .catch(done.fail);
+        });
 
-      it('takes a json object and creates it', function(done) {
-        const obj = {
-          contact: {
-            phone: 'not invented yet'
-          },
-          fn: 'Abraham',
-          ln: 'Lincoln'
-        };
-
-        request(sapi.app)
-          .post(this.uri('/user'))
-          .type('application/json')
-          .send(JSON.stringify(obj))
-          .expect(200)
-          .then((res) => {
-            expect(res.body.count).toBe(1, 'One document should have been inserted into the db');
-            expect(ObjectID.isValid(res.body.id)).toBeTruthy('A valid ObjectID should have been returned');
-            return res.body.id;
-          })
-          .then((id) => {
-            return User
-              .getCollection()
-              .find({_id: new ObjectID(id)})
-              .limit(1)
-              .next()
-              .then((result) => {
-                expect(result.fname).toBe(obj.fn);
-                expect(result.lname).toBe(obj.ln);
-                expect(result.contact).toBeDefined('contact embedded document should have been created');
-                expect(result.contact.phone).toBe(obj.contact.phone);
-                expect(result.contact.mobile).toBe('111-111-1111', 'Default value should have been saved');
-              });
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-    });
-
-    describe('PUT ./model', function() {
-      beforeEach(function(done) {
-        User
-          .removeAll({})
-          .then(() => {
-            const user = new User();
-            this.user1 = user;
-            return user.create();
-          })
-          .then(() => {
-            const user = new User();
-            user.firstName = 'Abraham';
-            user.lastName = 'Lincoln';
-            this.user2 = user;
-            return user.create();
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('returns 400 if the body is not an object', function(done) {
-        // Note: this test assumes that bodyparser middleware is installed... if it is, then there's a default
-        // top level error handler setup on the `.listen` method of SakuraApi that will catch a bodyparser parsing
-        // error and it should inject the 'invalid_body' error property.
-
-        request(sapi.app)
-          .put(this.uri(`/user/${this.user1.id.toString()}`))
-          .type('application/json')
-          .send(`{test:}`)
-          .expect(400)
-          .then((res) => {
-            expect(res.body.error).toBe('invalid_body');
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('returns 404 if the document to be updated is not found', function(done) {
-        request(sapi.app)
-          .put(this.uri(`/user/aaa`))
-          .type('application/json')
-          .send(JSON.stringify({}))
-          .expect(404)
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('takes a json object and updates it', function(done) {
-        const obj = {
-          contact: {
-            mobile: '888',
-            phone: '777'
-          },
-          fn: 'Abe',
-          id: 1234321,
-          ln: 'Speed',
-          tall: true
-        };
-
-        request(sapi.app)
-          .put(this.uri(`/user/${this.user2.id.toString()}`))
-          .type('application/json')
-          .send(JSON.stringify(obj))
-          .expect(200)
-          .then((res) => {
-            expect(res.body.modified).toBe(1, 'One record should have been modified');
-          })
-          .then(() => {
-            return User
-              .getCollection()
-              .find({_id: this.user2.id})
-              .next();
-          })
-          .then((updated: any) => {
-            expect(updated.fname).toBe(obj.fn);
-            expect(updated.lname).toBe(obj.ln);
-            expect(updated.contact).toBeDefined('contact should exist after update');
-            expect(updated.contact.phone).toBe(obj.contact.phone);
-            expect(updated.contact.mobile).toBe(obj.contact.mobile);
-            expect(updated._id.toString()).toBe(this.user2.id.toString());
-            expect(updated.tall).toBeUndefined('arbitrary fields should not be included in the changeset');
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-    });
-
-    describe('DELETE ./mode/:id', function() {
-      beforeEach(function(done) {
-        User
-          .removeAll({})
-          .then(() => {
-            const user = new User();
-            this.user1 = user;
-            return user.create();
-          })
-          .then(() => {
-            const user = new User();
-            this.user2 = user;
-            return user.create();
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('removes the document from the db if a matching id is found', function(done) {
-        request(sapi.app)
-          .delete(this.uri(`/user/${this.user1.id.toString()}`))
-          .then((result: any) => {
-            expect(result.body.n).toBe(1, 'one record should have been removed');
-            return User
-              .getCollection()
-              .find({_id: this.user1.id})
-              .limit(1)
-              .next();
-          })
-          .then((result) => {
-            expect(result).toBeNull(`User ${this.user1.id} should have been deleted`);
-          })
-          .then(() => {
-            return User
-              .getCollection()
-              .find({_id: this.user2.id})
-              .limit(1)
-              .next();
-          })
-          .then((result: any) => {
-            expect(result._id.toString())
-              .toBe(this.user2.id.toString(), 'Other documents should not have been removed');
-          })
-          .then(done)
-          .catch(done.fail);
+        it('more thorough testing', function() {
+          pending('not implemented');
+        });
       });
     });
   });
