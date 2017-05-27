@@ -76,7 +76,7 @@ export interface IRoutableOptions {
   baseUrl?: string;
 
   /**
-   * An array of strings for which APIs to expose. Valid values include:
+   * An array of strings for which APIs to expose when `@`[[Routable]] is bound to a model. Valid values include:
    * - get
    * - getAll
    * - put
@@ -88,16 +88,20 @@ export interface IRoutableOptions {
   exposeApi?: HttpMethod[];
 
   /**
-   * An array of strings for which APIs to suppress. Valid values include:
+   * An array of strings for which APIs to suppress when `@`[[Routable]] is bound to a model. Valid values include:
    * - get
    * - getAll
    * - put
    * - post
    * - delete
    *
+   * Alternatively, you can supply a boolean 'true' to suppress all endpoints from being included. This is helpful
+   * when you want the built in handlers for `@`[[Route]]'s `before` and `after` functionality, but you have no need
+   * for the built in endpoints.
+   *
    * If `exposeApi` is set, `suppressApi` will throw an error.
    */
-  suppressApi?: HttpMethod[];
+  suppressApi?: HttpMethod[] | boolean;
 
   /**
    * A class that is decorated with `@`[[Model]] for which this `@Routable` class will automatically create CRUD
@@ -223,17 +227,7 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
         + ` @Routable`);
     }
 
-    if (options.exposeApi && !Array.isArray(options.exposeApi)) {
-      throw new Error(`If @Routable '${target.name}' defines an 'exposeApi' option, that option must be an array of`
-        + ` valid strings`);
-    }
-
-    if (options.suppressApi && !Array.isArray(options.suppressApi)) {
-      throw new Error(`If @Routable '${target.name}' defines a 'suppressApi' option, that option must be an array of`
-        + ` valid strings`);
-    }
-
-    if ((options.suppressApi || options.exposeApi && !options.model)) {
+    if ((options.suppressApi || options.exposeApi) && !options.model) {
       throw new Error(`If @Routable '${target.name}' defines a 'suppressApi' or 'exposeApi' option, then a model`
         + ` option with a valid @Model must also be provided`);
     }
@@ -366,7 +360,11 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
         return;
       }
 
-      if (options.suppressApi && options.suppressApi.indexOf(method) > -1) {
+      const isSuppressed = options.suppressApi && (typeof options.suppressApi === 'boolean')
+        ? options.suppressApi
+        : (options.suppressApi as HttpMethod[]).indexOf(method) > -1;
+
+      if (!isSuppressed) {
         routes.push(generateRoute(method, handler, beforeAll, afterAll));
         return;
       }
