@@ -34,7 +34,7 @@ export interface IRoutableLocals {
   reqBody: any;
   data: any;
   status: any;
-  send(status, data?, r?: Response): IRoutableLocals;
+  send(status, data?): IRoutableLocals;
 }
 
 /**
@@ -586,7 +586,7 @@ function getAllRouteHandler(req: Request, res: Response, next: NextFunction) {
         response.push(result.toJson());
       }
 
-      resLocals.send(200, response, res);
+      resLocals.send(200, response);
       next();
     })
     .catch((err) => {
@@ -640,7 +640,7 @@ function putRouteHandler(req: Request, res: Response, next: NextFunction) {
       .send(400, {
         body: req.body,
         error: 'invalid_body'
-      }, res);
+      });
     return next();
   }
 
@@ -649,7 +649,7 @@ function putRouteHandler(req: Request, res: Response, next: NextFunction) {
       .send(400, {
         body: req.body,
         error: 'invalid_body_missing_id'
-      }, res);
+      });
     return next();
   }
 
@@ -671,7 +671,7 @@ function putRouteHandler(req: Request, res: Response, next: NextFunction) {
           resLocals
             .send(200, {
               modified: (result.result || {} as any).nModified
-            }, res);
+            });
           next();
         });
     })
@@ -688,7 +688,7 @@ function postRouteHandler(req: Request, res: Response, next: NextFunction) {
       .send(400, {
         body: req.body,
         error: 'invalid_body'
-      }, res);
+      });
     return next();
   }
 
@@ -703,7 +703,7 @@ function postRouteHandler(req: Request, res: Response, next: NextFunction) {
         .send(200, {
           count: result.insertedCount,
           id: result.insertedId
-        }, res);
+        });
       next();
     })
     .catch((err) => {
@@ -724,14 +724,14 @@ function deleteRouteHandler(req: Request, res: Response, next: NextFunction) {
     .then((result) => {
       resLocals.send(200, {
         n: (result.result || {}).n || 0
-      }, res);
+      });
       next();
     })
     .catch((err) => {
       err.status = 500;
       resLocals.send(500, {
         error: 'internal_server_error'
-      }, res);
+      });
       // TODO add logging here
       console.log(err); // tslint:disable-line:no-console
       next();
