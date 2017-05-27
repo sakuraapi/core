@@ -272,17 +272,17 @@ export class SakuraApi {
           res.locals.data = {};
           res.locals.status = 200;
 
-          res.locals.send = (status, data, r: Response): IRoutableLocals => {
-            r.locals.status = status;
+          res.locals.send = (status, data): IRoutableLocals => {
+            res.locals.status = status;
 
-            if (!r.locals.data || Object.keys(r.locals.data || {}).length === 0) {
-              r.locals.data = data;
-              return r.locals;
+            if (!res.locals.data || Object.keys(res.locals.data || {}).length === 0) {
+              res.locals.data = data;
+              return res.locals;
             }
 
             // shallow merge the two objects and make sure to de-reference data
-            r.locals.data = Object.assign(r.locals.data, JSON.parse(JSON.stringify(data)));
-            return r.locals;
+            res.locals.data = Object.assign(res.locals.data, JSON.parse(JSON.stringify(data)));
+            return res.locals;
           };
 
           next();

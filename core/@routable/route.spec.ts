@@ -208,7 +208,7 @@ describe('core/Route', function() {
           const reqLocals = res.locals as IRoutableLocals;
           reqLocals.send(200, {
             order: '1b'
-          }, res);
+          });
           next();
         }]
       })
@@ -216,7 +216,7 @@ describe('core/Route', function() {
         const reqLocals = res.locals as IRoutableLocals;
         reqLocals.send(200, {
           order: reqLocals.data.order + '2b'
-        }, res);
+        });
         next();
       }
 
