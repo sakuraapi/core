@@ -1131,8 +1131,8 @@ describe('core/Routable', function() {
       describe('suppressApi exposes non suppressed endpoints', function() {
         @Routable(sapi, {
           baseUrl: 'RoutableSuppressApiTrueTest',
-          suppressApi: true,
-          model: User
+          model: User,
+          suppressApi: true
         })
         class RoutableSuppressApiTrueTest {
         }
