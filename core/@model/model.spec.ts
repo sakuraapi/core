@@ -1,5 +1,6 @@
 import {
   Db,
+  Json,
   Model,
   modelSymbols,
   SakuraApiModel
@@ -834,6 +835,85 @@ describe('@Model', function() {
           .then(done)
           .catch(done.fail);
 
+      });
+    });
+
+    describe('properly stores and restores Date types', function() {
+
+      @Model(sapi, {
+        dbConfig: {
+          collection: 'dateTest',
+          db: 'userDb'
+        }
+      })
+      class ModelDateStoreAndRestoreTest extends SakuraApiModel {
+        @Db() @Json()
+        date: Date = new Date();
+      }
+
+      beforeEach(function(done) {
+        sapi
+          .dbConnections
+          .connectAll()
+          .then(() => ModelDateStoreAndRestoreTest.removeAll({}))
+          .then(done)
+          .catch(done.fail);
+      });
+
+      afterEach(function(done) {
+        done();
+      });
+
+      describe('when going to and from the database', function() {
+        it('stores Date types as native MongoDB ISO dates', function(done) {
+          const model = new ModelDateStoreAndRestoreTest();
+
+          model
+            .create()
+            .then(() => {
+              ModelDateStoreAndRestoreTest
+                .getDb()
+                .collection('dateTest')
+                .findOne({_id: model.id})
+                .then((result) => {
+                  expect(result.date instanceof Date).toBeTruthy('Should have been a Date');
+                })
+                .then(done)
+                .catch(done.fail);
+            });
+        });
+
+        it('retrieves a Date when MongoDB has ISO date field ', function(done) {
+          const model = new ModelDateStoreAndRestoreTest();
+
+          model
+            .create()
+            .then(() => {
+              ModelDateStoreAndRestoreTest
+                .getById(model.id)
+                .then((result) => {
+                  expect(result instanceof ModelDateStoreAndRestoreTest).toBeTruthy();
+                  expect(result.date instanceof Date).toBeTruthy('Should have been a Date');
+                })
+                .then(done)
+                .catch(done.fail);
+            });
+        });
+      });
+
+      describe('when marshalling to and from json', function() {
+        it('.toJson formats date to to Date object', function() {
+          const model = new ModelDateStoreAndRestoreTest();
+          const json = model.toJson();
+          expect(json.date instanceof Date).toBeTruthy('Should have been a Date');
+        });
+
+        it('.fromJson formats', function() {
+          pending('not implemented, see https://github.com/sakuraapi/api/issues/72');
+          const model = ModelDateStoreAndRestoreTest.fromJson({
+            date: '2017-05-28T21:58:10.806Z'
+          });
+        });
       });
     });
   });

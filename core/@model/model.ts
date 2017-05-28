@@ -205,7 +205,7 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
 
     // TODO change these to symbols
     newConstructor.debug = {
-      normal: debug('sapi:Model')
+      normal: debug('sapi:model')
     };
     newConstructor.prototype.debug = newConstructor.debug;
 
@@ -1027,7 +1027,7 @@ function toDb(changeSet?: any): object {
 
     // iterate over each property
     for (const key of Object.getOwnPropertyNames(source)) {
-      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID)) {
+      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID) && !(source[key] instanceof Date)) {
 
         const newKey = keyMapper(key, source[key], dbOptionsByPropertyName);
         if (newKey !== undefined) {
@@ -1135,7 +1135,10 @@ function toJson(): any {
         continue;
       }
 
-      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID) && source[key] !== null) {
+      if (typeof source[key] === 'object'
+        && !(source[key] instanceof ObjectID)
+        && source[key] !== null
+        && !(source[key] instanceof Date)) {
 
         const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
 
