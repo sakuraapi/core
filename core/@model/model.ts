@@ -12,7 +12,8 @@ import {
 } from 'mongodb';
 import {
   addDefaultInstanceMethods,
-  addDefaultStaticMethods
+  addDefaultStaticMethods,
+  shouldRecurse
 } from '../helpers';
 import {SakuraApi} from '../sakura-api';
 import {
@@ -407,11 +408,7 @@ function fromDb(json: any, options?: IFromDbOptions): object {
     // iterate over each property of the source json object
     for (const key of Object.getOwnPropertyNames(source)) {
 
-      const isObjectID = source[key] instanceof ObjectID
-        || ((source[key] || {}).constructor || {}).name === 'ObjectID';
-
-      // if the property is an Object, but not an ObjectID
-      if (typeof source[key] === 'object' && !isObjectID) {
+      if (shouldRecurse(source[key])) {
 
         // convert the DB key name to the Model key name
         const mapper = map(key, source[key], dbOptionsByFieldName);
@@ -547,8 +544,7 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
     // iterate over each property of the source json object
     for (const key of Object.getOwnPropertyNames(source)) {
 
-      // if the property is an Object, but not an ObjectID
-      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID)) {
+      if (shouldRecurse(source[key])) {
 
         // convert the DB key name to the Model key name
         const mapper = keyMapper(key, source[key], propertyNamesByJsonFieldName, target);
@@ -668,7 +664,7 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
         continue;
       }
 
-      if (typeof model[key] === 'object' && !(model[key] instanceof ObjectID) && model[key] !== null) {
+      if (shouldRecurse(model[key])) {
 
         const value = mapJsonToDb(model[key], jsonSrc[jsonMeta.field || key], result[dbMeta.field || key]);
 
@@ -1027,7 +1023,8 @@ function toDb(changeSet?: any): object {
 
     // iterate over each property
     for (const key of Object.getOwnPropertyNames(source)) {
-      if (typeof source[key] === 'object' && !(source[key] instanceof ObjectID) && !(source[key] instanceof Date)) {
+
+      if (shouldRecurse(source[key])) {
 
         const newKey = keyMapper(key, source[key], dbOptionsByPropertyName);
         if (newKey !== undefined) {
@@ -1135,11 +1132,7 @@ function toJson(): any {
         continue;
       }
 
-      if (typeof source[key] === 'object'
-        && !(source[key] instanceof ObjectID)
-        && source[key] !== null
-        && !(source[key] instanceof Date)) {
-
+      if (shouldRecurse(source[key])) {
         const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
 
         if (newKey !== undefined) {
