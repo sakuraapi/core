@@ -408,12 +408,12 @@ export class SakuraApi {
 
     this.debug.route(`SakuraApi.route called for %o`, target);
 
-    if (!target[routableSymbols.sakuraApiClassRoutes]) {
+    if (!target[routableSymbols.routes]) {
       this.debug.route(`.route '%o' is not a routable class`, target);
       return;
     }
 
-    for (const route of target[routableSymbols.sakuraApiClassRoutes]) {
+    for (const route of target[routableSymbols.routes]) {
       this.debug.route(`\tadded '${JSON.stringify(route)}'`);
 
       const routeSignature = `${route.httpMethod}:${route.path}`;

@@ -142,12 +142,10 @@ export interface ISakuraApiClassRoute {
  * The symbols used by `Reflect` to store `@Routeable` metadata.
  */
 export const routableSymbols = {
-  after: Symbol('after'),
-  afterAll: Symbol('afterAll'),
-  before: Symbol('before'),
-  beforeAll: Symbol('beforeAll'),
+  changeSapi: Symbol('changeSapi'),
   debug: Symbol('debug'),
-  sakuraApiClassRoutes: Symbol('sakuraApiClassRoutes')
+  routes: Symbol('routes'),
+  sapi: Symbol('sapi')
 };
 
 /**
@@ -318,16 +316,23 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
         }
 
         // set the routes property for the @Routable class
-        c[routableSymbols.sakuraApiClassRoutes] = routes;
+        c[routableSymbols.routes] = routes;
+
+        if (!c.constructor[routableSymbols.sapi]) {
+          c.constructor[routableSymbols.sapi] = sapi;
+        }
 
         if (options.autoRoute) {
           debug('sapi:routable')('\tenqueuing routes: %o', routes);
-          sapi.enqueueRoutes(c);
+          c.constructor[routableSymbols.sapi].enqueueRoutes(c);
         }
 
         return c;
       }
     });
+
+    newConstructor.changeSapi = changeSapi.bind(newConstructor);
+    newConstructor[routableSymbols.changeSapi] = changeSapi.bind(newConstructor);
 
     newConstructor[routableSymbols.debug] = {
       normal: debug('sapi:routable')
@@ -472,6 +477,21 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
       return skipBindNames;
     }
   };
+}
+
+/**
+ * Allows you to override the instance of Sapi used by the `@`[[Routable]] class. This should only be
+ * used in your tests.
+ * @param newSapi the new instance of SakuraApi for testing purposes
+ * @param autoRoute automatically adds routes from this class (defaults to true)
+ */
+function changeSapi(newSapi: SakuraApi, autoRoute = true) {
+  debug('sapi:routable')('changing sapi reference called');
+  this[routableSymbols.sapi] = newSapi;
+  if (autoRoute) {
+    // tslint:disable-next-line: no-unused-expression
+    new this();
+  }
 }
 
 // tslint:disable:max-line-length

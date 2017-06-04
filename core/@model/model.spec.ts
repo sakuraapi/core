@@ -19,7 +19,7 @@ import {
 
 import {Sapi} from '../../spec/helpers/sakuraapi';
 
-describe('@Model', function() {
+describe('core/@Model', function() {
 
   const sapi = Sapi();
 
@@ -991,5 +991,22 @@ describe('@Model', function() {
         });
       });
     });
+  });
+
+  it('allows sapi to be injected after bootstrapping for testing', function() {
+    const sapi = Sapi();
+    const sapi2 = Sapi();
+    sapi2['injectedTestValue'] = true;
+
+    @Model(sapi)
+    class SapiInjectionApiModelTest extends SakuraApiModel {
+    }
+
+    expect(SapiInjectionApiModelTest[modelSymbols.sapi]).toBeTruthy();
+    expect(SapiInjectionApiModelTest[modelSymbols.sapi].injectedTestValue).toBeFalsy();
+    expect(sapi2['injectedTestValue']).toBeTruthy();
+
+    SapiInjectionApiModelTest.changeSapi(sapi2);
+    expect(SapiInjectionApiModelTest[modelSymbols.sapi].injectedTestValue).toBeTruthy();
   });
 });
