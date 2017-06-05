@@ -22,6 +22,7 @@ import {Sapi} from '../../spec/helpers/sakuraapi';
 
 import method = require('lodash/method');
 import before = require('lodash/before');
+import {SakuraApiRoutable} from './sakura-api-routable';
 
 describe('core/Route', function() {
   const sapi = Sapi();
@@ -82,20 +83,20 @@ describe('core/Route', function() {
 
   beforeEach(function() {
     this.t = new TestCoreRoute(777);
-    this.sakuraApiClassRoutes = this.t[routableSymbols.sakuraApiClassRoutes];
+    this.routes = this.t[routableSymbols.routes];
   });
 
   it('gracefully handles an empty @Route(...), defaults path to baseUri/', function() {
     // if these expectations pass, the blackList was properly defaulted to false since
     // the route wouldn't be in sakuraApiClassRoutes if blackList had been true.
-    expect(this.sakuraApiClassRoutes.length).toBe(4);
-    expect(this.sakuraApiClassRoutes[3].path).toBe('/testCoreRoute');
-    expect(this.sakuraApiClassRoutes[3].httpMethod).toBe('get');
-    expect(this.sakuraApiClassRoutes[3].method).toBe('emptyRouteDecorator');
+    expect(this.routes.length).toBe(4);
+    expect(this.routes[3].path).toBe('/testCoreRoute');
+    expect(this.routes[3].httpMethod).toBe('get');
+    expect(this.routes[3].method).toBe('emptyRouteDecorator');
   });
 
   it('maintains the original functionality of the method', function() {
-    const returnValue = this.sakuraApiClassRoutes[2].f();
+    const returnValue = this.routes[2].f();
     expect(returnValue).toBe('it works');
   });
 
@@ -124,7 +125,7 @@ describe('core/Route', function() {
     }
 
     const t3 = new Test3();
-    expect(t3[routableSymbols.sakuraApiClassRoutes].length).toBe(0);
+    expect(t3[routableSymbols.routes].length).toBe(0);
   });
 
   describe('handles route parameters', function() {

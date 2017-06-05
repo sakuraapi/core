@@ -3,28 +3,24 @@ import {
   Request,
   Response
 } from 'express';
-import {Sapi} from '../../spec/helpers/sakuraapi';
-import {
-  Routable,
-  routableSymbols,
-  Route,
-  SakuraApiRoutable
-} from './';
-
 import {ObjectID} from 'mongodb';
+import {Sapi} from '../../spec/helpers/sakuraapi';
 import {
   Db,
   Json,
   Model,
   SakuraApiModel
 } from '../@model';
+import {
+  Routable,
+  routableSymbols,
+  Route,
+  SakuraApiRoutable
+} from './';
 import {IRoutableLocals} from './routable';
-
-import method = require('lodash/method');
-import before = require('lodash/before');
 import request = require('supertest');
 
-describe('core/Routable', function() {
+describe('core/@Routable', function() {
   describe('general functionality', function() {
     const sapi = Sapi();
 
@@ -42,7 +38,7 @@ describe('core/Routable', function() {
         }
 
         const router = new CoreRoutableAddBaseUrlTest();
-        const routes = router[routableSymbols.sakuraApiClassRoutes];
+        const routes = router[routableSymbols.routes];
         expect(routes).toBeDefined('@Routable class should have had route metadata');
         expect(routes.length).toBe(1, 'There should have been one route defined');
         expect(routes[0].path).toBe('/coreRoutableAddBaseUrlTest', 'baseUrl was not properly set by @Routable');
@@ -64,7 +60,7 @@ describe('core/Routable', function() {
         }
 
         const router = new CoreRoutableIgnoreRoutableBlacklisted();
-        const routes = router[routableSymbols.sakuraApiClassRoutes];
+        const routes = router[routableSymbols.routes];
         expect(routes).toBeDefined('@Routable class should have had route metadata');
 
         let found = false;
@@ -92,7 +88,7 @@ describe('core/Routable', function() {
         }
 
         const router = new CoreRoutableNoBaseMethodWorks();
-        const routes = router[routableSymbols.sakuraApiClassRoutes];
+        const routes = router[routableSymbols.routes];
         expect(routes).toBeDefined('@Routable class should have had route metadata');
         expect(routes.length).toBe(2, 'There should have been one route defined');
         expect(routes[0].path).toBe('/', 'baseUrl was not properly set by @Routable');
@@ -138,7 +134,7 @@ describe('core/Routable', function() {
       }
 
       const router = new CoreRoutableTrailingSlashDropTest();
-      const routes = router[routableSymbols.sakuraApiClassRoutes];
+      const routes = router[routableSymbols.routes];
       expect(routes).toBeDefined('@Routable class should have had route metadata');
       expect(routes.length).toBe(1, 'There should have been one route defined');
       expect(routes[0].path)
@@ -160,7 +156,7 @@ describe('core/Routable', function() {
       }
 
       const router = new CoreRoutableTrailingSlashAddTest();
-      const routes = router[routableSymbols.sakuraApiClassRoutes];
+      const routes = router[routableSymbols.routes];
       expect(routes).toBeDefined('@Routable class should have had route metadata');
       expect(routes.length).toBe(1, 'There should have been one route defined');
       expect(routes[0].path)
@@ -189,7 +185,7 @@ describe('core/Routable', function() {
       }
 
       const router = new CoreRoutableRoutesWork();
-      const routes = router[routableSymbols.sakuraApiClassRoutes];
+      const routes = router[routableSymbols.routes];
       expect(routes).toBeDefined('@Routable class should have had route metadata');
       expect(routes.length).toBe(2, 'There should have been one route defined');
       expect(routes[0].path).toBe('/CoreRoutableRoutesWork/a');
@@ -257,7 +253,7 @@ describe('core/Routable', function() {
       const obj = new CoreRoutableContextOfRouteMethod();
 
       expect(obj.someMethodTest4()).toBe(obj.someProperty);
-      expect(obj[routableSymbols.sakuraApiClassRoutes][0].f()).toBe(obj.someProperty);
+      expect(obj[routableSymbols.routes][0].f()).toBe(obj.someProperty);
     });
 
     it('automatically instantiates its class and adds it to SakuraApi.route(...)', function(done) {
@@ -1625,5 +1621,22 @@ describe('core/Routable', function() {
           .catch(done.fail);
       });
     });
+  });
+
+  it('allows sapi to be injected after bootstrapping for testing', function() {
+    const sapi = Sapi();
+    const sapi2 = Sapi();
+    sapi2['injectedTestValue'] = true;
+
+    @Routable(sapi)
+    class SapiInjectionRoutableApiTest extends SakuraApiRoutable {
+    }
+
+    expect(SapiInjectionRoutableApiTest[routableSymbols.sapi]).toBeTruthy();
+    expect(SapiInjectionRoutableApiTest[routableSymbols.sapi].injectedTestValue).toBeFalsy();
+    expect(sapi2['injectedTestValue']).toBeTruthy();
+
+    SapiInjectionRoutableApiTest.changeSapi(sapi2);
+    expect(SapiInjectionRoutableApiTest[routableSymbols.sapi].injectedTestValue).toBeTruthy();
   });
 });

@@ -10,12 +10,11 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
-
+import {SakuraApi} from '../sakura-api';
 import {
   IDbGetParams,
   IFromDbOptions
 } from './';
-
 /***
  * Integrators should extend their [[Model]] classes with this abstract class to get typing for the `@`[[Model]] mixin
  * functions that are injected. If you need to have a custom super class that cannot extend this abstract class,
@@ -72,6 +71,8 @@ import {
  * members.
  */
 export abstract class SakuraApiModel {
+  public static changeSapi?: (newSapi: SakuraApi) => void;
+
   public static fromDb?: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
   // tslint:disable-next-line:variable-name
   public static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;

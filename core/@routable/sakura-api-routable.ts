@@ -3,6 +3,7 @@ import {
   Request,
   Response
 } from 'express';
+import {SakuraApi} from '../sakura-api';
 
 /***
  * Integrators should extend their [[Routable]] classes with this abstract class to get typing for the `@`[[Routable]]
@@ -32,6 +33,7 @@ import {
  * a major release version bump, which seems silly for this contingency.
  */
 export abstract class SakuraApiRoutable {
+  public static changeSapi?: (newSapi: SakuraApi, autoRoute?: boolean) => void;
   public static getRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
   public static getAllRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
   public static putRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;

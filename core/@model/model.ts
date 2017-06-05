@@ -94,6 +94,7 @@ export interface IModelOptions {
  * A collection of symbols used internally by [[Model]].
  */
 export const modelSymbols = {
+  changeSapi: Symbol('changeSapi'),
   constructor: Symbol('constructor'),
   dbCollection: Symbol('dbCollection'),
   dbName: Symbol('dbName'),
@@ -275,6 +276,9 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
 
     newConstructor[modelSymbols.sapi] = sapi;
 
+    newConstructor.changeSapi = changeSapi.bind(newConstructor);
+    newConstructor[modelSymbols.changeSapi] = changeSapi.bind(newConstructor);
+
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
     //
@@ -310,10 +314,14 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
     newConstructor.prototype.toJsonString = toJsonString;
     newConstructor.prototype[modelSymbols.toJsonString] = toJsonString;
 
-    newConstructor.prototype[modelSymbols.sapi] = sapi;
-
     return newConstructor;
   };
+}
+
+function changeSapi(newSapi: SakuraApi) {
+  this.debug.normal('change sapi reference called');
+
+  this[modelSymbols.sapi] = newSapi;
 }
 
 //////////
