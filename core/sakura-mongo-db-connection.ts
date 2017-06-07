@@ -166,4 +166,11 @@ export class SakuraMongoDbConnection {
 
     return result;
   }
+
+  /**
+   * Returns a reference to the map of connections currently had.
+   */
+  getConnections(): Map<string, { uri: string, options?: MongoClientOptions }> {
+    return this.connections;
+  }
 }
