@@ -92,17 +92,21 @@ export class SakuraApiConfig {
     try {
       baseConfig = JSON.parse(fs.readFileSync(path, {encoding: 'utf8'}));
       this.debug.normal(`loaded environment.json`);
+      this.debug.verbose(baseConfig);
     } catch (err) {
+      this.debug.normal(`${err}`);
       handleLoadError(err, path, false);
     }
 
-    // environment.ts
+    // environment.js
     let jsPath = changeFileExtension(path, 'js');
     this.debug.normal(`loading ${jsPath}`);
     try {
       baseJsConfig = require(`${process.cwd()}/${jsPath}`);
       this.debug.normal(`loaded ${jsPath}`);
+      this.debug.verbose(baseConfig);
     } catch (err) {
+      this.debug.normal(`${err}`);
       handleLoadError(err, path, true);
     }
 
@@ -122,18 +126,22 @@ export class SakuraApiConfig {
       try {
         envConfig = JSON.parse(fs.readFileSync(path, {encoding: 'utf8'}));
         this.debug.normal(`loaded ${path}`);
+        this.debug.verbose(envConfig);
       } catch (err) {
+        this.debug.normal(`${err}`);
         handleLoadError(err, path, true);
       }
 
       path = changeFileExtension(path, 'js');
 
-      // environment.{env}.ts
+      // environment.{env}.js
       this.debug.normal(`loading ${process.cwd()}/${path}`);
       try {
         envJsConfig = require(`${process.cwd()}/${path}`);
         this.debug.normal(`loaded ${process.cwd()}/${path}`);
+        this.debug.verbose(envJsConfig);
       } catch (err) {
+        this.debug.normal(`${err}`);
         handleLoadError(err, path, true);
       }
     }
@@ -186,9 +194,15 @@ export class SakuraApiConfig {
    * Same as the instance method, but static, and it won't try to use the last loaded config since that
    * requires an instance.
    */
-  static dataSources(config: { dbConnections: any[] }): SakuraMongoDbConnection {
-    if (!config || !config.dbConnections) {
-      return null;
+  static dataSources(config: { dbConnections?: any[] }): SakuraMongoDbConnection {
+    config = config || {};
+
+    if (!config.dbConnections) {
+      this.debug.normal(`.dataSources, no config (config: ${!!config},`
+        + `config.dbConnections: ${!!(config || <any>{}).dbConnections})`);
+
+      config.dbConnections = [];
+      //return null;
     }
 
     if (!Array.isArray(config.dbConnections)) {
@@ -197,6 +211,7 @@ export class SakuraApiConfig {
 
     let dbConns = new SakuraMongoDbConnection();
 
+    this.debug.normal(`Adding ${config.dbConnections.length} dbConnections.`);
     for (let conn of config.dbConnections) {
       dbConns.addConnection(conn.name, conn.url, conn.mongoClientOptions);
     }

@@ -121,8 +121,8 @@ describe('sakura-api-config', function() {
     });
 
     it('returns null if no valid config is found', function() {
-      expect(this.config.dataSources())
-        .toBe(null);
+      expect(this.config.dataSources()).not.toBeFalsy();
+      expect(this.config.dataSources().getConnections().entries.length).toBe(0);
     });
 
     it('returns a SakuraMongoDbConnection object populated with the dbs in the config, but not yet connected', function() {
