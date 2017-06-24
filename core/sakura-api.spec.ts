@@ -1,20 +1,23 @@
+import {MongoClient} from 'mongodb';
+import * as request from 'supertest';
+import {SakuraApiConfig} from '../boot/sakura-api-config';
 import {
-  SakuraApi,
-  ServerConfig
-} from './sakura-api';
+  testMongoDbUrl,
+  testSapi,
+  testUrl
+} from '../spec/helpers/sakuraapi';
 import {
   Routable,
   Route
 } from './@routable/';
-import {MongoClient} from 'mongodb';
-import {SakuraApiConfig} from '../boot/sakura-api-config';
-import {Sapi} from '../spec/helpers/sakuraapi';
-
-import * as request from 'supertest';
+import {ServerConfig} from './sakura-api';
 import Spy = jasmine.Spy;
 
-describe('core/SakuraApi', function() {
-  const sapi = Sapi();
+describe('core/SakuraApi', () => {
+  const sapi = testSapi({
+    models: [],
+    routables: []
+  });
 
   @Routable(sapi)
   class RoutableTest {
@@ -35,7 +38,7 @@ describe('core/SakuraApi', function() {
     }
   }
 
-  beforeEach(function() {
+  beforeEach(() => {
     this.config = {bootMessage: ''} as ServerConfig;
     this.config.port = 9000;
     this.config.address = '127.0.0.1';
@@ -44,30 +47,34 @@ describe('core/SakuraApi', function() {
     spyOn(sapi.server, 'listen').and.callThrough();
   });
 
-  afterEach(function(done) {
+  afterEach((done) => {
     sapi
       .close()
       .then(done)
       .catch(done.fail);
   });
 
-  it('port property defaults to a valid integer > 1000', function() {
+  it('port property defaults to a valid integer > 1000', () => {
     expect(sapi.port).toBeDefined();
     expect(typeof  sapi.port).toBe('number');
     expect(sapi.port).toBeGreaterThanOrEqual(1000);
   });
 
-  it('app property exposes the Express app object used for construction', function() {
+  it('app property exposes the Express app object used for construction', () => {
     expect(sapi.app).toBeDefined();
     expect(typeof sapi.app).toBe('function');
   });
 
-  it('config is loaded properly', function() {
+  it('config is loaded properly', () => {
     expect(sapi.config.SAKURA_API_CONFIG_TEST).toBe('found');
   });
 
-  describe('middleware', function() {
-    let sak = new SakuraApi();
+  describe('middleware', () => {
+    const sak = testSapi({
+      models: [],
+      routables: []
+    });
+
     sak.baseUri = '/testApi';
 
     @Routable(sak, {
@@ -85,14 +92,14 @@ describe('core/SakuraApi', function() {
       }
     }
 
-    afterEach(function(done) {
+    afterEach((done) => {
       sak
         .close()
         .then(done)
         .catch(done.fail);
     });
 
-    it('injects middleware before @Routable classes', function(done) {
+    it('injects middleware before @Routable classes', (done) => {
       sak
         .addMiddleware((req, res, next) => {
           (req as any).bootStrapTest = 778;
@@ -103,7 +110,7 @@ describe('core/SakuraApi', function() {
         .listen({bootMessage: ''})
         .then(() => {
           request(sak.app)
-            .get(this.uri('/middleware/test'))
+            .get(testUrl('/middleware/test'))
             .expect('Content-Type', /json/)
             .expect('Content-Length', '14')
             .expect('{"result":778}')
@@ -120,8 +127,8 @@ describe('core/SakuraApi', function() {
 
   });
 
-  describe('listen(...)', function() {
-    it('bootstraps Express with defaulting settings when no parameters are provided', function(done) {
+  describe('listen(...)', () => {
+    it('bootstraps Express with defaulting settings when no parameters are provided', (done) => {
       sapi
         .listen({bootMessage: ''})
         .then(() => {
@@ -138,7 +145,7 @@ describe('core/SakuraApi', function() {
         .catch(done.fail);
     });
 
-    it('sets the port, when provided', function(done) {
+    it('sets the port, when provided', (done) => {
       this.config.port = 7777;
 
       sapi
@@ -157,7 +164,7 @@ describe('core/SakuraApi', function() {
         .catch(done.fail);
     });
 
-    it('sets the address, when provided', function(done) {
+    it('sets the address, when provided', (done) => {
       this.config.address = 'localhost';
 
       sapi
@@ -176,14 +183,14 @@ describe('core/SakuraApi', function() {
         .catch(done.fail);
     });
 
-    it('responds to a route setup in middleware', function(done) {
+    it('responds to a route setup in middleware', (done) => {
       sapi
         .listen(this.config)
         .then(() => {
           // setup middleware
           sapi
             .app
-            .get('/middleWareTest', function(req, res) {
+            .get('/middleWareTest', (req, res) => {
               res
                 .status(200)
                 .json({isTest: true});
@@ -207,14 +214,14 @@ describe('core/SakuraApi', function() {
         .catch(done.fail);
     });
 
-    it('connects to databases', function(done) {
+    it('connects to databases', (done) => {
       spyOn(MongoClient, 'connect').and.callThrough();
 
       sapi['_dbConnections'] = SakuraApiConfig.dataSources({
         dbConnections: [
           {
             name: 'testDb',
-            url: `${this.mongoDbBaseUri(sapi)}/testDb`
+            url: `${testMongoDbUrl(sapi)}/testDb`
           }
         ]
       });
@@ -224,7 +231,7 @@ describe('core/SakuraApi', function() {
         .then(() => {
           sapi
             .app
-            .get('/middleWareTest', function(req, res) {
+            .get('/middleWareTest', (req, res) => {
               res
                 .status(200)
                 .json({isTest: true});
@@ -261,8 +268,8 @@ describe('core/SakuraApi', function() {
     });
   });
 
-  describe('close(...)', function() {
-    it('closes the port when told to', function(done) {
+  describe('close(...)', () => {
+    it('closes the port when told to', (done) => {
       sapi
         .listen({bootMessage: ''})
         .then(() => {
@@ -279,16 +286,16 @@ describe('core/SakuraApi', function() {
     });
   });
 
-  describe('route(...)', function() {
+  describe('route(...)', () => {
 
-    it('takes a @Routable class and adds the proper routes to express', function(done) {
+    it('takes a @Routable class and adds the proper routes to express', (done) => {
       // note: the @Routable decorator logic called the route(...) method and passed its Class instance
       // that it instantiated, which caused .route(...) to be called (magic)
       sapi
         .listen(this.config)
         .then(() => {
           return request(sapi.app)
-            .get(this.uri('/testRouterGet'))
+            .get(testUrl('/testRouterGet'))
             .expect('Content-Type', /json/)
             .expect('Content-Length', '40')
             .expect('{"testRouterGet":"testRouterGet worked"}')
@@ -299,8 +306,11 @@ describe('core/SakuraApi', function() {
         .catch(done.fail);
     });
 
-    it('injects res.locals and sends a response', function(done) {
-      let sapi = Sapi();
+    it('injects res.locals and sends a response', (done) => {
+      const sapi = testSapi({
+        models: [],
+        routables: []
+      });
 
       @Routable(sapi)
       class InjectsResBodyDataTest {
@@ -318,7 +328,7 @@ describe('core/SakuraApi', function() {
         .listen(this.config)
         .then(() => {
           return request(sapi.app)
-            .get(this.uri('/injectsResBodyDataTest'))
+            .get(testUrl('/injectsResBodyDataTest'))
             .expect('{"test":"injected"}')
             .expect(277);
         })
@@ -328,4 +338,3 @@ describe('core/SakuraApi', function() {
     });
   });
 });
-

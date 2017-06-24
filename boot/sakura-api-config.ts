@@ -1,6 +1,6 @@
-import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
-import * as _ from 'lodash';
 import * as fs from 'fs';
+import * as _ from 'lodash';
+import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
 
 import debug = require('debug');
 
@@ -56,8 +56,8 @@ export class SakuraApiConfig {
   }
 
   /**
-   * loads the config file specified by path. If no path is provided, load the path/filename defined in environmental variable SAKURA_API_CONFIG,
-   *  otherwise load `config/environment.json` from the root of the project.
+   * loads the config file specified by path. If no path is provided, load the path/filename defined in environmental
+   * variable SAKURA_API_CONFIG, otherwise load `config/environment.json` from the root of the project.
    *
    *  SakuraApi looks for a config/ folder in the root of your api project.
    * It cascades the values found in the following order (the last taking precedence over the former):
@@ -68,7 +68,8 @@ export class SakuraApiConfig {
    * * environment.{env}.ts
    * * system environmental variables
    *
-   * Where `{env}` is replaced by what's set in the environmental variable `NODE_ENV`. For example, if your set `NODE_ENV=dev` when you start your server, the system will load:
+   * Where `{env}` is replaced by what's set in the environmental variable `NODE_ENV`. For example, if your set
+   * `NODE_ENV=dev` when you start your server, the system will load:
    *
    * * environment.json
    * * environment.ts
@@ -80,9 +81,10 @@ export class SakuraApiConfig {
    * @returns {{}}
    */
   load(path?: string): any {
+
     path = path || process.env.SAKURA_API_CONFIG || 'config/environment.json';
     this.debug.normal(`.load path: '${path}'`);
-
+    
     let config = {};
     let baseConfig = {};
     let baseJsConfig = {};

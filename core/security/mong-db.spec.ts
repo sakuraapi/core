@@ -1,17 +1,17 @@
 import {SanitizeMongoDB} from './';
 
-describe('core/security/mongo-db', function() {
+describe('core/security/mongo-db', () => {
 
-  describe('sanitizeObject', function() {
+  describe('sanitizeObject', () => {
 
-    it('returns null and undefined untouched', function() {
+    it('returns null and undefined untouched', () => {
       const filter = (key) => false;
 
       expect(SanitizeMongoDB.sanitizeObject(null, filter)).toBe(null);
       expect(SanitizeMongoDB.sanitizeObject(undefined, filter)).toBe(undefined);
     });
 
-    it('returns numbers and strings untouched', function() {
+    it('returns numbers and strings untouched', () => {
       const stringInput = '"hello"';
       const numberInput = 777;
       const filter = (key) => false;
@@ -20,7 +20,7 @@ describe('core/security/mongo-db', function() {
       expect(SanitizeMongoDB.sanitizeObject(numberInput, filter)).toBe(numberInput);
     });
 
-    it('throws when given invalid JSON', function() {
+    it('throws when given invalid JSON', () => {
       const invalidJson = `{firstName:'test'}`;
       const filter = (key) => false;
 
@@ -30,9 +30,9 @@ describe('core/security/mongo-db', function() {
     });
   });
 
-  describe('removeAll$Keys', function() {
+  describe('removeAll$Keys', () => {
 
-    it('removes top level object keys starting with $', function() {
+    it('removes top level object keys starting with $', () => {
       const obj = {
         firstName: 'Geroge',
         lastName: 'Washington',
@@ -52,7 +52,7 @@ describe('core/security/mongo-db', function() {
       expect(result.lastName).toBe(obj.lastName);
     });
 
-    it('throws when given invalid JSON', function() {
+    it('throws when given invalid JSON', () => {
       const invalidJson = `{firstName:'test'}`;
 
       expect(() => {
@@ -60,7 +60,7 @@ describe('core/security/mongo-db', function() {
       }).toThrow(new SyntaxError('Unexpected token f in JSON at position 1'));
     });
 
-    describe('deep inspects', function() {
+    describe('deep inspects', () => {
       const obj = {
         firstName: 'Geroge',
         inner: {
@@ -77,7 +77,7 @@ describe('core/security/mongo-db', function() {
         lastName: 'Washington'
       };
 
-      it('deep inspects object for $ fields and removes them', function() {
+      it('deep inspects object for $ fields and removes them', () => {
 
         const result = SanitizeMongoDB.removeAll$Keys(obj);
 
@@ -90,7 +90,7 @@ describe('core/security/mongo-db', function() {
         expect(result.inner.innerInner.$in).toBeUndefined('$in should have been undefined');
       });
 
-      it('deep inspects JSON string for $ fields and removes them', function() {
+      it('deep inspects JSON string for $ fields and removes them', () => {
         const jsonString = JSON.stringify(obj);
         const result = SanitizeMongoDB.removeAll$Keys(jsonString);
 
@@ -105,9 +105,9 @@ describe('core/security/mongo-db', function() {
     });
   });
 
-  describe('remove$where', function() {
+  describe('remove$where', () => {
 
-    it('removes top level object keys starting with $', function() {
+    it('removes top level object keys starting with $', () => {
       const obj = {
         $in: [],
         $where() {
@@ -125,7 +125,7 @@ describe('core/security/mongo-db', function() {
       expect(result.lastName).toBe(obj.lastName);
     });
 
-    it('throws when given invalid JSON', function() {
+    it('throws when given invalid JSON', () => {
       const invalidJson = `{firstName:'test'}`;
 
       expect(() => {
@@ -133,7 +133,7 @@ describe('core/security/mongo-db', function() {
       }).toThrow(new SyntaxError('Unexpected token f in JSON at position 1'));
     });
 
-    describe('deep inspects', function() {
+    describe('deep inspects', () => {
       const obj = {
         $in: [],
         $where() {
@@ -153,7 +153,7 @@ describe('core/security/mongo-db', function() {
         lastName: 'Washington'
       };
 
-      it('deep inspects object for $where fields and removes them', function() {
+      it('deep inspects object for $where fields and removes them', () => {
         const result = SanitizeMongoDB.remove$where(obj);
 
         expect(result.$where).toBeUndefined('$where should have been removed');
@@ -167,7 +167,7 @@ describe('core/security/mongo-db', function() {
         expect(result.inner.innerInner.$in).toBeDefined('$in should not have been undefined');
       });
 
-      it('deep inspects JSON string for $where fields and removes them', function() {
+      it('deep inspects JSON string for $where fields and removes them', () => {
         const jsonString = JSON.stringify(obj);
         const result = SanitizeMongoDB.remove$where(jsonString);
 
@@ -184,8 +184,8 @@ describe('core/security/mongo-db', function() {
     });
   });
 
-  describe('whiteList$key', function() {
-    it('only includes $ keys that are white listed', function() {
+  describe('whiteList$key', () => {
+    it('only includes $ keys that are white listed', () => {
       const input = {
         $notOk: true,
         $ok: true,
@@ -218,7 +218,7 @@ describe('core/security/mongo-db', function() {
     });
   });
 
-  describe('flattenObj', function() {
+  describe('flattenObj', () => {
     const obj = {
       contact: {
         phones: {
@@ -229,14 +229,14 @@ describe('core/security/mongo-db', function() {
       name: 'George Washington'
     };
 
-    it('returns the input if it\'s not an object', function() {
+    it('returns the input if it\'s not an object', () => {
       expect(SanitizeMongoDB.flattenObj('test')).toBe('test');
       expect(SanitizeMongoDB.flattenObj(1)).toBe(1);
       expect(SanitizeMongoDB.flattenObj(null)).toBe(null);
       expect(SanitizeMongoDB.flattenObj(undefined)).toBe(undefined);
     });
 
-    it('handles an object with multiple layers of embedded objects', function() {
+    it('handles an object with multiple layers of embedded objects', () => {
       const result = SanitizeMongoDB.flattenObj(obj);
 
       expect(result).toBeDefined('Some object should have been returned');
