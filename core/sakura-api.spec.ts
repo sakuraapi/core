@@ -14,12 +14,8 @@ import {ServerConfig} from './sakura-api';
 import Spy = jasmine.Spy;
 
 describe('core/SakuraApi', () => {
-  const sapi = testSapi({
-    models: [],
-    routables: []
-  });
 
-  @Routable(sapi)
+  @Routable()
   class RoutableTest {
     response = 'testRouterGet worked';
 
@@ -37,6 +33,11 @@ describe('core/SakuraApi', () => {
          });
     }
   }
+
+  const sapi = testSapi({
+    models: [],
+    routables: [RoutableTest]
+  });
 
   beforeEach(() => {
     this.config = {bootMessage: ''} as ServerConfig;
@@ -70,14 +71,8 @@ describe('core/SakuraApi', () => {
   });
 
   describe('middleware', () => {
-    const sak = testSapi({
-      models: [],
-      routables: []
-    });
 
-    sak.baseUri = '/testApi';
-
-    @Routable(sak, {
+    @Routable({
       baseUrl: 'middleware'
     })
     class MiddleWareTest {
@@ -92,39 +87,33 @@ describe('core/SakuraApi', () => {
       }
     }
 
-    afterEach((done) => {
-      sak
-        .close()
-        .then(done)
-        .catch(done.fail);
+    const sapi = testSapi({
+      models: [],
+      routables: [MiddleWareTest]
     });
+    sapi.baseUri = '/testApi';
 
     it('injects middleware before @Routable classes', (done) => {
-      sak
+      sapi
         .addMiddleware((req, res, next) => {
           (req as any).bootStrapTest = 778;
           next();
         });
 
-      sak
+      sapi
         .listen({bootMessage: ''})
         .then(() => {
-          request(sak.app)
+          return request(sapi.app)
             .get(testUrl('/middleware/test'))
             .expect('Content-Type', /json/)
             .expect('Content-Length', '14')
             .expect('{"result":778}')
             .expect(200)
-            .then(() => {
-              sak
-                .close()
-                .then(done)
-                .catch(done.fail);
-            });
         })
+        .then(() => sapi.close())
+        .then(done)
         .catch(done.fail);
     });
-
   });
 
   describe('listen(...)', () => {
@@ -307,12 +296,8 @@ describe('core/SakuraApi', () => {
     });
 
     it('injects res.locals and sends a response', (done) => {
-      const sapi = testSapi({
-        models: [],
-        routables: []
-      });
 
-      @Routable(sapi)
+      @Routable()
       class InjectsResBodyDataTest {
         @Route({
           path: 'injectsResBodyDataTest',
@@ -323,6 +308,11 @@ describe('core/SakuraApi', () => {
           next();
         }
       }
+
+      const sapi = testSapi({
+        models: [],
+        routables: [InjectsResBodyDataTest]
+      });
 
       sapi
         .listen(this.config)

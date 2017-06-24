@@ -13,7 +13,6 @@ import {
   SakuraApiModel
 } from '../@model';
 import {addDefaultStaticMethods} from '../helpers';
-import {SakuraApi} from '../sakura-api';
 import {SanitizeMongoDB as Sanitize} from '../security/mongo-db';
 import debug = require('debug');
 
@@ -41,12 +40,6 @@ export interface IRoutableLocals {
  * Interface defining the valid properties for the `@Routable({})` decorator ([[Routable]]).
  */
 export interface IRoutableOptions {
-  /**
-   * Tells SakuraApi whether or not to automatically bind this `@Routable`'s routes to the express router. If you turn
-   * this off, you will have to manually pass this class definition into [[SakuraApi.route]]. If this is not set
-   * SakuraApi assumes this is true.
-   */
-  autoRoute?: boolean;
 
   /**
    * Array of of method names (strings) defining which routes are ignored during route setup. Defaults to `[]`.
@@ -174,7 +167,7 @@ export const builtInHandlers = new Map<string, [string, boolean, boolean]>([
  * <pre>
  * import sapi from '../index'; // your app's reference to its instance of SakuraApi
  *
- * <span>@</span>Routable(sapi, {
+ * <span>@</span>Routable({
  *    baseUrl: 'users'
  * })
  * class User {
@@ -195,13 +188,11 @@ export const builtInHandlers = new Map<string, [string, boolean, boolean]>([
  * Keep in mind that `@Routable` will instantiate the class and pass it to [[SakuraApi.route]],
  * unless you set the [[RoutableClassOptions.autoRoute]] to false.
  */
-export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
+export function Routable(options?: IRoutableOptions): any {
 
   options = options || {};
   options.blackList = options.blackList || [];
   options.baseUrl = options.baseUrl || '';
-
-  options.autoRoute = (typeof options.autoRoute === 'boolean') ? options.autoRoute : true;
 
   // -------------------------------------------------------------------------------------------------------------------
   // Developer notes:
@@ -216,10 +207,6 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
   return (target: any) => {
     debug('sapi:routable')(`@Routable decorating '${target.name}' with options: ${JSON.stringify(options)}`);
     debug('sapi:routable')(`\t@Routable options.model set to ${(options.model || {} as any).name}`);
-
-    if (!sapi) {
-      throw new Error(`A valid instance of SakuraApi must be provided to the @Routable class '${target.name}'`);
-    }
 
     if (options.model && !options.model[modelSymbols.isSakuraApiModel]) {
       throw new Error(`${target.name} is not decorated by @Model and therefore cannot be used as a model for`
@@ -319,22 +306,10 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
         // set the routes property for the @Routable class
         c[routableSymbols.routes] = routes;
 
-        if (!c.constructor[routableSymbols.sapi]) {
-          c.constructor[routableSymbols.sapi] = sapi;
-        }
-
-        if (options.autoRoute) {
-          debug('sapi:routable')('\tenqueuing routes: %o', routes);
-          c.constructor[routableSymbols.sapi].enqueueRoutes(c);
-        }
-
         return c;
       }
     });
-
-    newConstructor.changeSapi = changeSapi.bind(newConstructor);
-    newConstructor[routableSymbols.changeSapi] = changeSapi.bind(newConstructor);
-
+    
     newConstructor[routableSymbols.debug] = {
       normal: debug('sapi:routable')
     };
@@ -349,18 +324,6 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
       value: true,
       writable: false
     });
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Developer note:
-    // If autoRoute (which is the default), then an instance of the @Routable class is instantiated to cause the routes
-    // to be setup. This makes it so that the integrator doesn't have to manually import and instantiate these @Routable
-    // classes on his or her own.
-    // =================================================================================================================
-    if (options.autoRoute) {
-      newConstructor[routableSymbols.debug].normal(`\t${target.name} autoRoute`);
-      // tslint:disable-next-line: no-unused-expression
-      new newConstructor();
-    }
 
     return newConstructor;
 
@@ -488,21 +451,6 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
       return skipBindNames;
     }
   };
-}
-
-/**
- * Allows you to override the instance of Sapi used by the `@`[[Routable]] class. This should only be
- * used in your tests.
- * @param newSapi the new instance of SakuraApi for testing purposes
- * @param autoRoute automatically adds routes from this class (defaults to true)
- */
-function changeSapi(newSapi: SakuraApi, autoRoute = true) {
-  debug('sapi:routable')('changing sapi reference called');
-  this[routableSymbols.sapi] = newSapi;
-  if (autoRoute) {
-    // tslint:disable-next-line: no-unused-expression
-    new this();
-  }
 }
 
 // tslint:disable:max-line-length

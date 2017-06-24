@@ -26,13 +26,7 @@ import method = require('lodash/method');
 import before = require('lodash/before');
 
 describe('core/Route', () => {
-  const sapi = testSapi({
-    models: [],
-    routables: []
-  });
-
-  @Routable(sapi, {
-    autoRoute: false,
+  @Routable({
     baseUrl: 'testCoreRoute',
     blackList: ['someBlacklistedMethod']
   })
@@ -107,7 +101,7 @@ describe('core/Route', () => {
   it('throws an exception when an invalid HTTP method is specificed', () => {
     let err;
     try {
-      @Routable(sapi)
+      @Routable()
       class X {
         @Route({method: 'imnotarealhttpmethod'})
         badHttpMethod() {
@@ -120,7 +114,7 @@ describe('core/Route', () => {
   });
 
   it('excludes a method level blacklisted @Route', () => {
-    @Routable(sapi)
+    @Routable()
     class Test3 {
       @Route({blackList: true})
       blackListedMethod() {
@@ -134,7 +128,7 @@ describe('core/Route', () => {
 
   describe('handles route parameters', () => {
 
-    @Routable(sapi, {
+    @Routable({
       baseUrl: 'handlesRouteParamtersTest'
     })
     class HandlesRouteParamtersTest {
@@ -159,52 +153,51 @@ describe('core/Route', () => {
       }
     }
 
-    it('at the end of the path', (done) => {
+    const sapi = testSapi({
+      models: [],
+      routables: [HandlesRouteParamtersTest]
+    });
+
+    beforeEach((done) => {
       sapi
         .listen({bootMessage: ''})
-        .then(() => {
-          request(sapi.app)
-            .get(testUrl('/handlesRouteParamtersTest/route/parameter/777'))
-            .expect('Content-Type', /json/)
-            .expect('Content-Length', '16')
-            .expect('{"result":"777"}')
-            .expect(200)
-            .then(() => {
-              sapi
-                .close()
-                .then(done)
-                .catch(done.fail);
-            })
-            .catch(done.fail);
-        })
+        .then(done)
+        .catch(done.fail);
+    });
+
+    afterEach((done) => {
+      sapi
+        .close()
+        .then(done)
         .catch(done.fail);
     });
 
     it('at the end of the path', (done) => {
-      sapi
-        .listen({bootMessage: ''})
-        .then(() => {
-          request(sapi.app)
-            .get(testUrl('/handlesRouteParamtersTest/route2/888/test'))
-            .expect('Content-Type', /json/)
-            .expect('Content-Length', '16')
-            .expect('{"result":"888"}')
-            .expect(200)
-            .then(() => {
-              sapi
-                .close()
-                .then(done)
-                .catch(done.fail);
-            })
-            .catch(done.fail);
-        })
+      request(sapi.app)
+        .get(testUrl('/handlesRouteParamtersTest/route/parameter/777'))
+        .expect('Content-Type', /json/)
+        .expect('Content-Length', '16')
+        .expect('{"result":"777"}')
+        .expect(200)
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('at the end of the path', (done) => {
+      request(sapi.app)
+        .get(testUrl('/handlesRouteParamtersTest/route2/888/test'))
+        .expect('Content-Type', /json/)
+        .expect('Content-Length', '16')
+        .expect('{"result":"888"}')
+        .expect(200)
+        .then(done)
         .catch(done.fail);
     });
   });
 
   describe('before', () => {
 
-    @Routable(sapi, {
+    @Routable({
       baseUrl: 'BeforeHandlerTests'
     })
     class BeforeHandlerTests {
@@ -232,6 +225,11 @@ describe('core/Route', () => {
         next();
       }
     }
+
+    const sapi = testSapi({
+      models: [],
+      routables: [BeforeHandlerTests]
+    });
 
     beforeEach((done) => {
       sapi
@@ -285,12 +283,7 @@ describe('core/Route', () => {
       lastName = 'Washinton';
     }
 
-    const sapi = testSapi({
-      models: [AfterHandlerTestModel],
-      routables: []
-    });
-
-    @Routable(sapi, {
+    @Routable({
       baseUrl: 'AfterHandlerTests'
     })
     class AfterHandlerTests {
@@ -329,6 +322,11 @@ describe('core/Route', () => {
         next();
       }
     }
+
+    const sapi = testSapi({
+      models: [AfterHandlerTestModel],
+      routables: [AfterHandlerTests]
+    });
 
     beforeEach((done) => {
       sapi

@@ -290,6 +290,12 @@ export class SakuraApi {
         routableRef = routable;
       }
 
+      // set the routable's instance of SakuraApi to this
+      routableRef[routableSymbols.sapi] = this;
+
+      // get the routes queued up for .listen
+      this.enqueueRoutes(new (routableRef as any)());
+
       this.routables.set(routableName, routableRef);
     }
   }

@@ -33,8 +33,7 @@ describe('core/@Routable', () => {
     describe('IRoutableOptions', () => {
 
       it('add a baseUrl to the path of an @Route, if provided', () => {
-        @Routable(sapi, {
-          autoRoute: false,
+        @Routable({
           baseUrl: 'coreRoutableAddBaseUrlTest'
         })
         class CoreRoutableAddBaseUrlTest {
@@ -51,8 +50,7 @@ describe('core/@Routable', () => {
       });
 
       it('ignore @Route methods that are listed in the @Routable(blacklist)', () => {
-        @Routable(sapi, {
-          autoRoute: false,
+        @Routable({
           blackList: ['bRouteMethod']
         })
         class CoreRoutableIgnoreRoutableBlacklisted {
@@ -78,7 +76,7 @@ describe('core/@Routable', () => {
       });
 
       it('handle the lack of a baseUrl gracefully', () => {
-        @Routable(sapi, {autoRoute: false})
+        @Routable()
         class CoreRoutableNoBaseMethodWorks {
           @Route({
             path: '/'
@@ -102,7 +100,7 @@ describe('core/@Routable', () => {
       });
 
       it('suppress autoRouting if options.autoRoute = false', (done) => {
-        @Routable(sapi, {autoRoute: false})
+        @Routable()
         class CoreRoutableSuppressRoutesWithAutoRouteFalse {
           @Route({
             path: 'autoRoutingFalseTest'
@@ -126,8 +124,7 @@ describe('core/@Routable', () => {
     });
 
     it('drops the traling / on a path', () => {
-      @Routable(sapi, {
-        autoRoute: false,
+      @Routable({
         baseUrl: 'CoreRoutableTrailingSlashDropTest'
 
       })
@@ -148,8 +145,7 @@ describe('core/@Routable', () => {
     });
 
     it('adds the leading / on a path if its missing', () => {
-      @Routable(sapi, {
-        autoRoute: false,
+      @Routable({
         baseUrl: 'CoreRoutableTrailingSlashAddTest'
 
       })
@@ -170,8 +166,7 @@ describe('core/@Routable', () => {
     });
 
     it('reads metadata from @Route and properly injects sakuraApiClassRoutes[] into the @Routable class', () => {
-      @Routable(sapi, {
-        autoRoute: false,
+      @Routable({
         baseUrl: 'CoreRoutableRoutesWork'
       })
       class CoreRoutableRoutesWork {
@@ -208,7 +203,7 @@ describe('core/@Routable', () => {
     });
 
     it('properly passes the constructor parameters', () => {
-      @Routable(sapi, {autoRoute: false})
+      @Routable()
       class CoreRoutableProxiedConstructorWorks {
 
         constructor(public v: number) {
@@ -227,7 +222,7 @@ describe('core/@Routable', () => {
     });
 
     it('maintains the prototype chain', () => {
-      @Routable(sapi, {autoRoute: false})
+      @Routable()
       class CoreRoutableInstanceOfWorks {
 
         constructor(public v: number) {
@@ -246,7 +241,7 @@ describe('core/@Routable', () => {
     });
 
     it('binds the instantiated class as the context of this for each route method', () => {
-      @Routable(sapi, {autoRoute: false})
+      @Routable()
       class CoreRoutableContextOfRouteMethod {
         someProperty = 'instance';
 
@@ -263,12 +258,8 @@ describe('core/@Routable', () => {
     });
 
     it('automatically instantiates its class and adds it to SakuraApi.route(...)', (done) => {
-      const sapi = testSapi({
-        models: [],
-        routables: []
-      });
 
-      @Routable(sapi)
+      @Routable()
       class CoreRouteAutoRouteTest {
         @Route({
           path: 'someMethodTest5'
@@ -301,6 +292,11 @@ describe('core/@Routable', () => {
             .json({result: test});
         }
       }
+
+      const sapi = testSapi({
+        models: [],
+        routables: [CoreRouteAutoRouteTest]
+      });
 
       sapi
         .listen({bootMessage: ''})
@@ -356,15 +352,7 @@ describe('core/@Routable', () => {
     class NoDocsCreated extends SakuraApiModel {
     }
 
-    const sapi = testSapi({
-      models: [
-        NoDocsCreated,
-        User
-      ],
-      routables: []
-    });
-
-    @Routable(sapi, {
+    @Routable({
       model: User
     })
     class UserApi1 {
@@ -376,7 +364,7 @@ describe('core/@Routable', () => {
       }
     }
 
-    @Routable(sapi, {
+    @Routable({
       baseUrl: 'testUserApi2',
       model: NoDocsCreated
     })
@@ -388,6 +376,17 @@ describe('core/@Routable', () => {
       testRoute(req, res) {
       }
     }
+
+    const sapi = testSapi({
+      models: [
+        NoDocsCreated,
+        User
+      ],
+      routables: [
+        UserApi1,
+        UserApi2
+      ]
+    });
 
     beforeEach((done) => {
       sapi
@@ -409,7 +408,7 @@ describe('core/@Routable', () => {
           class NotAModel {
           }
 
-          @Routable(sapi, {
+          @Routable({
             model: NotAModel
           })
           class BrokenRoutable {
@@ -421,7 +420,7 @@ describe('core/@Routable', () => {
 
       it('if provided either suppressApi or exposeApi options without a model', () => {
         expect(() => {
-          @Routable(sapi, {
+          @Routable({
             suppressApi: ['get']
           })
           class FailRoutableSuppressApiOptionTest {
@@ -431,7 +430,7 @@ describe('core/@Routable', () => {
             + ` option, then a model option with a valid @Model must also be provided`));
 
         expect(() => {
-          @Routable(sapi, {
+          @Routable({
             exposeApi: ['get']
           })
           class FailRoutableSuppressApiOptionTest {
@@ -1141,7 +1140,7 @@ describe('core/@Routable', () => {
       });
 
       describe('suppressApi exposes non suppressed endpoints', () => {
-        @Routable(sapi, {
+        @Routable({
           baseUrl: 'RoutableSuppressApiTrueTest',
           model: User,
           suppressApi: true
@@ -1183,12 +1182,7 @@ describe('core/@Routable', () => {
       order = '';
     }
 
-    const sapi = testSapi({
-      models: [UserBeforeAllHandlers],
-      routables: []
-    });
-
-    @Routable(sapi, {
+    @Routable({
       beforeAll: [UserBeforeAllHandlersApi.beforeHandler, testHandler],
       model: UserBeforeAllHandlers
     })
@@ -1200,6 +1194,11 @@ describe('core/@Routable', () => {
         next();
       }
     }
+
+    const sapi = testSapi({
+      models: [UserBeforeAllHandlers],
+      routables: [UserBeforeAllHandlersApi]
+    });
 
     beforeAll((done) => {
       sapi
@@ -1291,12 +1290,7 @@ describe('core/@Routable', () => {
       order = '1';
     }
 
-    const sapi = testSapi({
-      models: [UserAfterAllHandlers],
-      routables: []
-    });
-
-    @Routable(sapi, {
+    @Routable({
       afterAll: [UserAfterAllHandlersApi.afterHandler, testAfterHandler],
       model: UserAfterAllHandlers
     })
@@ -1313,6 +1307,11 @@ describe('core/@Routable', () => {
           .catch(next);
       }
     }
+
+    const sapi = testSapi({
+      models: [UserAfterAllHandlers],
+      routables: [UserAfterAllHandlersApi]
+    });
 
     function testAfterHandler(req: Request, res: Response, next: NextFunction) {
       const resLocal = res.locals as IRoutableLocals;
@@ -1356,7 +1355,6 @@ describe('core/@Routable', () => {
         .then(done)
         .catch(done.fail);
     });
-
   });
 
   describe('beforeAll and afterAll handlers play nice together', () => {
@@ -1377,12 +1375,7 @@ describe('core/@Routable', () => {
       order = '1';
     }
 
-    const sapi = testSapi({
-      models: [UserAfterAllHandlersBeforeAllHandlers],
-      routables: []
-    });
-
-    @Routable(sapi, {
+    @Routable({
       afterAll: [UserAfterAllHandlersBeforeAllHandlersApi.afterHandler, testAfterHandler],
       beforeAll: [UserAfterAllHandlersBeforeAllHandlersApi.beforeHandler, testBeforeHandler],
       model: UserAfterAllHandlersBeforeAllHandlers
@@ -1412,6 +1405,11 @@ describe('core/@Routable', () => {
       resLocal.data.order += '2a';
       next();
     }
+
+    const sapi = testSapi({
+      models: [UserAfterAllHandlersBeforeAllHandlers],
+      routables: [UserAfterAllHandlersBeforeAllHandlersApi]
+    });
 
     beforeEach((done) => {
       sapi
@@ -1449,7 +1447,7 @@ describe('core/@Routable', () => {
     it('throws if built in handler is called with no model bound', () => {
 
       try {
-        @Routable(sapi)
+        @Routable()
         class RoutableWithInternalHandlerButNoModelTest {
           @Route({
             before: 'getAllHandler'
@@ -1458,45 +1456,37 @@ describe('core/@Routable', () => {
           }
         }
 
+        testSapi({
+          models: [],
+          routables: [RoutableWithInternalHandlerButNoModelTest]
+        });
+
         fail('Should not have reached here');
       } catch (err) {
         expect(err.message).toBe('RoutableWithInternalHandlerButNoModelTest is attempting to use built in handler ' +
           'getAllRouteHandler, which requires RoutableWithInternalHandlerButNoModelTest to be bound to a model');
       }
-
     });
   });
 
   describe('before and after handlers can utilize injected route handlers', () => {
 
-    @Model({
-      dbConfig: {
-        collection: 'BeforeAfterInjectRouteTestModel',
-        db: 'userDb'
-      }
-    })
-    class BeforeAfterInjectRouteTestModel extends SakuraApiModel {
-      @Db() @Json()
-      firstName = 'George';
-
-      @Db() @Json()
-      lastName = 'Washington';
-    }
-
-    const sapi = testSapi({
-      models: [BeforeAfterInjectRouteTestModel],
-      routables: []
-    });
-
-    afterEach((done) => {
-      sapi
-        .close()
-        .then(done)
-        .catch(done.fail);
-    });
-
     describe('getAllHandler', () => {
-      @Routable(sapi, {
+      @Model({
+        dbConfig: {
+          collection: 'BeforeAfterInjectRouteTestModel',
+          db: 'userDb'
+        }
+      })
+      class BeforeAfterInjectRouteTestModel extends SakuraApiModel {
+        @Db() @Json()
+        firstName = 'George';
+
+        @Db() @Json()
+        lastName = 'Washington';
+      }
+
+      @Routable({
         baseUrl: 'GetAllRouteHandlerBeforeAfterTest',
         model: BeforeAfterInjectRouteTestModel
       })
@@ -1530,7 +1520,20 @@ describe('core/@Routable', () => {
         }
       }
 
+      const sapi = testSapi({
+        models: [BeforeAfterInjectRouteTestModel],
+        routables: [GetAllRouteHandlerBeforeAfterTest]
+      });
+
+      afterEach((done) => {
+        sapi
+          .close()
+          .then(done)
+          .catch(done.fail);
+      });
+
       it('with result', (done) => {
+
         sapi
           .listen({bootMessage: ''})
           .then(() => new BeforeAfterInjectRouteTestModel().create())
@@ -1570,7 +1573,21 @@ describe('core/@Routable', () => {
     });
 
     describe('get handler', () => {
-      @Routable(sapi, {
+      @Model({
+        dbConfig: {
+          collection: 'BeforeAfterInjectRouteTestModel',
+          db: 'userDb'
+        }
+      })
+      class BeforeAfterInjectRouteTestModel extends SakuraApiModel {
+        @Db() @Json()
+        firstName = 'George';
+
+        @Db() @Json()
+        lastName = 'Washington';
+      }
+
+      @Routable({
         baseUrl: 'GetRouteHandlerBeforeAfterTest',
         model: BeforeAfterInjectRouteTestModel
       })
@@ -1614,6 +1631,18 @@ describe('core/@Routable', () => {
         }
 
       }
+
+      const sapi = testSapi({
+        models: [BeforeAfterInjectRouteTestModel],
+        routables: [GetRouteHandlerBeforeAfterTest]
+      });
+
+      afterEach((done) => {
+        sapi
+          .close()
+          .then(done)
+          .catch(done.fail);
+      });
 
       it('with valid id', (done) => {
         sapi
