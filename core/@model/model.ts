@@ -15,7 +15,6 @@ import {
   addDefaultStaticMethods,
   shouldRecurse
 } from '../helpers';
-import {SakuraApi} from '../sakura-api';
 import {
   dbSymbols,
   IDbOptions
@@ -116,7 +115,6 @@ export const modelSymbols = {
  *
  * ### Example
  * <pre>
- * import sapi from '../index'; // your app's reference to its instance of SakuraApi
  *
  * <span>@</span>Model()
  * class User {
@@ -153,7 +151,7 @@ export const modelSymbols = {
  * mapped for the integrators convenience. If the integrator wants to actually change the underlying behavior that
  * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
  */
-export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) => any {
+export function Model(modelOptions?: IModelOptions): (object) => any {
   modelOptions = modelOptions || {} as IModelOptions;
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -167,10 +165,6 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
   // to add a static member: newConstructor.newFunction = () => {}
   // ===================================================================================================================
   return (target: any) => {
-    if (!sapi) {
-      throw new Error(`A valid instance of SakuraApi must be provided to the @Model '${target.name}'`);
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
     //
@@ -274,10 +268,8 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
     newConstructor.fromJsonToDb = fromJsonToDb;
     newConstructor[modelSymbols.fromJsonToDb] = fromJsonToDb;
 
-    newConstructor[modelSymbols.sapi] = sapi;
-
-    newConstructor.changeSapi = changeSapi.bind(newConstructor);
-    newConstructor[modelSymbols.changeSapi] = changeSapi.bind(newConstructor);
+    // Injected by SakuraApi in `.mapModels`
+    newConstructor[modelSymbols.sapi] = null;
 
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
@@ -316,12 +308,6 @@ export function Model(sapi: SakuraApi, modelOptions?: IModelOptions): (object) =
 
     return newConstructor;
   };
-}
-
-function changeSapi(newSapi: SakuraApi) {
-  this.debug.normal('change sapi reference called');
-
-  this[modelSymbols.sapi] = newSapi;
 }
 
 //////////

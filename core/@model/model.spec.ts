@@ -1,4 +1,11 @@
 import {
+  InsertOneWriteOpResult,
+  ObjectID,
+  ReplaceOneOptions,
+  UpdateWriteOpResult
+} from 'mongodb';
+import {testSapi} from '../../spec/helpers/sakuraapi';
+import {
   Db,
   Json,
   Model,
@@ -10,20 +17,9 @@ import {
   SapiMissingIdErr
 } from './errors';
 
-import {
-  InsertOneWriteOpResult,
-  ObjectID,
-  ReplaceOneOptions,
-  UpdateWriteOpResult
-} from 'mongodb';
+describe('core/@Model', () => {
 
-import {Sapi} from '../../spec/helpers/sakuraapi';
-
-describe('core/@Model', function() {
-
-  const sapi = Sapi();
-
-  @Model(sapi)
+  @Model()
   class Test extends SakuraApiModel {
 
     static getById(id: string, project?: any): Promise<string> {
@@ -51,40 +47,27 @@ describe('core/@Model', function() {
     }
   }
 
-  describe('construction', function() {
+  describe('construction', () => {
 
-    beforeEach(function() {
+    beforeEach(() => {
       this.t = new Test(777);
     });
 
-    it('properly passes the constructor parameters', function() {
+    it('properly passes the constructor parameters', () => {
       expect(this.t.n).toBe(777);
     });
 
-    it('maintains the prototype chain', function() {
+    it('maintains the prototype chain', () => {
       expect(this.t instanceof Test).toBe(true);
     });
 
-    it(`decorates itself with Symbol('sakuraApiModel') = true`, function() {
+    it(`decorates itself with Symbol('sakuraApiModel') = true`, () => {
       expect(this.t[modelSymbols.isSakuraApiModel]).toBe(true);
       expect(() => this.t[modelSymbols.isSakuraApiModel] = false)
         .toThrowError(`Cannot assign to read only property 'Symbol(isSakuraApiModel)' of object '#<Test>'`);
     });
 
-    it(`throws when sapi parameter passed to @Model(sapi) is not valid`, function(done) {
-
-      try {
-        @Model(null)
-        class InvalidModelSakuraApiReferenceTest {
-        }
-        done.fail('@Model should have thrown with invalid sapi parameter');
-      } catch (err) {
-        done();
-      }
-
-    });
-
-    it('maps _id to id without contaminating the object properties with the id accessor', function() {
+    it('maps _id to id without contaminating the object properties with the id accessor', () => {
       this.t.id = new ObjectID();
 
       expect(this.t._id).toEqual(this.t.id);
@@ -94,9 +77,9 @@ describe('core/@Model', function() {
       expect(json.id).toBeUndefined();
     });
 
-    describe('ModelOptions.dbConfig', function() {
+    describe('ModelOptions.dbConfig', () => {
 
-      @Model(sapi, {
+      @Model({
         dbConfig: {
           collection: '',
           db: ''
@@ -105,14 +88,14 @@ describe('core/@Model', function() {
       class TestDbConfig {
       }
 
-      it('throws when dbConfig.db is missing', function() {
+      it('throws when dbConfig.db is missing', () => {
         expect(() => {
           new TestDbConfig(); // tslint:disable-line
         }).toThrow();
       });
 
-      it('throws when dbConfig.collection is missing', function() {
-        @Model(sapi, {
+      it('throws when dbConfig.collection is missing', () => {
+        @Model({
           dbConfig: {
             collection: '',
             db: 'test'
@@ -127,9 +110,9 @@ describe('core/@Model', function() {
       });
     });
 
-    describe('injects default CRUD method', function() {
+    describe('injects default CRUD method', () => {
 
-      @Model(sapi, {
+      @Model({
         dbConfig: {
           collection: 'users',
           db: 'userDb',
@@ -149,7 +132,7 @@ describe('core/@Model', function() {
         password = '';
       }
 
-      @Model(sapi, {
+      @Model({
         dbConfig: {
           collection: 'users',
           db: 'userDb',
@@ -162,7 +145,7 @@ describe('core/@Model', function() {
         lastName = 'Washington';
       }
 
-      @Model(sapi, {
+      @Model({
         dbConfig: {
           collection: 'bad',
           db: 'bad'
@@ -171,30 +154,39 @@ describe('core/@Model', function() {
       class TestBadDb extends SakuraApiModel {
       }
 
-      beforeEach(function() {
+      beforeEach(() => {
+        this.sapi = testSapi({
+          models: [
+            TestDefaultMethods,
+            ChastityTest,
+            TestBadDb
+          ],
+          routables: []
+        });
+
         this.tdm = new TestDefaultMethods();
         this.tdm2 = new TestDefaultMethods();
         this.ct = new ChastityTest();
       });
 
-      describe('when CRUD not provided by integrator', function() {
+      describe('when CRUD not provided by integrator', () => {
 
-        beforeEach(function(done) {
-          sapi
-            .dbConnections
-            .connectAll()
-            .then(done)
-            .catch(done.fail);
+        beforeEach((done) => {
+          this.sapi
+              .dbConnections
+              .connectAll()
+              .then(done)
+              .catch(done.fail);
         });
 
-        describe('static method', function() {
+        describe('static method', () => {
 
           /**
            * See json.spec.ts for toJson and fromJson tests.
            * See db.spec.ts for toDb and fromDb tests.
            */
 
-          it('removeAll', function(done) {
+          it('removeAll', (done) => {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -225,7 +217,7 @@ describe('core/@Model', function() {
               .catch(done.fail);
           });
 
-          it('removeById', function(done) {
+          it('removeById', (done) => {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -253,20 +245,20 @@ describe('core/@Model', function() {
               .catch(done.fail);
           });
 
-          describe('getCollection', function() {
-            it('returns a valid MongoDB Collection for the current model', function() {
+          describe('getCollection', () => {
+            it('returns a valid MongoDB Collection for the current model', () => {
               const col = TestDefaultMethods.getCollection();
               expect(col['s'].dbName).toBe('userDb');
             });
           });
 
-          describe('getDb', function() {
-            it('returns a valid MongoDB Db for the current model', function() {
+          describe('getDb', () => {
+            it('returns a valid MongoDB Db for the current model', () => {
               const db = TestDefaultMethods.getDb();
               expect(db['s'].databaseName).toBe('userDb');
             });
 
-            it('throws SapiDbForModelNotFound when db is not found', function(done) {
+            it('throws SapiDbForModelNotFound when db is not found', (done) => {
               try {
                 TestBadDb.getDb();
                 done.fail('Error was expected but not thrown');
@@ -278,7 +270,7 @@ describe('core/@Model', function() {
             });
           });
 
-          it('get', function(done) {
+          it('get', (done) => {
 
             expect(this.tdm.id).toBeNull();
 
@@ -302,7 +294,7 @@ describe('core/@Model', function() {
               .catch(done.fail);
           });
 
-          it('getOne', function(done) {
+          it('getOne', (done) => {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -324,7 +316,7 @@ describe('core/@Model', function() {
               .catch(done.fail);
           });
 
-          it('getById', function(done) {
+          it('getById', (done) => {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -346,7 +338,7 @@ describe('core/@Model', function() {
               .catch(done.fail);
           });
 
-          it('getCursor', function(done) {
+          it('getCursor', (done) => {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -375,7 +367,7 @@ describe('core/@Model', function() {
               .catch(done.fail);
           });
 
-          it('getCursor supports projection', function(done) {
+          it('getCursor supports projection', (done) => {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -397,7 +389,7 @@ describe('core/@Model', function() {
               .catch(done.fail);
           });
 
-          it('getCursorById', function(done) {
+          it('getCursorById', (done) => {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -428,10 +420,10 @@ describe('core/@Model', function() {
 
         });
 
-        describe('instance method', function() {
+        describe('instance method', () => {
 
-          describe('create', function() {
-            it('inserts model into db', function(done) {
+          describe('create', () => {
+            it('inserts model into db', (done) => {
               this.tdm.id = new ObjectID();
               this
                 .tdm
@@ -461,7 +453,7 @@ describe('core/@Model', function() {
                 });
             });
 
-            it('sets the models Id before writing if Id is not set', function(done) {
+            it('sets the models Id before writing if Id is not set', (done) => {
               expect(this.tdm.id).toBeNull();
               this
                 .tdm
@@ -488,14 +480,14 @@ describe('core/@Model', function() {
                 });
             });
 
-            it('persists deeply nested objects', function(done) {
+            it('persists deeply nested objects', (done) => {
 
               class Contact {
                 @Db()
                 phone = '000-000-0000';
               }
 
-              @Model(sapi, {
+              @Model({
                 dbConfig: {
                   collection: 'userCreateTest',
                   db: 'userDb'
@@ -511,38 +503,48 @@ describe('core/@Model', function() {
                 contact = new Contact();
               }
 
-              const user = new UserCreateTest();
+              const sapi = testSapi({
+                models: [UserCreateTest],
+                routables: []
+              });
 
-              user
-                .create()
-                .then(() => user.getCollection().find({_id: user.id}).limit(1).next())
-                .then((result: any) => {
-                  expect(result._id.toString()).toBe(user.id.toString());
-                  expect(result.firstName).toBe(user.firstName || 'firstName should have been defined');
-                  expect(result.lastName).toBe(user.lastName || 'lastName should have been defined');
-                  expect(result.contact).toBeDefined();
-                  expect(result.contact.phone).toBe('000-000-0000');
+              sapi
+                .listen({bootMessage: ''})
+                .then(() => {
+                  const user = new UserCreateTest();
+
+                  return user
+                    .create()
+                    .then(() => user.getCollection().find({_id: user.id}).limit(1).next())
+                    .then((result: any) => {
+                      expect(result._id.toString()).toBe(user.id.toString());
+                      expect(result.firstName).toBe(user.firstName || 'firstName should have been defined');
+                      expect(result.lastName).toBe(user.lastName || 'lastName should have been defined');
+                      expect(result.contact).toBeDefined();
+                      expect(result.contact.phone).toBe('000-000-0000');
+                    })
+
                 })
+                .then(() => sapi.close())
                 .then(done)
                 .catch(done.fail);
-
             });
           });
 
-          describe('getCollection', function() {
-            it('returns a valid MongoDB Collection for the current model', function() {
+          describe('getCollection', () => {
+            it('returns a valid MongoDB Collection for the current model', () => {
               const col = this.tdm.getCollection();
               expect(col.s.dbName).toBe('userDb');
             });
           });
 
-          describe('getDb', function() {
-            it('returns a valid MongoDB Db for the current model', function() {
+          describe('getDb', () => {
+            it('returns a valid MongoDB Db for the current model', () => {
               const db = this.tdm.getDb();
               expect(db.s.databaseName).toBe('userDb');
             });
 
-            it('throws SapiDbForModelNotFound when db is not found', function(done) {
+            it('throws SapiDbForModelNotFound when db is not found', (done) => {
               try {
                 const badDb = new TestBadDb();
                 badDb.getDb();
@@ -556,8 +558,8 @@ describe('core/@Model', function() {
             });
           });
 
-          describe('save', function() {
-            it('rejects if missing id', function(done) {
+          describe('save', () => {
+            it('rejects if missing id', (done) => {
               this
                 .tdm
                 .save()
@@ -571,8 +573,8 @@ describe('core/@Model', function() {
                 });
             });
 
-            describe('with projection', function() {
-              @Model(sapi, {
+            describe('with projection', () => {
+              @Model({
                 dbConfig: {
                   collection: 'users',
                   db: 'userDb',
@@ -589,7 +591,26 @@ describe('core/@Model', function() {
                 password = '';
               }
 
-              it('sets the proper database level fields', function(done) {
+              const sapi = testSapi({
+                models: [PartialUpdateTest],
+                routables: []
+              });
+
+              beforeEach((done) => {
+                sapi
+                  .listen({bootMessage: ''})
+                  .then(done)
+                  .catch(done.fail);
+              });
+
+              afterEach((done) => {
+                sapi
+                  .close()
+                  .then(done)
+                  .catch(done.fail);
+              });
+
+              it('sets the proper database level fields', (done) => {
                 const pud = new PartialUpdateTest();
 
                 const updateSet = {
@@ -623,7 +644,7 @@ describe('core/@Model', function() {
                   .catch(done.fail);
               });
 
-              it('performs a partial update without disturbing other fields', function(done) {
+              it('performs a partial update without disturbing other fields', (done) => {
                 const pud = new PartialUpdateTest();
                 pud.password = 'test-password';
 
@@ -655,7 +676,7 @@ describe('core/@Model', function() {
             });
           });
 
-          it('updates entire model if no set parameter is passed', function(done) {
+          it('updates entire model if no set parameter is passed', (done) => {
             expect(this.tdm.id).toBeNull();
             this
               .tdm
@@ -700,8 +721,8 @@ describe('core/@Model', function() {
 
         });
 
-        describe('remove', function() {
-          it('itself', function(done) {
+        describe('remove', () => {
+          it('itself', (done) => {
             expect(this.tdm.id).toBeNull();
 
             this
@@ -733,8 +754,8 @@ describe('core/@Model', function() {
       });
     });
 
-    describe('but does not overwrite custom methods added by integrator', function() {
-      it('static methods getById', function(done) {
+    describe('but does not overwrite custom methods added by integrator', () => {
+      it('static methods getById', (done) => {
         Test
           .getById('123')
           .then((result) => {
@@ -744,7 +765,7 @@ describe('core/@Model', function() {
           .catch(done.fail);
       });
 
-      it('static methods save', function(done) {
+      it('static methods save', (done) => {
         this
           .t
           .save()
@@ -756,29 +777,29 @@ describe('core/@Model', function() {
       });
     });
 
-    describe('allows integrator to exclude CRUD with suppressInjection: [] in ModelOptions', function() {
-      @Model(sapi, {suppressInjection: ['get', 'save']})
+    describe('allows integrator to exclude CRUD with suppressInjection: [] in ModelOptions', () => {
+      @Model({suppressInjection: ['get', 'save']})
       class TestSuppressedDefaultMethods extends SakuraApiModel {
       }
 
-      beforeEach(function() {
+      beforeEach(() => {
         this.suppressed = new TestSuppressedDefaultMethods();
       });
 
-      it('with static defaults', function() {
+      it('with static defaults', () => {
         expect(this.suppressed.get).toBe(undefined);
       });
 
-      it('with instance defaults', function() {
+      it('with instance defaults', () => {
         expect(this.suppressed.save).toBe(undefined);
       });
     });
 
-    describe('properties that are declared as object literals', function() {
+    describe('properties that are declared as object literals', () => {
       // Integrator note: to persist complex models with deeply embedded objects, the embedded objects
       // should be their own classes.
 
-      @Model(sapi, {
+      @Model({
         dbConfig: {
           collection: 'users',
           db: 'userDb',
@@ -797,7 +818,14 @@ describe('core/@Model', function() {
         };
       }
 
-      beforeEach(function(done) {
+      beforeEach((done) => {
+        const sapi = testSapi({
+          models: [
+            NestedModel
+          ],
+          routables: []
+        });
+
         sapi
           .dbConnections
           .connectAll()
@@ -806,7 +834,7 @@ describe('core/@Model', function() {
           .catch(done.fail);
       });
 
-      it('require promiscuous mode', function(done) {
+      it('require promiscuous mode', (done) => {
         const nested = new NestedModel();
 
         nested.contact = {
@@ -838,10 +866,10 @@ describe('core/@Model', function() {
       });
     });
 
-    describe('handles object types', function() {
-      describe('Date', function() {
+    describe('handles object types', () => {
+      describe('Date', () => {
 
-        @Model(sapi, {
+        @Model({
           dbConfig: {
             collection: 'dateTest',
             db: 'userDb'
@@ -852,7 +880,14 @@ describe('core/@Model', function() {
           date: Date = new Date();
         }
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
+          const sapi = testSapi({
+            models: [
+              ModelDateStoreAndRestoreTest
+            ],
+            routables: []
+          });
+
           sapi
             .dbConnections
             .connectAll()
@@ -861,8 +896,8 @@ describe('core/@Model', function() {
             .catch(done.fail);
         });
 
-        describe('when going to and from the database', function() {
-          it('stores Date types as native MongoDB ISO dates', function(done) {
+        describe('when going to and from the database', () => {
+          it('stores Date types as native MongoDB ISO dates', (done) => {
             const model = new ModelDateStoreAndRestoreTest();
 
             model
@@ -880,7 +915,7 @@ describe('core/@Model', function() {
               });
           });
 
-          it('retrieves a Date when MongoDB has ISO date field ', function(done) {
+          it('retrieves a Date when MongoDB has ISO date field ', (done) => {
             const model = new ModelDateStoreAndRestoreTest();
 
             model
@@ -898,14 +933,14 @@ describe('core/@Model', function() {
           });
         });
 
-        describe('when marshalling to and from json', function() {
-          it('.toJson formats date to to Date object', function() {
+        describe('when marshalling to and from json', () => {
+          it('.toJson formats date to to Date object', () => {
             const model = new ModelDateStoreAndRestoreTest();
             const json = model.toJson();
             expect(json.date instanceof Date).toBeTruthy('Should have been a Date');
           });
 
-          it('.fromJson formats', function() {
+          it('.fromJson formats', () => {
             pending('not implemented, see https://github.com/sakuraapi/api/issues/72');
             const model = ModelDateStoreAndRestoreTest.fromJson({
               date: '2017-05-28T21:58:10.806Z'
@@ -914,8 +949,8 @@ describe('core/@Model', function() {
         });
       });
 
-      describe('Array', function() {
-        @Model(sapi, {
+      describe('Array', () => {
+        @Model({
           dbConfig: {
             collection: 'arrayTest',
             db: 'userDb'
@@ -926,7 +961,14 @@ describe('core/@Model', function() {
           anArray = ['value1', 'value2'];
         }
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
+          const sapi = testSapi({
+            models: [
+              ModelArrayStoreAndRestoreTest
+            ],
+            routables: []
+          });
+
           sapi
             .dbConnections
             .connectAll()
@@ -935,8 +977,8 @@ describe('core/@Model', function() {
             .catch(done.fail);
         });
 
-        describe('when going to and from the database', function() {
-          it('stores Array types as native MongoDB Arrays', function(done) {
+        describe('when going to and from the database', () => {
+          it('stores Array types as native MongoDB Arrays', (done) => {
             const model = new ModelArrayStoreAndRestoreTest();
 
             model
@@ -954,7 +996,7 @@ describe('core/@Model', function() {
               });
           });
 
-          it('retrieves an Array when MongoDB has an Array field', function(done) {
+          it('retrieves an Array when MongoDB has an Array field', (done) => {
             const model = new ModelArrayStoreAndRestoreTest();
 
             model
@@ -973,15 +1015,15 @@ describe('core/@Model', function() {
           });
         });
 
-        describe('when marshalling to and from json', function() {
-          it('.toJson formats date to to Date object', function() {
+        describe('when marshalling to and from json', () => {
+          it('.toJson formats date to to Date object', () => {
             const model = new ModelArrayStoreAndRestoreTest();
             const json = model.toJson();
 
             expect(Array.isArray(json.anArray)).toBeTruthy('Should have been an Array');
           });
 
-          it('.fromJson formats', function() {
+          it('.fromJson formats', () => {
             const model = ModelArrayStoreAndRestoreTest.fromJson({
               anArray: ['a', 'b']
             });
@@ -991,22 +1033,5 @@ describe('core/@Model', function() {
         });
       });
     });
-  });
-
-  it('allows sapi to be injected after bootstrapping for testing', function() {
-    const sapi = Sapi();
-    const sapi2 = Sapi();
-    sapi2['injectedTestValue'] = true;
-
-    @Model(sapi)
-    class SapiInjectionApiModelTest extends SakuraApiModel {
-    }
-
-    expect(SapiInjectionApiModelTest[modelSymbols.sapi]).toBeTruthy();
-    expect(SapiInjectionApiModelTest[modelSymbols.sapi].injectedTestValue).toBeFalsy();
-    expect(sapi2['injectedTestValue']).toBeTruthy();
-
-    SapiInjectionApiModelTest.changeSapi(sapi2);
-    expect(SapiInjectionApiModelTest[modelSymbols.sapi].injectedTestValue).toBeTruthy();
   });
 });

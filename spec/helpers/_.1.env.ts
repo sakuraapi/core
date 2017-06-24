@@ -2,7 +2,6 @@ import 'colors';
 
 process.env.NODE_ENV = 'sakura-api-test';
 process.env.SAKURA_API_CONFIG_TEST = 'found';
-process.env.SAKURA_API_CONFIG = 'spec/config/environment.json';
 process.env.TEST_MONGO_DB_ADDRESS = process.env.TEST_MONGO_DB_ADDRESS || 'localhost';
 process.env.TEST_MONGO_DB_PORT = process.env.TEST_MONGO_DB_PORT || 37001;
 

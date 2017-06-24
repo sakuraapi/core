@@ -4,6 +4,9 @@ import {
   Request,
   Response
 } from 'express';
+
+import * as path from 'path';
+import 'reflect-metadata';
 import {
   IDbGetParams,
   modelSymbols,
@@ -12,9 +15,6 @@ import {
 import {addDefaultStaticMethods} from '../helpers';
 import {SakuraApi} from '../sakura-api';
 import {SanitizeMongoDB as Sanitize} from '../security/mongo-db';
-
-import * as path from 'path';
-import 'reflect-metadata';
 import debug = require('debug');
 
 export type HttpMethod = 'get' | 'getAll' | 'put' | 'post' | 'delete';
@@ -144,6 +144,7 @@ export interface ISakuraApiClassRoute {
 export const routableSymbols = {
   changeSapi: Symbol('changeSapi'),
   debug: Symbol('debug'),
+  isSakuraApiRoutable: Symbol('isSakuraApiRoutable'),
   routes: Symbol('routes'),
   sapi: Symbol('sapi')
 };
@@ -339,6 +340,16 @@ export function Routable(sapi: SakuraApi, options?: IRoutableOptions): any {
     };
     newConstructor.prototype[routableSymbols.debug] = newConstructor[routableSymbols.debug];
 
+    // isSakuraApiModel hidden property is attached to let other parts of the framework know that this is an @Model obj
+    Reflect.defineProperty(newConstructor.prototype, routableSymbols.isSakuraApiRoutable, {
+      value: true,
+      writable: false
+    });
+    Reflect.defineProperty(newConstructor, routableSymbols.isSakuraApiRoutable, {
+      value: true,
+      writable: false
+    });
+
     // -----------------------------------------------------------------------------------------------------------------
     // Developer note:
     // If autoRoute (which is the default), then an instance of the @Routable class is instantiated to cause the routes
@@ -497,12 +508,13 @@ function changeSapi(newSapi: SakuraApi, autoRoute = true) {
 // tslint:disable:max-line-length
 /**
  * By default, when you provide the optional `model` property to [[IRoutableOptions]] in the [[Routable]] parameters,
- * SakuraApi creates a route for GET `{modelName}/:id` that returns an either that document as a model or null if nothing
- * is found.
+ * SakuraApi creates a route for GET `{modelName}/:id` that returns an either that document as a model or null if
+ * nothing is found.
  *
  * You an constrain the results by providing a `fields` query string parameter.
  *
- * `fields` follows the same rules as (MongoDB field projection)[https://docs.mongodb.com/manual/reference/glossary/#term-projection]
+ * `fields` follows the same rules as (MongoDB field
+ * projection)[https://docs.mongodb.com/manual/reference/glossary/#term-projection]
  */
 // tslint:enable:max-line-length
 function getRouteHandler(req: Request, res: Response, next: NextFunction) {
@@ -571,7 +583,8 @@ function getRouteHandler(req: Request, res: Response, next: NextFunction) {
  * client. You cannot include fields that are marked `@Db(private:true)` since these will not be marshalled
  * to json for the results.
  *
- * `fields` follows the same rules as (MongoDB field projection)[https://docs.mongodb.com/manual/reference/glossary/#term-projection]
+ * `fields` follows the same rules as (MongoDB field
+ * projection)[https://docs.mongodb.com/manual/reference/glossary/#term-projection]
  *
  * `where` queries are stripped of any `$where` fields. Giving the client the direct ability to define `$where`
  * queries is a bad idea. If you want to do this, you'll have to implement your own route handler.

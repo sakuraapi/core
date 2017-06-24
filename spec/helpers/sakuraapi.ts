@@ -1,16 +1,24 @@
+import * as path from 'path';
 import {SakuraApi} from '../../core/sakura-api';
 
 import bodyParser = require('body-parser');
 import helmet = require('helmet');
 
 export const baseUri = '/testApi';
+export const testUrl = (endpoint: string) => path.join(baseUri, endpoint);
+export const testMongoDbUrl = (sapi) => `mongodb://localhost:${sapi.config.TEST_MONGO_DB_PORT}`;
 
-export function Sapi(): SakuraApi {
-  const sapi = new SakuraApi();
+export function testSapi(options: { models: any[], routables: any[] }): SakuraApi {
+
+  const sapi = new SakuraApi({
+    models: options.models,
+    routables: options.routables,
+    configPath: 'spec/config/environment.json'
+  });
+
   sapi.baseUri = baseUri;
 
   sapi.addMiddleware(helmet());
-
   sapi.addMiddleware(bodyParser.json());
 
   if (process.env.TRACE_REQ) {

@@ -1,23 +1,25 @@
-import {SakuraApiConfig} from './sakura-api-config';
 import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
-import {Sapi} from '../spec/helpers/sakuraapi';
+import {
+  testMongoDbUrl,
+  testSapi
+} from '../spec/helpers/sakuraapi';
+import {SakuraApiConfig} from './sakura-api-config';
 
 const path = require('path');
 
-describe('sakura-api-config', function() {
+describe('sakura-api-config', () => {
 
-  const sapi = Sapi();
-
-  beforeEach(function() {
-    this.path = 'spec/test_config/environment.json';
-
-    spyOn(console, 'log')
-      .and
-      .callThrough();
+  const sapi = testSapi({
+    models: [],
+    routables: []
   });
 
-  describe('load(...)', function() {
-    it('loads the default config file if config file not found in path', function() {
+  beforeEach(() => {
+    this.path = 'spec/test_config/environment.json';
+  });
+
+  describe('load(...)', () => {
+    it('loads the default config file if config file not found in path', () => {
       this.path = this.path.replace('environment.json', 'not_found.json');
       try {
         let cfg = new SakuraApiConfig().load(this.path);
@@ -27,7 +29,7 @@ describe('sakura-api-config', function() {
       }
     });
 
-    it('loads the config file and properly cascades', function() {
+    it('loads the config file and properly cascades', () => {
       try {
         let cfg = new SakuraApiConfig().load(this.path);
         expect(cfg).toBeDefined();
@@ -42,12 +44,12 @@ describe('sakura-api-config', function() {
       }
     });
 
-    describe('SAKURA_API_CONFIG env path ', function() {
-      afterEach(function() {
+    describe('SAKURA_API_CONFIG env path ', () => {
+      afterEach(() => {
         delete process.env.SAKURA_API_CONFIG;
       });
 
-      it('when defined, loads config from that path', function(done) {
+      it('when defined, loads config from that path', (done) => {
         process.env.SAKURA_API_CONFIG = path.join(process.cwd(), 'spec/test_config/test-SAKURA_API_CONFIG.json');
 
         try {
@@ -59,7 +61,7 @@ describe('sakura-api-config', function() {
         }
       });
 
-      it('when path is bad, behaves as expected', function(done) {
+      it('when path is bad, behaves as expected', (done) => {
         process.env.SAKURA_API_CONFIG = path.join(process.cwd(), 'spec/test_config/test-SAKURA_API_CONFIG');
 
         try {
@@ -73,8 +75,8 @@ describe('sakura-api-config', function() {
       });
     });
 
-    describe('throws an error', function() {
-      it('when the config file is empty', function() {
+    describe('throws an error', () => {
+      it('when the config file is empty', () => {
         this.path = this.path.replace('environment.json', 'environment.invalid.json');
 
         try {
@@ -87,7 +89,7 @@ describe('sakura-api-config', function() {
         }
       });
 
-      it('when the config file is not valid JSON', function() {
+      it('when the config file is not valid JSON', () => {
         this.path = this.path.replace('environment.json', 'environment.invalid2.json');
 
         try {
@@ -102,30 +104,30 @@ describe('sakura-api-config', function() {
     });
   });
 
-  describe('dataSources(...)', function() {
-    beforeEach(function() {
+  describe('dataSources(...)', () => {
+    beforeEach(() => {
 
       this.config = new SakuraApiConfig();
       this.dbConnections = {
         dbConnections: [
           {
             'name': 'testDb1',
-            'url': `${this.mongoDbBaseUri(sapi)}/test1`
+            'url': `${testMongoDbUrl(sapi)}/test1`
           },
           {
             'name': 'testDb2',
-            'url': `${this.mongoDbBaseUri(sapi)}/test2`
+            'url': `${testMongoDbUrl(sapi)}/test2`
           }
         ]
       };
     });
 
-    it('returns null if no valid config is found', function() {
+    it('returns null if no valid config is found', () => {
       expect(this.config.dataSources()).not.toBeFalsy();
       expect(this.config.dataSources().getConnections().entries.length).toBe(0);
     });
 
-    it('returns a SakuraMongoDbConnection object populated with the dbs in the config, but not yet connected', function() {
+    it('returns a SakuraMongoDbConnection object populated with the dbs in the config, but not yet connected', () => {
       let conns: SakuraMongoDbConnection = this.config.dataSources(this.dbConnections);
 
       expect(conns.getConnection('testDb1')).toBeDefined();

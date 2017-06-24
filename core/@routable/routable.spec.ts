@@ -4,7 +4,10 @@ import {
   Response
 } from 'express';
 import {ObjectID} from 'mongodb';
-import {Sapi} from '../../spec/helpers/sakuraapi';
+import {
+  testSapi,
+  testUrl
+} from '../../spec/helpers/sakuraapi';
 import {
   Db,
   Json,
@@ -20,13 +23,16 @@ import {
 import {IRoutableLocals} from './routable';
 import request = require('supertest');
 
-describe('core/@Routable', function() {
-  describe('general functionality', function() {
-    const sapi = Sapi();
+describe('core/@Routable', () => {
+  describe('general functionality', () => {
+    const sapi = testSapi({
+      models: [],
+      routables: []
+    });
 
-    describe('IRoutableOptions', function() {
+    describe('IRoutableOptions', () => {
 
-      it('add a baseUrl to the path of an @Route, if provided', function() {
+      it('add a baseUrl to the path of an @Route, if provided', () => {
         @Routable(sapi, {
           autoRoute: false,
           baseUrl: 'coreRoutableAddBaseUrlTest'
@@ -44,7 +50,7 @@ describe('core/@Routable', function() {
         expect(routes[0].path).toBe('/coreRoutableAddBaseUrlTest', 'baseUrl was not properly set by @Routable');
       });
 
-      it('ignore @Route methods that are listed in the @Routable(blacklist)', function() {
+      it('ignore @Route methods that are listed in the @Routable(blacklist)', () => {
         @Routable(sapi, {
           autoRoute: false,
           blackList: ['bRouteMethod']
@@ -71,7 +77,7 @@ describe('core/@Routable', function() {
         expect(found).toBeFalsy('black listed path should not have been included in the routes');
       });
 
-      it('handle the lack of a baseUrl gracefully', function() {
+      it('handle the lack of a baseUrl gracefully', () => {
         @Routable(sapi, {autoRoute: false})
         class CoreRoutableNoBaseMethodWorks {
           @Route({
@@ -95,7 +101,7 @@ describe('core/@Routable', function() {
         expect(routes[1].path).toBe('/bRouteMethod', 'baseUrl was not properly set by @Routable');
       });
 
-      it('suppress autoRouting if options.autoRoute = false', function(done) {
+      it('suppress autoRouting if options.autoRoute = false', (done) => {
         @Routable(sapi, {autoRoute: false})
         class CoreRoutableSuppressRoutesWithAutoRouteFalse {
           @Route({
@@ -108,7 +114,7 @@ describe('core/@Routable', function() {
 
         sapi
           .listen({bootMessage: ''})
-          .then(function() {
+          .then(() => {
             return request(sapi.app)
               .get('/autoRoutingFalseTest')
               .expect(404);
@@ -119,7 +125,7 @@ describe('core/@Routable', function() {
       });
     });
 
-    it('drops the traling / on a path', function() {
+    it('drops the traling / on a path', () => {
       @Routable(sapi, {
         autoRoute: false,
         baseUrl: 'CoreRoutableTrailingSlashDropTest'
@@ -141,7 +147,7 @@ describe('core/@Routable', function() {
         .toBe('/CoreRoutableTrailingSlashDropTest/dropThatTrailingSlash', 'trailing slash was not added');
     });
 
-    it('adds the leading / on a path if its missing', function() {
+    it('adds the leading / on a path if its missing', () => {
       @Routable(sapi, {
         autoRoute: false,
         baseUrl: 'CoreRoutableTrailingSlashAddTest'
@@ -163,7 +169,7 @@ describe('core/@Routable', function() {
         .toBe('/CoreRoutableTrailingSlashAddTest/addThatTrailingSlash', 'trailing slash was not added');
     });
 
-    it('reads metadata from @Route and properly injects sakuraApiClassRoutes[] into the @Routable class', function() {
+    it('reads metadata from @Route and properly injects sakuraApiClassRoutes[] into the @Routable class', () => {
       @Routable(sapi, {
         autoRoute: false,
         baseUrl: 'CoreRoutableRoutesWork'
@@ -201,7 +207,7 @@ describe('core/@Routable', function() {
 
     });
 
-    it('properly passes the constructor parameters', function() {
+    it('properly passes the constructor parameters', () => {
       @Routable(sapi, {autoRoute: false})
       class CoreRoutableProxiedConstructorWorks {
 
@@ -220,7 +226,7 @@ describe('core/@Routable', function() {
       expect(result.v).toBe(777, 'Constructor value was not passed to the instantiated object');
     });
 
-    it('maintains the prototype chain', function() {
+    it('maintains the prototype chain', () => {
       @Routable(sapi, {autoRoute: false})
       class CoreRoutableInstanceOfWorks {
 
@@ -239,7 +245,7 @@ describe('core/@Routable', function() {
         .toBeTruthy('the prototype chain should have been maintained');
     });
 
-    it('binds the instantiated class as the context of this for each route method', function() {
+    it('binds the instantiated class as the context of this for each route method', () => {
       @Routable(sapi, {autoRoute: false})
       class CoreRoutableContextOfRouteMethod {
         someProperty = 'instance';
@@ -256,8 +262,11 @@ describe('core/@Routable', function() {
       expect(obj[routableSymbols.routes][0].f()).toBe(obj.someProperty);
     });
 
-    it('automatically instantiates its class and adds it to SakuraApi.route(...)', function(done) {
-      const sapi = Sapi();
+    it('automatically instantiates its class and adds it to SakuraApi.route(...)', (done) => {
+      const sapi = testSapi({
+        models: [],
+        routables: []
+      });
 
       @Routable(sapi)
       class CoreRouteAutoRouteTest {
@@ -297,7 +306,7 @@ describe('core/@Routable', function() {
         .listen({bootMessage: ''})
         .then(() => {
           return request(sapi.app)
-            .get(this.uri('/someMethodTest5'))
+            .get(testUrl('/someMethodTest5'))
             .expect('Content-Type', /json/)
             .expect('Content-Length', '42')
             .expect('{"someMethodTest5":"testRouterGet worked"}')
@@ -309,8 +318,7 @@ describe('core/@Routable', function() {
     });
   });
 
-  describe('takes an @Model class in IRoutableOptions', function() {
-    const sapi = Sapi();
+  describe('takes an @Model class in IRoutableOptions', () => {
 
     class Contact {
       @Db()
@@ -322,7 +330,7 @@ describe('core/@Routable', function() {
       mobile = '111-111-1111';
     }
 
-    @Model(sapi, {
+    @Model({
       dbConfig: {
         collection: 'usersRoutableTests',
         db: 'userDb'
@@ -339,7 +347,7 @@ describe('core/@Routable', function() {
       contact = new Contact();
     }
 
-    @Model(sapi, {
+    @Model({
       dbConfig: {
         collection: 'noDocsCreatedTests',
         db: 'userDb'
@@ -347,6 +355,14 @@ describe('core/@Routable', function() {
     })
     class NoDocsCreated extends SakuraApiModel {
     }
+
+    const sapi = testSapi({
+      models: [
+        NoDocsCreated,
+        User
+      ],
+      routables: []
+    });
 
     @Routable(sapi, {
       model: User
@@ -373,22 +389,22 @@ describe('core/@Routable', function() {
       }
     }
 
-    beforeEach(function(done) {
+    beforeEach((done) => {
       sapi
         .listen({bootMessage: ''})
         .then(done)
         .catch(done.fail);
     });
 
-    afterEach(function(done) {
+    afterEach((done) => {
       sapi
         .close()
         .then(done)
         .catch(done.fail);
     });
 
-    describe('throws', function() {
-      it('if the provided model is not decorated with @Model', function() {
+    describe('throws', () => {
+      it('if the provided model is not decorated with @Model', () => {
         expect(() => {
           class NotAModel {
           }
@@ -403,7 +419,7 @@ describe('core/@Routable', function() {
           + ` @Routable`));
       });
 
-      it('if provided either suppressApi or exposeApi options without a model', function() {
+      it('if provided either suppressApi or exposeApi options without a model', () => {
         expect(() => {
           @Routable(sapi, {
             suppressApi: ['get']
@@ -425,28 +441,28 @@ describe('core/@Routable', function() {
       });
     });
 
-    describe('generates routes with built in handlers when provided a model', function() {
-      describe('properly names routes', function() {
-        it('uses the model\'s name if there is no baseUrl for the @Routable class', function(done) {
+    describe('generates routes with built in handlers when provided a model', () => {
+      describe('properly names routes', () => {
+        it('uses the model\'s name if there is no baseUrl for the @Routable class', (done) => {
           request(sapi.app)
-            .get(this.uri('/user'))
+            .get(testUrl('/user'))
             .expect(200)
             .then(done)
             .catch(done.fail);
         });
       });
 
-      it('uses the baseUrl for the @Routable class if one is set', function(done) {
+      it('uses the baseUrl for the @Routable class if one is set', (done) => {
         request(sapi.app)
-          .get(this.uri('/testUserApi2'))
+          .get(testUrl('/testUserApi2'))
           .expect(200)
           .then(done)
           .catch(done.fail);
       });
 
-      describe('GET ./model', function() {
+      describe('GET ./model', () => {
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
           User
             .removeAll({})
             .then(() => {
@@ -483,10 +499,10 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        it('returns all documents with all fields properly mapped by @Json', function(done) {
+        it('returns all documents with all fields properly mapped by @Json', (done) => {
 
           request(sapi.app)
-            .get(this.uri('/user'))
+            .get(testUrl('/user'))
             .expect('Content-Type', /json/)
             .expect(200)
             .then((res) => {
@@ -501,9 +517,9 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        it('returns empty array with no results', function(done) {
+        it('returns empty array with no results', (done) => {
           request(sapi.app)
-            .get(this.uri('/testUserApi2'))
+            .get(testUrl('/testUserApi2'))
             .expect('Content-Type', /json/)
             .expect(200)
             .then((res) => {
@@ -514,11 +530,11 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        describe('supports a where query', function() {
+        describe('supports a where query', () => {
 
-          it('returns 400 with invalid json for where parameter', function(done) {
+          it('returns 400 with invalid json for where parameter', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user?where={firstName:test}`))
+              .get(testUrl(`/user?where={firstName:test}`))
               .expect(400)
               .then((res) => {
                 expect(res.body).toBeDefined('There should have been a body returned with the error');
@@ -529,13 +545,13 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns 200 with empty array when there is a valid where query with no matching entities', function(done) {
+          it('returns 200 with empty array when there is a valid where query with no matching entities', (done) => {
             const json = {
               fn: 'Zorg, Commander of the Raylon Empire'
             };
 
             request(sapi.app)
-              .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+              .get(testUrl(`/user?where=${JSON.stringify(json)}`))
               .expect(200)
               .expect('Content-Type', /json/)
               .then((res) => {
@@ -547,13 +563,13 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns the expected objects', function(done) {
+          it('returns the expected objects', (done) => {
             const json = {
               fn: 'George'
             };
 
             request(sapi.app)
-              .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+              .get(testUrl(`/user?where=${JSON.stringify(json)}`))
               .expect(200)
               .expect('Content-Type', /json/)
               .then((res) => {
@@ -575,7 +591,7 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          describe('supports deep where', function() {
+          describe('supports deep where', () => {
             const json = {
               contact: {
                 phone: '123'
@@ -583,9 +599,9 @@ describe('core/@Routable', function() {
               fn: 'George'
             };
 
-            it('with no results expected', function(done) {
+            it('with no results expected', (done) => {
               request(sapi.app)
-                .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+                .get(testUrl(`/user?where=${JSON.stringify(json)}`))
                 .expect(200)
                 .expect('Content-Type', /json/)
                 .then((res) => {
@@ -597,11 +613,11 @@ describe('core/@Routable', function() {
                 .catch(done.fail);
             });
 
-            it('with one result expected', function(done) {
+            it('with one result expected', (done) => {
               json.contact.phone = '111-111-1111';
 
               request(sapi.app)
-                .get(this.uri(`/user?where=${JSON.stringify(json)}`))
+                .get(testUrl(`/user?where=${JSON.stringify(json)}`))
                 .expect(200)
                 .expect('Content-Type', /json/)
                 .then((res) => {
@@ -620,17 +636,17 @@ describe('core/@Routable', function() {
             });
           });
 
-          it('does not allow for NoSQL injection', function() {
+          it('does not allow for NoSQL injection', (done) => {
             pending('not implemented: https://github.com/sakuraapi/api/issues/65');
           });
 
         });
 
-        describe('supports fields projection', function() {
+        describe('supports fields projection', () => {
 
-          it('returns 400 with invalid json for fields parameter', function(done) {
+          it('returns 400 with invalid json for fields parameter', (done) => {
             request(sapi.app)
-              .get(this.uri('/user?fields={blah}'))
+              .get(testUrl('/user?fields={blah}'))
               .expect(400)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
@@ -641,9 +657,9 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns 400 with invalid json for fields=', function(done) {
+          it('returns 400 with invalid json for fields=', (done) => {
             request(sapi.app)
-              .get(this.uri('/user?fields='))
+              .get(testUrl('/user?fields='))
               .expect(400)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
@@ -654,13 +670,13 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns results with excluded fields', function(done) {
+          it('returns results with excluded fields', (done) => {
             const fields = {
               ln: 0
             };
 
             request(sapi.app)
-              .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
+              .get(testUrl(`/user?fields=${JSON.stringify(fields)}`))
               .expect(200)
               .then((res) => {
                 expect(res.body.length).toBe(5);
@@ -678,13 +694,13 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns results with embedded document excluded fields', function(done) {
+          it('returns results with embedded document excluded fields', (done) => {
             const fields = {
               contact: {mobile: 0}
             };
 
             request(sapi.app)
-              .get(this.uri(`/user?fields=${JSON.stringify(fields)}`))
+              .get(testUrl(`/user?fields=${JSON.stringify(fields)}`))
               .expect(200)
               .then((res) => {
                 expect(res.body.length).toBe(5);
@@ -704,10 +720,10 @@ describe('core/@Routable', function() {
           });
         });
 
-        describe('supports skip', function() {
-          it('with valid values', function(done) {
+        describe('supports skip', () => {
+          it('with valid values', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user?skip=4`))
+              .get(testUrl(`/user?skip=4`))
               .expect(200)
               .then((res) => {
                 expect(res.body.length).toBe(1, 'should have skipped to last entry');
@@ -718,9 +734,9 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('with valid values greater than records available', function(done) {
+          it('with valid values greater than records available', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user?skip=100`))
+              .get(testUrl(`/user?skip=100`))
               .expect(200)
               .then((res) => {
                 expect(Array.isArray(res.body)).toBeTruthy('Expected an empty array');
@@ -730,27 +746,27 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns 400 with no values', function(done) {
+          it('returns 400 with no values', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user?skip=`))
+              .get(testUrl(`/user?skip=`))
               .expect(400)
               .then(done)
               .catch(done.fail);
           });
 
-          it('returns 400 with invalid values', function(done) {
+          it('returns 400 with invalid values', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user?skip=aaa`))
+              .get(testUrl(`/user?skip=aaa`))
               .expect(400)
               .then(done)
               .catch(done.fail);
           });
         });
 
-        describe('supports limit', function() {
-          it('with valid values', function(done) {
+        describe('supports limit', () => {
+          it('with valid values', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user?limit=2`))
+              .get(testUrl(`/user?limit=2`))
               .expect(200)
               .then((res) => {
                 expect(res.body.length).toBe(2, 'should have been limited');
@@ -759,9 +775,9 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('limit=0 is the same as unlimited', function(done) {
+          it('limit=0 is the same as unlimited', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user?limit=0`))
+              .get(testUrl(`/user?limit=0`))
               .expect(200)
               .then((res) => {
                 expect(res.body.length).toBe(5, 'All results should have been returned');
@@ -770,26 +786,26 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns 400 with no values', function(done) {
+          it('returns 400 with no values', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user?limit=`))
+              .get(testUrl(`/user?limit=`))
               .expect(400)
               .then(done)
               .catch(done.fail);
           });
 
-          it('returns 400 with invalid values', function(done) {
+          it('returns 400 with invalid values', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user?limit=aaa`))
+              .get(testUrl(`/user?limit=aaa`))
               .expect(400)
               .then(done)
               .catch(done.fail);
           });
         });
 
-        it('supports limit + skip', function(done) {
+        it('supports limit + skip', (done) => {
           request(sapi.app)
-            .get(this.uri(`/user?limit=2&skip=2`))
+            .get(testUrl(`/user?limit=2&skip=2`))
             .expect(200)
             .then((res) => {
               expect(res.body.length).toBe(2, 'should have been limited to 2 entries');
@@ -801,9 +817,9 @@ describe('core/@Routable', function() {
         });
       });
 
-      describe('GET ./model/:id', function() {
+      describe('GET ./model/:id', () => {
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
           User
             .removeAll({})
             .then(() => {
@@ -821,9 +837,9 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        it('returns a specific document with all fields properly mapped by @Json', function(done) {
+        it('returns a specific document with all fields properly mapped by @Json', (done) => {
           request(sapi.app)
-            .get(this.uri(`/user/${this.user1.id}`))
+            .get(testUrl(`/user/${this.user1.id}`))
             .expect('Content-Type', /json/)
             .expect(200)
             .then((res) => {
@@ -840,9 +856,9 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        it('returns null with no result', function(done) {
+        it('returns null with no result', (done) => {
           request(sapi.app)
-            .get(this.uri(`/user/123`))
+            .get(testUrl(`/user/123`))
             .expect('Content-Type', /json/)
             .expect(200)
             .then((res) => {
@@ -852,11 +868,11 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        describe('supports fields projection', function() {
+        describe('supports fields projection', () => {
 
-          it('returns 400 with invalid json for fields parameter', function(done) {
+          it('returns 400 with invalid json for fields parameter', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user/${this.user1.id.toString()}?fields={blah}`))
+              .get(testUrl(`/user/${this.user1.id.toString()}?fields={blah}`))
               .expect(400)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
@@ -867,9 +883,9 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns 400 with invalid json for fields=', function(done) {
+          it('returns 400 with invalid json for fields=', (done) => {
             request(sapi.app)
-              .get(this.uri(`/user/${this.user1.id.toString()}?fields=`))
+              .get(testUrl(`/user/${this.user1.id.toString()}?fields=`))
               .expect(400)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
@@ -880,13 +896,13 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns results with excluded fields', function(done) {
+          it('returns results with excluded fields', (done) => {
             const fields = {
               ln: 0
             };
 
             request(sapi.app)
-              .get(this.uri(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
+              .get(testUrl(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
               .expect(200)
               .then((res) => {
                 expect(res.body.fn).toBeDefined('firstName should not have been excluded');
@@ -899,13 +915,13 @@ describe('core/@Routable', function() {
               .catch(done.fail);
           });
 
-          it('returns results with embedded document excluded fields', function(done) {
+          it('returns results with embedded document excluded fields', (done) => {
             const fields = {
               contact: {mobile: 0}
             };
 
             request(sapi.app)
-              .get(this.uri(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
+              .get(testUrl(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
               .expect(200)
               .then((res) => {
                 expect(res.body.fn).toBe(this.user1.firstName);
@@ -920,22 +936,22 @@ describe('core/@Routable', function() {
         });
       });
 
-      describe('POST ./model', function() {
+      describe('POST ./model', () => {
 
-        beforeEach(function(done) {
+        beforeEach((done) => {
           User
             .removeAll({})
             .then(done)
             .catch(done.fail);
         });
 
-        it('returns 400 if the body is not an object', function(done) {
+        it('returns 400 if the body is not an object', (done) => {
           // Note: this test assumes that bodyparser middleware is installed... if it is, then there's a default
           // top level error handler setup on the `.listen` method of SakuraApi that will catch a bodyparser parsing
           // error and it should inject the 'invalid_body' error property.
 
           request(sapi.app)
-            .post(this.uri(`/user`))
+            .post(testUrl(`/user`))
             .type('application/json')
             .send(`{test:}`)
             .expect(400)
@@ -946,7 +962,7 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        it('takes a json object and creates it', function(done) {
+        it('takes a json object and creates it', (done) => {
           const obj = {
             contact: {
               phone: 'not invented yet'
@@ -956,7 +972,7 @@ describe('core/@Routable', function() {
           };
 
           request(sapi.app)
-            .post(this.uri('/user'))
+            .post(testUrl('/user'))
             .type('application/json')
             .send(JSON.stringify(obj))
             .expect(200)
@@ -985,8 +1001,8 @@ describe('core/@Routable', function() {
 
       });
 
-      describe('PUT ./model', function() {
-        beforeEach(function(done) {
+      describe('PUT ./model', () => {
+        beforeEach((done) => {
           User
             .removeAll({})
             .then(() => {
@@ -1005,13 +1021,13 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        it('returns 400 if the body is not an object', function(done) {
+        it('returns 400 if the body is not an object', (done) => {
           // Note: this test assumes that bodyparser middleware is installed... if it is, then there's a default
           // top level error handler setup on the `.listen` method of SakuraApi that will catch a bodyparser parsing
           // error and it should inject the 'invalid_body' error property.
 
           request(sapi.app)
-            .put(this.uri(`/user/${this.user1.id.toString()}`))
+            .put(testUrl(`/user/${this.user1.id.toString()}`))
             .type('application/json')
             .send(`{test:}`)
             .expect(400)
@@ -1022,9 +1038,9 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        it('returns 404 if the document to be updated is not found', function(done) {
+        it('returns 404 if the document to be updated is not found', (done) => {
           request(sapi.app)
-            .put(this.uri(`/user/aaa`))
+            .put(testUrl(`/user/aaa`))
             .type('application/json')
             .send(JSON.stringify({}))
             .expect(404)
@@ -1032,7 +1048,7 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        it('takes a json object and updates it', function(done) {
+        it('takes a json object and updates it', (done) => {
           const obj = {
             contact: {
               mobile: '888',
@@ -1045,7 +1061,7 @@ describe('core/@Routable', function() {
           };
 
           request(sapi.app)
-            .put(this.uri(`/user/${this.user2.id.toString()}`))
+            .put(testUrl(`/user/${this.user2.id.toString()}`))
             .type('application/json')
             .send(JSON.stringify(obj))
             .expect(200)
@@ -1072,8 +1088,8 @@ describe('core/@Routable', function() {
         });
       });
 
-      describe('DELETE ./mode/:id', function() {
-        beforeEach(function(done) {
+      describe('DELETE ./mode/:id', () => {
+        beforeEach((done) => {
           User
             .removeAll({})
             .then(() => {
@@ -1090,9 +1106,9 @@ describe('core/@Routable', function() {
             .catch(done.fail);
         });
 
-        it('removes the document from the db if a matching id is found', function(done) {
+        it('removes the document from the db if a matching id is found', (done) => {
           request(sapi.app)
-            .delete(this.uri(`/user/${this.user1.id.toString()}`))
+            .delete(testUrl(`/user/${this.user1.id.toString()}`))
             .then((result: any) => {
               expect(result.body.n).toBe(1, 'one record should have been removed');
               return User
@@ -1120,11 +1136,11 @@ describe('core/@Routable', function() {
         });
       });
 
-      describe('exposeApi suppresses non exposed endpoints', function() {
+      describe('exposeApi suppresses non exposed endpoints', () => {
         pending('not implemented');
       });
 
-      describe('suppressApi exposes non suppressed endpoints', function() {
+      describe('suppressApi exposes non suppressed endpoints', () => {
         @Routable(sapi, {
           baseUrl: 'RoutableSuppressApiTrueTest',
           model: User,
@@ -1133,25 +1149,24 @@ describe('core/@Routable', function() {
         class RoutableSuppressApiTrueTest {
         }
 
-        it('suppressess all model generated endpoints when suppressApi is set to true rather than an array', function(done) {
+        it('suppressess all model generated endpoints when suppressApi is set to true rather than an array', (done) => {
           request(sapi.app)
-            .get(this.uri('/RoutableSuppressApiTrueTest'))
+            .get(testUrl('/RoutableSuppressApiTrueTest'))
             .expect(404)
             .then(done)
             .catch(done.fail);
         });
 
-        it('more thorough testing', function() {
+        it('more thorough testing', () => {
           pending('not implemented');
         });
       });
     });
   });
 
-  describe('beforeAll handlers', function() {
-    const sapi = Sapi();
+  describe('beforeAll handlers', () => {
 
-    @Model(sapi, {
+    @Model({
       dbConfig: {
         collection: 'users',
         db: 'userDb'
@@ -1168,6 +1183,11 @@ describe('core/@Routable', function() {
       order = '';
     }
 
+    const sapi = testSapi({
+      models: [UserBeforeAllHandlers],
+      routables: []
+    });
+
     @Routable(sapi, {
       beforeAll: [UserBeforeAllHandlersApi.beforeHandler, testHandler],
       model: UserBeforeAllHandlers
@@ -1181,7 +1201,7 @@ describe('core/@Routable', function() {
       }
     }
 
-    beforeAll(function(done) {
+    beforeAll((done) => {
       sapi
         .listen({bootMessage: ''})
         .then(() => UserBeforeAllHandlers.removeAll({}))
@@ -1189,16 +1209,16 @@ describe('core/@Routable', function() {
         .catch(done.fail);
     });
 
-    afterAll(function(done) {
+    afterAll((done) => {
       sapi
         .close()
         .then(done)
         .catch(done.fail);
     });
 
-    it('run before each @Route method', function(done) {
+    it('run before each @Route method', (done) => {
       request(sapi.app)
-        .post(this.uri('/userbeforeallhandlers'))
+        .post(testUrl('/userbeforeallhandlers'))
         .type('application/json')
         .send({
           firstName: 'Ben',
@@ -1221,9 +1241,9 @@ describe('core/@Routable', function() {
         .catch(done.fail);
     });
 
-    it('run in the correct order', function(done) {
+    it('run in the correct order', (done) => {
       request(sapi.app)
-        .post(this.uri('/userbeforeallhandlers'))
+        .post(testUrl('/userbeforeallhandlers'))
         .type('application/json')
         .send({
           firstName: 'Ben',
@@ -1251,12 +1271,10 @@ describe('core/@Routable', function() {
     }
   });
 
-  describe('afterAll handlers', function() {
-
-    const sapi = Sapi();
+  describe('afterAll handlers', () => {
     let test = 0;
 
-    @Model(sapi, {
+    @Model({
       dbConfig: {
         collection: 'users',
         db: 'userDb'
@@ -1272,6 +1290,11 @@ describe('core/@Routable', function() {
       @Db() @Json()
       order = '1';
     }
+
+    const sapi = testSapi({
+      models: [UserAfterAllHandlers],
+      routables: []
+    });
 
     @Routable(sapi, {
       afterAll: [UserAfterAllHandlersApi.afterHandler, testAfterHandler],
@@ -1297,7 +1320,7 @@ describe('core/@Routable', function() {
       next();
     }
 
-    beforeEach(function(done) {
+    beforeEach((done) => {
       sapi
         .listen({bootMessage: ''})
         .then(() => UserAfterAllHandlers.removeAll({}))
@@ -1305,16 +1328,16 @@ describe('core/@Routable', function() {
         .catch(done.fail);
     });
 
-    afterEach(function(done) {
+    afterEach((done) => {
       sapi
         .close()
         .then(done)
         .catch(done.fail);
     });
 
-    it('run after each @Route method', function(done) {
+    it('run after each @Route method', (done) => {
       request(sapi.app)
-        .post(this.uri(`/UserAfterAllHandlers?test=${++test}`))
+        .post(testUrl(`/UserAfterAllHandlers?test=${++test}`))
         .type('application/json')
         .send({
           firstName: 'Ben',
@@ -1336,11 +1359,8 @@ describe('core/@Routable', function() {
 
   });
 
-  describe('beforeAll and afterAll handlers play nice together', function() {
-
-    const sapi = Sapi();
-
-    @Model(sapi, {
+  describe('beforeAll and afterAll handlers play nice together', () => {
+    @Model({
       dbConfig: {
         collection: 'users',
         db: 'userDb'
@@ -1356,6 +1376,11 @@ describe('core/@Routable', function() {
       @Db() @Json()
       order = '1';
     }
+
+    const sapi = testSapi({
+      models: [UserAfterAllHandlersBeforeAllHandlers],
+      routables: []
+    });
 
     @Routable(sapi, {
       afterAll: [UserAfterAllHandlersBeforeAllHandlersApi.afterHandler, testAfterHandler],
@@ -1388,7 +1413,7 @@ describe('core/@Routable', function() {
       next();
     }
 
-    beforeEach(function(done) {
+    beforeEach((done) => {
       sapi
         .listen({bootMessage: ''})
         .then(() => UserAfterAllHandlersBeforeAllHandlers.removeAll({}))
@@ -1396,17 +1421,17 @@ describe('core/@Routable', function() {
         .catch(done.fail);
     });
 
-    afterEach(function(done) {
+    afterEach((done) => {
       sapi
         .close()
         .then(done)
         .catch(done.fail);
     });
 
-    it('run after each @Route method', function(done) {
+    it('run after each @Route method', (done) => {
 
       request(sapi.app)
-        .post(this.uri('/UserAfterAllHandlersBeforeAllHandlers'))
+        .post(testUrl('/UserAfterAllHandlersBeforeAllHandlers'))
         .type('application/json')
         .send({
           firstName: 'Ben',
@@ -1421,7 +1446,7 @@ describe('core/@Routable', function() {
         .catch(done.fail);
     });
 
-    it('throws if built in handler is called with no model bound', function() {
+    it('throws if built in handler is called with no model bound', () => {
 
       try {
         @Routable(sapi)
@@ -1442,10 +1467,9 @@ describe('core/@Routable', function() {
     });
   });
 
-  describe('before and after handlers can utilize injected route handlers', function() {
-    const sapi = Sapi();
+  describe('before and after handlers can utilize injected route handlers', () => {
 
-    @Model(sapi, {
+    @Model({
       dbConfig: {
         collection: 'BeforeAfterInjectRouteTestModel',
         db: 'userDb'
@@ -1459,14 +1483,19 @@ describe('core/@Routable', function() {
       lastName = 'Washington';
     }
 
-    afterEach(function(done) {
+    const sapi = testSapi({
+      models: [BeforeAfterInjectRouteTestModel],
+      routables: []
+    });
+
+    afterEach((done) => {
       sapi
         .close()
         .then(done)
         .catch(done.fail);
     });
 
-    describe('getAllHandler', function() {
+    describe('getAllHandler', () => {
       @Routable(sapi, {
         baseUrl: 'GetAllRouteHandlerBeforeAfterTest',
         model: BeforeAfterInjectRouteTestModel
@@ -1501,13 +1530,13 @@ describe('core/@Routable', function() {
         }
       }
 
-      it('with result', function(done) {
+      it('with result', (done) => {
         sapi
           .listen({bootMessage: ''})
           .then(() => new BeforeAfterInjectRouteTestModel().create())
           .then(() => {
             return request(sapi.app)
-              .get(this.uri('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
+              .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
               .expect(200)
               .then((res) => {
                 const body = res.body;
@@ -1521,13 +1550,13 @@ describe('core/@Routable', function() {
           .catch(done.fail);
       });
 
-      it('without results', function(done) {
+      it('without results', (done) => {
         sapi
           .listen({bootMessage: ''})
           .then(() => BeforeAfterInjectRouteTestModel.removeAll({}))
           .then(() => {
             return request(sapi.app)
-              .get(this.uri('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
+              .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
               .expect(200)
               .then((res) => {
                 const body = res.body;
@@ -1540,7 +1569,7 @@ describe('core/@Routable', function() {
       });
     });
 
-    describe('get handler', function() {
+    describe('get handler', () => {
       @Routable(sapi, {
         baseUrl: 'GetRouteHandlerBeforeAfterTest',
         model: BeforeAfterInjectRouteTestModel
@@ -1586,13 +1615,13 @@ describe('core/@Routable', function() {
 
       }
 
-      it('with valid id', function(done) {
+      it('with valid id', (done) => {
         sapi
           .listen({bootMessage: ''})
           .then(() => new BeforeAfterInjectRouteTestModel().create())
           .then((db) => {
             return request(sapi.app)
-              .get(this.uri(`/GetRouteHandlerBeforeAfterTest/beforeTest/get/${db.insertedId}`))
+              .get(testUrl(`/GetRouteHandlerBeforeAfterTest/beforeTest/get/${db.insertedId}`))
               .expect(200)
               .then((res) => {
                 const body = res.body;
@@ -1605,12 +1634,12 @@ describe('core/@Routable', function() {
           .catch(done.fail);
       });
 
-      it('with invalid id', function(done) {
+      it('with invalid id', (done) => {
         sapi
           .listen({bootMessage: ''})
           .then(() => {
             return request(sapi.app)
-              .get(this.uri(`/GetRouteHandlerBeforeAfterTest/beforeTest/get2/123`))
+              .get(testUrl(`/GetRouteHandlerBeforeAfterTest/beforeTest/get2/123`))
               .expect(200)
               .then((res) => {
                 const body = res.body;
@@ -1621,22 +1650,5 @@ describe('core/@Routable', function() {
           .catch(done.fail);
       });
     });
-  });
-
-  it('allows sapi to be injected after bootstrapping for testing', function() {
-    const sapi = Sapi();
-    const sapi2 = Sapi();
-    sapi2['injectedTestValue'] = true;
-
-    @Routable(sapi)
-    class SapiInjectionRoutableApiTest extends SakuraApiRoutable {
-    }
-
-    expect(SapiInjectionRoutableApiTest[routableSymbols.sapi]).toBeTruthy();
-    expect(SapiInjectionRoutableApiTest[routableSymbols.sapi].injectedTestValue).toBeFalsy();
-    expect(sapi2['injectedTestValue']).toBeTruthy();
-
-    SapiInjectionRoutableApiTest.changeSapi(sapi2);
-    expect(SapiInjectionRoutableApiTest[routableSymbols.sapi].injectedTestValue).toBeTruthy();
   });
 });
