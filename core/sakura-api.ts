@@ -1,22 +1,16 @@
 import * as express from 'express';
-import {
-  ErrorRequestHandler,
-  Express,
-  Handler,
-  NextFunction,
-  Request,
-  Response
-} from 'express';
+import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response} from 'express';
 import * as http from 'http';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
 import {modelSymbols} from './@model/model';
-import {
-  ISakuraApiClassRoute,
-  routableSymbols
-} from './@routable';
+import {ISakuraApiClassRoute, routableSymbols} from './@routable';
 import {IRoutableLocals} from './@routable/routable';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
-import debug = require('debug');
+
+const debug = {
+  normal: require('debug')('sapi:SakuraApi'),
+  route: require('debug')('sapi:route')
+};
 
 /**
  * A set of properties defining the configuration of the server.
@@ -121,12 +115,6 @@ export interface SakuraApiOptions {
  */
 export class SakuraApi {
 
-  private static debug = {
-    normal: debug('sapi:SakuraApi'),
-    route: debug('sapi:route')
-  };
-  private debug = SakuraApi.debug;
-
   private _address: string = '127.0.0.1';
   private _app: Express;
   private _config: any;
@@ -205,7 +193,7 @@ export class SakuraApi {
   }
 
   constructor(options: SakuraApiOptions) {
-    this.debug.normal('.constructor started');
+    debug.normal('.constructor started');
 
     this.config = (!options.config)
       ? new SakuraApiConfig().load(options.configPath) || {}
@@ -224,11 +212,11 @@ export class SakuraApi {
     this.mapModels(options);
     this.mapRoutables(options);
 
-    this.debug.normal('.constructor done');
+    debug.normal('.constructor done');
   }
 
   private mapModels(options: SakuraApiOptions) {
-    this.debug.normal('\tMapping Models');
+    debug.normal('\tMapping Models');
     const models = options.models || [];
 
     for (const model of models) {
@@ -263,7 +251,7 @@ export class SakuraApi {
   }
 
   private mapRoutables(options: SakuraApiOptions) {
-    this.debug.normal('\tMapping Models');
+    debug.normal('\tMapping Models');
     const routables = options.routables || [];
 
     for (const routable of routables) {
@@ -307,12 +295,12 @@ export class SakuraApi {
    * This uses `express.use(...)` internally.
    */
   addMiddleware(fn: (req: Request, res: Response, next: NextFunction) => void) {
-    SakuraApi.debug.normal('.addMiddleware called');
+    debug.normal('.addMiddleware called');
     this.app.use(fn);
   }
 
   addLastErrorHandlers(fn: ErrorRequestHandler) {
-    SakuraApi.debug.normal('.addMiddleware called');
+    debug.normal('.addMiddleware called');
     this.lastErrorHandlers.push(fn);
   }
 
@@ -321,19 +309,19 @@ export class SakuraApi {
    * with any error other than `Not running` that's returned from the `http.Server` instance.
    */
   close(): Promise<null> {
-    this.debug.normal('.close called');
+    debug.normal('.close called');
 
     return new Promise((resolve, reject) => {
       this
         .server
         .close((err) => {
           if (err && err.message !== 'Not running') {
-            this.debug.normal('.close error', err);
+            debug.normal('.close error', err);
 
             return reject(err);
           }
 
-          this.debug.normal('.close done');
+          debug.normal('.close done');
           resolve();
         });
     });
@@ -352,8 +340,8 @@ export class SakuraApi {
   listen(listenProperties?: ServerConfig): Promise<null> {
 
     return new Promise((resolve, reject) => {
-      this.debug.route(`.listen called with serverConfig:`, listenProperties);
-      this.debug.route(`.listen setting baseUri to ${this.baseUri}`);
+      debug.route(`.listen called with serverConfig:`, listenProperties);
+      debug.route(`.listen setting baseUri to ${this.baseUri}`);
 
       listenProperties = listenProperties || {};
       this._address = listenProperties.address || this._address;
@@ -363,12 +351,12 @@ export class SakuraApi {
       // Add App Route Handlers ----------------------------------------------------------------------------------------
       // but only once per instance of SakuraApi
       if (!this.appMiddlewareAdded) {
-        this.debug.route(`\t.listen first time call, adding app middleware`);
+        debug.route(`\t.listen first time call, adding app middleware`);
 
         /**
          * Catch BodyParser parse errors
          */
-        this.app.use(function(err, req, res, next) {
+        this.app.use(function (err, req, res, next) {
           // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
           if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
             res.status(400).send({
@@ -422,7 +410,7 @@ export class SakuraApi {
          * Setup route handler so that each call to listen always overwrites the prior routes -- makes testing
          * easier, there's really not a lot of reasons to be calling listen multiple times in a production app
          */
-        this.app.use(this.baseUri, function(req, res, next) {
+        this.app.use(this.baseUri, function (req, res, next) {
           // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
           // hook whatever the current router is
           router(req, res, next);
@@ -434,11 +422,11 @@ export class SakuraApi {
       // Setup @Routable routes ----------------------------------------------------------------------------------------
       router = express.Router();
 
-      this.debug.route('\t.listen processing route queue');
+      debug.route('\t.listen processing route queue');
       // add routes
       for (let route of this.routeQueue.values()) {
 
-        this.debug.route('\t\t.listen route %o', route);
+        debug.route('\t\t.listen route %o', route);
 
         let routeHandlers: Handler[] = [];
 
@@ -486,7 +474,7 @@ export class SakuraApi {
           .server
           .listen(this.port, this.address, (err) => {
             if (err) {
-              this.debug.normal('.listen error', err);
+              debug.normal('.listen error', err);
               return reject(err);
             }
 
@@ -502,7 +490,7 @@ export class SakuraApi {
               }
             }
 
-            this.debug.normal(`.listen server started ${this.address}:${this.port}`);
+            debug.normal(`.listen server started ${this.address}:${this.port}`);
             return resolve();
           });
       }
@@ -527,15 +515,15 @@ export class SakuraApi {
    */
   enqueueRoutes(target: any) {
 
-    this.debug.route(`SakuraApi.route called for %o`, target);
+    debug.route(`SakuraApi.route called for %o`, target);
 
     if (!target[routableSymbols.routes]) {
-      this.debug.route(`.route '%o' is not a routable class`, target);
+      debug.route(`.route '%o' is not a routable class`, target);
       return;
     }
 
     for (const route of target[routableSymbols.routes]) {
-      this.debug.route(`\tadded '${JSON.stringify(route)}'`);
+      debug.route(`\tadded '${JSON.stringify(route)}'`);
 
       const routeSignature = `${route.httpMethod}:${route.path}`;
       if (this.routeQueue.get(routeSignature)) {

@@ -2,7 +2,10 @@ import * as fs from 'fs';
 import * as _ from 'lodash';
 import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
 
-import debug = require('debug');
+const debug = {
+  normal: require('debug')('sapi:SakuraApiConfig'),
+  verbose: require('debug')('sapi:SakuraApiConfig:verbose')
+};
 
 /**
  * SakuraApiConfig loads and manages the cascading configuration files of SakuraApi.
@@ -16,17 +19,11 @@ export class SakuraApiConfig {
    */
   config: any;
 
-  private static debug = {
-    normal: debug('sapi:SakuraApiConfig'),
-    verbose: debug('sapi:SakuraApiConfig:verbose')
-  };
-  private debug = SakuraApiConfig.debug;
-
   /**
    * Instantiate SakuraApiConfig.
    */
   constructor() {
-    this.debug.normal('.constructor');
+    debug.normal('.constructor');
   }
 
   /**
@@ -83,32 +80,32 @@ export class SakuraApiConfig {
   load(path?: string): any {
 
     path = path || process.env.SAKURA_API_CONFIG || 'config/environment.json';
-    this.debug.normal(`.load path: '${path}'`);
-    
+    debug.normal(`.load path: '${path}'`);
+
     let config = {};
     let baseConfig = {};
     let baseJsConfig = {};
 
     // environment.json
-    this.debug.normal(`loading environment.json`);
+    debug.normal(`loading environment.json`);
     try {
       baseConfig = JSON.parse(fs.readFileSync(path, {encoding: 'utf8'}));
-      this.debug.normal(`loaded environment.json`);
-      this.debug.verbose(baseConfig);
+      debug.normal(`loaded environment.json`);
+      debug.verbose(baseConfig);
     } catch (err) {
-      this.debug.normal(`${err}`);
+      debug.normal(`${err}`);
       handleLoadError(err, path, false);
     }
 
     // environment.js
     let jsPath = changeFileExtension(path, 'js');
-    this.debug.normal(`loading ${jsPath}`);
+    debug.normal(`loading ${jsPath}`);
     try {
       baseJsConfig = require(`${process.cwd()}/${jsPath}`);
-      this.debug.normal(`loaded ${jsPath}`);
-      this.debug.verbose(baseConfig);
+      debug.normal(`loaded ${jsPath}`);
+      debug.verbose(baseConfig);
     } catch (err) {
-      this.debug.normal(`${err}`);
+      debug.normal(`${err}`);
       handleLoadError(err, path, true);
     }
 
@@ -124,26 +121,26 @@ export class SakuraApiConfig {
       pathParts[pathParts.length - 1] = fileParts.join('.');
       path = pathParts.join('/');
 
-      this.debug.normal(`loading ${path}`);
+      debug.normal(`loading ${path}`);
       try {
         envConfig = JSON.parse(fs.readFileSync(path, {encoding: 'utf8'}));
-        this.debug.normal(`loaded ${path}`);
-        this.debug.verbose(envConfig);
+        debug.normal(`loaded ${path}`);
+        debug.verbose(envConfig);
       } catch (err) {
-        this.debug.normal(`${err}`);
+        debug.normal(`${err}`);
         handleLoadError(err, path, true);
       }
 
       path = changeFileExtension(path, 'js');
 
       // environment.{env}.js
-      this.debug.normal(`loading ${process.cwd()}/${path}`);
+      debug.normal(`loading ${process.cwd()}/${path}`);
       try {
         envJsConfig = require(`${process.cwd()}/${path}`);
-        this.debug.normal(`loaded ${process.cwd()}/${path}`);
-        this.debug.verbose(envJsConfig);
+        debug.normal(`loaded ${process.cwd()}/${path}`);
+        debug.verbose(envJsConfig);
       } catch (err) {
-        this.debug.normal(`${err}`);
+        debug.normal(`${err}`);
         handleLoadError(err, path, true);
       }
     }
@@ -151,7 +148,7 @@ export class SakuraApiConfig {
     _.merge(config, baseConfig, baseJsConfig, envConfig, envJsConfig, process.env);
     this.config = config;
 
-    this.debug.verbose('.load:\n%O', config);
+    debug.verbose('.load:\n%O', config);
     return config;
 
     //////////
@@ -167,26 +164,26 @@ export class SakuraApiConfig {
     function handleLoadError(err: Error, path: string, noDefault: boolean) {
       if (err['code'] === 'ENOENT') {
         // NOOP: the config file is empty, just default to {}
-        SakuraApiConfig.debug.normal(`.load config file empty, defaulting to {} for path: '${path}'`);
+        debug.normal(`.load config file empty, defaulting to {} for path: '${path}'`);
         return;
       } else if (err.message.startsWith('Cannot find module')) {
         // NOOP: a ts config file wasn't found
-        SakuraApiConfig.debug.normal(`.load config file wasn't found, defaulting to {} for path: '${path}'`);
+        debug.normal(`.load config file wasn't found, defaulting to {} for path: '${path}'`);
         return;
       } else if (err.message === 'Unexpected end of JSON input') {
         let e = new Error(err.message);
         e['code'] = 'INVALID_JSON_EMPTY';
         e['path'] = path;
-        SakuraApiConfig.debug.normal(`.load path: '${path}', error:`, err);
+        debug.normal(`.load path: '${path}', error:`, err);
         throw e;
       } else if (err.message.startsWith('Unexpected token')) {
         let e = new Error(err.message);
         e['code'] = 'INVALID_JSON_INVALID';
         e['path'] = path;
-        SakuraApiConfig.debug.normal(`.load path: '${path}', error:`, err);
+        debug.normal(`.load path: '${path}', error:`, err);
         throw e;
       } else {
-        SakuraApiConfig.debug.normal(`.load path: '${path}', error:`, err);
+        debug.normal(`.load path: '${path}', error:`, err);
         throw err;
       }
     }
@@ -200,7 +197,7 @@ export class SakuraApiConfig {
     config = config || {};
 
     if (!config.dbConnections) {
-      this.debug.normal(`.dataSources, no config (config: ${!!config},`
+      debug.normal(`.dataSources, no config (config: ${!!config},`
         + `config.dbConnections: ${!!(config || <any>{}).dbConnections})`);
 
       config.dbConnections = [];
@@ -213,7 +210,7 @@ export class SakuraApiConfig {
 
     let dbConns = new SakuraMongoDbConnection();
 
-    this.debug.normal(`Adding ${config.dbConnections.length} dbConnections.`);
+    debug.normal(`Adding ${config.dbConnections.length} dbConnections.`);
     for (let conn of config.dbConnections) {
       dbConns.addConnection(conn.name, conn.url, conn.mongoClientOptions);
     }

@@ -10,27 +10,15 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
-import {
-  addDefaultInstanceMethods,
-  addDefaultStaticMethods,
-  shouldRecurse
-} from '../helpers';
-import {
-  dbSymbols,
-  IDbOptions
-} from './db';
-import {
-  SapiDbForModelNotFound,
-  SapiInvalidModelObject,
-  SapiMissingIdErr
-} from './errors';
-import {
-  IJsonOptions,
-  jsonSymbols
-} from './json';
+import {addDefaultInstanceMethods, addDefaultStaticMethods, shouldRecurse} from '../helpers';
+import {dbSymbols, IDbOptions} from './db';
+import {SapiDbForModelNotFound, SapiInvalidModelObject, SapiMissingIdErr} from './errors';
+import {IJsonOptions, jsonSymbols} from './json';
 import {privateSymbols} from './private';
 
-import debug = require('debug');
+const debug = {
+  normal: require('debug')('sapi:model')
+};
 
 /**
  * Interface defining the properties used for retrieving records from the DB
@@ -199,11 +187,6 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
       }
     });
 
-    // TODO change these to symbols
-    newConstructor.debug = {
-      normal: debug('sapi:model')
-    };
-    newConstructor.prototype.debug = newConstructor.debug;
 
     // isSakuraApiModel hidden property is attached to let other parts of the framework know that this is an @Model obj
     Reflect.defineProperty(newConstructor.prototype, modelSymbols.isSakuraApiModel, {
@@ -327,8 +310,7 @@ function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpR
   return new Promise((resolve, reject) => {
     const col = constructor.getCollection();
 
-    this
-      .debug
+    debug
       .normal(`.create called, dbName: '${constructor[modelSymbols.dbName].name}', found?: ${!!col}, set: %O`, this);
 
     if (!col) {
@@ -357,7 +339,7 @@ function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpR
  */
 function fromDb(json: any, options?: IFromDbOptions): object {
   const modelName = this.name;
-  this.debug.normal(`.fromDb called, target '${modelName}'`);
+  debug.normal(`.fromDb called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
     return null;
@@ -484,7 +466,7 @@ function fromDb(json: any, options?: IFromDbOptions): object {
  * null if the `jsons` parameter is null, undefined, or not an Array.
  */
 function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
-  this.debug.normal(`.fromDbArray called, target '${this.name}'`);
+  debug.normal(`.fromDbArray called, target '${this.name}'`);
 
   if (!jsons || !Array.isArray(jsons)) {
     return [];
@@ -511,7 +493,7 @@ function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
  */
 function fromJson(json: object, ...constructorArgs: any[]): object {
   const modelName = this.name;
-  this.debug.normal(`.fromJson called, target '${modelName}'`);
+  debug.normal(`.fromJson called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
     return null;
@@ -605,7 +587,7 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
  * parameter is null, undefined, or not an array.
  */
 function fromJsonArray(json: object[], ...constructorArgs: any[]): object[] {
-  this.debug.normal(`.fromJsonArray called, target '${this.name}'`);
+  debug.normal(`.fromJsonArray called, target '${this.name}'`);
 
   const result = [];
 
@@ -628,7 +610,7 @@ function fromJsonArray(json: object[], ...constructorArgs: any[]): object[] {
  */
 function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
   const modelName = this.name;
-  this.debug.normal(`.fromJsonToDb called, target '${modelName}'`);
+  debug.normal(`.fromJsonToDb called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
     return null;
@@ -689,7 +671,7 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
  * in the database.
  */
 function get(params?: IDbGetParams): Promise<object[]> {
-  this.debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
+  debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
   return new Promise((resolve, reject) => {
 
     const cursor = this.getCursor(params.filter, params.project);
@@ -731,7 +713,7 @@ function get(params?: IDbGetParams): Promise<object[]> {
  * if the record is not found in the Db.
  */
 function getById(id: string | ObjectID, project?: any): Promise<any> {
-  this.debug.normal(`.getById called, dbName '${this[modelSymbols.dbName]}'`);
+  debug.normal(`.getById called, dbName '${this[modelSymbols.dbName]}'`);
   const cursor = this.getCursorById(id, project);
 
   const options = (project) ? {strict: true} : null;
@@ -765,7 +747,7 @@ function getCollection(): Collection {
 
   const col = db.collection(constructor[modelSymbols.dbCollection]);
 
-  this.debug.normal(`.getCollection called, dbName: '${constructor[modelSymbols.dbName]},` +
+  debug.normal(`.getCollection called, dbName: '${constructor[modelSymbols.dbName]},` +
     ` collection: ${constructor[modelSymbols.dbCollection]}', found?: ${!!col}`);
 
   return col;
@@ -783,7 +765,7 @@ function getCursor(filter: any, project?: any): Cursor<any> {
   filter = filter || {};
 
   const col = this.getCollection();
-  this.debug.normal(`.getCursor called, dbName '${this[modelSymbols.dbName]}', found?: ${!!col}`);
+  debug.normal(`.getCursor called, dbName '${this[modelSymbols.dbName]}', found?: ${!!col}`);
 
   if (!col) {
     throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
@@ -806,7 +788,7 @@ function getCursor(filter: any, project?: any): Cursor<any> {
  * @returns {Cursor<T>}
  */
 function getCursorById(id, project?: any): Cursor<any> {
-  this.debug.normal(`.getCursorById called, dbName '${this[modelSymbols.dbName]}'`);
+  debug.normal(`.getCursorById called, dbName '${this[modelSymbols.dbName]}'`);
 
   return this
     .getCursor({
@@ -825,7 +807,7 @@ function getDb(): Db {
   const constructor = this[modelSymbols.constructor] || this;
   const db = constructor[modelSymbols.sapi].dbConnections.getDb(constructor[modelSymbols.dbName]);
 
-  this.debug.normal(`.getDb called, dbName: '${constructor[modelSymbols.dbName]}', found?: ${!!db}`);
+  debug.normal(`.getDb called, dbName: '${constructor[modelSymbols.dbName]}', found?: ${!!db}`);
 
   if (!db) {
     throw new SapiDbForModelNotFound(constructor.name, constructor[modelSymbols.dbName]);
@@ -844,7 +826,7 @@ function getDb(): Db {
 function getOne(filter: any, project?: any): Promise<any> {
   return new Promise((resolve, reject) => {
     const cursor = this.getCursor(filter, project);
-    this.debug.normal(`.getOne called, dbName '${this[modelSymbols.dbName]}'`);
+    debug.normal(`.getOne called, dbName '${this[modelSymbols.dbName]}'`);
 
     cursor
       .limit(1)
@@ -865,7 +847,7 @@ function getOne(filter: any, project?: any): Promise<any> {
 function remove(options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
   const constructor = this.constructor;
 
-  this.debug.normal(`.remove called for ${this.id}`);
+  debug.normal(`.remove called for ${this.id}`);
   return constructor.removeById(this.id, options);
 }
 
@@ -878,9 +860,7 @@ function remove(options?: CollectionOptions): Promise<DeleteWriteOpResultObject>
 function removeAll(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
   const col = this.getCollection();
 
-  this
-    .debug
-    .normal(`.removeAll called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
+  debug.normal(`.removeAll called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
 
   if (!col) {
     throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
@@ -902,9 +882,7 @@ function removeById(id: any, options?: CollectionOptions): Promise<DeleteWriteOp
     id = (ObjectID.isValid(id)) ? new ObjectID(id) : id;
   }
 
-  this
-    .debug
-    .normal(`.removeById called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
+  debug.normal(`.removeById called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, id);
 
   if (!col) {
     throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
@@ -935,9 +913,8 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
   const constructor = this.constructor;
 
   const col = constructor.getCollection();
-  this
-    .debug
-    .normal(`.save called, dbName: '${constructor[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, changeSet);
+
+  debug.normal(`.save called, dbName: '${constructor[modelSymbols.dbName]}', found?: ${!!col}, set: %O`, changeSet);
 
   if (!col) {
     throw new Error(`Database '${constructor[modelSymbols.dbName]}' not found`);
@@ -992,7 +969,7 @@ function toDb(changeSet?: any): object {
   const constructor = this[modelSymbols.constructor] || this;
 
   const modelOptions = constructor[modelSymbols.modelOptions];
-  this.debug.normal(`.toDb called, target '${constructor.name}'`);
+  debug.normal(`.toDb called, target '${constructor.name}'`);
 
   changeSet = changeSet || this;
 
@@ -1075,7 +1052,7 @@ function toDb(changeSet?: any): object {
  * @returns {{}}
  */
 function toJson(): any {
-  this.debug.normal(`.toJson called, target '${this.constructor.name}'`);
+  debug.normal(`.toJson called, target '${this.constructor.name}'`);
 
   const obj = mapModelToJson(this);
   return obj;
@@ -1159,6 +1136,6 @@ function toJson(): any {
  * @returns {string}
  */
 function toJsonString(replacer?: () => any | Array<string | number>, space?: string | number): string {
-  this.debug.normal(`.toJsonString called, target '${this.constructor.name}'`);
+  debug.normal(`.toJsonString called, target '${this.constructor.name}'`);
   return JSON.stringify(this[modelSymbols.toJson](), replacer, space);
 }
