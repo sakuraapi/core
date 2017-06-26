@@ -10,11 +10,7 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
-import {SakuraApi} from '../sakura-api';
-import {
-  IDbGetParams,
-  IFromDbOptions
-} from './';
+import {IDbGetParams, IFromDbOptions} from './';
 /***
  * Integrators should extend their [[Model]] classes with this abstract class to get typing for the `@`[[Model]] mixin
  * functions that are injected. If you need to have a custom super class that cannot extend this abstract class,
@@ -27,41 +23,41 @@ import {
  * ### Example
  * <pre>
  * class SuperChicken extends SuperHeroBirds {
- *   public static fromDb?: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
+ *   static fromDb?: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
  *
- *   public static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
- *   public static fromJsonToDb?: (json: any) => any;
+ *   static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
+ *   static fromJsonToDb?: (json: any) => any;
  *
- *   public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs) => T[];
- *   public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
+ *   static fromDbArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs) => T[];
+ *   static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
  *
- *   public static get?: <T>(this: { new (): T }, params: IDbGetParams) => Promise<T[]>;
- *   public static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
- *   public static getCollection?: () => Collection;
- *   public static getCursor?: (filter: any, project?: any) => Cursor<any>;
- *   public static getCursorById?: (id, project?: any) => Cursor<any>;
- *   public static getDb?: () => Db;
- *   public static getOne?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
+ *   static get?: <T>(this: { new (): T }, params: IDbGetParams) => Promise<T[]>;
+ *   static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
+ *   static getCollection?: () => Collection;
+ *   static getCursor?: (filter: any, project?: any) => Cursor<any>;
+ *   static getCursorById?: (id, project?: any) => Cursor<any>;
+ *   static getDb?: () => Db;
+ *   static getOne?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
  *
- *   public static mapJsonToDb?: (json: object) => object;
+ *   static mapJsonToDb?: (json: object) => object;
  *
- *   public static removeAll?: (filter: any, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
- *   public static removeById?: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+ *   static removeAll?: (filter: any, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+ *   static removeById?: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
  *
- *   public _id?: ObjectID; // tslint:disable-line
- *   public id?: ObjectID;
+ *   _id?: ObjectID; // tslint:disable-line
+ *   id?: ObjectID;
  *
- *   public create?: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
+ *   create?: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
  *
- *   public getCollection?: () => Collection;
- *   public getDb?: () => Db;
+ *   getCollection?: () => Collection;
+ *   getDb?: () => Db;
  *
- *   public remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
- *   public save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
+ *   remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+ *   save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
  *
- *   public toDb?: (changeSet?: object) => any;
- *   public toJson?: (projection?: any) => any;
- *   public toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
+ *   toDb?: (changeSet?: object) => any;
+ *   toJson?: (projection?: any) => any;
+ *   toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
  *
  *   ///
  *   // your class implementation continues on here...
@@ -71,41 +67,39 @@ import {
  * members.
  */
 export abstract class SakuraApiModel {
-  public static changeSapi?: (newSapi: SakuraApi) => void;
-
-  public static fromDb?: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
+  static fromDb?: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
   // tslint:disable-next-line:variable-name
-  public static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
-  public static fromJsonToDb?: (json: any) => any;
+  static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
+  static fromJsonToDb?: (json: any) => any;
 
-  public static fromDbArray?: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
-  public static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
+  static fromDbArray?: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
+  static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
 
-  public static get?: <T>(this: { new (): T }, params: IDbGetParams) => Promise<T[]>;
-  public static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
-  public static getCollection?: () => Collection;
-  public static getCursor?: (filter: any, project?: any) => Cursor<any>;
-  public static getCursorById?: (id, project?: any) => Cursor<any>;
-  public static getDb?: () => Db;
-  public static getOne?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
+  static get?: <T>(this: { new (): T }, params: IDbGetParams) => Promise<T[]>;
+  static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
+  static getCollection?: () => Collection;
+  static getCursor?: (filter: any, project?: any) => Cursor<any>;
+  static getCursorById?: (id, project?: any) => Cursor<any>;
+  static getDb?: () => Db;
+  static getOne?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
 
-  public static mapJsonToDb?: (json: object) => object;
+  static mapJsonToDb?: (json: object) => object;
 
-  public static removeAll?: (filter: any, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
-  public static removeById?: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+  static removeAll?: (filter: any, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+  static removeById?: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
 
-  public _id?: ObjectID; // tslint:disable-line
-  public id?: ObjectID;
+  _id?: ObjectID; // tslint:disable-line
+  id?: ObjectID;
 
-  public create?: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
+  create?: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
 
-  public getCollection?: () => Collection;
-  public getDb?: () => Db;
+  getCollection?: () => Collection;
+  getDb?: () => Db;
 
-  public remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
-  public save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
+  remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+  save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
 
-  public toDb?: (changeSet?: object) => any;
-  public toJson?: (projection?: any) => any;
-  public toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
+  toDb?: (changeSet?: object) => any;
+  toJson?: (projection?: any) => any;
+  toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
 }

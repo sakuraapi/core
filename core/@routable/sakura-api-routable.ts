@@ -1,9 +1,4 @@
-import {
-  NextFunction,
-  Request,
-  Response
-} from 'express';
-import {SakuraApi} from '../sakura-api';
+import {NextFunction, Request, Response} from 'express';
 
 /***
  * Integrators should extend their [[Routable]] classes with this abstract class to get typing for the `@`[[Routable]]
@@ -17,11 +12,11 @@ import {SakuraApi} from '../sakura-api';
  * ### Example
  * <pre>
  * class SuperChickenApi extends SuperHeroBirdsApi {
- *   public getRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
- *   public getAllRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
- *   public putRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
- *   public postRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
- *   public deleteRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+ *   getRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+ *   getAllRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+ *   putRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+ *   postRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+ *   deleteRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
  *
  *   ///
  *   // your class implementation continues on here...
@@ -33,10 +28,9 @@ import {SakuraApi} from '../sakura-api';
  * a major release version bump, which seems silly for this contingency.
  */
 export abstract class SakuraApiRoutable {
-  public static changeSapi?: (newSapi: SakuraApi, autoRoute?: boolean) => void;
-  public static getRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
-  public static getAllRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
-  public static putRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
-  public static postRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
-  public static deleteRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+  static getRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+  static getAllRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+  static putRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+  static postRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+  static deleteRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
 }

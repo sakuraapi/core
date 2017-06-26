@@ -1,19 +1,13 @@
-import {
-  Db,
-  dbSymbols,
-  Json
-} from './';
-import {Model} from './model';
-
+// tslint:disable:no-shadowed-variable
 import {ObjectID} from 'mongodb';
+import {testSapi} from '../../spec/helpers/sakuraapi';
+import {Db, dbSymbols, Json} from './';
+import {Model} from './model';
 import {SakuraApiModel} from './sakura-api-model';
 
-import {Sapi} from '../../spec/helpers/sakuraapi';
+describe('@Db', () => {
 
-describe('@Db', function() {
-  const sapi = Sapi();
-
-  it('takes a string for the fieldname or an IDbOptions if other options are needed', function() {
+  it('takes a string for the fieldname or an IDbOptions if other options are needed', () => {
     class DbTestStringField {
       @Db('t1')
       test1 = 'test1';
@@ -27,24 +21,24 @@ describe('@Db', function() {
     expect(map.get('test2').field).toBe('t2');
   });
 
-  describe('fromDb', function() {
+  describe('fromDb', () => {
 
-    it('is injected as a static member of an @Model object by default', function() {
-      @Model(sapi)
+    it('is injected as a static member of an @Model object by default', () => {
+      @Model()
       class Test extends SakuraApiModel {
       }
 
       expect(Test.fromDb).toBeDefined();
     });
 
-    it('handles falsy properties', function() {
+    it('handles falsy properties', () => {
 
       class Deep {
         @Db()
         deepValue;
       }
 
-      @Model(sapi)
+      @Model()
       class User extends SakuraApiModel {
         @Db()
         value;
@@ -74,8 +68,8 @@ describe('@Db', function() {
 
     });
 
-    describe('constructor', function() {
-      @Model(sapi)
+    describe('constructor', () => {
+      @Model()
       class Test extends SakuraApiModel {
 
         constructor(public constructorTest?: number) {
@@ -83,23 +77,23 @@ describe('@Db', function() {
         }
       }
 
-      it('returns null on invalid input', function() {
+      it('returns null on invalid input', () => {
         const result = Test.fromDb(null);
         expect(result).toBeNull();
       });
 
-      it('constructs a new target object, passing along the constructor fields', function() {
+      it('constructs a new target object, passing along the constructor fields', () => {
         const result = Test.fromDb({}, {constructorArgs: [777]});
         expect(result.constructorTest).toBe(777);
       });
 
-      it('returns an object of the correct instaceOf', function() {
+      it('returns an object of the correct instaceOf', () => {
         const result = Test.fromDb({}, 777);
         expect(result instanceof Test).toBe(true);
       });
     });
 
-    describe('maps db fields to deeply nested model properties', function() {
+    describe('maps db fields to deeply nested model properties', () => {
       class Address {
         @Db('st')
         street = '1600 Pennsylvania Ave NW';
@@ -130,7 +124,7 @@ describe('@Db', function() {
         itemName = 'Cherry Tree Axe';
       }
 
-      @Model(sapi)
+      @Model()
       class Test extends SakuraApiModel {
 
         @Db('fn')
@@ -161,13 +155,13 @@ describe('@Db', function() {
         }
       };
 
-      it('returns a model default property even if the Db source is missing that property', function() {
+      it('returns a model default property even if the Db source is missing that property', () => {
         class Contact {
           firstName: string = 'George';
           lastName: string = 'Washington';
         }
 
-        @Model(sapi)
+        @Model()
         class Test extends SakuraApiModel {
           @Db({model: Contact})
           contact: Contact = new Contact();
@@ -186,7 +180,7 @@ describe('@Db', function() {
         expect(result.contact.lastName).toBe('Washington');
       });
 
-      it('excludes fields without @Db model properties if not in promiscuous mode', function() {
+      it('excludes fields without @Db model properties if not in promiscuous mode', () => {
         const result = Test.fromDb(input);
 
         expect(result.firstName).toBe(input.fn);
@@ -204,8 +198,8 @@ describe('@Db', function() {
 
       });
 
-      it('throws when IDbOptions.model is invalid constructor function', function() {
-        @Model(sapi)
+      it('throws when IDbOptions.model is invalid constructor function', () => {
+        @Model()
         class TestModelOptionFail extends SakuraApiModel {
           @Db({model: {}})
           doh = new Order();
@@ -216,7 +210,7 @@ describe('@Db', function() {
             + `its model with a value that cannot be constructed`));
       });
 
-      it('maps objects with an IDbOptions.model option to an instance of that object constructor', function() {
+      it('maps objects with an IDbOptions.model option to an instance of that object constructor', () => {
         const result = Test.fromDb(input);
 
         expect(result.order instanceof Order).toBeTruthy('result.order should be instance of Order '
@@ -226,7 +220,7 @@ describe('@Db', function() {
             + `but it was instance of '${result.order.address.constructor.name}' instead`);
       });
 
-      it('deeply maps values with matching @Db', function() {
+      it('deeply maps values with matching @Db', () => {
 
         const result = Test.fromDb(input);
 
@@ -250,8 +244,8 @@ describe('@Db', function() {
 
       });
 
-      it('handles properties with @Db({field}) set', function() {
-        @Model(sapi)
+      it('handles properties with @Db({field}) set', () => {
+        @Model()
         class Test {
           static fromDb;
 
@@ -272,9 +266,9 @@ describe('@Db', function() {
         expect(result.lastName).toBeUndefined();
       });
 
-      describe('with dbOptions.promiscuous mode', function() {
+      describe('with dbOptions.promiscuous mode', () => {
 
-        @Model(sapi, {
+        @Model({
           dbConfig: {
             collection: 'users',
             db: 'UserDb',
@@ -289,7 +283,7 @@ describe('@Db', function() {
           order = new Order();
         }
 
-        it('promiscuously includes fields not mapped with @Db', function() {
+        it('promiscuously includes fields not mapped with @Db', () => {
           const input = {
             firstName: 'George',
             lastName: 'Washington',
@@ -306,7 +300,7 @@ describe('@Db', function() {
           expect((result.order as any).test).toBe(777);
         });
 
-        it('Properly return _id as instanceOf ObjectID', function() {
+        it('Properly return _id as instanceOf ObjectID', () => {
 
           const dbResult = {
             _id: new ObjectID().toString(),
@@ -325,9 +319,9 @@ describe('@Db', function() {
         });
       });
 
-      it('unmarshalls _id', function(done) {
+      it('unmarshalls _id', (done) => {
 
-        @Model(sapi)
+        @Model()
         class Test extends SakuraApiModel {
 
           @Db({field: 'ph'})
@@ -347,7 +341,7 @@ describe('@Db', function() {
       });
     });
 
-    describe('prunes model fields missing from db document in strict mode', function() {
+    describe('prunes model fields missing from db document in strict mode', () => {
 
       class Contact {
         @Db('ph')
@@ -355,7 +349,7 @@ describe('@Db', function() {
 
       }
 
-      @Model(sapi, {
+      @Model({
         dbConfig: {
           collection: 'fromDbStrictMode',
           db: 'userDb'
@@ -374,7 +368,14 @@ describe('@Db', function() {
 
       }
 
-      beforeEach(function(done) {
+      beforeEach((done) => {
+        const sapi = testSapi({
+          models: [
+            User
+          ],
+          routables: []
+        });
+
         sapi
           .dbConnections
           .connectAll()
@@ -393,7 +394,7 @@ describe('@Db', function() {
           .catch(done.fail);
       });
 
-      it('via projection', function(done) {
+      it('via projection', (done) => {
         const projection = {
           ln: 0
         };
@@ -414,7 +415,7 @@ describe('@Db', function() {
           .catch(done.fail);
       });
 
-      it('doesn\'t include id property if there\'s no _id', function(done) {
+      it('doesn\'t include id property if there\'s no _id', (done) => {
         const projection = {
           _id: 0
         };
@@ -431,27 +432,27 @@ describe('@Db', function() {
           .catch(done.fail);
       });
 
-      it('works with specifying projects for embedded documents', function(done) {
+      it('works with specifying projects for embedded documents', (done) => {
         const projection = {
           'contact.ph': 1
         };
 
         User.get({filter: {}, project: projection})
-            .then((results) => {
-              expect(results[0]._id instanceof ObjectID).toBeTruthy('Should be an instance of ObjectID');
-              expect(results[0].firstName).toBeUndefined('Projection should have excluded this');
-              expect(results[0].lastName).toBeUndefined('Projection should have excluded this');
-              expect(results[0].contact.phone).toBe('123-123-1234');
-            })
-            .then(done)
-            .catch(done.fail);
+          .then((results) => {
+            expect(results[0]._id instanceof ObjectID).toBeTruthy('Should be an instance of ObjectID');
+            expect(results[0].firstName).toBeUndefined('Projection should have excluded this');
+            expect(results[0].lastName).toBeUndefined('Projection should have excluded this');
+            expect(results[0].contact.phone).toBe('123-123-1234');
+          })
+          .then(done)
+          .catch(done.fail);
       });
 
     });
   });
 
-  describe('fromDbArray', function() {
-    @Model(sapi)
+  describe('fromDbArray', () => {
+    @Model()
     class Test {
       static fromDbArray;
 
@@ -468,7 +469,7 @@ describe('@Db', function() {
       }
     }
 
-    it('takes an array of json and returns an array of Model objects', function() {
+    it('takes an array of json and returns an array of Model objects', () => {
       const input = [
         {
           fn: 'George',
@@ -489,7 +490,7 @@ describe('@Db', function() {
       expect(results[1].lastName).toBe(input[1].ln);
     });
 
-    it('returns an empty array if an invalid json input is passed in', function() {
+    it('returns an empty array if an invalid json input is passed in', () => {
       // tslint:disable-next-line:no-unused-expression
       const input = void(0);
 
@@ -499,7 +500,7 @@ describe('@Db', function() {
     });
   });
 
-  describe('toDb', function() {
+  describe('toDb', () => {
     class Address {
       @Db('st')
       street = '1600 Pennsylvania Ave NW';
@@ -521,7 +522,7 @@ describe('@Db', function() {
       address: Address = new Address();
     }
 
-    @Model(sapi, {
+    @Model({
       dbConfig: {
         collection: 'users',
         db: 'userDb',
@@ -539,14 +540,13 @@ describe('@Db', function() {
       order = new Order();
     }
 
-    @Model(sapi, {
-        dbConfig: {
-          collection: 'users',
-          db: 'userDb',
-          promiscuous: true
-        }
+    @Model({
+      dbConfig: {
+        collection: 'users',
+        db: 'userDb',
+        promiscuous: true
       }
-    )
+    })
     class PromiscuousModelTest {
       @Db('fn')
       firstName = 'George';
@@ -556,7 +556,7 @@ describe('@Db', function() {
       order = new Order();
     }
 
-    beforeEach(function() {
+    beforeEach(() => {
       this.promiscuousModel = new PromiscuousModelTest();
       this.promiscuousModel.id = new ObjectID();
 
@@ -564,10 +564,10 @@ describe('@Db', function() {
       this.chasteModel.id = new ObjectID();
     });
 
-    it('handles falsy properties', function() {
+    it('handles falsy properties', () => {
       const model = new ChasteModelTest();
-      (model as any)['firstName'] = 0;
-      (model as any)['lastName'] = false;
+      (model as any).firstName = 0;
+      (model as any).lastName = false;
 
       const result = model.toDb();
       expect(result.fn).toBe(0);
@@ -575,8 +575,8 @@ describe('@Db', function() {
       expect(result.lastName).toBeFalsy();
     });
 
-    describe('Chaste Mode', function() {
-      it('returns a db object with only explicit @Db fields, and does not include non-enumerable properties', function() {
+    describe('Chaste Mode', () => {
+      it('returns a db object with only explicit @Db fields, and does not include non-enumerable properties', () => {
         const result = this.chasteModel.toDb();
 
         expect(result._id).toBe(this.chasteModel.id);
@@ -595,8 +595,8 @@ describe('@Db', function() {
       });
     });
 
-    describe('Promiscuous Mode (hey baby)', function() {
-      it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', function() {
+    describe('Promiscuous Mode (hey baby)', () => {
+      it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', () => {
         const result = this.promiscuousModel.toDb();
 
         expect(result._id).toBe(this.promiscuousModel.id);
@@ -613,6 +613,6 @@ describe('@Db', function() {
         expect(result.id).toBeUndefined();
       });
     });
-
   });
 });
+// tslint:enable:no-shadowed-variable

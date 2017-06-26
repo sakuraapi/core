@@ -1,34 +1,15 @@
 import * as express from 'express';
-import {
-  NextFunction,
-  Request,
-  Response
-} from 'express';
+import {NextFunction, Request, Response} from 'express';
 import * as request from 'supertest';
-import {
-  Db,
-  Json,
-  Model,
-  SakuraApiModel
-} from '../@model';
-import {
-  IRoutableLocals,
-  Routable,
-  routableSymbols,
-  Route
-} from './';
-
-import {Sapi} from '../../spec/helpers/sakuraapi';
+import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
+import {Db, Json, Model, SakuraApiModel} from '../@model';
+import {IRoutableLocals, Routable, routableSymbols, Route} from './';
 
 import method = require('lodash/method');
 import before = require('lodash/before');
-import {SakuraApiRoutable} from './sakura-api-routable';
 
-describe('core/Route', function() {
-  const sapi = Sapi();
-
-  @Routable(sapi, {
-    autoRoute: false,
+describe('core/Route', () => {
+  @Routable({
     baseUrl: 'testCoreRoute',
     blackList: ['someBlacklistedMethod']
   })
@@ -77,16 +58,16 @@ describe('core/Route', function() {
 
     @Route()
     emptyRouteDecorator() {
-
+      // lint empty
     }
   }
 
-  beforeEach(function() {
+  beforeEach(() => {
     this.t = new TestCoreRoute(777);
     this.routes = this.t[routableSymbols.routes];
   });
 
-  it('gracefully handles an empty @Route(...), defaults path to baseUri/', function() {
+  it('gracefully handles an empty @Route(...), defaults path to baseUri/', () => {
     // if these expectations pass, the blackList was properly defaulted to false since
     // the route wouldn't be in sakuraApiClassRoutes if blackList had been true.
     expect(this.routes.length).toBe(4);
@@ -95,18 +76,19 @@ describe('core/Route', function() {
     expect(this.routes[3].method).toBe('emptyRouteDecorator');
   });
 
-  it('maintains the original functionality of the method', function() {
+  it('maintains the original functionality of the method', () => {
     const returnValue = this.routes[2].f();
     expect(returnValue).toBe('it works');
   });
 
-  it('throws an exception when an invalid HTTP method is specificed', function() {
+  it('throws an exception when an invalid HTTP method is specificed', () => {
     let err;
     try {
-      @Routable(sapi)
+      @Routable()
       class X {
         @Route({method: 'imnotarealhttpmethod'})
         badHttpMethod() {
+          // lint empty
         }
       }
     } catch (e) {
@@ -115,12 +97,12 @@ describe('core/Route', function() {
     expect(err).toBeDefined();
   });
 
-  it('excludes a method level blacklisted @Route', function() {
-    @Routable(sapi)
+  it('excludes a method level blacklisted @Route', () => {
+    @Routable()
     class Test3 {
       @Route({blackList: true})
       blackListedMethod() {
-
+        // lint empty
       }
     }
 
@@ -128,9 +110,9 @@ describe('core/Route', function() {
     expect(t3[routableSymbols.routes].length).toBe(0);
   });
 
-  describe('handles route parameters', function() {
+  describe('handles route parameters', () => {
 
-    @Routable(sapi, {
+    @Routable({
       baseUrl: 'handlesRouteParamtersTest'
     })
     class HandlesRouteParamtersTest {
@@ -155,52 +137,51 @@ describe('core/Route', function() {
       }
     }
 
-    it('at the end of the path', function(done) {
+    const sapi = testSapi({
+      models: [],
+      routables: [HandlesRouteParamtersTest]
+    });
+
+    beforeEach((done) => {
       sapi
         .listen({bootMessage: ''})
-        .then(() => {
-          request(sapi.app)
-            .get(this.uri('/handlesRouteParamtersTest/route/parameter/777'))
-            .expect('Content-Type', /json/)
-            .expect('Content-Length', '16')
-            .expect('{"result":"777"}')
-            .expect(200)
-            .then(() => {
-              sapi
-                .close()
-                .then(done)
-                .catch(done.fail);
-            })
-            .catch(done.fail);
-        })
+        .then(done)
         .catch(done.fail);
     });
 
-    it('at the end of the path', function(done) {
+    afterEach((done) => {
       sapi
-        .listen({bootMessage: ''})
-        .then(() => {
-          request(sapi.app)
-            .get(this.uri('/handlesRouteParamtersTest/route2/888/test'))
-            .expect('Content-Type', /json/)
-            .expect('Content-Length', '16')
-            .expect('{"result":"888"}')
-            .expect(200)
-            .then(() => {
-              sapi
-                .close()
-                .then(done)
-                .catch(done.fail);
-            })
-            .catch(done.fail);
-        })
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('at the end of the path', (done) => {
+      request(sapi.app)
+        .get(testUrl('/handlesRouteParamtersTest/route/parameter/777'))
+        .expect('Content-Type', /json/)
+        .expect('Content-Length', '16')
+        .expect('{"result":"777"}')
+        .expect(200)
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('at the end of the path', (done) => {
+      request(sapi.app)
+        .get(testUrl('/handlesRouteParamtersTest/route2/888/test'))
+        .expect('Content-Type', /json/)
+        .expect('Content-Length', '16')
+        .expect('{"result":"888"}')
+        .expect(200)
+        .then(done)
         .catch(done.fail);
     });
   });
 
-  describe('before', function() {
+  describe('before', () => {
 
-    @Routable(sapi, {
+    @Routable({
       baseUrl: 'BeforeHandlerTests'
     })
     class BeforeHandlerTests {
@@ -229,23 +210,28 @@ describe('core/Route', function() {
       }
     }
 
-    beforeEach(function(done) {
+    const sapi = testSapi({
+      models: [],
+      routables: [BeforeHandlerTests]
+    });
+
+    beforeEach((done) => {
       sapi
         .listen({bootMessage: ''})
         .then(done)
         .catch(done.fail);
     });
 
-    afterEach(function(done) {
+    afterEach((done) => {
       sapi
         .close()
         .then(done)
         .catch(done.fail);
     });
 
-    it('runs before handler before route handler', function(done) {
+    it('runs before handler before route handler', (done) => {
       request(sapi.app)
-        .get(this.uri('/BeforeHandlerTests'))
+        .get(testUrl('/BeforeHandlerTests'))
         .expect(200)
         .then((result) => {
           expect(result.body.order).toBe('1b2b');
@@ -254,9 +240,9 @@ describe('core/Route', function() {
         .catch(done.fail);
     });
 
-    it('does not run before handlers without before route handlers', function(done) {
+    it('does not run before handlers without before route handlers', (done) => {
       request(sapi.app)
-        .get(this.uri(`/BeforeHandlerTests/test2Handler`))
+        .get(testUrl(`/BeforeHandlerTests/test2Handler`))
         .expect(200)
         .then((result) => {
           expect(result.body.order).toBeUndefined();
@@ -266,8 +252,8 @@ describe('core/Route', function() {
     });
   });
 
-  describe('after', function() {
-    @Model(sapi, {
+  describe('after', () => {
+    @Model({
       dbConfig: {
         collection: 'afterHandlerTestModel',
         db: 'userDb'
@@ -281,7 +267,7 @@ describe('core/Route', function() {
       lastName = 'Washinton';
     }
 
-    @Routable(sapi, {
+    @Routable({
       baseUrl: 'AfterHandlerTests'
     })
     class AfterHandlerTests {
@@ -321,23 +307,28 @@ describe('core/Route', function() {
       }
     }
 
-    beforeEach(function(done) {
+    const sapi = testSapi({
+      models: [AfterHandlerTestModel],
+      routables: [AfterHandlerTests]
+    });
+
+    beforeEach((done) => {
       sapi
         .listen()
         .then(done)
         .catch(done.fail);
     });
 
-    afterEach(function(done) {
+    afterEach((done) => {
       sapi
         .close()
         .then(done)
         .catch(done.fail);
     });
 
-    it('runs after handler after route handler', function(done) {
+    it('runs after handler after route handler', (done) => {
       request(sapi.app)
-        .get(this.uri('/AfterHandlerTests'))
+        .get(testUrl('/AfterHandlerTests'))
         .expect(200)
         .then((result) => {
           const body = result.body;
@@ -350,9 +341,9 @@ describe('core/Route', function() {
         .catch(done.fail);
     });
 
-    it('does not run after handler after other handlers', function(done) {
+    it('does not run after handler after other handlers', (done) => {
       request(sapi.app)
-        .get(this.uri('/AfterHandlerTests/test2Handler'))
+        .get(testUrl('/AfterHandlerTests/test2Handler'))
         .expect(200)
         .then((result) => {
           expect(result.body.order).toBeUndefined();
@@ -361,5 +352,4 @@ describe('core/Route', function() {
         .catch(done.fail);
     });
   });
-
 });

@@ -10,7 +10,7 @@ export class SanitizeMongoDB {
    * Deep inspects the input for any keys that start with $ and deletes them. If the input is not
    * an object, the original input will be returned.
    */
-  public static removeAll$Keys(input: any): any {
+  static removeAll$Keys(input: any): any {
     return SanitizeMongoDB.sanitizeObject(input, (key) => {
       return /^\$/.test(key);
     });
@@ -20,7 +20,7 @@ export class SanitizeMongoDB {
    * Deep inspects the input for any $where keys and deletes them. If the input is not
    * an object, the original input will be returned.
    */
-  public static remove$where(input: any): any {
+  static remove$where(input: any): any {
     return SanitizeMongoDB.sanitizeObject(input, (key) => {
       return key === '$where';
     });
@@ -35,7 +35,7 @@ export class SanitizeMongoDB {
    * removed.
    * @returns {any} if the input was a valid JSON string, the result will be a sanitized JSON object
    */
-  public static sanitizeObject(input: any, filter: (key: any) => boolean): any {
+  static sanitizeObject(input: any, filter: (key: any) => boolean): any {
     if (input === null || input === undefined) {
       return input;
     }
@@ -68,7 +68,7 @@ export class SanitizeMongoDB {
    * @param whiteList the string array of $keys to allow
    * @returns {any}
    */
-  public static whiteList$Keys(input: any, whiteList: string[]): any {
+  static whiteList$Keys(input: any, whiteList: string[]): any {
     whiteList = whiteList || [];
     return SanitizeMongoDB.sanitizeObject(input, (key) => {
       return /^\$/.test(key) && whiteList.indexOf(key) === -1;
@@ -98,7 +98,7 @@ export class SanitizeMongoDB {
    * </pre>
    * @param input the deeply nested object that requires flattening
    */
-  public static flattenObj(input: any): any {
+  static flattenObj(input: any): any {
     if (typeof input !== 'object' || input === null) {
       return input;
     }
