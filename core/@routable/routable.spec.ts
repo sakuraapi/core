@@ -340,12 +340,6 @@ describe('core/@Routable', () => {
 
       @Db('email')
       email: string;
-
-      // constructor() {
-      //   super();
-      //
-      //   this.email = `test+${new Date().getTime().toString()}@test.olivetech.net`;
-      // }
     }
 
     @Model({
