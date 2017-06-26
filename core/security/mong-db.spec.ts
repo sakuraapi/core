@@ -40,7 +40,7 @@ describe('core/security/mongo-db', () => {
           /*do something bad*/
         },
         $in() {
-
+          // lint empty
         }
       };
 
@@ -70,6 +70,7 @@ describe('core/security/mongo-db', () => {
               /*do something bad*/
             },
             $in() {
+              // lint empty
             }
           },
           number: 777

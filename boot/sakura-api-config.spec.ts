@@ -1,11 +1,8 @@
 import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
-import {
-  testMongoDbUrl,
-  testSapi
-} from '../spec/helpers/sakuraapi';
+import {testMongoDbUrl, testSapi} from '../spec/helpers/sakuraapi';
 import {SakuraApiConfig} from './sakura-api-config';
 
-const path = require('path');
+import path = require('path');
 
 describe('sakura-api-config', () => {
 
@@ -22,7 +19,7 @@ describe('sakura-api-config', () => {
     it('loads the default config file if config file not found in path', () => {
       this.path = this.path.replace('environment.json', 'not_found.json');
       try {
-        let cfg = new SakuraApiConfig().load(this.path);
+        const cfg = new SakuraApiConfig().load(this.path);
         expect(cfg.SAKURA_API_CONFIG_TEST).toEqual('found');
       } catch (err) {
         fail(err);
@@ -31,7 +28,7 @@ describe('sakura-api-config', () => {
 
     it('loads the config file and properly cascades', () => {
       try {
-        let cfg = new SakuraApiConfig().load(this.path);
+        const cfg = new SakuraApiConfig().load(this.path);
         expect(cfg).toBeDefined();
         expect(cfg.baseFile).toBe(true);
         expect(cfg.ts).toBe(true);
@@ -53,7 +50,7 @@ describe('sakura-api-config', () => {
         process.env.SAKURA_API_CONFIG = path.join(process.cwd(), 'spec/test_config/test-SAKURA_API_CONFIG.json');
 
         try {
-          let cfg = new SakuraApiConfig().load();
+          const cfg = new SakuraApiConfig().load();
           expect(cfg['env-SAKURA_API_CONFIG']).toBeTruthy();
           done();
         } catch (err) {
@@ -65,7 +62,7 @@ describe('sakura-api-config', () => {
         process.env.SAKURA_API_CONFIG = path.join(process.cwd(), 'spec/test_config/test-SAKURA_API_CONFIG');
 
         try {
-          let cfg = new SakuraApiConfig().load();
+          const cfg = new SakuraApiConfig().load();
           expect(cfg['env-SAKURA_API_CONFIG']).toBeUndefined();
           done();
         } catch (err) {
@@ -111,12 +108,12 @@ describe('sakura-api-config', () => {
       this.dbConnections = {
         dbConnections: [
           {
-            'name': 'testDb1',
-            'url': `${testMongoDbUrl(sapi)}/test1`
+            name: 'testDb1',
+            url: `${testMongoDbUrl(sapi)}/test1`
           },
           {
-            'name': 'testDb2',
-            'url': `${testMongoDbUrl(sapi)}/test2`
+            name: 'testDb2',
+            url: `${testMongoDbUrl(sapi)}/test2`
           }
         ]
       };
@@ -128,12 +125,12 @@ describe('sakura-api-config', () => {
     });
 
     it('returns a SakuraMongoDbConnection object populated with the dbs in the config, but not yet connected', () => {
-      let conns: SakuraMongoDbConnection = this.config.dataSources(this.dbConnections);
+      const conns: SakuraMongoDbConnection = this.config.dataSources(this.dbConnections);
 
       expect(conns.getConnection('testDb1')).toBeDefined();
       expect(conns.getConnection('testDb2')).toBeDefined();
       expect(conns.getDb('testDb1')).toBeUndefined();
       expect(conns.getDb('testDb2')).toBeUndefined();
     });
-  })
+  });
 });

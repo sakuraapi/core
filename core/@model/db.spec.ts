@@ -1,10 +1,7 @@
+// tslint:disable:no-shadowed-variable
 import {ObjectID} from 'mongodb';
 import {testSapi} from '../../spec/helpers/sakuraapi';
-import {
-  Db,
-  dbSymbols,
-  Json
-} from './';
+import {Db, dbSymbols, Json} from './';
 import {Model} from './model';
 import {SakuraApiModel} from './sakura-api-model';
 
@@ -441,14 +438,14 @@ describe('@Db', () => {
         };
 
         User.get({filter: {}, project: projection})
-            .then((results) => {
-              expect(results[0]._id instanceof ObjectID).toBeTruthy('Should be an instance of ObjectID');
-              expect(results[0].firstName).toBeUndefined('Projection should have excluded this');
-              expect(results[0].lastName).toBeUndefined('Projection should have excluded this');
-              expect(results[0].contact.phone).toBe('123-123-1234');
-            })
-            .then(done)
-            .catch(done.fail);
+          .then((results) => {
+            expect(results[0]._id instanceof ObjectID).toBeTruthy('Should be an instance of ObjectID');
+            expect(results[0].firstName).toBeUndefined('Projection should have excluded this');
+            expect(results[0].lastName).toBeUndefined('Projection should have excluded this');
+            expect(results[0].contact.phone).toBe('123-123-1234');
+          })
+          .then(done)
+          .catch(done.fail);
       });
 
     });
@@ -569,8 +566,8 @@ describe('@Db', () => {
 
     it('handles falsy properties', () => {
       const model = new ChasteModelTest();
-      (model as any)['firstName'] = 0;
-      (model as any)['lastName'] = false;
+      (model as any).firstName = 0;
+      (model as any).lastName = false;
 
       const result = model.toDb();
       expect(result.fn).toBe(0);
@@ -618,3 +615,4 @@ describe('@Db', () => {
     });
   });
 });
+// tslint:enable:no-shadowed-variable

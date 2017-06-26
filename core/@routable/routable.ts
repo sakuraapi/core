@@ -302,7 +302,7 @@ export function Routable(options?: IRoutableOptions): any {
         return c;
       }
     });
-    
+
     // isSakuraApiModel hidden property is attached to let other parts of the framework know that this is an @Model obj
     Reflect.defineProperty(newConstructor.prototype, routableSymbols.isSakuraApiRoutable, {
       value: true,

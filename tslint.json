@@ -3,6 +3,15 @@
   "defaultSeverity": "warning",
   "rules": {
     "curly": true,
+    "max-classes-per-file": false,
+    "member-access": [
+      true,
+      "no-public"
+    ],
+    "max-line-length": [
+      true,
+      128
+    ],
     "quotemark": [
       true,
       "single",
@@ -15,7 +24,7 @@
         "singleline": "never"
       }
     ],
-    "no-object-literal-type-assertion": false,
+    "interface-name": false,
     "prefer-object-spread": false
   },
   "jsRules": {

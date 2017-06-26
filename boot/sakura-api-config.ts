@@ -14,6 +14,34 @@ const debug = {
 export class SakuraApiConfig {
 
   /**
+   * Same as the instance method, but static, and it won't try to use the last loaded config since that
+   * requires an instance.
+   */
+  static dataSources(config: { dbConnections?: any[] }): SakuraMongoDbConnection {
+    config = config || {};
+
+    if (!config.dbConnections) {
+      debug.normal(`.dataSources, no config (config: ${!!config},`
+        + `config.dbConnections: ${!!(config || {} as any).dbConnections})`);
+
+      config.dbConnections = [];
+    }
+
+    if (!Array.isArray(config.dbConnections)) {
+      throw new Error('Invalid dbConnections array. The "dbConnections" object should be an array');
+    }
+
+    const dbConns = new SakuraMongoDbConnection();
+
+    debug.normal(`Adding ${config.dbConnections.length} dbConnections.`);
+    for (const conn of config.dbConnections) {
+      dbConns.addConnection(conn.name, conn.url, conn.mongoClientOptions);
+    }
+
+    return dbConns;
+  }
+
+  /**
    * The configuration that was loaded from the various json and ts files and the environmental
    * variables that were set at the time the configuration was last loaded.
    */
@@ -82,7 +110,7 @@ export class SakuraApiConfig {
     path = path || process.env.SAKURA_API_CONFIG || 'config/environment.json';
     debug.normal(`.load path: '${path}'`);
 
-    let config = {};
+    const config = {};
     let baseConfig = {};
     let baseJsConfig = {};
 
@@ -98,7 +126,7 @@ export class SakuraApiConfig {
     }
 
     // environment.js
-    let jsPath = changeFileExtension(path, 'js');
+    const jsPath = changeFileExtension(path, 'js');
     debug.normal(`loading ${jsPath}`);
     try {
       baseJsConfig = require(`${process.cwd()}/${jsPath}`);
@@ -109,13 +137,13 @@ export class SakuraApiConfig {
       handleLoadError(err, path, true);
     }
 
-    let env = process.env.NODE_ENV;
+    const env = process.env.NODE_ENV;
     let envConfig = {};
     let envJsConfig = {};
     if (env && env.NODE_ENV !== '') {
       // environment.{env}.json
-      let pathParts = path.split('/');
-      let fileParts = pathParts[pathParts.length - 1].split('.');
+      const pathParts = path.split('/');
+      const fileParts = pathParts[pathParts.length - 1].split('.');
 
       fileParts.splice(fileParts.length - 1, 0, env);
       pathParts[pathParts.length - 1] = fileParts.join('.');
@@ -152,69 +180,40 @@ export class SakuraApiConfig {
     return config;
 
     //////////
-    function changeFileExtension(path: string, newExtension: string) {
-      let pathParts = path.split('/');
-      let fileParts = pathParts[pathParts.length - 1].split('.');
+    function changeFileExtension(targetPath: string, newExtension: string) {
+      const pathParts = targetPath.split('/');
+      const fileParts = pathParts[pathParts.length - 1].split('.');
       fileParts[fileParts.length - 1] = newExtension;
 
       pathParts[pathParts.length - 1] = fileParts.join('.');
       return pathParts.join('/');
     }
 
-    function handleLoadError(err: Error, path: string, noDefault: boolean) {
-      if (err['code'] === 'ENOENT') {
+    function handleLoadError(err: Error, targetPath: string, noDefault: boolean) {
+      if ((err as any).code === 'ENOENT') {
         // NOOP: the config file is empty, just default to {}
-        debug.normal(`.load config file empty, defaulting to {} for path: '${path}'`);
+        debug.normal(`.load config file empty, defaulting to {} for path: '${targetPath}'`);
         return;
       } else if (err.message.startsWith('Cannot find module')) {
         // NOOP: a ts config file wasn't found
-        debug.normal(`.load config file wasn't found, defaulting to {} for path: '${path}'`);
+        debug.normal(`.load config file wasn't found, defaulting to {} for path: '${targetPath}'`);
         return;
       } else if (err.message === 'Unexpected end of JSON input') {
-        let e = new Error(err.message);
-        e['code'] = 'INVALID_JSON_EMPTY';
-        e['path'] = path;
-        debug.normal(`.load path: '${path}', error:`, err);
-        throw e;
+        const jsonInputErr = new Error(err.message);
+        (jsonInputErr as any).code = 'INVALID_JSON_EMPTY';
+        (jsonInputErr as any).path = targetPath;
+        debug.normal(`.load path: '${targetPath}', error:`, err);
+        throw jsonInputErr;
       } else if (err.message.startsWith('Unexpected token')) {
-        let e = new Error(err.message);
-        e['code'] = 'INVALID_JSON_INVALID';
-        e['path'] = path;
-        debug.normal(`.load path: '${path}', error:`, err);
-        throw e;
+        const tokenErr = new Error(err.message);
+        (tokenErr as any).code = 'INVALID_JSON_INVALID';
+        (tokenErr as any).path = targetPath;
+        debug.normal(`.load path: '${targetPath}', error:`, err);
+        throw tokenErr;
       } else {
-        debug.normal(`.load path: '${path}', error:`, err);
+        debug.normal(`.load path: '${targetPath}', error:`, err);
         throw err;
       }
     }
-  }
-
-  /**
-   * Same as the instance method, but static, and it won't try to use the last loaded config since that
-   * requires an instance.
-   */
-  static dataSources(config: { dbConnections?: any[] }): SakuraMongoDbConnection {
-    config = config || {};
-
-    if (!config.dbConnections) {
-      debug.normal(`.dataSources, no config (config: ${!!config},`
-        + `config.dbConnections: ${!!(config || <any>{}).dbConnections})`);
-
-      config.dbConnections = [];
-      //return null;
-    }
-
-    if (!Array.isArray(config.dbConnections)) {
-      throw new Error('Invalid dbConnections array. The "dbConnections" object should be an array');
-    }
-
-    let dbConns = new SakuraMongoDbConnection();
-
-    debug.normal(`Adding ${config.dbConnections.length} dbConnections.`);
-    for (let conn of config.dbConnections) {
-      dbConns.addConnection(conn.name, conn.url, conn.mongoClientOptions);
-    }
-
-    return dbConns;
   }
 }

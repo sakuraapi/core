@@ -1,26 +1,9 @@
 import * as express from 'express';
-import {
-  NextFunction,
-  Request,
-  Response
-} from 'express';
+import {NextFunction, Request, Response} from 'express';
 import * as request from 'supertest';
-import {
-  testSapi,
-  testUrl
-} from '../../spec/helpers/sakuraapi';
-import {
-  Db,
-  Json,
-  Model,
-  SakuraApiModel
-} from '../@model';
-import {
-  IRoutableLocals,
-  Routable,
-  routableSymbols,
-  Route
-} from './';
+import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
+import {Db, Json, Model, SakuraApiModel} from '../@model';
+import {IRoutableLocals, Routable, routableSymbols, Route} from './';
 
 import method = require('lodash/method');
 import before = require('lodash/before');
@@ -75,7 +58,7 @@ describe('core/Route', () => {
 
     @Route()
     emptyRouteDecorator() {
-
+      // lint empty
     }
   }
 
@@ -105,6 +88,7 @@ describe('core/Route', () => {
       class X {
         @Route({method: 'imnotarealhttpmethod'})
         badHttpMethod() {
+          // lint empty
         }
       }
     } catch (e) {
@@ -118,7 +102,7 @@ describe('core/Route', () => {
     class Test3 {
       @Route({blackList: true})
       blackListedMethod() {
-
+        // lint empty
       }
     }
 

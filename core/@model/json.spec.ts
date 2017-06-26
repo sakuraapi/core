@@ -2,10 +2,7 @@ import {ObjectID} from 'mongodb';
 import {testSapi} from '../../spec/helpers/sakuraapi';
 import {Db} from './db';
 import {Json} from './json';
-import {
-  Model,
-  modelSymbols
-} from './model';
+import {Model, modelSymbols} from './model';
 import {SakuraApiModel} from './sakura-api-model';
 
 describe('@Json', () => {
@@ -33,6 +30,7 @@ describe('@Json', () => {
     }
 
     aFunction() {
+      // lint empty
     }
   }
 
@@ -43,6 +41,7 @@ describe('@Json', () => {
     aThirdProperty: number = 777;
 
     aFunction() {
+      // lint empty
     }
   }
 
@@ -628,7 +627,8 @@ describe('@Json', () => {
         });
         expect(obj.anotherProperty).toBe(2);
       });
-      it('with the last property defined in the json object winning if there are multiple matching fields for a property', () => {
+      it('with the last property defined in the json object winning if there are multiple' +
+        ' matching fields for a property', () => {
         const obj = Test.fromJson({
           anotherProperty: 3,
           anp: 2

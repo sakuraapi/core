@@ -1,25 +1,9 @@
-import {
-  NextFunction,
-  Request,
-  Response
-} from 'express';
+// tslint:disable:no-shadowed-variable
+import {NextFunction, Request, Response} from 'express';
 import {ObjectID} from 'mongodb';
-import {
-  testSapi,
-  testUrl
-} from '../../spec/helpers/sakuraapi';
-import {
-  Db,
-  Json,
-  Model,
-  SakuraApiModel
-} from '../@model';
-import {
-  Routable,
-  routableSymbols,
-  Route,
-  SakuraApiRoutable
-} from './';
+import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
+import {Db, Json, Model, SakuraApiModel} from '../@model';
+import {Routable, routableSymbols, Route, SakuraApiRoutable} from './';
 import {IRoutableLocals} from './routable';
 import request = require('supertest');
 
@@ -39,6 +23,7 @@ describe('core/@Routable', () => {
         class CoreRoutableAddBaseUrlTest {
           @Route()
           aRouteMethod() {
+            // lint empty
           }
         }
 
@@ -56,10 +41,12 @@ describe('core/@Routable', () => {
         class CoreRoutableIgnoreRoutableBlacklisted {
           @Route()
           aRouteMethod() {
+            // lint empty
           }
 
           @Route()
           bRouteMethod() {
+            // lint empty
           }
         }
 
@@ -82,12 +69,14 @@ describe('core/@Routable', () => {
             path: '/'
           })
           aRouteMethod() {
+            // lint empty
           }
 
           @Route({
             path: 'bRouteMethod'
           })
           bRouteMethod() {
+            // lint empty
           }
         }
 
@@ -133,6 +122,7 @@ describe('core/@Routable', () => {
           path: '/dropThatTrailingSlash/'
         })
         aRouteMethod() {
+          // lint empty
         }
       }
 
@@ -154,6 +144,7 @@ describe('core/@Routable', () => {
           path: 'addThatTrailingSlash/'
         })
         aRouteMethod() {
+          // lint empty
         }
       }
 
@@ -175,6 +166,7 @@ describe('core/@Routable', () => {
           path: 'a'
         })
         aRouteMethod() {
+          // lint empty
         }
 
         @Route({
@@ -182,6 +174,7 @@ describe('core/@Routable', () => {
           path: 'b'
         })
         bRouteMethod() {
+          // lint empty
         }
       }
 
@@ -214,6 +207,7 @@ describe('core/@Routable', () => {
           path: 'a'
         })
         aRouteMethod(req, res) {
+          // lint empty
         }
       }
 
@@ -233,6 +227,7 @@ describe('core/@Routable', () => {
           path: 'a'
         })
         aRouteMethod(req, res) {
+          // lint empty
         }
       }
 
@@ -361,6 +356,7 @@ describe('core/@Routable', () => {
         path: 'test-path'
       })
       testRoute(req, res) {
+        // lint empty
       }
     }
 
@@ -374,6 +370,7 @@ describe('core/@Routable', () => {
         path: 'test-path'
       })
       testRoute(req, res) {
+        // lint empty
       }
     }
 
@@ -406,13 +403,14 @@ describe('core/@Routable', () => {
       it('if the provided model is not decorated with @Model', () => {
         expect(() => {
           class NotAModel {
+            // lint empty
           }
 
           @Routable({
             model: NotAModel
           })
           class BrokenRoutable {
-
+            // lint empty
           }
         }).toThrow(new Error(`BrokenRoutable is not decorated by @Model and therefore cannot be used as a model for`
           + ` @Routable`));
@@ -1453,6 +1451,7 @@ describe('core/@Routable', () => {
             before: 'getAllHandler'
           })
           badJuju() {
+            // lint empty
           }
         }
 
@@ -1681,3 +1680,4 @@ describe('core/@Routable', () => {
     });
   });
 });
+// tslint:enable:no-shadowed-variable

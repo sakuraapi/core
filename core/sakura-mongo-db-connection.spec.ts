@@ -1,8 +1,5 @@
 import {MongoClient} from 'mongodb';
-import {
-  testMongoDbUrl,
-  testSapi
-} from '../spec/helpers/sakuraapi';
+import {testMongoDbUrl, testSapi} from '../spec/helpers/sakuraapi';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 
 describe('core/sakura-mongo-db', () => {
@@ -31,7 +28,7 @@ describe('core/sakura-mongo-db', () => {
       this.sapiDb.addConnection('test', this.dbUrl);
       expect(this.sapiDb.getDb('test')).toBeUndefined();
       expect(this.sapiDb.getConnection('test')).toBeDefined();
-    })
+    });
   });
 
   describe('connect', () => {
@@ -58,7 +55,7 @@ describe('core/sakura-mongo-db', () => {
           done();
         })
         .catch(done.fail);
-    })
+    });
 
     describe('does not reconnect to a Db that is already connected', () => {
       it('serial scenario', (done) => {
@@ -87,7 +84,7 @@ describe('core/sakura-mongo-db', () => {
         spyOn(MongoClient, 'connect')
           .and
           .callThrough();
-        let wait = [];
+        const wait = [];
         wait.push(this.sapiDb.connect('test', this.dbUrl));
         wait.push(this.sapiDb.connect('test', this.dbUrl));
 
@@ -133,15 +130,15 @@ describe('core/sakura-mongo-db', () => {
 
   describe('closeAll', () => {
     it('closes all connections', (done) => {
-      let wait = [];
+      const wait = [];
       wait.push(this.sapiDb.connect('x1', this.dbUrl));
       wait.push(this.sapiDb.connect('x2', this.dbUrl));
 
       Promise
         .all(wait)
         .then((results) => {
-          let db1 = results[0];
-          let db2 = results[1];
+          const db1 = results[0];
+          const db2 = results[1];
 
           let closeCount = 0;
           db1.on('close', () => closeCount++);

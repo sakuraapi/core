@@ -140,7 +140,7 @@ export const modelSymbols = {
  * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
  */
 export function Model(modelOptions?: IModelOptions): (object) => any {
-  modelOptions = modelOptions || {} as IModelOptions;
+  modelOptions = modelOptions || {} as IModelOptions; // tslint:disable-line:no-object-literal-type-assertion
 
   // -------------------------------------------------------------------------------------------------------------------
   // Developer notes:
@@ -186,7 +186,6 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
         return c;
       }
     });
-
 
     // isSakuraApiModel hidden property is attached to let other parts of the framework know that this is an @Model obj
     Reflect.defineProperty(newConstructor.prototype, modelSymbols.isSakuraApiModel, {

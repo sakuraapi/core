@@ -1,12 +1,9 @@
-import {
-  DisplayProcessor,
-  SpecReporter
-} from 'jasmine-spec-reporter';
+import {DisplayProcessor, SpecReporter} from 'jasmine-spec-reporter';
 import 'source-map-support/register';
 import SuiteInfo = jasmine.SuiteInfo;
 
 class CustomProcessor extends DisplayProcessor {
-  public displayJasmineStarted(info: SuiteInfo, log: string): string {
+  displayJasmineStarted(info: SuiteInfo, log: string): string {
     return `SakuraApi Jasmine ${log}`.blue;
   }
 }

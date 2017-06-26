@@ -1,16 +1,9 @@
+// tslint:disable:no-shadowed-variable
 import {MongoClient} from 'mongodb';
 import * as request from 'supertest';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
-import {
-  testMongoDbUrl,
-  testSapi,
-  testUrl
-} from '../spec/helpers/sakuraapi';
-import {
-  Routable,
-  Route
-} from './@routable/';
-import {ServerConfig} from './sakura-api';
+import {testMongoDbUrl, testSapi, testUrl} from '../spec/helpers/sakuraapi';
+import {Routable, Route} from './@routable/';
 import Spy = jasmine.Spy;
 
 describe('core/SakuraApi', () => {
@@ -19,18 +12,15 @@ describe('core/SakuraApi', () => {
   class RoutableTest {
     response = 'testRouterGet worked';
 
-    constructor() {
-    }
-
     @Route({
-      path: 'testRouterGet',
-      method: 'get'
+      method: 'get',
+      path: 'testRouterGet'
     })
     testRouterGet(req, res) {
       res.status(200)
-         .json({
-           testRouterGet: this.response
-         });
+        .json({
+          testRouterGet: this.response
+        });
     }
   }
 
@@ -40,7 +30,7 @@ describe('core/SakuraApi', () => {
   });
 
   beforeEach(() => {
-    this.config = {bootMessage: ''} as ServerConfig;
+    this.config = {bootMessage: ''};
     this.config.port = 9000;
     this.config.address = '127.0.0.1';
     this.config.bootMessage = '';
@@ -108,7 +98,7 @@ describe('core/SakuraApi', () => {
             .expect('Content-Type', /json/)
             .expect('Content-Length', '14')
             .expect('{"result":778}')
-            .expect(200)
+            .expect(200);
         })
         .then(() => sapi.close())
         .then(done)
@@ -206,7 +196,7 @@ describe('core/SakuraApi', () => {
     it('connects to databases', (done) => {
       spyOn(MongoClient, 'connect').and.callThrough();
 
-      sapi['_dbConnections'] = SakuraApiConfig.dataSources({
+      (sapi as any)._dbConnections = SakuraApiConfig.dataSources({
         dbConnections: [
           {
             name: 'testDb',
@@ -249,9 +239,9 @@ describe('core/SakuraApi', () => {
                     .then(done)
                     .catch(done.fail);
                 })
-                .catch(done.fail)
+                .catch(done.fail);
             })
-            .catch(done.fail)
+            .catch(done.fail);
         })
         .catch(done.fail);
     });
@@ -288,7 +278,7 @@ describe('core/SakuraApi', () => {
             .expect('Content-Type', /json/)
             .expect('Content-Length', '40')
             .expect('{"testRouterGet":"testRouterGet worked"}')
-            .expect(200)
+            .expect(200);
         })
         .then(() => sapi.close())
         .then(done)
@@ -300,8 +290,8 @@ describe('core/SakuraApi', () => {
       @Routable()
       class InjectsResBodyDataTest {
         @Route({
-          path: 'injectsResBodyDataTest',
-          method: 'get'
+          method: 'get',
+          path: 'injectsResBodyDataTest'
         })
         testRouterGet(req, res, next) {
           res.locals.send(277, {test: 'injected'}, res);
@@ -328,3 +318,4 @@ describe('core/SakuraApi', () => {
     });
   });
 });
+// tslint:enable:no-shadowed-variable

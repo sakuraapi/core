@@ -9,11 +9,11 @@ export const testUrl = (endpoint: string) => path.join(baseUri, endpoint);
 export const testMongoDbUrl = (sapi) => `mongodb://localhost:${sapi.config.TEST_MONGO_DB_PORT}`;
 
 export function testSapi(options: { models: any[], routables: any[] }): SakuraApi {
-  
+
   const sapi = new SakuraApi({
+    configPath: 'spec/config/environment.json',
     models: options.models,
-    routables: options.routables,
-    configPath: 'spec/config/environment.json'
+    routables: options.routables
   });
 
   sapi.baseUri = baseUri;

@@ -1,21 +1,7 @@
-import {
-  InsertOneWriteOpResult,
-  ObjectID,
-  ReplaceOneOptions,
-  UpdateWriteOpResult
-} from 'mongodb';
+import {InsertOneWriteOpResult, ObjectID, ReplaceOneOptions, UpdateWriteOpResult} from 'mongodb';
 import {testSapi} from '../../spec/helpers/sakuraapi';
-import {
-  Db,
-  Json,
-  Model,
-  modelSymbols,
-  SakuraApiModel
-} from './';
-import {
-  SapiDbForModelNotFound,
-  SapiMissingIdErr
-} from './errors';
+import {Db, Json, Model, modelSymbols, SakuraApiModel} from './';
+import {SapiDbForModelNotFound, SapiMissingIdErr} from './errors';
 
 describe('core/@Model', () => {
 
@@ -37,13 +23,14 @@ describe('core/@Model', () => {
 
     // https://github.com/Microsoft/TypeScript/issues/14439
     saveOverride(set?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
-      return Promise.resolve({
-        result: {
-          n: -1,
-          nModified: -1,
-          ok: 1
-        }
-      } as UpdateWriteOpResult);
+      return Promise
+        .resolve({
+          result: {
+            n: -1,
+            nModified: -1,
+            ok: 1
+          }
+        });
     }
   }
 
@@ -173,10 +160,10 @@ describe('core/@Model', () => {
 
         beforeEach((done) => {
           this.sapi
-              .dbConnections
-              .connectAll()
-              .then(done)
-              .catch(done.fail);
+            .dbConnections
+            .connectAll()
+            .then(done)
+            .catch(done.fail);
         });
 
         describe('static method', () => {
@@ -248,14 +235,14 @@ describe('core/@Model', () => {
           describe('getCollection', () => {
             it('returns a valid MongoDB Collection for the current model', () => {
               const col = TestDefaultMethods.getCollection();
-              expect(col['s'].dbName).toBe('userDb');
+              expect((col as any).s.dbName).toBe('userDb');
             });
           });
 
           describe('getDb', () => {
             it('returns a valid MongoDB Db for the current model', () => {
               const db = TestDefaultMethods.getDb();
-              expect(db['s'].databaseName).toBe('userDb');
+              expect((db as any).s.databaseName).toBe('userDb');
             });
 
             it('throws SapiDbForModelNotFound when db is not found', (done) => {
@@ -522,7 +509,7 @@ describe('core/@Model', () => {
                       expect(result.lastName).toBe(user.lastName || 'lastName should have been defined');
                       expect(result.contact).toBeDefined();
                       expect(result.contact.phone).toBe('000-000-0000');
-                    })
+                    });
 
                 })
                 .then(() => sapi.close())

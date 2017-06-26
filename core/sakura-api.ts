@@ -31,23 +31,37 @@ export interface ServerConfig {
 }
 
 /**
+ * The interface of an object returned from a SakuraApi module (for example native-authentication-authority)
+ */
+export interface SakuraApiModuleResult {
+  models: any[];
+  routables: any[];
+}
+
+export interface SakuraApiModule {
+  // tslint:disable-next-line:variable-name
+  module: (SakuraApi, any) => any;
+  options?: any;
+}
+
+/**
  * Used for [[SakuraApi]] constructor
  */
 export interface SakuraApiOptions {
-  app?: Express,
+  app?: Express;
   /**
    * Optionally sets [[SakuraApiConfig]] manually, otherwise, the configuration will be loaded automatically.
    */
-  config?: any,
+  config?: any;
   /**
    * Allows the configuration file location to be overridden. By default [[SakuraApiConfig]] looks for
    * `config/environment.json`.
    */
-  configPath?: any,
+  configPath?: any;
   /**
    * Optionally sets [[SakuraMongoDbConnection]], otherwise, the configuration will be loaded automatically.
    */
-  dbConfig?: SakuraMongoDbConnection
+  dbConfig?: SakuraMongoDbConnection;
   /**
    * An array of objects that are decorated with @[[Model]]. Alternatively, for testing purposes, a Model can be
    * mocked by passing in the following object literal:
@@ -58,7 +72,7 @@ export interface SakuraApiOptions {
    *   }
    * </pre>
    */
-  models: any[],
+  models: any[];
   /**
    * An array of objects that are decorated with @[[Routable]]. Alternatively, for testing purposes, a Routable can be
    * mocked by passing in the following object literal:
@@ -69,7 +83,13 @@ export interface SakuraApiOptions {
    *   }
    * </pre>
    */
-  routables: any[]
+  routables: any[];
+  /**
+   * Takes an array of [[SakuraApiModule]]s, or an empty array. This is how you add a module to SakuraApi. A module
+   * adds Routable and Module classes; they're usually a set of add-on functionality that either you or a third-party
+   * have defined. For example, `auth-native-authority` is a SakuraApi Module.
+   */
+  modules?: SakuraApiModule[];
 }
 
 /**
@@ -115,19 +135,6 @@ export interface SakuraApiOptions {
  */
 export class SakuraApi {
 
-  private _address: string = '127.0.0.1';
-  private _app: Express;
-  private _config: any;
-  private _dbConnections: SakuraMongoDbConnection;
-  private _port: number = 3000;
-  private _server: http.Server;
-
-  private appMiddlewareAdded = false;
-  private lastErrorHandlers: ErrorRequestHandler[] = [];
-  private models = new Map<string, any>();
-  private routables = new Map<string, any>();
-  routeQueue = new Map<string, ISakuraApiClassRoute>();
-
   /**
    * Sets the baseUri for the entire application.
    *
@@ -140,6 +147,21 @@ export class SakuraApi {
    * `http://localhost:8080/api/user`).
    */
   baseUri = '/';
+
+  // tslint:disable:variable-name
+  private _address: string = '127.0.0.1';
+  private _app: Express;
+  private _config: any;
+  private _dbConnections: SakuraMongoDbConnection;
+  private _port: number = 3000;
+  private _server: http.Server;
+  // tslint:enable:variable-name
+
+  private appMiddlewareAdded = false;
+  private lastErrorHandlers: ErrorRequestHandler[] = [];
+  private models = new Map<string, any>();
+  private routables = new Map<string, any>();
+  private routeQueue = new Map<string, ISakuraApiClassRoute>();
 
   /**
    * Returns the address of the server as a string.
@@ -209,83 +231,11 @@ export class SakuraApi {
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
 
-    this.mapModels(options);
-    this.mapRoutables(options);
+    this.registerModules(options);
+    this.registerModels(options);
+    this.registerRoutables(options);
 
     debug.normal('.constructor done');
-  }
-
-  private mapModels(options: SakuraApiOptions) {
-    debug.normal('\tMapping Models');
-    const models = options.models || [];
-
-    for (const model of models) {
-      const isModel = model[modelSymbols.isSakuraApiModel];
-
-      let modelName: string;
-      let modelRef: any;
-
-      // must be decorated with @Model or { use: SomeModel, for: SomeOriginalModel }
-      if (!isModel) {
-        if (!model.use
-          || !model.for
-          || !model.use[modelSymbols.isSakuraApiModel]
-          || !model.for[modelSymbols.isSakuraApiModel]) {
-          throw new Error('SakuraApi setup error. SakuraApiOptions.models array must have classes decorated with @Model'
-            + ' or an object literal of the form { use: SomeMockModel, for: SomeRealModel }, where SomeMockModel and'
-            + ' SomeRealModel are decorated with @Model.');
-        }
-
-        modelName = model.for.name;
-        modelRef = model.use;
-      } else {
-        modelName = model.name;
-        modelRef = model;
-      }
-
-      // set the model's instance of SakuraApi to this
-      modelRef[modelSymbols.sapi] = this;
-
-      this.models.set(modelName, modelRef);
-    }
-  }
-
-  private mapRoutables(options: SakuraApiOptions) {
-    debug.normal('\tMapping Models');
-    const routables = options.routables || [];
-
-    for (const routable of routables) {
-      const isRoutable = routable[routableSymbols.isSakuraApiRoutable];
-
-      let routableName: string;
-      let routableRef: string;
-
-      // must be decorated with @Routable or { use: Routable, for: Routable }
-      if (!isRoutable) {
-        if (!routable.use
-          || !routable.for
-          || !routable.use[modelSymbols.isSakuraApiModel]
-          || !routable.for[modelSymbols.isSakuraApiModel]) {
-          throw new Error('SakuraApi setup error. SakuraApiOptions.routables array must have classes decorated with '
-            + ' @Routable or an object literal of the form { use: SomeMockRoutable, for: SomeRealRoutable }, where'
-            + ' SomeMockRoutable and SomeRealRoutable are decorated with @Model.');
-        }
-
-        routableName = routable.for.name;
-        routableRef = routable.use;
-      } else {
-        routableName = routable.name;
-        routableRef = routable;
-      }
-
-      // set the routable's instance of SakuraApi to this
-      routableRef[routableSymbols.sapi] = this;
-
-      // get the routes queued up for .listen
-      this.enqueueRoutes(new (routableRef as any)());
-
-      this.routables.set(routableName, routableRef);
-    }
   }
 
   /**
@@ -356,12 +306,12 @@ export class SakuraApi {
         /**
          * Catch BodyParser parse errors
          */
-        this.app.use(function (err, req, res, next) {
+        this.app.use((err, req, res, next) => {
           // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
           if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
             res.status(400).send({
-              error: 'invalid_body',
-              body: req.body
+              body: req.body,
+              error: 'invalid_body'
             });
           } else {
             next(err);
@@ -401,7 +351,7 @@ export class SakuraApi {
          * Add final error handlers
          */
         if (this.lastErrorHandlers) {
-          for (let handler of this.lastErrorHandlers) {
+          for (const handler of this.lastErrorHandlers) {
             this.app.use(handler);
           }
         }
@@ -410,7 +360,7 @@ export class SakuraApi {
          * Setup route handler so that each call to listen always overwrites the prior routes -- makes testing
          * easier, there's really not a lot of reasons to be calling listen multiple times in a production app
          */
-        this.app.use(this.baseUri, function (req, res, next) {
+        this.app.use(this.baseUri, (req, res, next) => {
           // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
           // hook whatever the current router is
           router(req, res, next);
@@ -424,7 +374,7 @@ export class SakuraApi {
 
       debug.route('\t.listen processing route queue');
       // add routes
-      for (let route of this.routeQueue.values()) {
+      for (const route of this.routeQueue.values()) {
 
         debug.route('\t\t.listen route %o', route);
 
@@ -463,7 +413,7 @@ export class SakuraApi {
           })
           .catch((err) => {
             return reject(err);
-          })
+          });
       } else {
         listen.bind(this)();
       }
@@ -479,9 +429,10 @@ export class SakuraApi {
             }
 
             if (listenProperties.bootMessage === undefined) {
+              // tslint:disable-next-line:no-console
               console.log(`SakuraAPI started on: ${this.address}:${this.port}`.green);
             } else {
-              let msg = (listenProperties.bootMessage === '')
+              const msg = (listenProperties.bootMessage === '')
                 ? false
                 : listenProperties.bootMessage;
 
@@ -534,4 +485,95 @@ export class SakuraApi {
       this.routeQueue.set(routeSignature, route);
     }
   }
+
+  private registerModules(options: SakuraApiOptions) {
+    debug.normal('\tRegistering Modules');
+    const modules = options.modules || [];
+
+    for (const module of modules) {
+      if (typeof module.module !== 'function') {
+        throw new Error('SakuraApi setup error. SakuraApiOptions.module array must have objects with a module ' +
+          'property that is a function, which accepts an instance of SakuraApi. The module throwing this error is ' +
+          `a ${typeof module.module} rather than a function.`);
+      }
+      const result = module.module(this, module.options);
+
+      this.registerModels(result);
+      this.registerRoutables(result);
+    }
+  }
+
+  private registerModels(options: SakuraApiOptions) {
+    debug.normal('\tRegistering Models');
+    const models = options.models || [];
+
+    for (const model of models) {
+      const isModel = model[modelSymbols.isSakuraApiModel];
+
+      let modelName: string;
+      let modelRef: any;
+
+      // must be decorated with @Model or { use: SomeModel, for: SomeOriginalModel }
+      if (!isModel) {
+        if (!model.use
+          || !model.for
+          || !model.use[modelSymbols.isSakuraApiModel]
+          || !model.for[modelSymbols.isSakuraApiModel]) {
+          throw new Error('SakuraApi setup error. SakuraApiOptions.models array must have classes decorated with @Model'
+            + ' or an object literal of the form { use: SomeMockModel, for: SomeRealModel }, where SomeMockModel and'
+            + ' SomeRealModel are decorated with @Model.');
+        }
+
+        modelName = model.for.name;
+        modelRef = model.use;
+      } else {
+        modelName = model.name;
+        modelRef = model;
+      }
+
+      // set the model's instance of SakuraApi to this
+      modelRef[modelSymbols.sapi] = this;
+
+      this.models.set(modelName, modelRef);
+    }
+  }
+
+  private registerRoutables(options: SakuraApiOptions) {
+    debug.normal('\tRegistering Models');
+    const routables = options.routables || [];
+
+    for (const routable of routables) {
+
+      const isRoutable = routable[routableSymbols.isSakuraApiRoutable];
+
+      let routableName: string;
+      let routableRef: string;
+
+      // must be decorated with @Routable or { use: Routable, for: Routable }
+      if (!isRoutable) {
+        if (!routable.use
+          || !routable.for
+          || !routable.use[modelSymbols.isSakuraApiModel]
+          || !routable.for[modelSymbols.isSakuraApiModel]) {
+          throw new Error('SakuraApi setup error. SakuraApiOptions.routables array must have classes decorated with '
+            + ' @Routable or an object literal of the form { use: SomeMockRoutable, for: SomeRealRoutable }, where'
+            + ' SomeMockRoutable and SomeRealRoutable are decorated with @Model.');
+        }
+
+        routableName = routable.for.name;
+        routableRef = routable.use;
+      } else {
+        routableName = routable.name;
+        routableRef = routable;
+      }
+
+      // set the routable's instance of SakuraApi to this
+      routableRef[routableSymbols.sapi] = this;
+
+      // get the routes queued up for .listen
+      this.enqueueRoutes(new (routableRef as any)());
+      this.routables.set(routableName, routableRef);
+    }
+  }
+
 }
