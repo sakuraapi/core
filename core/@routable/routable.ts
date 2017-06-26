@@ -1,9 +1,9 @@
 import {Handler, NextFunction, Request, Response} from 'express';
-
 import * as path from 'path';
 import 'reflect-metadata';
 import {IDbGetParams, modelSymbols, SakuraApiModel} from '../@model';
 import {addDefaultStaticMethods} from '../helpers';
+import {DUPLICATE_RESOURCE} from '../helpers/http-status';
 import {SanitizeMongoDB as Sanitize} from '../security/mongo-db';
 
 const debug = {
@@ -676,8 +676,33 @@ function postRouteHandler(req: Request, res: Response, next: NextFunction) {
       next();
     })
     .catch((err) => {
+      if (err.name === 'MongoError') {
+        switch (err.code) {
+          case 11000:
+            err.status = DUPLICATE_RESOURCE;
+            resLocals.send(DUPLICATE_RESOURCE, {
+              error: 'duplicate_resource'
+            });
+            break;
+          default:
+            err.status = 500;
+            resLocals.send(500, {
+              error: 'internal_server_error'
+            });
+        }
+      } else {
+        err.status = 500;
+        resLocals.send(500, {
+          error: 'internal_server_error'
+        });
+      }
+
       // TODO add some kind of error handling
-      console.log(err); // tslint:disable-line:no-console
+      if (err.status === 500) {
+        console.log(err); // tslint:disable-line:no-console
+      }
+
+      next();
     });
 }
 

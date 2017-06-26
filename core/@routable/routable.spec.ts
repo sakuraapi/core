@@ -3,6 +3,7 @@ import {NextFunction, Request, Response} from 'express';
 import {ObjectID} from 'mongodb';
 import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
 import {Db, Json, Model, SakuraApiModel} from '../@model';
+import {DUPLICATE_RESOURCE} from '../helpers/http-status';
 import {Routable, routableSymbols, Route, SakuraApiRoutable} from './';
 import {IRoutableLocals} from './routable';
 import request = require('supertest');
@@ -336,6 +337,15 @@ describe('core/@Routable', () => {
       @Db({model: Contact})
       @Json()
       contact = new Contact();
+
+      @Db('email')
+      email: string;
+
+      // constructor() {
+      //   super();
+      //
+      //   this.email = `test+${new Date().getTime().toString()}@test.olivetech.net`;
+      // }
     }
 
     @Model({
@@ -386,15 +396,14 @@ describe('core/@Routable', () => {
     });
 
     beforeEach((done) => {
-      sapi
-        .listen({bootMessage: ''})
+      sapi.listen({bootMessage: ''})
+        .then(() => User.removeAll({}))
         .then(done)
         .catch(done.fail);
     });
 
     afterEach((done) => {
-      sapi
-        .close()
+      sapi.close()
         .then(done)
         .catch(done.fail);
     });
@@ -996,6 +1005,61 @@ describe('core/@Routable', () => {
             .catch(done.fail);
         });
 
+        it('sends http status 409 on MongoError: E11000', (done) => {
+          let indexName;
+
+          const userDb = sapi.dbConnections.getDb('userDb');
+          userDb
+            .collection('usersRoutableTests')
+            .createIndex({email: 1}, {unique: true})
+            .then((idxName) => {
+              indexName = idxName;
+
+              const user1 = User.fromJson({
+                email: 'test'
+              });
+
+              const user2 = User.fromJson({
+                email: 'test'
+              });
+
+              const wait = [];
+
+              wait.push(user1.create());
+              wait.push(user2.create());
+
+              return Promise.all(wait);
+            })
+            .then(() => {
+              done.fail('A MongoDB duplicate error should have been thrown, this test is invalid');
+            })
+            .catch((err) => {
+              expect(err.name).toBe('MongoError', 'Test setup should have returned a MongoError. ' +
+                `It returned ${(err || {} as any).name} instead. This test is not in a valid state`);
+              expect(err.code).toBe(11000, 'The wrong kind of mongo error was thrown, the test is in an invalid state');
+            })
+            .then(() => {
+              return request(sapi.app)
+                .post(testUrl(`/user`))
+                .type('application/json')
+                .send({
+                  email: 'test',
+                  firstName: 'george',
+                  lastName: 'washington',
+                  password: '123'
+                })
+                .expect(DUPLICATE_RESOURCE);
+            })
+            .then(() => {
+              return sapi
+                .dbConnections
+                .getDb('userDb')
+                .collection('usersRoutableTests')
+                .dropIndex(indexName);
+            })
+            .then(done)
+            .catch(done.fail);
+        });
       });
 
       describe('PUT ./model', () => {

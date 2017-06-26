@@ -920,7 +920,8 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
   }
 
   if (!this.id) {
-    return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save', this));
+    return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save. Did you mean ' +
+      'to use create?', this));
   }
 
   const dbObj = changeSet || this.toDb(this);
