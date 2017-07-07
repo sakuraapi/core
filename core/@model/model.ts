@@ -227,8 +227,10 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     addDefaultStaticMethods(newConstructor, 'get', get, modelOptions);
     addDefaultStaticMethods(newConstructor, 'getOne', getOne, modelOptions);
     addDefaultStaticMethods(newConstructor, 'getById', getById, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'getByEmail', getByEmail, modelOptions);
     addDefaultStaticMethods(newConstructor, 'getCursor', getCursor, modelOptions);
     addDefaultStaticMethods(newConstructor, 'getCursorById', getCursorById, modelOptions);
+    addDefaultStaticMethods(newConstructor, 'getCursorByEmail', getCursorByEmail, modelOptions);
     addDefaultStaticMethods(newConstructor, 'getCollection', getCollection, modelOptions);
     addDefaultStaticMethods(newConstructor, 'getDb', getDb, modelOptions);
 
@@ -729,6 +731,30 @@ function getById(id: string | ObjectID, project?: any): Promise<any> {
 }
 
 /**
+ * @static Gets a document by its email from the database and builds its corresponding [[Model]] then resolves that object.
+ * @param email The email of the document in the database.
+ * @param project The fields to project (all if not supplied).
+ * @returns {Promise<T>} Returns a Promise that resolves with an instantiated [[Model]] object. Returns null
+ * if the record is not found in the Db.
+ */
+function getByEmail(email: string | ObjectID, project?: any): Promise<any> {
+  debug.normal(`.getByEmail called, dbName '${this[modelSymbols.dbName]}'`);
+  const cursor = this.getCursorByEmail(email, project);
+
+  const options = (project) ? {strict: true} : null;
+
+  return new Promise((resolve, reject) => {
+    cursor
+      .next()
+      .then((result) => {
+        const obj = this.fromDb(result, options);
+        resolve(obj);
+      })
+      .catch(reject);
+  });
+}
+
+/**
  * @instance Gets the MongoDB `Collection` object associated with this [[Model]] based on the [[IModelOptions.dbConfig]]
  * @static Also available as a static method
  * parameters passed into the [[Model]]'s definition.
@@ -770,14 +796,23 @@ function getCursor(filter: any, project?: any): Cursor<any> {
     throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
   }
 
-  // make sure the _id field is an ObjectId
-  if (filter._id && !(filter._id instanceof ObjectID) && ObjectID.isValid(filter._id)) {
-    filter._id = new ObjectID(filter._id.toString());
+  if (filter.email) {
+
+    return (project)
+      ? col.find(filter).project(project)
+      : col.find(filter);
+  } else {
+    // make sure the _id field is an ObjectId
+    if (filter._id && !(filter._id instanceof ObjectID) && ObjectID.isValid(filter._id)) {
+      filter._id = new ObjectID(filter._id.toString());
+    }
+
+    return (project)
+      ? col.find(filter).project(project)
+      : col.find(filter);
+
   }
 
-  return (project)
-    ? col.find(filter).project(project)
-    : col.find(filter);
 }
 
 /**
@@ -792,6 +827,22 @@ function getCursorById(id, project?: any): Cursor<any> {
   return this
     .getCursor({
       _id: (id instanceof ObjectID) ? id : id.toString() || `${id}`
+    }, project)
+    .limit(1);
+}
+
+/**
+ * @static Gets a `Cursor` from MonogDb based on the supplied `id` and applies a `limit(1)` before returning the cursor.
+ * @param id the document's id in the database.
+ * @param project The fields to project (all if not supplied).
+ * @returns {Cursor<T>}
+ */
+function getCursorByEmail(email, project?: any): Cursor<any> {
+  debug.normal(`.getCursorByEmail called, dbName '${this[modelSymbols.dbName]}'`);
+
+  return this
+    .getCursor({
+      email:  `${email}`
     }, project)
     .limit(1);
 }
