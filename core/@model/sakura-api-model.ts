@@ -77,9 +77,11 @@ export abstract class SakuraApiModel {
 
   static get?: <T>(this: { new (): T }, params: IDbGetParams) => Promise<T[]>;
   static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
+  static getByEmail?: <T>(this: { new (): T }, email: string, project?: any) => Promise<T>;
   static getCollection?: () => Collection;
   static getCursor?: (filter: any, project?: any) => Cursor<any>;
   static getCursorById?: (id, project?: any) => Cursor<any>;
+  static getCursorByEmail?: (email, project?: any) => Cursor<any>;
   static getDb?: () => Db;
   static getOne?: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
 
