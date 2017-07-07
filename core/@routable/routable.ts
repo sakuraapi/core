@@ -469,6 +469,23 @@ function getRouteHandler(req: Request, res: Response, next: NextFunction) {
 
   debug.normal(`getRouteHandler called with id:'%o', field projection: %o`, id, project);
 
+  if (req.params.email) {
+    const email = req.params.email;
+    this
+      .getByEmail(email, project)
+      .then((result) => {
+        const response = (result) ? result.toJson() : null;
+        resLocals.status = 200;
+        resLocals.data = response;
+        next();
+      })
+      .catch((err) => {
+        // TODO add logging system here
+        console.log(err); // tslint:disable-line:no-console
+        next(err);
+      });
+  }
+
   this
     .getById(id, project)
     .then((result) => {
