@@ -13,7 +13,8 @@ export class SapiDbForModelNotFound extends Error {
 
     super(`getDb for model '${modelName}' failed because database name '${dbName}'`
       + ` was not defined. Make sure your @Model({dbConfig.db}) is set to a valid database name from your`
-      + ` environment config's dbConnections:[{name:'...'}] setting.`);
+      + ` environment config's dbConnections:[{name:'...'}] setting. Also, make sure you've started SakuraApi, or`
+      + ` that you have manually started db connections (e.g. with SakuraMongoDbConnection.connectAll())`);
   }
 }
 

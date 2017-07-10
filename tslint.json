@@ -25,7 +25,8 @@
       }
     ],
     "interface-name": false,
-    "prefer-object-spread": false
+    "prefer-object-spread": false,
+    "variable-name": false
   },
   "jsRules": {
     "curly": true

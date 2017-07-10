@@ -1,9 +1,15 @@
 // tslint:disable:no-shadowed-variable
+
+import {NextFunction, Request, Response} from 'express';
 import {MongoClient} from 'mongodb';
 import * as request from 'supertest';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
 import {testMongoDbUrl, testSapi, testUrl} from '../spec/helpers/sakuraapi';
+import {Json} from './@model/json';
+import {Model} from './@model/model';
+import {SakuraApiModel} from './@model/sakura-api-model';
 import {Routable, Route} from './@routable/';
+import {SakuraApi, SakuraApiPluginResult} from './sakura-api';
 import Spy = jasmine.Spy;
 
 describe('core/SakuraApi', () => {
@@ -313,6 +319,138 @@ describe('core/SakuraApi', () => {
             .expect(277);
         })
         .then(() => sapi.close())
+        .then(done)
+        .catch(done.fail);
+    });
+  });
+
+  describe('plugins', () => {
+
+    function testPluginA(sapi: SakuraApi, options: any): SakuraApiPluginResult {
+
+      function testHandler(req: Request, res: Response, next: NextFunction) {
+        if (!res.locals.handlerTrace) {
+          res.locals.handlerTrace = '';
+        }
+        res.locals.handlerTrace += res.locals.handlerTrace = options.value;
+        next();
+      }
+
+      @Model()
+      class TestModelPlugin extends SakuraApiModel {
+        @Json()
+        modelValue = 'found';
+      }
+
+      @Routable()
+      class TestRoutablePlugin {
+        @Route({
+          method: 'get',
+          path: 'TestRoutablePlugin'
+        })
+        getHandler(req: Request, res: Response, next: NextFunction) {
+          const result = new TestModelPlugin();
+
+          res
+            .status(200)
+            .json(result.toJson());
+        }
+      }
+
+      return {
+        middlewareHandlers: [testHandler],
+        models: [TestModelPlugin],
+        routables: [TestRoutablePlugin]
+      };
+    }
+
+    function testPluginB(sapi: SakuraApi, options: any): SakuraApiPluginResult {
+      function testHandler(req: Request, res: Response, next: NextFunction) {
+        if (!res.locals.handlerTrace) {
+          res.locals.handlerTrace = '';
+        }
+        res.locals.handlerTrace += res.locals.handlerTrace = options.value;
+        next();
+      }
+
+      return {
+        middlewareHandlers: [testHandler]
+      };
+    }
+
+    @Routable()
+    class RoutableTestStub {
+      response = 'testRouterGet worked';
+
+      @Route({
+        method: 'get',
+        path: 'plugins_test'
+      })
+      testRouterGet(req, res) {
+        res
+          .status(200)
+          .json({
+            testHandlerResult: res.locals.handlerTrace
+          });
+      }
+    }
+
+    const sapi = testSapi({
+      plugins: [
+        {
+          options: {
+            value: 'A'
+          },
+          order: 1,
+          plugin: testPluginA
+        },
+        {
+          options: {
+            value: 'B'
+          },
+          order: 0,
+          plugin: testPluginB
+        }
+      ],
+      routables: [
+        RoutableTestStub
+      ]
+    });
+
+    beforeEach((done) => {
+      sapi
+        .listen({bootMessage: ''})
+        .then(done)
+        .catch(done.fail);
+    });
+
+    afterEach((done) => {
+      sapi
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('adds plugin handlers in the proper order', (done) => {
+      request(sapi.app)
+        .get(testUrl('plugins_test'))
+        .expect(200)
+        .then((result) => {
+          const body = result.body;
+          expect(body.testHandlerResult).toBe('BA');
+        })
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('adds plugin models and routables', (done) => {
+      request(sapi.app)
+        .get(testUrl('TestRoutablePlugin'))
+        .expect(200)
+        .then((result) => {
+          const body = result.body;
+          expect(body.modelValue).toBe('found');
+        })
         .then(done)
         .catch(done.fail);
     });
