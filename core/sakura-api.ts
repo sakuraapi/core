@@ -12,36 +12,39 @@ const debug = {
   route: require('debug')('sapi:route')
 };
 
-/**
- * A set of properties defining the configuration of the server.
- */
-export interface ServerConfig {
+export interface SakuraApiPlugin {
   /**
-   * An Express compatible address for the server to bind to.
+   * Options passed into the plugin (see documentation for the plugin).
    */
-  address?: string;
-  /**
-   * An Express compatible port for the server to bind to.
-   */
-  port?: number;
-  /**
-   * A message that you'd like printed to the screen when the server is started.
-   */
-  bootMessage?: string;
-}
-
-/**
- * The interface of an object returned from a SakuraApi module (for example native-authentication-authority)
- */
-export interface SakuraApiModuleResult {
-  models: any[];
-  routables: any[];
-}
-
-export interface SakuraApiModule {
-  // tslint:disable-next-line:variable-name
-  module: (SakuraApi, any) => any;
   options?: any;
+  /**
+   * If the plugin includes middleware handlers, this is the order in which they'll be included. See
+   * [[SakuraApi.addMiddleware]]
+   */
+  order?: number;
+  /**
+   * A SakuraApi plugin that conforms to the interface (SakuraApi, any) => SakuraApiPluginResult;
+   */
+  plugin: (sapi: SakuraApi, options: any) => SakuraApiPluginResult;
+}
+
+/**
+ * The interface of an object returned from a SakuraApi plugin (for example native-authentication-authority)
+ */
+export interface SakuraApiPluginResult {
+  /**
+   * Route handlers that get called before any specific route handlers are called. This is for plugins that
+   * inspect all incoming requests before they're passed off to specific route handlers.
+   */
+  middlewareHandlers?: Handler[];
+  /**
+   * `@Model` decorated models for the plugin.
+   */
+  models?: any[];
+  /**
+   * `@Routable` decorated models for the plugin.
+   */
+  routables?: any[];
 }
 
 /**
@@ -89,7 +92,25 @@ export interface SakuraApiOptions {
    * adds Routable and Module classes; they're usually a set of add-on functionality that either you or a third-party
    * have defined. For example, `auth-native-authority` is a SakuraApi Module.
    */
-  modules?: SakuraApiModule[];
+  plugins?: SakuraApiPlugin[];
+}
+
+/**
+ * A set of properties defining the configuration of the server.
+ */
+export interface ServerConfig {
+  /**
+   * An Express compatible address for the server to bind to.
+   */
+  address?: string;
+  /**
+   * An Express compatible port for the server to bind to.
+   */
+  port?: number;
+  /**
+   * A message that you'd like printed to the screen when the server is started.
+   */
+  bootMessage?: string;
 }
 
 /**
@@ -157,8 +178,9 @@ export class SakuraApi {
   private _server: http.Server;
   // tslint:enable:variable-name
 
-  private appMiddlewareAdded = false;
   private lastErrorHandlers: ErrorRequestHandler[] = [];
+  private listenCalled = false;
+  private middlewareHandlers: { [key: number]: Handler[] } = {};
   private models = new Map<string, any>();
   private routables = new Map<string, any>();
   private routeQueue = new Map<string, ISakuraApiClassRoute>();
@@ -231,7 +253,7 @@ export class SakuraApi {
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
 
-    this.registerModules(options);
+    this.registerPlugins(options);
     this.registerModels(options);
     this.registerRoutables(options);
 
@@ -239,14 +261,32 @@ export class SakuraApi {
   }
 
   /**
-   * A helper method to make it easier to add middleware. See [[SakuraApi]] for an example of its use. You could also
-   * use [[SakuraApi.app]] to get a reference to Express then add your middleware with that reference directly.
+   * Adds middleware grouped by option ordering. See [[SakuraApi]] for an example of its use. You could also
+   * use [[SakuraApi.app]] to get a reference to Express then add your middleware with that reference directly, but that
+   * would not support ordering. Default order group is 0. When handlers are added, they're added by their order
+   * (least to highest), and in then in the order that `addMiddleware` was called.
    *
    * This uses `express.use(...)` internally.
+   *
+   * @param fn the handler function being added
+   * @param order The priority in which the route should be added. Routes are added in groups by their order, and then
+   * by the order in which they were added. So, for example, if you add routes [A, B, C] with an order of 0, they'll
+   * be added [A, B, C] to the router. As another example, if you Add C to 0 and [A, B] to 1, then Z to 0, the handlers
+   * will be added: [C, Z, A, B].
    */
-  addMiddleware(fn: (req: Request, res: Response, next: NextFunction) => void) {
-    debug.normal('.addMiddleware called');
-    this.app.use(fn);
+  addMiddleware(fn: Handler, order: number = 0) {
+    debug.normal(`.addMiddleware called: '${(fn || {} as any).name}', orderr: ${order}`);
+
+    if (!fn) {
+      debug.normal(`handler rejected because it's null or undefined`);
+      return;
+    }
+
+    if (!this.middlewareHandlers[order]) {
+      this.middlewareHandlers[order] = [];
+    }
+
+    this.middlewareHandlers[order].push(fn);
   }
 
   addLastErrorHandlers(fn: ErrorRequestHandler) {
@@ -288,7 +328,6 @@ export class SakuraApi {
    * [[SakuraMongoDbConnection.connect]] to manually define Db connections.
    */
   listen(listenProperties?: ServerConfig): Promise<null> {
-
     return new Promise((resolve, reject) => {
       debug.route(`.listen called with serverConfig:`, listenProperties);
       debug.route(`.listen setting baseUri to ${this.baseUri}`);
@@ -300,8 +339,16 @@ export class SakuraApi {
       let router;
       // Add App Route Handlers ----------------------------------------------------------------------------------------
       // but only once per instance of SakuraApi
-      if (!this.appMiddlewareAdded) {
-        debug.route(`\t.listen first time call, adding app middleware`);
+      if (!this.listenCalled) {
+        debug.route(`\t.listen first time call, adding app middleware and route handlers`);
+
+        /**
+         * Add ordered middleware
+         */
+        for (const key of Object.keys(this.middlewareHandlers).sort()) {
+          const handlers = this.middlewareHandlers[key];
+          this.app.use(handlers);
+        }
 
         /**
          * Catch BodyParser parse errors
@@ -366,7 +413,8 @@ export class SakuraApi {
           router(req, res, next);
         });
 
-        this.appMiddlewareAdded = true;
+        // ensures that middleware is added only once
+        this.listenCalled = true;
       }
 
       // Setup @Routable routes ----------------------------------------------------------------------------------------
@@ -486,24 +534,34 @@ export class SakuraApi {
     }
   }
 
-  private registerModules(options: SakuraApiOptions) {
+  private registerPlugins(options: SakuraApiOptions) {
     debug.normal('\tRegistering Modules');
-    const modules = options.modules || [];
+    const plugins = options.plugins || [];
 
-    for (const module of modules) {
-      if (typeof module.module !== 'function') {
-        throw new Error('SakuraApi setup error. SakuraApiOptions.module array must have objects with a module ' +
+    for (const plugin of plugins) {
+      if (typeof plugin.plugin !== 'function') {
+        throw new Error('SakuraApi setup error. SakuraApiOptions.plugin array must have objects with a plugin ' +
           'property that is a function, which accepts an instance of SakuraApi. The module throwing this error is ' +
-          `a ${typeof module.module} rather than a function.`);
+          `a ${typeof plugin.plugin} rather than a function.`);
       }
-      const result = module.module(this, module.options);
+      const pluginResults: SakuraApiPluginResult = plugin.plugin(this, plugin.options);
 
-      this.registerModels(result);
-      this.registerRoutables(result);
+      // Note: this is not a duplicate of the calls found in the constructor... this allows a plugin to user its own
+      // plugins
+      this.registerModels(pluginResults);
+      this.registerRoutables(pluginResults);
+
+      if (pluginResults.middlewareHandlers) {
+        for (const handlers of pluginResults.middlewareHandlers) {
+          for (const handler of pluginResults.middlewareHandlers) {
+            this.addMiddleware(handler, plugin.order || 0);
+          }
+        }
+      }
     }
   }
 
-  private registerModels(options: SakuraApiOptions) {
+  private registerModels(options: SakuraApiOptions | SakuraApiPluginResult) {
     debug.normal('\tRegistering Models');
     const models = options.models || [];
 
@@ -538,7 +596,7 @@ export class SakuraApi {
     }
   }
 
-  private registerRoutables(options: SakuraApiOptions) {
+  private registerRoutables(options: SakuraApiOptions | SakuraApiPluginResult) {
     debug.normal('\tRegistering Models');
     const routables = options.routables || [];
 
@@ -575,5 +633,4 @@ export class SakuraApi {
       this.routables.set(routableName, routableRef);
     }
   }
-
 }
