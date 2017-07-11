@@ -93,6 +93,18 @@ export interface SakuraApiOptions {
    * have defined. For example, `auth-native-authority` is a SakuraApi Module.
    */
   plugins?: SakuraApiPlugin[];
+  /**
+   * Sets the baseUrl for the entire application.
+   *
+   * ### Example
+   * <pre>
+   * sakuraApi.baseUrl = '/api';
+   * </pre>
+   *
+   * This will cause SakuraApi to expect all routes to have `api` at their base (e.g.,
+   * `http://localhost:8080/api/user`).
+   */
+  baseUrl?: string;
 }
 
 /**
@@ -156,22 +168,10 @@ export interface ServerConfig {
  */
 export class SakuraApi {
 
-  /**
-   * Sets the baseUri for the entire application.
-   *
-   * ### Example
-   * <pre>
-   * sakuraApi.baseUri = '/api';
-   * </pre>
-   *
-   * This will cause SakuraApi to expect all routes to have `api` at their base (e.g.,
-   * `http://localhost:8080/api/user`).
-   */
-  baseUri = '/';
-
   // tslint:disable:variable-name
   private _address: string = '127.0.0.1';
   private _app: Express;
+  private _baseUrl;
   private _config: any;
   private _dbConnections: SakuraMongoDbConnection;
   private _port: number = 3000;
@@ -197,6 +197,14 @@ export class SakuraApi {
    */
   get app(): Express {
     return this._app;
+  }
+
+  /**
+   * Returns the base URL for this instance of SakuraApi. The Base URL is prepended to all [[Routable]]
+   * apis.
+   */
+  get baseUrl(): string {
+    return this._baseUrl;
   }
 
   /**
@@ -238,6 +246,8 @@ export class SakuraApi {
 
   constructor(options: SakuraApiOptions) {
     debug.normal('.constructor started');
+
+    this._baseUrl = options.baseUrl || '/';
 
     this.config = (!options.config)
       ? new SakuraApiConfig().load(options.configPath) || {}
@@ -330,7 +340,7 @@ export class SakuraApi {
   listen(listenProperties?: ServerConfig): Promise<null> {
     return new Promise((resolve, reject) => {
       debug.route(`.listen called with serverConfig:`, listenProperties);
-      debug.route(`.listen setting baseUri to ${this.baseUri}`);
+      debug.route(`.listen setting baseUri to ${this._baseUrl}`);
 
       listenProperties = listenProperties || {};
       this._address = listenProperties.address || this._address;
@@ -407,7 +417,7 @@ export class SakuraApi {
          * Setup route handler so that each call to listen always overwrites the prior routes -- makes testing
          * easier, there's really not a lot of reasons to be calling listen multiple times in a production app
          */
-        this.app.use(this.baseUri, (req, res, next) => {
+        this.app.use(this._baseUrl, (req, res, next) => {
           // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
           // hook whatever the current router is
           router(req, res, next);

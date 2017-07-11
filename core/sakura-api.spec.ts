@@ -87,7 +87,6 @@ describe('core/SakuraApi', () => {
       models: [],
       routables: [MiddleWareTest]
     });
-    sapi.baseUri = '/testApi';
 
     it('injects middleware before @Routable classes', (done) => {
       sapi
