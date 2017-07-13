@@ -94,7 +94,7 @@ export interface IRoutableOptions {
    * A class that is decorated with `@`[[Model]] for which this `@Routable` class will automatically create CRUD
    * route handlers.
    */
-  model?: object;
+  model?: any;
 
   /**
    * Takes an array of Express Handlers or a single Express Handler. The handler(s) will be called before
@@ -120,8 +120,8 @@ export interface ISakuraApiClassRoute {
   method: string;                  // the classes's method name that handles the route (the name of f)
   beforeAll: Handler[] | Handler;  // route handlers that run before all routes for an @Routable Class
   afterAll: Handler[] | Handler;   // route handlers that run after all routes for an @Routable Class
-  before?: Handler[] | Handler;     // route handlers that run before this route for an @Route Method
-  after?: Handler[] | Handler;      // route handlers that run after this route for an @Route Method
+  before?: Handler[] | Handler;    // route handlers that run before this route for an @Route Method
+  after?: Handler[] | Handler;     // route handlers that run after this route for an @Route Method
   name: string;                    // the name of the constructor that added this route
 }
 
@@ -351,10 +351,12 @@ export function Routable(options?: IRoutableOptions): any {
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
+      const diModel = newConstructor[routableSymbols.sapi].getModelByName(options.model.name);
+
       const routerData: ISakuraApiClassRoute = {
         afterAll,
         beforeAll,
-        f: handler.bind(options.model),
+        f: handler.bind(diModel),
         httpMethod: httpMethodMap[method],
         method: handler.name,
         name: target.name,
@@ -391,7 +393,8 @@ export function Routable(options?: IRoutableOptions): any {
           if (skipBindNames.indexOf(handler.name) === -1) {
             boundHandlers.push(handler.bind(c));
           } else {
-            boundHandlers.push(handler.bind(options.model));
+            const diModel = newConstructor[routableSymbols.sapi].getModelByName(options.model.name);
+            boundHandlers.push(handler.bind(diModel));
           }
 
           index++;

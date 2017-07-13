@@ -518,6 +518,24 @@ export class SakuraApi {
   }
 
   /**
+   * Gets a `@`[[Model]] that was registered during construction of [[SakuraApi]] by name.
+   * @param name the name of the Model (the name of the class that was decorated with `@`[[Model]]
+   * @returns {undefined|any}
+   */
+  getModelByName(name: string): any {
+    return this.models.get(name);
+  }
+
+  /**
+   * Gets a `@`[[Routable]] that was registered during construction of [[SakuraApi]] by name.
+   * @param name the name of the Routable (the name of the class that was decorated with `@`[[Model]]
+   * @returns {undefined|any}
+   */
+  getRoutableByName(name: string): any {
+    return this.routables.get(name);
+  }
+
+  /**
    * Primarily used internally by [[Routable]] during bootstrapping. However, if an `@Routable` class has
    * [[RoutableClassOptions.autoRoute]] set to false, the integrator will have to pass that `@Routable` class in to
    * this method manually if he wants to routes to be bound.
@@ -621,8 +639,8 @@ export class SakuraApi {
       if (!isRoutable) {
         if (!routable.use
           || !routable.for
-          || !routable.use[modelSymbols.isSakuraApiModel]
-          || !routable.for[modelSymbols.isSakuraApiModel]) {
+          || !routable.use[routableSymbols.isSakuraApiRoutable]
+          || !routable.for[routableSymbols.isSakuraApiRoutable]) {
           throw new Error('SakuraApi setup error. SakuraApiOptions.routables array must have classes decorated with '
             + ' @Routable or an object literal of the form { use: SomeMockRoutable, for: SomeRealRoutable }, where'
             + ' SomeMockRoutable and SomeRealRoutable are decorated with @Model.');
