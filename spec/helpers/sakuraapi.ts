@@ -10,9 +10,9 @@ export const testUrl = (endpoint: string) => path.join(baseUri, endpoint);
 export const testMongoDbUrl = (sapi) => `mongodb://localhost:${sapi.config.TEST_MONGO_DB_PORT}`;
 
 export interface ITestSapiOptions {
-  models?: any[],
-  routables?: any[],
-  plugins?: SakuraApiPlugin[]
+  models?: any[];
+  routables?: any[];
+  plugins?: SakuraApiPlugin[];
 }
 
 export function testSapi(options: ITestSapiOptions): SakuraApi {

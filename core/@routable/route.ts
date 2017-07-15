@@ -75,19 +75,22 @@ export interface IRoutableMethodOptions {
    * }
    * </pre>
    *
-   * You can also use one of built in handlers. See [[builtInHandlers]]. In the case of built in handlers, their
-   * context is set to the model, but their functionality is private, so you don't have to worry about that.
-   *
+   * You can also use one of built in handlers. Those are located in `@sakuraapi/api/handlers`. Options include:
+   *    - [[getAllRouteHandler]]
+   *    - [[getRouteHandler]]
+   *    - [[putRouteHandler]]
+   *    - [[postRouteHandler]]
+   *    - [[deleteRouteHandler]]
    */
-  before?: [Handler | string] | Handler | string;
+  before?: [Handler] | Handler;
 
   /**
    * Takes an array of Express Handlers or a single Express Handler. The handler(s) will be called after
    * each `@Route` method in the `@Routable` class.
    *
-   * See [[IRoutableMethodOptions.before]] for an explanation of how static and context work with after.
+   * See [[IRoutableMethodOptions.before]] for an explanation of how after works.
    */
-  after?: [Handler | string] | Handler | string ;
+  after?: [Handler] | Handler;
 }
 
 /**

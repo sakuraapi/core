@@ -436,7 +436,15 @@ export class SakuraApi {
 
         debug.route('\t\t.listen route %o', route);
 
-        let routeHandlers: Handler[] = [];
+        let routeHandlers: Handler[] = [
+          // injects an initial handler that injects the reference to the instantiated @Routable decorated object
+          // responsible for this route. This allows route handlers to look get the @Routable's model
+          // (if present)
+          (req: Request, res: Response, next: NextFunction) => {
+            res.locals.routable = route.routable;
+            next();
+          }
+        ];
 
         if (route.beforeAll) {
           routeHandlers = routeHandlers.concat(route.beforeAll);
