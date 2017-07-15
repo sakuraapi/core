@@ -1,6 +1,6 @@
 {
   "name": "@sakuraapi/api",
-  "version": "0.7.0-6",
+  "version": "0.7.0-7",
   "description": "MongoDB and TypeScript MEAN Stack Framework for NodeJS",
   "main": "index.js",
   "typings": "index.d.ts",
@@ -26,6 +26,8 @@
     "prepublish": "npm test && npm run nsp check",
     "say:fail": "say 'fail' || echo ''",
     "say:pass": "say 'pass' || echo ''",
+    "start": "nodemon --exec \"npm run build; echo build done\"",
+    "start:test": "nodemon --exec \"npm test\"",
     "test": "npm run docker:compose-test && npm run build && ((npm run jasmine && npm run say:pass) || npm run say:fail) && docker-compose down",
     "test:db": "npm run docker:compose-test && npm run build && ((npm run jasmine && npm run say:pass) || npm run say:fail)",
     "test:trace": "npm test",

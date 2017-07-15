@@ -9,15 +9,15 @@ export interface IDefaultMethodsOptions {
  * the official API and as a result, that behavior may break without notice.
  * @internal This is not part of the API contract.
  */
-export function addDefaultInstanceMethods(target: any, functionName: string, fn: (...any) => any,
+export function addDefaultInstanceMethods(target: any, fn: (...any) => any,
                                           options?: IDefaultMethodsOptions) {
 
-  if (options && options.suppressInjection && options.suppressInjection.indexOf(functionName) > -1) {
+  if (options && options.suppressInjection && options.suppressInjection.indexOf(fn.name) > -1) {
     return;
   }
 
-  if (!target.prototype[functionName]) {
-    target.prototype[functionName] = fn;
+  if (!target.prototype[fn.name]) {
+    target.prototype[fn.name] = fn;
   }
 }
 
@@ -26,16 +26,16 @@ export function addDefaultInstanceMethods(target: any, functionName: string, fn:
  * official API and as a result, that behavior may break without notice.
  * @internal This is not part of the API contract.
  */
-export function addDefaultStaticMethods(target: any, functionName: string, fn: (...any) => any,
+export function addDefaultStaticMethods(target: any, fn: (...any) => any,
                                         options?: IDefaultMethodsOptions) {
 
-  if (options && options.suppressInjection && options.suppressInjection.indexOf(functionName) > -1) {
+  if (options && options.suppressInjection && options.suppressInjection.indexOf(fn.name) > -1) {
     return;
   }
 
-  if (!target[functionName]) {
+  if (!target[fn.name]) {
 
-    target[functionName] = fn;
+    target[fn.name] = fn;
   }
 }
 /* tslint:enable:variable-name */

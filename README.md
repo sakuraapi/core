@@ -5,12 +5,11 @@
 | Develop   |[![Build Status](https://travis-ci.org/sakuraapi/api.svg?branch=develop)](https://travis-ci.org/sakuraapi/api)| 
 | Master    |[![Build Status](https://travis-ci.org/sakuraapi/api.svg?branch=master)](https://travis-ci.org/sakuraapi/api)|
 
+Note: Rapid development is taking place on the 0.7.0 release; as a result, docs may be out of date.
 API Documentation: https://sakuraapi.github.io/api/
 
 # SakuraApi
 SakuraAPI is a NodeJS API framework that utilizes modern and emerging webs standards like TypeScript and ES6 in a way that feels familiar to programmers that are responsible for full-stack MEAN development. 
-
-At the moment, this project is an experiment to explore various ideas with my team.
 
 ## Install
 ```
@@ -19,15 +18,21 @@ npm install @sakuraapi/api
 
 ## Goals
 
-* Angular developers should find the conventions in SakuraApi to be familiar.
-* Anyone looking at a SakuraApi based project should be able to get a quick feel for what's going on, if they're familiar with SakuraApi. The structure is opinionated enough that disparate projects will feel familiar (assuming the developer didn't go out of their way to be non-standard). 
-* SakuraApi is built using modern and emerging web standards. If there is some reason your project cannot use Node 7+ or TypeScript 2+, then this isn't the right project for you. Currently there are no plans to expose a pure ECMAScript version of the framework.
-* Implementing a new model or route in a SakuraApi project should be ergonomic - it shouldn't require that you remember to change settings in various files spread throughout your project. SakuraApi should, however, support a robust cascading configuration system.
+* Good DX (developer experience design)
+* A person coming to SakuraApi for the first time should be have a sense of familiarity if they're familiar with Angular or other frameworks that make use of DI concepts and Decorators.   
+* SakuraApi is built using modern and emerging web standards. If a circumstance arises where a choice has to be made between new or emerging standards or backwards comparability with older versions of Node, etc., legacy loses.
+* Configuration should be kept close to the thing being configured, but there should also be a robust cascading configuration system.
+* SakuraApi should be easy to integrate into a CI/CD system via its configuration system.
 * SakuraApi should encourage good API development practices through how developers implement it. In other words, using SakuraApi as intended should result in an API that's reasonably close to best practices (within the semantic domain of whatever that means).
-* SakuraApi should facilitate interacting with MongoDB, but the developer should not be abstracted away from the database if he or she needs to dive deep into MongoDB land. I
-  * It is the opinion of the contributors to this frameowrkMany of the database abstractions in current frameworks actually make it harder to develop because you can't use you existing knowledge of MongoDB to solve non-trivial queries. Sometimes the more advanced features of a db aren't even supported yet.
+* SakuraApi should facilitate interacting with MongoDB, but the developer should not be abstracted away from the database if he or she needs to dive deep into MongoDB land.
+  * It is the opinion of the maintainer of this framework that many of the database abstractions in current frameworks actually make it harder to develop because you can't use you existing knowledge of MongoDB to solve non-trivial queries. Sometimes the more advanced features of a db aren't even supported yet.
   * As a result, interacting with databases will not be treated generically - this is a MEAN stack framework, where the letter M is brought to you by MongoDB. Someone familiar with the NodeJS drivers for MongoDB should feel familiar with SakuraApi if anything non-trivial needs to be accomplished.
   * If you're looking for RDMS support (e.g., MySQL, PosgreSQL, etc.), support for some othe NoSQL database, or ______, this is likely not the API you're looking for (Jedi hand-wave).
+* SakuraApi should have an eco-system that simplifies common tasks. For example, there should be a suite of basic handlers that know how to CRUD models through automagically presenting a REST api for a Model.
+  * Models are CRUD capable out of the box
+  * Native authentication (email password) and oAuth for common platforms (like Facebook, Google, etc.), are available via plugins
+* SakuraApi should support a plugin system that allows easy addition of additional functionality that might be useful to a subset of users, but not all users
+* SakuraApi should be secure. 
 
 ## How to interact with others on this project:
 
@@ -62,11 +67,11 @@ This is a new tiny community, so if you don't get a response right away, it migh
 
 ## Community and Conduct
 
-Everyone should be treated with respect. Though candor is encouraged, being mean will not be tolerated. We're a MEAN stack, not a mean stack.
+Everyone should be treated with respect. Though candor is encouraged, being mean will not be tolerated.
 
 ## What's with the name?
 
-[J.P.](https://github.com/etsuo) is half Japanese and he has fond memories of cherry blossoms in Japan... he also likes sakura mochi. No, he doesn't speak Japanese, much to his mother's disappointment.
+[J.P.](https://github.com/etsuo) is half Japanese and has fond memories of cherry blossoms in Japan... he also likes sakura mochi. No, he doesn't speak Japanese, much to his mother's disappointment.
 
 # Working with the SakuraApi codebase
 
@@ -75,7 +80,7 @@ npm install
 npm test
 ```
 
-It's a framework / library, so there isn't an `npm start`. You can look at the [starter](https://github.com/sakuraapi/example) project to get an ostensive feel for how the api is used.
+You can look at the [starter](https://github.com/sakuraapi/example) project to get an ostensive feel for how the api is used. Make sure th example project has the same version as the current version of SakuraApi. If it does not, then it may not be accurate.
 
 SakuraApi uses Docker for testing, so you need to have a Docker installed if you plan to contribute.
 
@@ -97,7 +102,7 @@ Anyone who's ok with the changing API until the project reaches 1.0. Anyone who'
 
 Though this API is not being developed for or by Olive Technology, Inc. Olive Technology has been kind enough to allow a few of us to spend some of our time contributing to this project towards meeting the needs of some of their client projects. This does not imply in any way that Olive Technology has any claim to the intellectual properties of this project or that Olive Technology has any special licensing rights. It's BSD all around. ;)
 
-# environment
+# Configuration
 
 SakuraApi looks for a `config/` folder in the root of your api project.
 
@@ -144,3 +149,5 @@ Naturally, anything you define is available to you. You get access to the config
 # Using SakuraAPI
 
 See the [SakuraAPI Example](https://github.com/sakuraapi/api-example) project for a demonstration of how to use the API.
+
+Make sure the version of the sample project matches the version of SakuraApi. If it does not, it's out of date and may not reflect the current state of affairs in `@sakuraapi/api`.

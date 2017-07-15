@@ -1,11 +1,13 @@
 // tslint:disable:no-shadowed-variable
 import {NextFunction, Request, Response} from 'express';
 import {ObjectID} from 'mongodb';
+import {getAllRouteHandler, getRouteHandler} from '../../handlers/basic-handlers';
 import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
 import {Db, Json, Model, SakuraApiModel} from '../@model';
 import {DUPLICATE_RESOURCE} from '../helpers/http-status';
 import {Routable, routableSymbols, Route, SakuraApiRoutable} from './';
 import {IRoutableLocals} from './routable';
+
 import request = require('supertest');
 
 describe('core/@Routable', () => {
@@ -1499,31 +1501,6 @@ describe('core/@Routable', () => {
         .then(done)
         .catch(done.fail);
     });
-
-    it('throws if built in handler is called with no model bound', () => {
-
-      try {
-        @Routable()
-        class RoutableWithInternalHandlerButNoModelTest {
-          @Route({
-            before: 'getAllHandler'
-          })
-          badJuju() {
-            // lint empty
-          }
-        }
-
-        testSapi({
-          models: [],
-          routables: [RoutableWithInternalHandlerButNoModelTest]
-        });
-
-        fail('Should not have reached here');
-      } catch (err) {
-        expect(err.message).toBe('RoutableWithInternalHandlerButNoModelTest is attempting to use built in handler ' +
-          'getAllRouteHandler, which requires RoutableWithInternalHandlerButNoModelTest to be bound to a model');
-      }
-    });
   });
 
   describe('before and after handlers can utilize injected route handlers', () => {
@@ -1561,7 +1538,7 @@ describe('core/@Routable', () => {
 
         @Route({
           after: GetAllRouteHandlerBeforeAfterTest.getAfterTest,
-          before: ['getAllHandler'],
+          before: [getAllRouteHandler],
           method: 'get',
           path: 'beforeTest/get'
         })
@@ -1664,7 +1641,7 @@ describe('core/@Routable', () => {
 
         @Route({
           after: GetRouteHandlerBeforeAfterTest.getAfterTest,
-          before: ['getHandler'],
+          before: [getRouteHandler],
           method: 'get',
           path: 'beforeTest/get/:id'
         })
@@ -1677,7 +1654,7 @@ describe('core/@Routable', () => {
 
         @Route({
           after: GetRouteHandlerBeforeAfterTest.getAfterTest,
-          before: ['getHandler'],
+          before: [getRouteHandler],
           method: 'get',
           path: 'beforeTest/get2/:id'
         })

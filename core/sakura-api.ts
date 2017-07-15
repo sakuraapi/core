@@ -436,7 +436,15 @@ export class SakuraApi {
 
         debug.route('\t\t.listen route %o', route);
 
-        let routeHandlers: Handler[] = [];
+        let routeHandlers: Handler[] = [
+          // injects an initial handler that injects the reference to the instantiated @Routable decorated object
+          // responsible for this route. This allows route handlers to look get the @Routable's model
+          // (if present)
+          (req: Request, res: Response, next: NextFunction) => {
+            res.locals.routable = route.routable;
+            next();
+          }
+        ];
 
         if (route.beforeAll) {
           routeHandlers = routeHandlers.concat(route.beforeAll);
@@ -515,6 +523,24 @@ export class SakuraApi {
         next();
       }
     });
+  }
+
+  /**
+   * Gets a `@`[[Model]] that was registered during construction of [[SakuraApi]] by name.
+   * @param name the name of the Model (the name of the class that was decorated with `@`[[Model]]
+   * @returns {undefined|any}
+   */
+  getModelByName(name: string): any {
+    return this.models.get(name);
+  }
+
+  /**
+   * Gets a `@`[[Routable]] that was registered during construction of [[SakuraApi]] by name.
+   * @param name the name of the Routable (the name of the class that was decorated with `@`[[Model]]
+   * @returns {undefined|any}
+   */
+  getRoutableByName(name: string): any {
+    return this.routables.get(name);
   }
 
   /**
@@ -621,8 +647,8 @@ export class SakuraApi {
       if (!isRoutable) {
         if (!routable.use
           || !routable.for
-          || !routable.use[modelSymbols.isSakuraApiModel]
-          || !routable.for[modelSymbols.isSakuraApiModel]) {
+          || !routable.use[routableSymbols.isSakuraApiRoutable]
+          || !routable.for[routableSymbols.isSakuraApiRoutable]) {
           throw new Error('SakuraApi setup error. SakuraApiOptions.routables array must have classes decorated with '
             + ' @Routable or an object literal of the form { use: SomeMockRoutable, for: SomeRealRoutable }, where'
             + ' SomeMockRoutable and SomeRealRoutable are decorated with @Model.');

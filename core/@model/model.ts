@@ -222,15 +222,15 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     // =================================================================================================================
 
     // Inject static methods
-    addDefaultStaticMethods(newConstructor, 'removeAll', removeAll, modelOptions);
-    addDefaultStaticMethods(newConstructor, 'removeById', removeById, modelOptions);
-    addDefaultStaticMethods(newConstructor, 'get', get, modelOptions);
-    addDefaultStaticMethods(newConstructor, 'getOne', getOne, modelOptions);
-    addDefaultStaticMethods(newConstructor, 'getById', getById, modelOptions);
-    addDefaultStaticMethods(newConstructor, 'getCursor', getCursor, modelOptions);
-    addDefaultStaticMethods(newConstructor, 'getCursorById', getCursorById, modelOptions);
-    addDefaultStaticMethods(newConstructor, 'getCollection', getCollection, modelOptions);
-    addDefaultStaticMethods(newConstructor, 'getDb', getDb, modelOptions);
+    addDefaultStaticMethods(newConstructor, removeAll, modelOptions);
+    addDefaultStaticMethods(newConstructor, removeById, modelOptions);
+    addDefaultStaticMethods(newConstructor, get, modelOptions);
+    addDefaultStaticMethods(newConstructor, getOne, modelOptions);
+    addDefaultStaticMethods(newConstructor, getById, modelOptions);
+    addDefaultStaticMethods(newConstructor, getCursor, modelOptions);
+    addDefaultStaticMethods(newConstructor, getCursorById, modelOptions);
+    addDefaultStaticMethods(newConstructor, getCollection, modelOptions);
+    addDefaultStaticMethods(newConstructor, getDb, modelOptions);
 
     // Various internal methods are exposed to the integrator,
     // but allow the integrator to replace this functionality without
@@ -273,11 +273,11 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     // =================================================================================================================
 
     // Inject default instance methods for CRUD if not already defined by integrator
-    addDefaultInstanceMethods(newConstructor, 'create', create, modelOptions);
-    addDefaultInstanceMethods(newConstructor, 'getCollection', getCollection, modelOptions);
-    addDefaultInstanceMethods(newConstructor, 'getDb', getDb, modelOptions);
-    addDefaultInstanceMethods(newConstructor, 'remove', remove, modelOptions);
-    addDefaultInstanceMethods(newConstructor, 'save', save, modelOptions);
+    addDefaultInstanceMethods(newConstructor, create, modelOptions);
+    addDefaultInstanceMethods(newConstructor, getCollection, modelOptions);
+    addDefaultInstanceMethods(newConstructor, getDb, modelOptions);
+    addDefaultInstanceMethods(newConstructor, remove, modelOptions);
+    addDefaultInstanceMethods(newConstructor, save, modelOptions);
 
     newConstructor.prototype.toDb = toDb;
     newConstructor.prototype[modelSymbols.toDb] = toDb;

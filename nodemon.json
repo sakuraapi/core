@@ -1,0 +1,9 @@
+{
+  "verbose": true,
+  "ignore": [
+    "**/*.js",
+    "**/*.d.ts",
+    "node_modules"
+  ],
+  "ext": "ts, json"
+}
