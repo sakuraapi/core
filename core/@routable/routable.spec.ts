@@ -5,9 +5,9 @@ import {getAllRouteHandler, getRouteHandler} from '../../handlers/basic-handlers
 import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
 import {Db, Json, Model, SakuraApiModel} from '../@model';
 import {DUPLICATE_RESOURCE} from '../helpers/http-status';
+import {SakuraApi} from '../sakura-api';
 import {Routable, routableSymbols, Route, SakuraApiRoutable} from './';
 import {IRoutableLocals} from './routable';
-
 import request = require('supertest');
 
 describe('core/@Routable', () => {
@@ -1712,6 +1712,43 @@ describe('core/@Routable', () => {
           .then(done)
           .catch(done.fail);
       });
+    });
+  });
+
+  describe('sapi injected', () => {
+
+    @Routable()
+    class TestRoutableSapiInjection extends SakuraApiModel {
+    }
+
+    let sapi;
+    let testSapiInjection;
+    beforeEach(() => {
+      sapi = testSapi({
+        models: [],
+        routables: [TestRoutableSapiInjection]
+      });
+    });
+
+    it('@Routable has reference to sapi injected as symbol when SakuraApi is constructed', () => {
+      const sapiRef = TestRoutableSapiInjection[routableSymbols.sapi];
+
+      expect(sapiRef).toBeDefined();
+      expect(sapiRef instanceof SakuraApi).toBe(true, 'Should have been an instance of SakuraApi'
+        + ` but was an instance of ${sapiRef.name || (sapiRef.constructor || {} as any).name} instead`);
+    });
+
+    it('@Routable has reference to sapi injected as symbol when SakuraApi is constructed', () => {
+      const sapiRef = TestRoutableSapiInjection.sapi;
+
+      expect(sapiRef).toBeDefined();
+      expect(sapiRef instanceof SakuraApi).toBe(true, 'Should have been an instance of SakuraApi'
+        + ` but was an instance of ${(sapiRef as any).name || (sapiRef.constructor || {} as any).name} instead`);
+    });
+
+    it('@Routable injects sapiConfig to make it easier to get access to sapiConfig', () => {
+      expect(TestRoutableSapiInjection.sapiConfig).toBeDefined();
+      expect(TestRoutableSapiInjection.sapiConfig.SAKURA_API_CONFIG_TEST).toBe('found');
     });
   });
 });

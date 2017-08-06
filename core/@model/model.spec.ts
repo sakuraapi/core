@@ -1,5 +1,6 @@
 import {InsertOneWriteOpResult, ObjectID, ReplaceOneOptions, UpdateWriteOpResult} from 'mongodb';
 import {testSapi} from '../../spec/helpers/sakuraapi';
+import {SakuraApi} from '../sakura-api';
 import {Db, Json, Model, modelSymbols, SakuraApiModel} from './';
 import {SapiDbForModelNotFound, SapiMissingIdErr} from './errors';
 
@@ -36,31 +37,32 @@ describe('core/@Model', () => {
 
   describe('construction', () => {
 
+    let test = null;
     beforeEach(() => {
-      this.t = new Test(777);
+      test = new Test(777);
     });
 
     it('properly passes the constructor parameters', () => {
-      expect(this.t.n).toBe(777);
+      expect(test.n).toBe(777);
     });
 
     it('maintains the prototype chain', () => {
-      expect(this.t instanceof Test).toBe(true);
+      expect(test instanceof Test).toBe(true);
     });
 
     it(`decorates itself with Symbol('sakuraApiModel') = true`, () => {
-      expect(this.t[modelSymbols.isSakuraApiModel]).toBe(true);
-      expect(() => this.t[modelSymbols.isSakuraApiModel] = false)
+      expect(test[modelSymbols.isSakuraApiModel]).toBe(true);
+      expect(() => test[modelSymbols.isSakuraApiModel] = false)
         .toThrowError(`Cannot assign to read only property 'Symbol(isSakuraApiModel)' of object '#<Test>'`);
     });
 
     it('maps _id to id without contaminating the object properties with the id accessor', () => {
-      this.t.id = new ObjectID();
+      test.id = new ObjectID();
 
-      expect(this.t._id).toEqual(this.t.id);
-      expect(this.t.id).toEqual(this.t.id);
+      expect(test._id).toEqual(test.id);
+      expect(test.id).toEqual(test.id);
 
-      const json = JSON.parse(JSON.stringify(this.t));
+      const json = JSON.parse(JSON.stringify(test));
       expect(json.id).toBeUndefined();
     });
 
@@ -121,19 +123,6 @@ describe('core/@Model', () => {
 
       @Model({
         dbConfig: {
-          collection: 'users',
-          db: 'userDb',
-          promiscuous: false
-        }
-      })
-      class ChastityTest extends SakuraApiModel {
-        @Db({field: 'fn'})
-        firstName = 'George';
-        lastName = 'Washington';
-      }
-
-      @Model({
-        dbConfig: {
           collection: 'bad',
           db: 'bad'
         }
@@ -141,25 +130,27 @@ describe('core/@Model', () => {
       class TestBadDb extends SakuraApiModel {
       }
 
+      let sapi = null;
+      let testDefaultMethods = null;
+      let testDefaultMethods2 = null;
       beforeEach(() => {
-        this.sapi = testSapi({
+        sapi = testSapi({
           models: [
             TestDefaultMethods,
-            ChastityTest,
+            // ChastityTest,
             TestBadDb
           ],
           routables: []
         });
 
-        this.tdm = new TestDefaultMethods();
-        this.tdm2 = new TestDefaultMethods();
-        this.ct = new ChastityTest();
+        testDefaultMethods = new TestDefaultMethods();
+        testDefaultMethods2 = new TestDefaultMethods();
       });
 
       describe('when CRUD not provided by integrator', () => {
 
         beforeEach((done) => {
-          this.sapi
+          sapi
             .dbConnections
             .connectAll()
             .then(done)
@@ -174,23 +165,21 @@ describe('core/@Model', () => {
            */
 
           it('removeAll', (done) => {
-            expect(this.tdm.id).toBeNull();
+            expect(testDefaultMethods.id).toBeNull();
 
-            this
-              .tdm
+            testDefaultMethods
               .create()
               .then((createdResult) => {
                 expect(createdResult.insertedCount).toBe(1);
 
-                this
-                  .tdm2
+                testDefaultMethods2
                   .create()
                   .then((createResult) => {
                     expect(createResult.insertedCount).toBe(1);
 
                     TestDefaultMethods
                       .removeAll({
-                        $or: [{_id: this.tdm.id}, {_id: this.tdm2.id}]
+                        $or: [{_id: testDefaultMethods.id}, {_id: testDefaultMethods2.id}]
                       })
                       .then((deleteResults) => {
                         expect(deleteResults.deletedCount).toBe(2);
@@ -205,22 +194,20 @@ describe('core/@Model', () => {
           });
 
           it('removeById', (done) => {
-            expect(this.tdm.id).toBeNull();
+            expect(testDefaultMethods.id).toBeNull();
 
-            this
-              .tdm
+            testDefaultMethods
               .create()
               .then((createResult) => {
                 expect(createResult.insertedCount).toBe(1);
 
-                this
-                  .tdm2
+                testDefaultMethods2
                   .create()
                   .then((createResult2) => {
                     expect(createResult2.insertedCount).toBe(1);
 
                     TestDefaultMethods
-                      .removeById(this.tdm.id)
+                      .removeById(testDefaultMethods.id)
                       .then((deleteResults) => {
                         expect(deleteResults.deletedCount).toBe(1);
                         done();
@@ -259,21 +246,20 @@ describe('core/@Model', () => {
 
           it('get', (done) => {
 
-            expect(this.tdm.id).toBeNull();
+            expect(testDefaultMethods.id).toBeNull();
 
-            this
-              .tdm
+            testDefaultMethods
               .create()
               .then((createdResult) => {
                 expect(createdResult.insertedCount).toBe(1);
 
                 TestDefaultMethods
-                  .get({filter: {_id: this.tdm.id}})
+                  .get({filter: {_id: testDefaultMethods.id}})
                   .then((results) => {
                     expect(results.length).toBe(1);
-                    expect(results[0]._id.toString()).toBe(this.tdm.id.toString());
-                    expect(results[0].firstName).toBe(this.tdm.firstName);
-                    expect(results[0].lastName).toBe(this.tdm.lastName);
+                    expect(results[0]._id.toString()).toBe(testDefaultMethods.id.toString());
+                    expect(results[0].firstName).toBe(testDefaultMethods.firstName);
+                    expect(results[0].lastName).toBe(testDefaultMethods.lastName);
                     done();
                   })
                   .catch(done.fail);
@@ -282,20 +268,19 @@ describe('core/@Model', () => {
           });
 
           it('getOne', (done) => {
-            expect(this.tdm.id).toBeNull();
+            expect(testDefaultMethods.id).toBeNull();
 
-            this
-              .tdm
+            testDefaultMethods
               .create()
               .then((createdResult) => {
                 expect(createdResult.insertedCount).toBe(1);
 
                 TestDefaultMethods
-                  .getOne({_id: this.tdm.id})
+                  .getOne({_id: testDefaultMethods.id})
                   .then((result) => {
-                    expect(result._id.toString()).toBe(this.tdm.id.toString());
-                    expect(result.firstName).toBe(this.tdm.firstName);
-                    expect(result.lastName).toBe(this.tdm.lastName);
+                    expect(result._id.toString()).toBe(testDefaultMethods.id.toString());
+                    expect(result.firstName).toBe(testDefaultMethods.firstName);
+                    expect(result.lastName).toBe(testDefaultMethods.lastName);
                     done();
                   })
                   .catch(done.fail);
@@ -304,20 +289,19 @@ describe('core/@Model', () => {
           });
 
           it('getById', (done) => {
-            expect(this.tdm.id).toBeNull();
+            expect(testDefaultMethods.id).toBeNull();
 
-            this
-              .tdm
+            testDefaultMethods
               .create()
               .then((createdResult) => {
                 expect(createdResult.insertedCount).toBe(1);
 
                 TestDefaultMethods
-                  .getById(this.tdm.id)
+                  .getById(testDefaultMethods.id)
                   .then((result) => {
-                    expect(result._id.toString()).toBe(this.tdm.id.toString());
-                    expect(result.firstName).toBe(this.tdm.firstName);
-                    expect(result.lastName).toBe(this.tdm.lastName);
+                    expect(result._id.toString()).toBe(testDefaultMethods.id.toString());
+                    expect(result.firstName).toBe(testDefaultMethods.firstName);
+                    expect(result.lastName).toBe(testDefaultMethods.lastName);
                     done();
                   })
                   .catch(done.fail);
@@ -326,26 +310,25 @@ describe('core/@Model', () => {
           });
 
           it('getCursor', (done) => {
-            expect(this.tdm.id).toBeNull();
+            expect(testDefaultMethods.id).toBeNull();
 
-            this
-              .tdm
+            testDefaultMethods
               .create()
               .then((createdResult) => {
                 expect(createdResult.insertedCount).toBe(1);
 
                 TestDefaultMethods
-                  .getCursor({_id: this.tdm.id})
+                  .getCursor({_id: testDefaultMethods.id})
                   .toArray()
                   .then((results) => {
                     expect(results.length).toBe(1);
-                    expect(results[0]._id.toString()).toBe(this.tdm.id.toString());
+                    expect(results[0]._id.toString()).toBe(testDefaultMethods.id.toString());
 
                     expect(results[0].fn).toBeDefined();
                     expect(results[0].lastName).toBeDefined();
 
-                    expect(results[0].fn).toBe(this.tdm.firstName);
-                    expect(results[0].lastName).toBe(this.tdm.lastName);
+                    expect(results[0].fn).toBe(testDefaultMethods.firstName);
+                    expect(results[0].lastName).toBe(testDefaultMethods.lastName);
                     done();
                   })
                   .catch(done.fail);
@@ -355,21 +338,21 @@ describe('core/@Model', () => {
           });
 
           it('getCursor supports projection', (done) => {
-            expect(this.tdm.id).toBeNull();
+            expect(testDefaultMethods.id).toBeNull();
 
-            this
-              .tdm
+
+            testDefaultMethods
               .create()
               .then((createResults: InsertOneWriteOpResult) => {
                 expect(createResults.insertedCount).toBe(1);
 
                 TestDefaultMethods
-                  .getCursor(this.tdm.id, {_id: 1})
+                  .getCursor(testDefaultMethods.id, {_id: 1})
                   .next()
                   .then((result) => {
                     expect(result.firstName).toBeUndefined();
                     expect(result.lastName).toBeUndefined();
-                    expect(result._id.toString()).toBe(this.tdm.id.toString());
+                    expect(result._id.toString()).toBe(testDefaultMethods.id.toString());
                     done();
                   });
               })
@@ -377,25 +360,24 @@ describe('core/@Model', () => {
           });
 
           it('getCursorById', (done) => {
-            expect(this.tdm.id).toBeNull();
+            expect(testDefaultMethods.id).toBeNull();
 
-            this
-              .tdm
+            testDefaultMethods
               .create()
               .then((createdResult) => {
                 expect(createdResult.insertedCount).toBe(1);
 
                 TestDefaultMethods
-                  .getCursorById(this.tdm.id)
+                  .getCursorById(testDefaultMethods.id)
                   .next()
                   .then((result) => {
-                    expect(result._id.toString()).toBe(this.tdm.id.toString());
+                    expect(result._id.toString()).toBe(testDefaultMethods.id.toString());
 
                     expect(result.fn).toBeDefined();
                     expect(result.lastName).toBeDefined();
 
-                    expect(result.fn).toBe(this.tdm.firstName);
-                    expect(result.lastName).toBe(this.tdm.lastName);
+                    expect(result.fn).toBe(testDefaultMethods.firstName);
+                    expect(result.lastName).toBe(testDefaultMethods.lastName);
                     done();
                   })
                   .catch(done.fail);
@@ -411,26 +393,26 @@ describe('core/@Model', () => {
 
           describe('create', () => {
             it('inserts model into db', (done) => {
-              this.tdm.id = new ObjectID();
-              this
-                .tdm
+              testDefaultMethods.id = new ObjectID();
+
+              testDefaultMethods
                 .create()
                 .then((result) => {
                   expect(result.insertedCount).toBe(1);
-                  this
-                    .tdm
+
+                  testDefaultMethods
                     .getCollection()
-                    .find({_id: this.tdm.id})
+                    .find({_id: testDefaultMethods.id})
                     .limit(1)
                     .next()
                     .then((result2) => {
-                      expect(result2._id.toString()).toBe(this.tdm.id.toString());
+                      expect(result2._id.toString()).toBe(testDefaultMethods.id.toString());
 
                       expect(result2.fn).toBeDefined();
                       expect(result2.lastName).toBeDefined();
 
-                      expect(result2.fn).toBe(this.tdm.firstName);
-                      expect(result2.lastName).toBe(this.tdm.lastName);
+                      expect(result2.fn).toBe(testDefaultMethods.firstName);
+                      expect(result2.lastName).toBe(testDefaultMethods.lastName);
                       done();
                     })
                     .catch(done.fail);
@@ -441,26 +423,26 @@ describe('core/@Model', () => {
             });
 
             it('sets the models Id before writing if Id is not set', (done) => {
-              expect(this.tdm.id).toBeNull();
-              this
-                .tdm
+              expect(testDefaultMethods.id).toBeNull();
+
+              testDefaultMethods
                 .create()
                 .then((result) => {
                   expect(result.insertedCount).toBe(1);
-                  this
-                    .tdm
+
+                  testDefaultMethods
                     .getCollection()
-                    .find({_id: this.tdm.id})
+                    .find({_id: testDefaultMethods.id})
                     .limit(1)
                     .next()
                     .then((result2) => {
-                      expect(result2._id.toString()).toBe(this.tdm.id.toString());
+                      expect(result2._id.toString()).toBe(testDefaultMethods.id.toString());
 
                       expect(result2.fn).toBeDefined();
                       expect(result2.lastName).toBeDefined();
 
-                      expect(result2.fn).toBe(this.tdm.firstName);
-                      expect(result2.lastName).toBe(this.tdm.lastName);
+                      expect(result2.fn).toBe(testDefaultMethods.firstName);
+                      expect(result2.lastName).toBe(testDefaultMethods.lastName);
                       done();
                     })
                     .catch(done.fail);
@@ -520,14 +502,14 @@ describe('core/@Model', () => {
 
           describe('getCollection', () => {
             it('returns a valid MongoDB Collection for the current model', () => {
-              const col = this.tdm.getCollection();
+              const col = testDefaultMethods.getCollection();
               expect(col.s.dbName).toBe('userDb');
             });
           });
 
           describe('getDb', () => {
             it('returns a valid MongoDB Db for the current model', () => {
-              const db = this.tdm.getDb();
+              const db = testDefaultMethods.getDb();
               expect(db.s.databaseName).toBe('userDb');
             });
 
@@ -547,15 +529,14 @@ describe('core/@Model', () => {
 
           describe('save', () => {
             it('rejects if missing id', (done) => {
-              this
-                .tdm
+              testDefaultMethods
                 .save()
                 .then(() => {
                   done.fail(new Error('Expected exception'));
                 })
                 .catch((err) => {
                   expect(err).toEqual(jasmine.any(SapiMissingIdErr));
-                  expect(err.target).toEqual(this.tdm);
+                  expect(err.target).toEqual(testDefaultMethods);
                   done();
                 });
             });
@@ -664,32 +645,29 @@ describe('core/@Model', () => {
           });
 
           it('updates entire model if no set parameter is passed', (done) => {
-            expect(this.tdm.id).toBeNull();
-            this
-              .tdm
+            expect(testDefaultMethods.id).toBeNull();
+            testDefaultMethods
               .create()
               .then((createResult) => {
                 expect(createResult.insertedCount).toBe(1);
-                expect(this.tdm.id).toBeTruthy();
+                expect(testDefaultMethods.id).toBeTruthy();
 
                 const changes = {
                   firstName: 'updatedFirstName',
                   lastName: 'updatedLastName'
                 };
 
-                this.tdm.firstName = changes.firstName;
-                this.tdm.lastName = changes.lastName;
+                testDefaultMethods.firstName = changes.firstName;
+                testDefaultMethods.lastName = changes.lastName;
 
-                this
-                  .tdm
+                testDefaultMethods
                   .save()
                   .then((result: UpdateWriteOpResult) => {
                     expect(result.modifiedCount).toBe(1);
 
-                    this
-                      .tdm
+                    testDefaultMethods
                       .getCollection()
-                      .find({_id: this.tdm.id})
+                      .find({_id: testDefaultMethods.id})
                       .limit(1)
                       .next()
                       .then((updated) => {
@@ -705,26 +683,22 @@ describe('core/@Model', () => {
                   .catch(done.fail);
               });
           });
-
         });
 
         describe('remove', () => {
           it('itself', (done) => {
-            expect(this.tdm.id).toBeNull();
+            expect(testDefaultMethods.id).toBeNull();
 
-            this
-              .tdm
+            testDefaultMethods
               .create()
               .then((createResult) => {
                 expect(createResult.insertedCount).toBe(1);
 
-                this
-                  .tdm2
+                testDefaultMethods2
                   .create()
                   .then((createResult2) => {
                     expect(createResult2.insertedCount).toBe(1);
-                    this
-                      .tdm
+                    testDefaultMethods
                       .remove()
                       .then((deleteResults) => {
                         expect(deleteResults.deletedCount).toBe(1);
@@ -753,8 +727,7 @@ describe('core/@Model', () => {
       });
 
       it('static methods save', (done) => {
-        this
-          .t
+        test
           .save()
           .then((op) => {
             expect(op.result.nModified).toBe(-1);
@@ -1018,6 +991,43 @@ describe('core/@Model', () => {
             expect(Array.isArray(model.anArray)).toBeTruthy('Should have been an array');
           });
         });
+      });
+    });
+
+    describe('sapi injected', () => {
+
+      @Model()
+      class TestSapiInjection extends SakuraApiModel {
+      }
+
+      let sapi;
+      let testSapiInjection;
+      beforeEach(() => {
+        sapi = testSapi({
+          models: [TestSapiInjection],
+          routables: []
+        });
+      });
+
+      it('model has reference to sapi injected as symbol when SakuraApi is constructed', () => {
+        const sapiRef = TestSapiInjection[modelSymbols.sapi];
+
+        expect(sapiRef).toBeDefined();
+        expect(sapiRef instanceof SakuraApi).toBe(true, 'Should have been an instance of SakuraApi'
+          + ` but was an instance of ${sapiRef.name || (sapiRef.constructor || {} as any).name} instead`);
+      });
+
+      it('model has reference to sapi injected as symbol when SakuraApi is constructed', () => {
+        const sapiRef = TestSapiInjection.sapi;
+
+        expect(sapiRef).toBeDefined();
+        expect(sapiRef instanceof SakuraApi).toBe(true, 'Should have been an instance of SakuraApi'
+          + ` but was an instance of ${(sapiRef as any).name || (sapiRef.constructor || {} as any).name} instead`);
+      });
+
+      it('model injects sapiConfig to make it easier to get access to sapiConfig', () => {
+        expect(TestSapiInjection.sapiConfig).toBeDefined();
+        expect(TestSapiInjection.sapiConfig.SAKURA_API_CONFIG_TEST).toBe('found');
       });
     });
   });

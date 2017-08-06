@@ -624,7 +624,7 @@ export class SakuraApi {
         modelName = model.name;
         modelRef = model;
       }
-
+      
       // set the model's instance of SakuraApi to this
       modelRef[modelSymbols.sapi] = this;
 

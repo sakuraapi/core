@@ -1,4 +1,5 @@
 import {NextFunction, Request, Response} from 'express';
+import {SakuraApi} from '../sakura-api';
 
 /***
  * Integrators should extend their [[Routable]] classes with this abstract class to get typing for the `@`[[Routable]]
@@ -17,15 +18,14 @@ import {NextFunction, Request, Response} from 'express';
  *   putRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
  *   postRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
  *   deleteRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+ *   static sapi?: SakuraApi;
+ *   static sapiConfig?: any;
  *
  *   ///
  *   // your class implementation continues on here...
  * }
  * </pre>
- * Pain in the arse? Sure. In the case of [[Routable]] classes, this could have been done with an interface. However,
- * if we add static methods in the future, as is the case with [[Model]] (see [[SakuraApiModel]]) then it would be
- * necessary to turn this into an abstract class, which would break backwards compatability, which would then warrant
- * a major release version bump, which seems silly for this contingency.
+
  */
 export abstract class SakuraApiRoutable {
   static getRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
@@ -33,4 +33,7 @@ export abstract class SakuraApiRoutable {
   static putRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
   static postRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
   static deleteRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
+
+  static sapi?: SakuraApi;
+  static sapiConfig?: any;
 }
