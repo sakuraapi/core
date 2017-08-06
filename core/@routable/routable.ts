@@ -32,6 +32,7 @@ export interface IRoutableLocals {
   reqBody: any;
   data: any;
   status: any;
+
   send(status, data?): IRoutableLocals;
 }
 
@@ -195,6 +196,11 @@ export const routableSymbols = {
  * The above example creates a routable class called `User` that has one route, `users/:id`, which responds to GET
  * requests.
  *
+ * Injection of properties and other stuff of interest:
+ *   Static:
+ *   * sapi: the @Routable's instance of SakuraApi that was injected during SakuraApi construction
+ *   * sapiConfig: the @Routable's SakuraApi config (this is a shortcut to sapi.config)
+ *
  * ### Automagical Behavior
  * @Routable decorated classes get instantiated when they are injected into the constructor of SakuraApi during
  * initialization. This registers their routes with [[SakuraApi]], which then adds the routes / handlers when
@@ -333,6 +339,22 @@ export function Routable(options?: IRoutableOptions): any {
     Reflect.defineProperty(newConstructor, routableSymbols.isSakuraApiRoutable, {
       value: true,
       writable: false
+    });
+
+    newConstructor[routableSymbols.sapi] = null;
+
+    // Injects sapi as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi]
+    Reflect.defineProperty(newConstructor, 'sapi', {
+      configurable: false,
+      enumerable: false,
+      get: () => newConstructor[routableSymbols.sapi]
+    });
+
+    // Injects sapiConfig as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi].config
+    Reflect.defineProperty(newConstructor, 'sapiConfig', {
+      configurable: false,
+      enumerable: false,
+      get: () => (newConstructor[routableSymbols.sapi] || {} as any).config
     });
 
     // if a model is present, then add a method that allows that model to be retrieved

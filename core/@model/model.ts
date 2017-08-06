@@ -81,7 +81,6 @@ export interface IModelOptions {
  * A collection of symbols used internally by [[Model]].
  */
 export const modelSymbols = {
-  changeSapi: Symbol('changeSapi'),
   constructor: Symbol('constructor'),
   dbCollection: Symbol('dbCollection'),
   dbName: Symbol('dbName'),
@@ -128,6 +127,8 @@ export const modelSymbols = {
  *   * [[getOne]]
  *   * [[removeAll]]
  *   * [[removeById]]
+ *   * sapi: the @Routable's instance of SakuraApi that was injected during SakuraApi construction
+ *   * sapiConfig: the @Routable's SakuraApi config (this is a shortcut to sapi.config)
  * * *instance*:
  *   * [[create]]
  *   * [[remove]]
@@ -192,6 +193,7 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
       value: true,
       writable: false
     });
+
     Reflect.defineProperty(newConstructor, modelSymbols.isSakuraApiModel, {
       value: true,
       writable: false
@@ -252,6 +254,21 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
 
     // Injected by SakuraApi in `.mapModels`
     newConstructor[modelSymbols.sapi] = null;
+
+    // Injects sapi as a shortcut property on models pointing to newConstructor[modelSymbols.sapi]
+    Reflect.defineProperty(newConstructor, 'sapi', {
+      configurable: false,
+      enumerable: false,
+      get: () => newConstructor[modelSymbols.sapi]
+    });
+
+    // Injects sapiConfig as a shortcut property on models pointing to newConstructor[modelSymbols.sapi].config
+    Reflect.defineProperty(newConstructor, 'sapiConfig', {
+      configurable: false,
+      enumerable: false,
+      get: () => (newConstructor[modelSymbols.sapi] || {} as any).config
+    });
+
 
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
