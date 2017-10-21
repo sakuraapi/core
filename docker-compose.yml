@@ -3,4 +3,4 @@ services:
     sakura-api-testing:
         image: mongo
         ports:
-            - localhost:37001:27017
+            - 127.0.0.1:37001:27017

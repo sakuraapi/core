@@ -64,7 +64,7 @@
     "@types/jasmine": "2.5.45",
     "@types/lodash": "^4.14.63",
     "@types/mongodb": "^2.2.0",
-    "@types/node": "^7.0.14",
+    "@types/node": "^8.0.46",
     "@types/supertest": "^2.0.0",
     "body-parser": "^1.17.1",
     "helmet": "^3.6.0",

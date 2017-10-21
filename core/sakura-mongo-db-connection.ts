@@ -18,7 +18,7 @@ export class SakuraMongoDbConnection {
    * connection configurations that are later used for opening connections to MongoDB with
    * [[SakuraMongoDbConnection.connectAll]].
    */
-  addConnection(dbName: string, uri: string, options?: MongoClientOptions) {
+  addConnection(dbName: string, uri: string, options?: MongoClientOptions): void {
     debug.normal(`.addConnection dbName: '${dbName}', uri: '${uri}', options:`, options);
     this.connections.set(dbName, {uri, options});
     debug.verbose(`.addConnection connections: '%O'`, this.connections);
@@ -28,75 +28,68 @@ export class SakuraMongoDbConnection {
    * Connects to MongoDB with the supplied parameters and returns a Promise containing the newly connected Db
    * created by `MongoClient.connect`.
    */
-  connect(dbName: string, uri: string, options?: MongoClientOptions): Promise<Db> {
+  async connect(dbName: string, uri: string, options?: MongoClientOptions): Promise<Db> {
     debug.normal(`.connect dbName: '${dbName}', uri: '${uri}', options:`, options);
 
-    return new Promise((resolve, reject) => {
-      const isConnected = this.getDb(dbName) || null;
-      if (isConnected) {
-        debug.normal(`.connect dbName: '${dbName}' already connected`);
-        return resolve(isConnected);
-      }
+    let db: Db;
 
-      // Because the connection is asychronous, it's possible for multiple calls to connect
-      // to happen before the first call resolves and sets the entry in the dbs Map. Thus,
-      // a place holder is inserted to prevent other calls to connect from trying to connect
-      // with this dbName.
-      //
-      // See "parallel, possible race condition" unit test.
-      this.dbs.set(dbName, {} as any);
-      this.connections.set(dbName, {uri, options});
-      MongoClient
-        .connect(uri, options)
-        .then((db) => {
-          debug.normal(`.connect dbName: '${dbName}' connected`);
+    db = this.getDb(dbName) || null;
+    if (db) {
+      debug.normal(`.connect dbName: '${dbName}' already connected`);
+      return db;
+    }
 
-          this.dbs.set(dbName, db); // replace placeholder with the db
-          debug.verbose('.connect dbs: %O', this.dbs);
-          resolve(db);
-        })
-        .catch((err) => {
-          debug.normal(`.connect dbName: '${dbName}' error:`, err);
+    // Because the connection is asychronous, it's possible for multiple calls to connect
+    // to happen before the first call resolves and sets the entry in the dbs Map. Thus,
+    // a place holder is inserted to prevent other calls to connect from trying to connect
+    // with this dbName.
+    //
+    // See "parallel, possible race condition" unit test.
+    this.dbs.set(dbName, {} as any);
+    this.connections.set(dbName, {uri, options});
 
-          this.dbs.delete(dbName); // remove placeholder
-          reject(err);
-        });
-    });
+    try {
+      db = await MongoClient.connect(uri, options);
+      debug.normal(`.connect dbName: '${dbName}' connected`);
+
+      this.dbs.set(dbName, db); // replace placeholder with the db
+      debug.verbose('.connect dbs: %O', this.dbs);
+      return db;
+    } catch (err) {
+      debug.normal(`.connect dbName: '${dbName}' error:`, err);
+
+      this.dbs.delete(dbName); // remove placeholder
+      return Promise.reject(err);
+    }
   }
 
   /**
    * Iterates through the connection parameters provided via [[SakuraMongoDbConnection.addConnection]] and connects to
    * MongoDb. Returns a Promise containing an array of the connected MongoDB `Db` objects.
    */
-  connectAll(): Promise<Db[]> {
-    return new Promise((resolve, reject) => {
-      debug.normal('.connectAll start');
+  async connectAll(): Promise<Db[]> {
+    debug.normal('.connectAll start');
 
-      const wait = [];
+    const wait = [];
 
-      for (const connection of this.connections) {
-        wait.push(this.connect(connection[0], connection[1].uri, connection[1].options));
-      }
+    for (const connection of this.connections) {
+      wait.push(this.connect(connection[0], connection[1].uri, connection[1].options));
+    }
 
-      Promise
-        .all(wait)
-        .then((results) => {
-          debug.normal('.connectAll done');
-
-          resolve(results);
-        })
-        .catch((err) => {
-          debug.normal(`.connectAll error:`, err);
-
-          reject(err);
-        });
-    });
+    try {
+      const results = Promise.all(wait);
+      debug.normal('.connectAll done');
+      return results;
+    } catch (err) {
+      debug.normal(`.connectAll error:`, err);
+      return Promise.reject(err);
+    }
   }
 
   /**
    * Closes a specific db Connection and removes it from [[SakuraMongoDbConnection]]'s internal Maps.
    */
-  close(dbName: string, forceClose?: boolean): Promise<null> {
+  async close(dbName: string, forceClose?: boolean): Promise<void> {
     const db = this.dbs.get(dbName);
 
     debug.normal(`.close dbName:'${dbName}', forceClose: ${forceClose}, connection found: ${!!db}`);
@@ -104,37 +97,31 @@ export class SakuraMongoDbConnection {
     if (db) {
       this.connections.delete(dbName);
       this.dbs.delete(dbName);
-      return db.close(forceClose);
+      return await db.close(forceClose);
     }
 
-    return Promise.resolve(null);
+    return;
   }
 
   /**
    * Closes all connections tracked by this instance of [[SakuraMongoDbConnection]].
    */
-  closeAll(): Promise<null> {
+  async closeAll(): Promise<null> {
     debug.normal('.closeAll called');
 
-    return new Promise((resolve, reject) => {
-      const wait = [];
+    const wait = [];
 
-      for (const db of this.dbs) {
-        wait.push(db[1].close());
-      }
+    for (const db of this.dbs) {
+      wait.push(db[1].close());
+    }
 
-      Promise
-        .all(wait)
-        .then(() => {
-          debug.normal('.closeAll done');
-
-          return resolve();
-        })
-        .catch((err) => {
-          debug.normal('.closeAll error:', err);
-          reject(err);
-        });
-    });
+    try {
+      await Promise.all(wait);
+      debug.normal('.closeAll done');
+    } catch (err) {
+      debug.normal('.closeAll error:', err);
+      return Promise.reject(err);
+    }
   }
 
   /**
