@@ -1,4 +1,7 @@
 import {testSapi} from '../../spec/helpers/sakuraapi';
+import {Json} from '../@model/json';
+import {Model} from '../@model/model';
+import {SakuraApiModel} from '../@model/sakura-api-model';
 import {SakuraApi} from '../sakura-api';
 import {
   Injectable,
@@ -200,7 +203,7 @@ describe('@Injectable', () => {
       expect(b.c.hasC()).toBe('C');
     });
 
-    fit('allows mocking', () => {
+    it('allows mocking', () => {
       @Injectable()
       class A {
         constructor() {
@@ -268,6 +271,51 @@ describe('@Injectable', () => {
       expect(c.doSomething()).toBe('mock');
       expect(c.b.doSomething()).toBe('real');
       expect(c.b.a.doSomething()).toBe('mock');
+    });
+  });
+
+  describe(`@Model`, () => {
+
+    @Injectable()
+    class TestService {
+      val = 'found';
+    }
+
+    @Injectable()
+    class TestServiceMock {
+      val = 'mock';
+    }
+
+    @Model()
+    class TestModel extends SakuraApiModel {
+
+      @Json()
+      test: string;
+
+      constructor(private testService: TestService) {
+        super();
+        this.test = testService.val;
+      }
+    }
+
+    it('supports injection', () => {
+      testSapi({
+        models: [TestModel],
+        providers: [TestService]
+      });
+
+      const result = TestModel.fromJson({});
+      expect(result.test).toBe('found');
+    });
+
+    it('supports mocking', () => {
+      testSapi({
+        models: [TestModel],
+        providers: [{for: TestService, use: TestServiceMock}]
+      });
+
+      const result = TestModel.fromJson({});
+      expect(result.test).toBe('mock');
     });
   });
 });

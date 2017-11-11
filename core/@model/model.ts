@@ -10,6 +10,7 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
+import {getDependencyInjections} from '../@injectable/injectable';
 import {addDefaultInstanceMethods, addDefaultStaticMethods, shouldRecurse} from '../helpers';
 import {dbSymbols, IDbOptions} from './db';
 import {SapiDbForModelNotFound, SapiInvalidModelObject, SapiMissingIdErr} from './errors';
@@ -34,10 +35,6 @@ export interface IDbGetParams {
  * Interface defining the valid properties for options passed to [[toDb]].
  */
 export interface IFromDbOptions {
-  /**
-   * The array of parameters to be passed to the constructor of the Model
-   */
-  constructorArgs?: any[];
   /**
    * If set to true, the resulting model will only have the properties for fields present in the document returned from
    * the database
@@ -161,7 +158,10 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     // =================================================================================================================
     const newConstructor = new Proxy(target, {
       construct: (t, args, nt) => {
-        const c = Reflect.construct(t, args, nt);
+
+        const diArgs = getDependencyInjections(target, t, target[modelSymbols.sapi]);
+
+        const c = Reflect.construct(t, diArgs, nt);
 
         // map _id to id
         newConstructor.prototype._id = null;
@@ -356,7 +356,7 @@ function fromDb(json: any, options?: IFromDbOptions): object {
 
   options = options || {};
 
-  const obj = new this(...options.constructorArgs || []);
+  const obj = new this();
 
   const result = mapDbToModel(json, obj, keyMapper.bind(this));
 
@@ -495,12 +495,10 @@ function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
 /**
  * @static Constructs an `@`Model object from a json object (see [[Json]]).
  * @param json The json object to be unmarshaled into an `@`[[Model]] object.
- * @param constructorArgs A variadic list of parameters to be passed to the constructor of the `@`[[Model]] object being
- * constructed.
  * @returns {{}} Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
  * undefined, or not an object.
  */
-function fromJson(json: object, ...constructorArgs: any[]): object {
+function fromJson(json: object): object {
   const modelName = this.name;
   debug.normal(`.fromJson called, target '${modelName}'`);
 
@@ -508,7 +506,7 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
     return null;
   }
 
-  const obj = new this(...constructorArgs);
+  const obj = new this();
 
   return mapJsonToModel(json, obj);
 
@@ -595,14 +593,14 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
  * @returns [{{}}] Returns an array of instantiated objects based on the [[Model]]'s. Returns null if the `json`
  * parameter is null, undefined, or not an array.
  */
-function fromJsonArray(json: object[], ...constructorArgs: any[]): object[] {
+function fromJsonArray(json: object[]): object[] {
   debug.normal(`.fromJsonArray called, target '${this.name}'`);
 
   const result = [];
 
   if (Array.isArray(json)) {
     for (const item of json) {
-      result.push(this[modelSymbols.fromJson](item, ...constructorArgs));
+      result.push(this[modelSymbols.fromJson](item));
     }
   }
 
