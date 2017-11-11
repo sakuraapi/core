@@ -72,13 +72,15 @@ import {IDbGetParams, IFromDbOptions} from './';
  * members.
  */
 export abstract class SakuraApiModel {
+
   static fromDb?: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
+
   // tslint:disable-next-line:variable-name
-  static fromJson?: <T>(this: { new(...any): T }, json: object, ...constructorArgs: any[]) => T;
+  static fromJson?: <T>(this: { new(...any): T }, json: object) => T;
   static fromJsonToDb?: (json: any) => any;
 
   static fromDbArray?: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
-  static fromJsonArray?: <T>(this: { new(): T }, jsons: object[], ...constructorArgs: any[]) => T[];
+  static fromJsonArray?: <T>(this: { new(): T }, jsons: object[]) => T[];
 
   static get?: <T>(this: { new (): T }, params: IDbGetParams) => Promise<T[]>;
   static getById?: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;

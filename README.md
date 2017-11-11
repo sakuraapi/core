@@ -16,10 +16,136 @@ SakuraAPI is a NodeJS API framework that utilizes modern and emerging webs stand
 npm install @sakuraapi/api
 ```
 
+## Examples
+The example projects and some of the documentation has fallen behind, so the following is a quick sample of what a project utilizing SakuraApi looks like. Updated documentation and a getting started guide is coming.
+
+### Setup a route
+```
+@Routable({
+  baseUrl: 'users'
+})
+export class UserApi extends SakuraApiRoutable {
+
+  constructor(private userService: UserService) {
+  }
+
+  @Route({
+    method: 'get',
+    path: '/'
+  })
+  async updateCardHandler(req: Request, res: Response, next: NextFunction) {
+    const resLocals = res.locals as IRoutableLocals;
+    
+    try {
+      const results:[] = await this.userService.getAll();
+      
+      resLocals.send(200, results);
+    
+    } catch(err) {
+      resLocals.send(500, {
+        error: 'SERVER_ERROR'
+      });
+    }
+      next();
+  }
+}
+```
+This example setups a route `/api/users/` that responds to a GET request and uses the `UserService` provider to get the resulting array of user things.
+
+### Setup a model
+```
+@Model({
+  dbConfig: dbs.presidents
+})
+export class President extends SakuraApiModel {
+  @Db('fn') @Json('fName')
+  firstName: string;
+  
+  @Db('ln') @Json('lName')
+  lastName: string;
+}
+
+```
+This defines a model that can be marshalled to and from the database or from json. It allows you to alias the fields differently for your DB and JSON. It also supports a number of utility functions that facilitate manipulating the model (persisting it, getting it, mutating before sending it, etc.).
+
+### Provide a service
+```
+      @Injectable()
+      class A {
+        constructor() {
+        }
+
+        doSomething() {
+          return 'real';
+        }
+      }
+
+      @Injectable()
+      class B {
+        constructor(public a: A) {
+        }
+
+        doSomething() {
+          return 'real';
+        }
+
+      }
+
+      @Injectable()
+      class C {
+        constructor(public b: B) {
+        }
+
+        doSometing() {
+          return 'real';
+        }
+      }
+
+      @Injectable()
+      class AMock {
+        doSomething() {
+          return 'mock';
+        }
+      }
+
+      @Injectable()
+      class CMock {
+        constructor(public b: B) {
+        }
+
+        doSomething() {
+          return 'mock';
+        }
+      }
+
+      const sapi = new SakuraApi({
+        providers: [
+          {use: AMock, for: A},
+          B,
+          {use: CMock, for: C}
+        ]
+      });
+
+      const a = sapi.getProvider(A);
+      expect(a.doSomething()).toBe('mock');
+
+      const b = sapi.getProvider(B);
+      expect(b.doSomething()).toBe('real');
+      expect(b.a.doSomething()).toBe('mock');
+
+      const c = sapi.getProvider(C);
+      expect(c.doSomething()).toBe('mock');
+      expect(c.b.doSomething()).toBe('real');
+      expect(c.b.a.doSomething()).toBe('mock');
+```
+Injectables are lazy loaded singletons that can be injected into other Injectables, Models and Routables. They're mockable, allowing you to easily isolate your code for testing.  
+
 ## Goals
 
-* Good DX (developer experience design)
+* Good DX (developer experience)
 * A person coming to SakuraApi for the first time should be have a sense of familiarity if they're familiar with Angular or other frameworks that make use of DI concepts and Decorators.   
+* Built in dependency injection system to facilitate loose coupling and mocking for a better testing experience
+* Built in plugin system to allow quick addition of functionality like email based authentication system, or Facebook oAuth login, etc.
 * SakuraApi is built using modern and emerging web standards. If a circumstance arises where a choice has to be made between new or emerging standards or backwards comparability with older versions of Node, etc., legacy loses.
 * Configuration should be kept close to the thing being configured, but there should also be a robust cascading configuration system.
 * SakuraApi should be easy to integrate into a CI/CD system via its configuration system.
@@ -45,7 +171,7 @@ This is a new tiny community, so if you don't get a response right away, it migh
 ## Dependencies:
 
 * TypeScript >= 2.2
-* NodeJS >= 7.0
+* NodeJS >= 8.0
 
 (among other things)
  
@@ -68,10 +194,6 @@ This is a new tiny community, so if you don't get a response right away, it migh
 ## Community and Conduct
 
 Everyone should be treated with respect. Though candor is encouraged, being mean will not be tolerated.
-
-## What's with the name?
-
-[J.P.](https://github.com/etsuo) is half Japanese and has fond memories of cherry blossoms in Japan... he also likes sakura mochi. No, he doesn't speak Japanese, much to his mother's disappointment.
 
 # Working with the SakuraApi codebase
 

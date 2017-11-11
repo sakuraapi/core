@@ -15,9 +15,7 @@ describe('core/@Model', () => {
       });
     }
 
-    testProperty = true;
-
-    constructor(public n: number) {
+    constructor() {
       super();
       this.save = this.saveOverride;
     }
@@ -39,11 +37,7 @@ describe('core/@Model', () => {
 
     let test = null;
     beforeEach(() => {
-      test = new Test(777);
-    });
-
-    it('properly passes the constructor parameters', () => {
-      expect(test.n).toBe(777);
+      test = new Test();
     });
 
     it('maintains the prototype chain', () => {
@@ -339,7 +333,6 @@ describe('core/@Model', () => {
 
           it('getCursor supports projection', (done) => {
             expect(testDefaultMethods.id).toBeNull();
-
 
             testDefaultMethods
               .create()
