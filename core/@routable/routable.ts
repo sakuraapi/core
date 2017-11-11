@@ -8,6 +8,7 @@ import {
   postRouteHandler,
   putRouteHandler
 } from '../../handlers/basic-handlers';
+import {getDependencyInjections} from '../@injectable/injectable';
 import {modelSymbols} from '../@model';
 import {addDefaultStaticMethods} from '../helpers';
 
@@ -247,7 +248,9 @@ export function Routable(options?: IRoutableOptions): any {
       construct: (t, args, nt) => {
         debug.normal(`\tconstructing ${target.name}`);
 
-        const constructorProxy = Reflect.construct(t, args, nt);
+        const diArgs = getDependencyInjections(target, t, target[routableSymbols.sapi]);
+
+        const constructorProxy = Reflect.construct(t, diArgs, nt);
 
         const routes: ISakuraApiClassRoute[] = [];
 

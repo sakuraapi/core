@@ -1,7 +1,12 @@
-import {testSapi} from '../../spec/helpers/sakuraapi';
+import {NextFunction, Request, Response} from 'express';
+import * as request from 'supertest';
+import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
 import {Json} from '../@model/json';
 import {Model} from '../@model/model';
 import {SakuraApiModel} from '../@model/sakura-api-model';
+import {IRoutableLocals, Routable} from '../@routable/routable';
+import {Route} from '../@routable/route';
+import {SakuraApiRoutable} from '../@routable/sakura-api-routable';
 import {SakuraApi} from '../sakura-api';
 import {
   Injectable,
@@ -316,6 +321,86 @@ describe('@Injectable', () => {
 
       const result = TestModel.fromJson({});
       expect(result.test).toBe('mock');
+    });
+  });
+
+  describe('@Routable', () => {
+    @Injectable()
+    class TestService {
+      val = 'found';
+    }
+
+    @Injectable()
+    class TestServiceMock {
+      val = 'mock';
+    }
+
+    @Routable({
+      baseUrl: 'injectRoutableTest'
+    })
+    class AnApi extends SakuraApiRoutable {
+
+      constructor(private testService: TestService) {
+        super();
+      }
+
+      @Route({
+        method: 'get',
+        path: '/'
+      })
+      handleGet(req: Request, res: Response, next: NextFunction) {
+        const resLocals = res.locals as IRoutableLocals;
+        resLocals.send(200, {
+          result: this.testService.val
+        });
+        next();
+      }
+    }
+
+    let sapi: SakuraApi;
+    afterEach((done) => {
+      sapi
+        .close()
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('supports injection', async (done) => {
+
+      sapi = testSapi({
+        providers: [TestService],
+        routables: [AnApi]
+      });
+
+      await sapi.listen({bootMessage: ''});
+
+      request(sapi.app)
+        .get(testUrl('/injectRoutableTest'))
+        .expect(200)
+        .then((result) => {
+          expect(result.body.result).toBe('found');
+        })
+        .then(done)
+        .catch(done.fail);
+    });
+
+    it('supports mocking', async (done) => {
+
+      sapi = testSapi({
+        providers: [{for: TestService, use: TestServiceMock}],
+        routables: [AnApi]
+      });
+
+      await sapi.listen({bootMessage: ''});
+
+      request(sapi.app)
+        .get(testUrl('/injectRoutableTest'))
+        .expect(200)
+        .then((result) => {
+          expect(result.body.result).toBe('mock');
+        })
+        .then(done)
+        .catch(done.fail);
     });
   });
 });
