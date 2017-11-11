@@ -1,6 +1,5 @@
 import * as path from 'path';
 import {SakuraApi, SakuraApiPlugin} from '../../core/sakura-api';
-
 import bodyParser = require('body-parser');
 import helmet = require('helmet');
 
@@ -10,6 +9,7 @@ export const testUrl = (endpoint: string) => path.join(baseUri, endpoint);
 export const testMongoDbUrl = (sapi) => `mongodb://localhost:${sapi.config.TEST_MONGO_DB_PORT}`;
 
 export interface ITestSapiOptions {
+  providers?: any[];
   models?: any[];
   routables?: any[];
   plugins?: SakuraApiPlugin[];
@@ -20,6 +20,7 @@ export function testSapi(options: ITestSapiOptions): SakuraApi {
   const sapi = new SakuraApi({
     baseUrl: baseUri,
     configPath: 'spec/config/environment.json',
+    providers: options.providers,
     models: options.models,
     plugins: options.plugins,
     routables: options.routables
