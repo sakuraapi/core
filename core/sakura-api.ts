@@ -1,15 +1,22 @@
+import * as debugInit from 'debug';
 import * as express from 'express';
 import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response} from 'express';
 import * as http from 'http';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
+import {
+  injectableSymbols,
+  ProviderNotRegistered,
+  ProvidersMustBeDecoratedWithInjectableError
+} from './@injectable/injectable';
 import {modelSymbols} from './@model/model';
 import {ISakuraApiClassRoute, routableSymbols} from './@routable';
 import {IRoutableLocals} from './@routable/routable';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 
 const debug = {
-  normal: require('debug')('sapi:SakuraApi'),
-  route: require('debug')('sapi:route')
+  normal: debugInit('sapi:SakuraApi'),
+  providers: debugInit('sapi:providers'),
+  route: debugInit('sapi:route')
 };
 
 export interface SakuraApiPlugin {
@@ -32,6 +39,10 @@ export interface SakuraApiPlugin {
  * The interface of an object returned from a SakuraApi plugin (for example native-authentication-authority)
  */
 export interface SakuraApiPluginResult {
+  /**
+   * `@Injectable` decorated services for the plugin.
+   */
+  providers?: any[];
   /**
    * Route handlers that get called before any specific route handlers are called. This is for plugins that
    * inspect all incoming requests before they're passed off to specific route handlers.
@@ -65,6 +76,17 @@ export interface SakuraApiOptions {
    * Optionally sets [[SakuraMongoDbConnection]], otherwise, the configuration will be loaded automatically.
    */
   dbConfig?: SakuraMongoDbConnection;
+  /**
+   * An array of objects that are decorated with @[[Injectable]]. Alternatively, for testing purposes, an Injectable can be
+   * mocked by passing in the following object literal:
+   * <pre>
+   *   {
+   *      use: SomeMockInjectable,
+   *      for: TheInjectableBeingReplacedByTheMock
+   *   }
+   * </pre>
+   */
+  providers?: any[];
   /**
    * An array of objects that are decorated with @[[Model]]. Alternatively, for testing purposes, a Model can be
    * mocked by passing in the following object literal:
@@ -125,6 +147,11 @@ export interface ServerConfig {
   bootMessage?: string;
 }
 
+interface IProviderContainer {
+  target: any;
+  instance: any;
+}
+
 /**
  * @outdatedDoc
  *
@@ -178,6 +205,7 @@ export class SakuraApi {
   private _server: http.Server;
   // tslint:enable:variable-name
 
+  private providers = new Map<string, IProviderContainer>();
   private lastErrorHandlers: ErrorRequestHandler[] = [];
   private listenCalled = false;
   private middlewareHandlers: { [key: number]: Handler[] } = {};
@@ -263,6 +291,7 @@ export class SakuraApi {
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
 
+    this.registerProviders(options);
     this.registerPlugins(options);
     this.registerModels(options);
     this.registerRoutables(options);
@@ -531,6 +560,26 @@ export class SakuraApi {
     return this.models.get(name);
   }
 
+  getProvider(target: any) {
+    debug.providers(`.getProvider ${(target || {} as any).name}`);
+
+    if (!target || !target[injectableSymbols.isSakuraApiInjectable]) {
+      throw new ProvidersMustBeDecoratedWithInjectableError(target);
+    }
+
+    const provider = this.providers.get(target[injectableSymbols.id]);
+    if (!provider) {
+      throw new ProviderNotRegistered(target);
+    }
+
+    if (!provider.instance) {
+      debug.providers(`\t lazy instantiating singleton instance of ${(target || {} as any).name}`);
+      provider.instance = new provider.target();
+    }
+
+    return provider.instance;
+  }
+
   /**
    * Gets a `@`[[Routable]] that was registered during construction of [[SakuraApi]] by name.
    * @param name the name of the Routable (the name of the class that was decorated with `@`[[Model]]
@@ -564,6 +613,42 @@ export class SakuraApi {
 
       // used by this.listen
       this.routeQueue.set(routeSignature, route);
+    }
+  }
+
+  private registerProviders(options: SakuraApiOptions | SakuraApiPluginResult): void {
+    debug.normal('\tRegistering Providers');
+
+    const injectables = options.providers || [];
+
+    for (const injectable of injectables) {
+      const isInjectable = injectable[injectableSymbols.isSakuraApiInjectable];
+
+      let injectableSource: any;
+      let injectableRef: any;
+
+      if (!isInjectable) {
+        if (!injectable.use
+          || !injectable.for
+          || !injectable.use[injectableSymbols.isSakuraApiInjectable]
+          || !injectable.for[injectableSymbols.isSakuraApiInjectable]) {
+          throw new Error('SakuraApi setup error. SakuraApiOptions.providers array must have classes decorated with'
+            + ' @Injectable or an object literal of the form { use: SomeInjectableService, for: SomeRealService },'
+            + ' where SomeMockInjectable and SomeRealInjectable are decorated with @Injectable.');
+        }
+
+        injectableSource = injectable.for;
+        injectableRef = injectable.use;
+      } else {
+        injectableSource = injectable;
+        injectableRef = injectable;
+      }
+
+      // set the injectable's instance of SakuraApi to this
+      injectableRef[injectableSymbols.sapi] = this;
+
+      debug.providers(`registering provider ${(injectableRef || {} as any).name}`);
+      this.providers.set(injectableSource[injectableSymbols.id], {target: injectableRef, instance: null});
     }
   }
 

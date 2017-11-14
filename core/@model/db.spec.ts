@@ -71,10 +71,7 @@ describe('@Db', () => {
     describe('constructor', () => {
       @Model()
       class Test extends SakuraApiModel {
-
-        constructor(public constructorTest?: number) {
-          super();
-        }
+        val = 777;
       }
 
       it('returns null on invalid input', () => {
@@ -83,12 +80,12 @@ describe('@Db', () => {
       });
 
       it('constructs a new target object, passing along the constructor fields', () => {
-        const result = Test.fromDb({}, {constructorArgs: [777]});
-        expect(result.constructorTest).toBe(777);
+        const result = Test.fromDb({});
+        expect(result.val).toBe(777);
       });
 
       it('returns an object of the correct instaceOf', () => {
-        const result = Test.fromDb({}, 777);
+        const result = Test.fromDb({});
         expect(result instanceof Test).toBe(true);
       });
     });
@@ -246,8 +243,7 @@ describe('@Db', () => {
 
       it('handles properties with @Db({field}) set', () => {
         @Model()
-        class Test {
-          static fromDb;
+        class Test extends SakuraApiModel {
 
           @Db({
             field: 'fn'
@@ -453,9 +449,7 @@ describe('@Db', () => {
 
   describe('fromDbArray', () => {
     @Model()
-    class Test {
-      static fromDbArray;
-
+    class Test extends SakuraApiModel {
       @Db({
         field: 'fn'
       })
@@ -465,8 +459,6 @@ describe('@Db', () => {
       })
       lastName: string;
 
-      constructor(public x) {
-      }
     }
 
     it('takes an array of json and returns an array of Model objects', () => {
@@ -481,7 +473,7 @@ describe('@Db', () => {
         }
       ];
 
-      const results = Test.fromDbArray(input, 777);
+      const results = Test.fromDbArray(input);
       expect(results.length).toBe(2);
       expect(results[0].firstName).toBe(input[0].fn);
       expect(results[0].lastName).toBe(input[0].ln);
