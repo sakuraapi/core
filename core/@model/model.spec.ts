@@ -465,7 +465,7 @@ describe('core/@Model', () => {
                 contact = new Contact();
               }
 
-              const sapi = testSapi({
+              sapi = testSapi({
                 models: [UserCreateTest],
                 routables: []
               });
@@ -552,20 +552,20 @@ describe('core/@Model', () => {
                 password = '';
               }
 
-              const sapi = testSapi({
+              const sapi2 = testSapi({
                 models: [PartialUpdateTest],
                 routables: []
               });
 
               beforeEach((done) => {
-                sapi
+                sapi2
                   .listen({bootMessage: ''})
                   .then(done)
                   .catch(done.fail);
               });
 
               afterEach((done) => {
-                sapi
+                sapi2
                   .close()
                   .then(done)
                   .catch(done.fail);
@@ -994,7 +994,6 @@ describe('core/@Model', () => {
       }
 
       let sapi;
-      let testSapiInjection;
       beforeEach(() => {
         sapi = testSapi({
           models: [TestSapiInjection],

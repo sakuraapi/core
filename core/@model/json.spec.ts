@@ -620,10 +620,10 @@ describe('@Json', () => {
         lastName: 'Jefferson'
       };
 
-      const test = TestDefaults.fromJson(data);
+      const result = TestDefaults.fromJson(data);
 
-      expect(test.firstName).toBe(data.firstName);
-      expect(test.lastName).toBe(data.lastName);
+      expect(result.firstName).toBe(data.firstName);
+      expect(result.lastName).toBe(data.lastName);
     });
 
     it('does not map a model property that has no default value and has no @Json decorator', () => {
@@ -689,10 +689,10 @@ describe('@Json', () => {
           id: '1234567890987654321'
         };
 
-        const test = Test.fromJson(data);
+        const results = Test.fromJson(data);
 
-        expect(test.id instanceof ObjectID).not.toBeTruthy();
-        expect(test._id instanceof ObjectID).not.toBeTruthy();
+        expect(results.id instanceof ObjectID).not.toBeTruthy();
+        expect(results._id instanceof ObjectID).not.toBeTruthy();
       });
 
       it('unmarshalls _id as an ObjectID when it is a valid ObjectID', () => {
@@ -700,10 +700,10 @@ describe('@Json', () => {
           _id: new ObjectID().toString()
         };
 
-        const test = Test.fromJson(data);
+        const results = Test.fromJson(data);
 
-        expect(test._id instanceof ObjectID).toBeTruthy();
-        expect(test.id instanceof ObjectID).toBeTruthy();
+        expect(results._id instanceof ObjectID).toBeTruthy();
+        expect(results.id instanceof ObjectID).toBeTruthy();
       });
 
       it('unmarshalls _id as a string when it is not a valid ObjectID', () => {
@@ -711,10 +711,10 @@ describe('@Json', () => {
           _id: '12345678900987654321'
         };
 
-        const test = Test.fromJson(data);
+        const results = Test.fromJson(data);
 
-        expect(test._id instanceof ObjectID).not.toBeTruthy();
-        expect(test.id instanceof ObjectID).not.toBeTruthy();
+        expect(results._id instanceof ObjectID).not.toBeTruthy();
+        expect(results.id instanceof ObjectID).not.toBeTruthy();
       });
     });
 

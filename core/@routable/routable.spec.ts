@@ -1699,7 +1699,6 @@ describe('core/@Routable', () => {
     }
 
     let sapi;
-    let testSapiInjection;
     beforeEach(() => {
       sapi = testSapi({
         models: [],

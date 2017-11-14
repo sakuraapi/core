@@ -20,9 +20,9 @@ export function testSapi(options: ITestSapiOptions): SakuraApi {
   const sapi = new SakuraApi({
     baseUrl: baseUri,
     configPath: 'spec/config/environment.json',
-    providers: options.providers,
     models: options.models,
     plugins: options.plugins,
+    providers: options.providers,
     routables: options.routables
   });
 

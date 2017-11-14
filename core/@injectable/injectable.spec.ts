@@ -58,6 +58,7 @@ describe('@Injectable', () => {
       @Injectable()
       class BrokenInjectable2 {
         constructor(s: string) {
+          // lint empty
         }
       }
 
@@ -212,6 +213,7 @@ describe('@Injectable', () => {
       @Injectable()
       class A {
         constructor() {
+          // lint empty
         }
 
         doSomething() {
