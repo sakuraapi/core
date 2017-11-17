@@ -60,6 +60,9 @@ import {IDbGetParams, IFromDbOptions} from './';
  *   remove?: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
  *   save?: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
  *
+ *   sapi?: SakuraApi;
+ *   sapiConfig?: any;
+ *
  *   toDb?: (changeSet?: object) => any;
  *   toJson?: (projection?: any) => any;
  *   toJsonString?: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
@@ -69,7 +72,7 @@ import {IDbGetParams, IFromDbOptions} from './';
  * }
  * </pre>
  * Pain in the arse? Sure. Unfortunately, TypeScript interfaces don't allow you to define static interface
- * members.
+ * members. See: https://github.com/Microsoft/TypeScript/issues/4881
  */
 export abstract class SakuraApiModel {
 
