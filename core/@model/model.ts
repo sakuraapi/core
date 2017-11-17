@@ -10,6 +10,7 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
+import {getDependencyInjections} from '../@injectable/injectable';
 import {addDefaultInstanceMethods, addDefaultStaticMethods, shouldRecurse} from '../helpers';
 import {dbSymbols, IDbOptions} from './db';
 import {SapiDbForModelNotFound, SapiInvalidModelObject, SapiMissingIdErr} from './errors';
@@ -34,10 +35,6 @@ export interface IDbGetParams {
  * Interface defining the valid properties for options passed to [[toDb]].
  */
 export interface IFromDbOptions {
-  /**
-   * The array of parameters to be passed to the constructor of the Model
-   */
-  constructorArgs?: any[];
   /**
    * If set to true, the resulting model will only have the properties for fields present in the document returned from
    * the database
@@ -161,7 +158,10 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     // =================================================================================================================
     const newConstructor = new Proxy(target, {
       construct: (t, args, nt) => {
-        const c = Reflect.construct(t, args, nt);
+
+        const diArgs = getDependencyInjections(target, t, target[modelSymbols.sapi]);
+
+        const c = Reflect.construct(t, diArgs, nt);
 
         // map _id to id
         newConstructor.prototype._id = null;
@@ -269,7 +269,6 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
       get: () => (newConstructor[modelSymbols.sapi] || {} as any).config
     });
 
-
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
     //
@@ -320,29 +319,23 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
  * [insertOneWriteOpCallback](http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#~insertOneWriteOpCallback).
  */
 // tslint:enable:max-line-length
-function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
+async function create(options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
   const constructor = this.constructor;
 
-  return new Promise((resolve, reject) => {
-    const col = constructor.getCollection();
+  const col = constructor.getCollection();
 
-    debug
-      .normal(`.create called, dbName: '${constructor[modelSymbols.dbName].name}', found?: ${!!col}, set: %O`, this);
+  debug
+    .normal(`.create called, dbName: '${constructor[modelSymbols.dbName].name}', found?: ${!!col}, set: %O`, this);
 
-    if (!col) {
-      throw new Error(`Database '${constructor[modelSymbols.dbName].name}' not found`);
-    }
+  if (!col) {
+    throw new Error(`Database '${constructor[modelSymbols.dbName].name}' not found`);
+  }
 
-    const dbObj = this.toDb();
+  const dbObj = this.toDb();
 
-    col
-      .insertOne(dbObj, options)
-      .then((result) => {
-        this.id = result.insertedId;
-        return resolve(result);
-      })
-      .catch(reject);
-  });
+  const result = await col.insertOne(dbObj, options);
+  this.id = result.insertedId;
+  return result;
 }
 
 /**
@@ -363,7 +356,7 @@ function fromDb(json: any, options?: IFromDbOptions): object {
 
   options = options || {};
 
-  const obj = new this(...options.constructorArgs || []);
+  const obj = new this();
 
   const result = mapDbToModel(json, obj, keyMapper.bind(this));
 
@@ -502,12 +495,10 @@ function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
 /**
  * @static Constructs an `@`Model object from a json object (see [[Json]]).
  * @param json The json object to be unmarshaled into an `@`[[Model]] object.
- * @param constructorArgs A variadic list of parameters to be passed to the constructor of the `@`[[Model]] object being
- * constructed.
  * @returns {{}} Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
  * undefined, or not an object.
  */
-function fromJson(json: object, ...constructorArgs: any[]): object {
+function fromJson(json: object): object {
   const modelName = this.name;
   debug.normal(`.fromJson called, target '${modelName}'`);
 
@@ -515,7 +506,7 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
     return null;
   }
 
-  const obj = new this(...constructorArgs);
+  const obj = new this();
 
   return mapJsonToModel(json, obj);
 
@@ -602,14 +593,14 @@ function fromJson(json: object, ...constructorArgs: any[]): object {
  * @returns [{{}}] Returns an array of instantiated objects based on the [[Model]]'s. Returns null if the `json`
  * parameter is null, undefined, or not an array.
  */
-function fromJsonArray(json: object[], ...constructorArgs: any[]): object[] {
+function fromJsonArray(json: object[]): object[] {
   debug.normal(`.fromJsonArray called, target '${this.name}'`);
 
   const result = [];
 
   if (Array.isArray(json)) {
     for (const item of json) {
-      result.push(this[modelSymbols.fromJson](item, ...constructorArgs));
+      result.push(this[modelSymbols.fromJson](item));
     }
   }
 
@@ -686,39 +677,33 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
  * documents returned from the database using MongoDB's find method. Returns an empty array if no matches are found
  * in the database.
  */
-function get(params?: IDbGetParams): Promise<object[]> {
+async function get(params?: IDbGetParams): Promise<object[]> {
   debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
-  return new Promise((resolve, reject) => {
 
-    const cursor = this.getCursor(params.filter, params.project);
+  const cursor = this.getCursor(params.filter, params.project);
 
-    if (params) {
-      if (params.skip) {
-        cursor.skip(params.skip);
-      }
-
-      if (params.limit) {
-        cursor.limit(params.limit);
-      }
+  if (params) {
+    if (params.skip) {
+      cursor.skip(params.skip);
     }
 
-    cursor
-      .toArray()
-      .then((results) => {
+    if (params.limit) {
+      cursor.limit(params.limit);
+    }
+  }
 
-        const options = (params.project) ? {strict: true} : null;
+  const results = await cursor.toArray();
 
-        const objs = [];
-        for (const result of results) {
-          const obj = this.fromDb(result, options);
-          if (obj) {
-            objs.push(obj);
-          }
-        }
-        resolve(objs);
-      })
-      .catch(reject);
-  });
+  const options = (params.project) ? {strict: true} : null;
+
+  const objs = [];
+  for (const result of results) {
+    const obj = this.fromDb(result, options);
+    if (obj) {
+      objs.push(obj);
+    }
+  }
+  return objs;
 }
 
 /**
@@ -728,21 +713,14 @@ function get(params?: IDbGetParams): Promise<object[]> {
  * @returns {Promise<T>} Returns a Promise that resolves with an instantiated [[Model]] object. Returns null
  * if the record is not found in the Db.
  */
-function getById(id: string | ObjectID, project?: any): Promise<any> {
+async function getById(id: string | ObjectID, project?: any): Promise<any> {
   debug.normal(`.getById called, dbName '${this[modelSymbols.dbName]}'`);
   const cursor = this.getCursorById(id, project);
 
   const options = (project) ? {strict: true} : null;
+  const result = await cursor.next();
 
-  return new Promise((resolve, reject) => {
-    cursor
-      .next()
-      .then((result) => {
-        const obj = this.fromDb(result, options);
-        resolve(obj);
-      })
-      .catch(reject);
-  });
+  return this.fromDb(result, options);
 }
 
 /**
@@ -839,20 +817,16 @@ function getDb(): Db {
  * @returns {Promise<any>} Returns a Promise that resolves with an instantiated [[Model]] object. Returns null if the
  * record is not found in the Db.
  */
-function getOne(filter: any, project?: any): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const cursor = this.getCursor(filter, project);
-    debug.normal(`.getOne called, dbName '${this[modelSymbols.dbName]}'`);
+async function getOne(filter: any, project?: any): Promise<any> {
+  const cursor = this.getCursor(filter, project);
+  debug.normal(`.getOne called, dbName '${this[modelSymbols.dbName]}'`);
 
-    cursor
-      .limit(1)
-      .next()
-      .then((result) => {
-        const obj = this.fromDb(result);
-        resolve(obj);
-      })
-      .catch(reject);
-  });
+  const result = await cursor
+    .limit(1)
+    .next();
+
+  const obj = this.fromDb(result);
+  return obj;
 }
 
 /**
@@ -862,7 +836,6 @@ function getOne(filter: any, project?: any): Promise<any> {
  */
 function remove(options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
   const constructor = this.constructor;
-
   debug.normal(`.remove called for ${this.id}`);
   return constructor.removeById(this.id, options);
 }
@@ -925,7 +898,7 @@ function removeById(id: any, options?: CollectionOptions): Promise<DeleteWriteOp
  * @param options The MongoDB ReplaceOneOptions. If you want to set this, but not the `set`, then pass null into `set`.
  * @returns {any}
  */
-function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
+async function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
   const constructor = this.constructor;
 
   const col = constructor.getCollection();
@@ -945,23 +918,18 @@ function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOpt
   delete dbObj._id;
   delete dbObj.id;
 
-  return new Promise((resolve, reject) => {
-    col
-      .updateOne({_id: this.id}, {$set: dbObj}, options)
-      .then((result) => {
-        if (changeSet) {
-          const modelMappedChangeSet = this.constructor.fromDb(changeSet, {strict: true});
-          for (const key of Object.getOwnPropertyNames(modelMappedChangeSet)) {
-            if (key === '_id' || key === 'id') {
-              continue;
-            }
-            this[key] = modelMappedChangeSet[key];
-          }
-        }
-        return resolve(result);
-      })
-      .catch(reject);
-  });
+  const result = await col.updateOne({_id: this.id}, {$set: dbObj}, options);
+
+  if (changeSet) {
+    const modelMappedChangeSet = this.constructor.fromDb(changeSet, {strict: true});
+    for (const key of Object.getOwnPropertyNames(modelMappedChangeSet)) {
+      if (key === '_id' || key === 'id') {
+        continue;
+      }
+      this[key] = modelMappedChangeSet[key];
+    }
+  }
+  return result;
 }
 
 /**

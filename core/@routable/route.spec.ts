@@ -4,20 +4,14 @@ import * as request from 'supertest';
 import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
 import {Db, Json, Model, SakuraApiModel} from '../@model';
 import {IRoutableLocals, Routable, routableSymbols, Route} from './';
-
-import method = require('lodash/method');
-import before = require('lodash/before');
+import {SakuraApiRoutable} from './sakura-api-routable';
 
 describe('core/Route', () => {
   @Routable({
     baseUrl: 'testCoreRoute',
     blackList: ['someBlacklistedMethod']
   })
-  class TestCoreRoute {
-
-    constructor(public someProperty?: number) {
-    }
-
+  class TestCoreRoute extends SakuraApiRoutable {
     @Route({
       method: 'get',
       path: '/'
@@ -63,7 +57,7 @@ describe('core/Route', () => {
   }
 
   beforeEach(() => {
-    this.t = new TestCoreRoute(777);
+    this.t = new TestCoreRoute();
     this.routes = this.t[routableSymbols.routes];
   });
 

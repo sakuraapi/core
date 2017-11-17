@@ -1,15 +1,22 @@
+import * as debugInit from 'debug';
 import * as express from 'express';
 import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response} from 'express';
 import * as http from 'http';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
+import {
+  injectableSymbols,
+  ProviderNotRegistered,
+  ProvidersMustBeDecoratedWithInjectableError
+} from './@injectable/injectable';
 import {modelSymbols} from './@model/model';
 import {ISakuraApiClassRoute, routableSymbols} from './@routable';
 import {IRoutableLocals} from './@routable/routable';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 
 const debug = {
-  normal: require('debug')('sapi:SakuraApi'),
-  route: require('debug')('sapi:route')
+  normal: debugInit('sapi:SakuraApi'),
+  providers: debugInit('sapi:providers'),
+  route: debugInit('sapi:route')
 };
 
 export interface SakuraApiPlugin {
@@ -32,6 +39,10 @@ export interface SakuraApiPlugin {
  * The interface of an object returned from a SakuraApi plugin (for example native-authentication-authority)
  */
 export interface SakuraApiPluginResult {
+  /**
+   * `@Injectable` decorated services for the plugin.
+   */
+  providers?: any[];
   /**
    * Route handlers that get called before any specific route handlers are called. This is for plugins that
    * inspect all incoming requests before they're passed off to specific route handlers.
@@ -65,6 +76,17 @@ export interface SakuraApiOptions {
    * Optionally sets [[SakuraMongoDbConnection]], otherwise, the configuration will be loaded automatically.
    */
   dbConfig?: SakuraMongoDbConnection;
+  /**
+   * An array of objects that are decorated with @[[Injectable]]. Alternatively, for testing purposes, an Injectable can be
+   * mocked by passing in the following object literal:
+   * <pre>
+   *   {
+   *      use: SomeMockInjectable,
+   *      for: TheInjectableBeingReplacedByTheMock
+   *   }
+   * </pre>
+   */
+  providers?: any[];
   /**
    * An array of objects that are decorated with @[[Model]]. Alternatively, for testing purposes, a Model can be
    * mocked by passing in the following object literal:
@@ -125,6 +147,11 @@ export interface ServerConfig {
   bootMessage?: string;
 }
 
+interface IProviderContainer {
+  target: any;
+  instance: any;
+}
+
 /**
  * @outdatedDoc
  *
@@ -178,6 +205,7 @@ export class SakuraApi {
   private _server: http.Server;
   // tslint:enable:variable-name
 
+  private providers = new Map<string, IProviderContainer>();
   private lastErrorHandlers: ErrorRequestHandler[] = [];
   private listenCalled = false;
   private middlewareHandlers: { [key: number]: Handler[] } = {};
@@ -263,6 +291,7 @@ export class SakuraApi {
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
 
+    this.registerProviders(options);
     this.registerPlugins(options);
     this.registerModels(options);
     this.registerRoutables(options);
@@ -284,7 +313,7 @@ export class SakuraApi {
    * be added [A, B, C] to the router. As another example, if you Add C to 0 and [A, B] to 1, then Z to 0, the handlers
    * will be added: [C, Z, A, B].
    */
-  addMiddleware(fn: Handler, order: number = 0) {
+  addMiddleware(fn: Handler, order: number = 0): void {
     debug.normal(`.addMiddleware called: '${(fn || {} as any).name}', orderr: ${order}`);
 
     if (!fn) {
@@ -299,7 +328,7 @@ export class SakuraApi {
     this.middlewareHandlers[order].push(fn);
   }
 
-  addLastErrorHandlers(fn: ErrorRequestHandler) {
+  addLastErrorHandlers(fn: ErrorRequestHandler): void {
     debug.normal('.addMiddleware called');
     this.lastErrorHandlers.push(fn);
   }
@@ -317,10 +346,8 @@ export class SakuraApi {
         .close((err) => {
           if (err && err.message !== 'Not running') {
             debug.normal('.close error', err);
-
             return reject(err);
           }
-
           debug.normal('.close done');
           resolve();
         });
@@ -337,155 +364,127 @@ export class SakuraApi {
    * you constructed elsewhere, then no DB connections will be opened. You can also user
    * [[SakuraMongoDbConnection.connect]] to manually define Db connections.
    */
-  listen(listenProperties?: ServerConfig): Promise<null> {
-    return new Promise((resolve, reject) => {
-      debug.route(`.listen called with serverConfig:`, listenProperties);
-      debug.route(`.listen setting baseUri to ${this._baseUrl}`);
+  async listen(listenProperties?: ServerConfig): Promise<void> {
 
-      listenProperties = listenProperties || {};
-      this._address = listenProperties.address || this._address;
-      this._port = listenProperties.port || this._port;
+    debug.route(`.listen called with serverConfig:`, listenProperties);
+    debug.route(`.listen setting baseUri to ${this._baseUrl}`);
 
-      let router;
-      // Add App Route Handlers ----------------------------------------------------------------------------------------
-      // but only once per instance of SakuraApi
-      if (!this.listenCalled) {
-        debug.route(`\t.listen first time call, adding app middleware and route handlers`);
+    listenProperties = listenProperties || {};
+    this._address = listenProperties.address || this._address;
+    this._port = listenProperties.port || this._port;
 
-        /**
-         * Add ordered middleware
-         */
-        for (const key of Object.keys(this.middlewareHandlers).sort()) {
-          const handlers = this.middlewareHandlers[key];
-          this.app.use(handlers);
+    let router;
+    // Add App Route Handlers ----------------------------------------------------------------------------------------
+    // but only once per instance of SakuraApi
+    if (!this.listenCalled) {
+      debug.route(`\t.listen first time call, adding app middleware and route handlers`);
+
+      /**
+       * Add ordered middleware
+       */
+      for (const key of Object.keys(this.middlewareHandlers).sort()) {
+        const handlers = this.middlewareHandlers[key];
+        this.app.use(handlers);
+      }
+
+      /**
+       * Catch BodyParser parse errors
+       */
+      this.app.use(catchBodyParserErrors);
+
+      /**
+       * Handle Response.locals injection
+       */
+      this.app.use(handleResponseLocals);
+
+      /**
+       * Add final error handlers
+       */
+      if (this.lastErrorHandlers) {
+        for (const handler of this.lastErrorHandlers) {
+          this.app.use(handler);
         }
+      }
 
-        /**
-         * Catch BodyParser parse errors
-         */
-        this.app.use((err, req, res, next) => {
-          // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
-          if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
-            res.status(400).send({
-              body: req.body,
-              error: 'invalid_body'
-            });
-          } else {
-            next(err);
-          }
-        });
+      /**
+       * Setup route handler so that each call to listen always overwrites the prior routes -- makes testing
+       * easier, there's really not a lot of reasons to be calling listen multiple times in a production app
+       */
+      this.app.use(this._baseUrl, (req, res, next) => {
+        // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
+        // hook whatever the current router is
+        router(req, res, next);
+      });
 
-        /**
-         * Handle Response.locals injection
-         */
-        this.app.use((req: Request, res: Response, next: NextFunction) => {
-          // inject Response.locals.body
-          // inject Response.locals.response
+      // ensures that middleware is added only once
+      this.listenCalled = true;
+    }
 
-          if (req.body && !res.locals.reqBody) {
-            res.locals.reqBody = req.body;
-          }
-          res.locals.data = {};
-          res.locals.status = 200;
+    // Setup @Routable routes ----------------------------------------------------------------------------------------
+    router = express.Router();
 
-          res.locals.send = (status, data): IRoutableLocals => {
-            res.locals.status = status;
+    debug.route('\t.listen processing route queue');
+    // add routes
+    for (const route of this.routeQueue.values()) {
 
-            if (!res.locals.data || Object.keys(res.locals.data || {}).length === 0) {
-              res.locals.data = data;
-              return res.locals;
-            }
+      debug.route('\t\t.listen route %o', route);
 
-            // shallow merge the two objects and make sure to de-reference data
-            res.locals.data = Object.assign(res.locals.data, JSON.parse(JSON.stringify(data)));
-            return res.locals;
-          };
-
+      let routeHandlers: Handler[] = [
+        // injects an initial handler that injects the reference to the instantiated @Routable decorated object
+        // responsible for this route. This allows route handlers to look get the @Routable's model
+        // (if present)
+        (req: Request, res: Response, next: NextFunction) => {
+          res.locals.routable = route.routable;
           next();
-        });
-
-        /**
-         * Add final error handlers
-         */
-        if (this.lastErrorHandlers) {
-          for (const handler of this.lastErrorHandlers) {
-            this.app.use(handler);
-          }
         }
+      ];
 
-        /**
-         * Setup route handler so that each call to listen always overwrites the prior routes -- makes testing
-         * easier, there's really not a lot of reasons to be calling listen multiple times in a production app
-         */
-        this.app.use(this._baseUrl, (req, res, next) => {
-          // see: https://github.com/expressjs/express/issues/2596#issuecomment-81353034
-          // hook whatever the current router is
-          router(req, res, next);
-        });
-
-        // ensures that middleware is added only once
-        this.listenCalled = true;
+      if (route.beforeAll) {
+        routeHandlers = routeHandlers.concat(route.beforeAll);
       }
 
-      // Setup @Routable routes ----------------------------------------------------------------------------------------
-      router = express.Router();
-
-      debug.route('\t.listen processing route queue');
-      // add routes
-      for (const route of this.routeQueue.values()) {
-
-        debug.route('\t\t.listen route %o', route);
-
-        let routeHandlers: Handler[] = [
-          // injects an initial handler that injects the reference to the instantiated @Routable decorated object
-          // responsible for this route. This allows route handlers to look get the @Routable's model
-          // (if present)
-          (req: Request, res: Response, next: NextFunction) => {
-            res.locals.routable = route.routable;
-            next();
-          }
-        ];
-
-        if (route.beforeAll) {
-          routeHandlers = routeHandlers.concat(route.beforeAll);
-        }
-
-        if (route.before) {
-          routeHandlers = routeHandlers.concat(route.before);
-        }
-
-        routeHandlers.push(route.f);
-
-        if (route.after) {
-          routeHandlers = routeHandlers.concat(route.after);
-        }
-
-        if (route.afterAll) {
-          routeHandlers = routeHandlers.concat(route.afterAll);
-        }
-
-        routeHandlers.push(resLocalsHandler);
-
-        router[route.httpMethod](route.path, routeHandlers);
+      if (route.before) {
+        routeHandlers = routeHandlers.concat(route.before);
       }
 
-      // Setup DB Connetions -------------------------------------------------------------------------------------------
-      if (this.dbConnections) {
-        this
-          .dbConnections
-          .connectAll()
-          .then(() => {
-            listen.bind(this)();
-          })
-          .catch((err) => {
-            return reject(err);
-          });
+      routeHandlers.push(route.f);
+
+      if (route.after) {
+        routeHandlers = routeHandlers.concat(route.after);
+      }
+
+      if (route.afterAll) {
+        routeHandlers = routeHandlers.concat(route.afterAll);
+      }
+
+      routeHandlers.push(resLocalsHandler);
+
+      router[route.httpMethod](route.path, routeHandlers);
+    }
+
+    // Setup DB Connetions -------------------------------------------------------------------------------------------
+    if (this.dbConnections) {
+      await this.dbConnections.connectAll();
+      return await listen.bind(this)();
+    } else {
+      return await listen.bind(this)();
+    }
+
+    //////////
+    function catchBodyParserErrors(err, req: Request, res: Response, next: NextFunction): void {
+      // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
+      if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
+        res.status(400).send({
+          body: req.body,
+          error: 'invalid_body'
+        });
       } else {
-        listen.bind(this)();
+        next(err);
       }
+    }
 
-      //////////
-      function listen() {
+    function listen(): Promise<null> {
+      return new Promise((resolve, reject) => {
         this
           .server
           .listen(this.port, this.address, (err) => {
@@ -510,19 +509,46 @@ export class SakuraApi {
             debug.normal(`.listen server started ${this.address}:${this.port}`);
             return resolve();
           });
-      }
+      });
+    }
 
-      function resLocalsHandler(req: Request, res: Response, next: NextFunction) {
-        if (res.headersSent) {
-          return next();
+    function handleResponseLocals(req: Request, res: Response, next: NextFunction) {
+      // inject Response.locals.body
+      // inject Response.locals.response
+
+      if (req.body && !res.locals.reqBody) {
+        res.locals.reqBody = req.body;
+      }
+      res.locals.data = {};
+      res.locals.status = 200;
+
+      res.locals.send = (status, data): IRoutableLocals => {
+        res.locals.status = status;
+
+        if (!res.locals.data || Object.keys(res.locals.data || {}).length === 0) {
+          res.locals.data = data;
+          return res.locals;
         }
-        res
-          .status(res.locals.status || 200)
-          .json(res.locals.data);
 
-        next();
+        // shallow merge the two objects and make sure to de-reference data
+        res.locals.data = Object.assign(res.locals.data, JSON.parse(JSON.stringify(data)));
+        return res.locals;
+      };
+
+      next();
+    }
+
+    function resLocalsHandler(req: Request, res: Response, next: NextFunction) {
+      if (res.headersSent) {
+        return next();
       }
-    });
+      res
+        .status(res.locals.status || 200)
+        .json(res.locals.data);
+
+      next();
+    }
+
   }
 
   /**
@@ -532,6 +558,26 @@ export class SakuraApi {
    */
   getModelByName(name: string): any {
     return this.models.get(name);
+  }
+
+  getProvider(target: any) {
+    debug.providers(`.getProvider ${(target || {} as any).name}`);
+
+    if (!target || !target[injectableSymbols.isSakuraApiInjectable]) {
+      throw new ProvidersMustBeDecoratedWithInjectableError(target);
+    }
+
+    const provider = this.providers.get(target[injectableSymbols.id]);
+    if (!provider) {
+      throw new ProviderNotRegistered(target);
+    }
+
+    if (!provider.instance) {
+      debug.providers(`\t lazy instantiating singleton instance of ${(target || {} as any).name}`);
+      provider.instance = new provider.target();
+    }
+
+    return provider.instance;
   }
 
   /**
@@ -548,7 +594,7 @@ export class SakuraApi {
    * [[RoutableClassOptions.autoRoute]] set to false, the integrator will have to pass that `@Routable` class in to
    * this method manually if he wants to routes to be bound.
    */
-  enqueueRoutes(target: any) {
+  enqueueRoutes(target: any): void {
 
     debug.route(`SakuraApi.route called for %o`, target);
 
@@ -570,7 +616,43 @@ export class SakuraApi {
     }
   }
 
-  private registerPlugins(options: SakuraApiOptions) {
+  private registerProviders(options: SakuraApiOptions | SakuraApiPluginResult): void {
+    debug.normal('\tRegistering Providers');
+
+    const injectables = options.providers || [];
+
+    for (const injectable of injectables) {
+      const isInjectable = injectable[injectableSymbols.isSakuraApiInjectable];
+
+      let injectableSource: any;
+      let injectableRef: any;
+
+      if (!isInjectable) {
+        if (!injectable.use
+          || !injectable.for
+          || !injectable.use[injectableSymbols.isSakuraApiInjectable]
+          || !injectable.for[injectableSymbols.isSakuraApiInjectable]) {
+          throw new Error('SakuraApi setup error. SakuraApiOptions.providers array must have classes decorated with'
+            + ' @Injectable or an object literal of the form { use: SomeInjectableService, for: SomeRealService },'
+            + ' where SomeMockInjectable and SomeRealInjectable are decorated with @Injectable.');
+        }
+
+        injectableSource = injectable.for;
+        injectableRef = injectable.use;
+      } else {
+        injectableSource = injectable;
+        injectableRef = injectable;
+      }
+
+      // set the injectable's instance of SakuraApi to this
+      injectableRef[injectableSymbols.sapi] = this;
+
+      debug.providers(`registering provider ${(injectableRef || {} as any).name}`);
+      this.providers.set(injectableSource[injectableSymbols.id], {target: injectableRef, instance: null});
+    }
+  }
+
+  private registerPlugins(options: SakuraApiOptions): void {
     debug.normal('\tRegistering Modules');
     const plugins = options.plugins || [];
 
@@ -597,7 +679,7 @@ export class SakuraApi {
     }
   }
 
-  private registerModels(options: SakuraApiOptions | SakuraApiPluginResult) {
+  private registerModels(options: SakuraApiOptions | SakuraApiPluginResult): void {
     debug.normal('\tRegistering Models');
     const models = options.models || [];
 
@@ -624,7 +706,7 @@ export class SakuraApi {
         modelName = model.name;
         modelRef = model;
       }
-      
+
       // set the model's instance of SakuraApi to this
       modelRef[modelSymbols.sapi] = this;
 
@@ -632,7 +714,7 @@ export class SakuraApi {
     }
   }
 
-  private registerRoutables(options: SakuraApiOptions | SakuraApiPluginResult) {
+  private registerRoutables(options: SakuraApiOptions | SakuraApiPluginResult): void {
     debug.normal('\tRegistering Models');
     const routables = options.routables || [];
 

@@ -25,47 +25,33 @@ describe('@Json', () => {
 
     aFourthProperty: string;
 
-    constructor(public constructedProperty?, public constructedProperty2?) {
-      super();
-    }
-
     aFunction() {
       // lint empty
     }
   }
 
-  @Model()
-  class Test2 {
-    aProperty: string = 'test';
-    anotherProperty: string;
-    aThirdProperty: number = 777;
-
-    aFunction() {
-      // lint empty
-    }
-  }
+  let test: Test;
 
   beforeEach(() => {
-    this.t = new Test();
-    this.t2 = new Test2();
+    test = new Test();
   });
 
   it('allows the injected functions to be overridden without breaking the internal dependencies', () => {
 
-    this.t.toJson = () => {
+    test.toJson = () => {
       throw new Error('toJson broken');
     };
 
-    this.t.toJsonString = () => {
+    test.toJsonString = () => {
       throw new Error('toJsonString broken');
     };
 
-    expect(this.t[modelSymbols.toJson]().ap).toBe('test');
-    expect(this.t[modelSymbols.toJson]().anp).toBeUndefined();
-    expect(this.t[modelSymbols.toJson]().aThirdProperty).toBe(777);
-    expect(this.t[modelSymbols.toJson]().aFunction).toBeUndefined();
+    expect(test[modelSymbols.toJson]().ap).toBe('test');
+    expect(test[modelSymbols.toJson]().anp).toBeUndefined();
+    expect(test[modelSymbols.toJson]().aThirdProperty).toBe(777);
+    expect(test[modelSymbols.toJson]().aFunction).toBeUndefined();
 
-    const result = JSON.parse(this.t[modelSymbols.toJsonString]());
+    const result = JSON.parse(test[modelSymbols.toJsonString]());
 
     expect(result.ap).toBe('test');
     expect(result.anp).toBeUndefined();
@@ -202,7 +188,7 @@ describe('@Json', () => {
       expect(user.id).toBeDefined('The test user should have a valid id for this test to be meaningful');
       expect(json._id).toBeUndefined('_id should not be included because id maps to the same value');
       expect(json.id).toBe(user.id, 'id should be included and should be the same as the model\'s _id');
-      expect(this.t.toJson()._id).toBeUndefined();
+      expect(test.toJson()._id).toBeUndefined();
     });
 
     it('handles falsy properties', () => {
@@ -437,12 +423,12 @@ describe('@Json', () => {
 
   describe('toJsonString', () => {
     it('function is injected into the prototype of the model by default', () => {
-      expect(this.t.toJsonString())
+      expect(test.toJsonString())
         .toBeDefined();
     });
 
     it('transforms a defined property to the designated fieldName in the output of toJsonString', () => {
-      const result = JSON.parse(this.t.toJsonString());
+      const result = JSON.parse(test.toJsonString());
 
       expect(result.ap).toBe('test');
       expect(result.anp).toBeUndefined();
@@ -489,15 +475,6 @@ describe('@Json', () => {
 
       @Json({field: 'c2', model: Contact})
       contact2 = new Contact();
-
-      constructedPropertyX: number;
-      constructedPropertyY: number;
-
-      constructor(x, y) {
-        super();
-        this.constructedPropertyX = x;
-        this.constructedPropertyY = y;
-      }
     }
 
     it('from is injected into the model as a static member by default', () => {
@@ -526,13 +503,6 @@ describe('@Json', () => {
       const obj = User.fromJson({});
 
       expect(obj instanceof User).toBe(true);
-    });
-
-    it('passes on constructor arguments to the @Model target being returned', () => {
-      const user = User.fromJson({}, 888, 999);
-
-      expect(user.constructedPropertyX).toBe(888);
-      expect(user.constructedPropertyY).toBe(999);
     });
 
     it('does not throw if there are no @Json decorators', () => {
@@ -650,10 +620,10 @@ describe('@Json', () => {
         lastName: 'Jefferson'
       };
 
-      const test = TestDefaults.fromJson(data);
+      const result = TestDefaults.fromJson(data);
 
-      expect(test.firstName).toBe(data.firstName);
-      expect(test.lastName).toBe(data.lastName);
+      expect(result.firstName).toBe(data.firstName);
+      expect(result.lastName).toBe(data.lastName);
     });
 
     it('does not map a model property that has no default value and has no @Json decorator', () => {
@@ -719,10 +689,10 @@ describe('@Json', () => {
           id: '1234567890987654321'
         };
 
-        const test = Test.fromJson(data);
+        const results = Test.fromJson(data);
 
-        expect(test.id instanceof ObjectID).not.toBeTruthy();
-        expect(test._id instanceof ObjectID).not.toBeTruthy();
+        expect(results.id instanceof ObjectID).not.toBeTruthy();
+        expect(results._id instanceof ObjectID).not.toBeTruthy();
       });
 
       it('unmarshalls _id as an ObjectID when it is a valid ObjectID', () => {
@@ -730,10 +700,10 @@ describe('@Json', () => {
           _id: new ObjectID().toString()
         };
 
-        const test = Test.fromJson(data);
+        const results = Test.fromJson(data);
 
-        expect(test._id instanceof ObjectID).toBeTruthy();
-        expect(test.id instanceof ObjectID).toBeTruthy();
+        expect(results._id instanceof ObjectID).toBeTruthy();
+        expect(results.id instanceof ObjectID).toBeTruthy();
       });
 
       it('unmarshalls _id as a string when it is not a valid ObjectID', () => {
@@ -741,10 +711,10 @@ describe('@Json', () => {
           _id: '12345678900987654321'
         };
 
-        const test = Test.fromJson(data);
+        const results = Test.fromJson(data);
 
-        expect(test._id instanceof ObjectID).not.toBeTruthy();
-        expect(test.id instanceof ObjectID).not.toBeTruthy();
+        expect(results._id instanceof ObjectID).not.toBeTruthy();
+        expect(results.id instanceof ObjectID).not.toBeTruthy();
       });
     });
 
@@ -882,13 +852,6 @@ describe('@Json', () => {
       const obj = Test.fromJsonArray([{}]);
 
       expect(obj[0] instanceof Test).toBe(true);
-    });
-
-    it('passes on constructor arguments to the @Model target being returned', () => {
-      const obj = Test.fromJsonArray([{}], 888, 999);
-
-      expect(obj[0].constructedProperty).toBe(888);
-      expect(obj[0].constructedProperty2).toBe(999);
     });
 
     it('gracefully takes a non array', () => {

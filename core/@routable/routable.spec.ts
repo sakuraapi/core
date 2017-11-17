@@ -198,33 +198,10 @@ describe('core/@Routable', () => {
 
     });
 
-    it('properly passes the constructor parameters', () => {
-      @Routable()
-      class CoreRoutableProxiedConstructorWorks {
-
-        constructor(public v: number) {
-        }
-
-        @Route({
-          method: 'get',
-          path: 'a'
-        })
-        aRouteMethod(req, res) {
-          // lint empty
-        }
-      }
-
-      const result = new CoreRoutableProxiedConstructorWorks(777);
-      expect(result.v).toBe(777, 'Constructor value was not passed to the instantiated object');
-    });
-
     it('maintains the prototype chain', () => {
       @Routable()
       class CoreRoutableInstanceOfWorks {
 
-        constructor(public v: number) {
-        }
-
         @Route({
           method: 'get',
           path: 'a'
@@ -234,7 +211,7 @@ describe('core/@Routable', () => {
         }
       }
 
-      expect(new CoreRoutableInstanceOfWorks(777) instanceof CoreRoutableInstanceOfWorks)
+      expect(new CoreRoutableInstanceOfWorks() instanceof CoreRoutableInstanceOfWorks)
         .toBeTruthy('the prototype chain should have been maintained');
     });
 
@@ -1722,7 +1699,6 @@ describe('core/@Routable', () => {
     }
 
     let sapi;
-    let testSapiInjection;
     beforeEach(() => {
       sapi = testSapi({
         models: [],

@@ -7,7 +7,6 @@ import {
   putRouteHandler
 } from './basic-handlers';
 
-
 describe('basic-handlers', () => {
 
   @Routable()
@@ -27,6 +26,7 @@ describe('basic-handlers', () => {
   } as any;
 
   const mockNext = () => {
+    // lint empty
   };
 
   describe('throws correct error if @Routable has no model', () => {

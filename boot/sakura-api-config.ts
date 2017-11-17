@@ -140,7 +140,7 @@ export class SakuraApiConfig {
     const env = process.env.NODE_ENV;
     let envConfig = {};
     let envJsConfig = {};
-    if (env && env.NODE_ENV !== '') {
+    if (env && env !== '') {
       // environment.{env}.json
       const pathParts = path.split('/');
       const fileParts = pathParts[pathParts.length - 1].split('.');

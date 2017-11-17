@@ -1,6 +1,6 @@
 {
   "name": "@sakuraapi/api",
-  "version": "0.7.0-8",
+  "version": "0.7.0-9",
   "description": "MongoDB and TypeScript MEAN Stack Framework for NodeJS",
   "main": "index.js",
   "typings": "index.d.ts",
@@ -64,8 +64,9 @@
     "@types/jasmine": "2.5.45",
     "@types/lodash": "^4.14.63",
     "@types/mongodb": "^2.2.0",
-    "@types/node": "^7.0.14",
+    "@types/node": "^8.0.46",
     "@types/supertest": "^2.0.0",
+    "@types/uuid": "^3.4.3",
     "body-parser": "^1.17.1",
     "helmet": "^3.6.0",
     "http-server": "^0.9.0",
@@ -88,6 +89,7 @@
     "express": "^4.15.2",
     "lodash": "^4.17.4",
     "mongodb": "^2.2.26",
-    "reflect-metadata": "^0.1.10"
+    "reflect-metadata": "^0.1.10",
+    "uuid": "^3.1.0"
   }
 }
