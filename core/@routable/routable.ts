@@ -353,8 +353,22 @@ export function Routable(options?: IRoutableOptions): any {
       get: () => newConstructor[routableSymbols.sapi]
     });
 
+    // Injects sapi as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi]
+    Reflect.defineProperty(newConstructor.prototype, 'sapi', {
+      configurable: false,
+      enumerable: false,
+      get: () => newConstructor[routableSymbols.sapi]
+    });
+
     // Injects sapiConfig as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi].config
     Reflect.defineProperty(newConstructor, 'sapiConfig', {
+      configurable: false,
+      enumerable: false,
+      get: () => (newConstructor[routableSymbols.sapi] || {} as any).config
+    });
+
+    // Injects sapiConfig as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi].config
+    Reflect.defineProperty(newConstructor.prototype, 'sapiConfig', {
       configurable: false,
       enumerable: false,
       get: () => (newConstructor[routableSymbols.sapi] || {} as any).config

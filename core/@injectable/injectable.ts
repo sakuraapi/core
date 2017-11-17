@@ -82,6 +82,34 @@ export function Injectable(): (object) => any {
       writable: false
     });
 
+    // Injects sapi as a shortcut property on injectables pointing to newConstructor[injectableSymbols.sapi]
+    Reflect.defineProperty(newConstructor, 'sapi', {
+      configurable: false,
+      enumerable: false,
+      get: () => newConstructor[injectableSymbols.sapi]
+    });
+
+    // Injects sapi as a shortcut property on injectables pointing to newConstructor[injectableSymbols.sapi]
+    Reflect.defineProperty(newConstructor.prototype, 'sapi', {
+      configurable: false,
+      enumerable: false,
+      get: () => newConstructor[injectableSymbols.sapi]
+    });
+
+    // Injects sapiConfig as a shortcut property on injectables pointing to newConstructor[injectableSymbols.sapi].config
+    Reflect.defineProperty(newConstructor, 'sapiConfig', {
+      configurable: false,
+      enumerable: false,
+      get: () => (newConstructor[injectableSymbols.sapi] || {} as any).config
+    });
+
+    // Injects sapiConfig as a shortcut property on injectables pointing to newConstructor[injectableSymbols.sapi].config
+    Reflect.defineProperty(newConstructor.prototype, 'sapiConfig', {
+      configurable: false,
+      enumerable: false,
+      get: () => (newConstructor[injectableSymbols.sapi] || {} as any).config
+    });
+
     // Injected by SakuraApi in `.mapModels`
     newConstructor[injectableSymbols.sapi] = null;
 

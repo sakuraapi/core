@@ -21,11 +21,14 @@ import {SakuraApi} from '../sakura-api';
  *   static sapi?: SakuraApi;
  *   static sapiConfig?: any;
  *
+ *   sapi?: SakuraApi;
+ *   sapiConfig?: any;
+ *
  *   ///
  *   // your class implementation continues on here...
  * }
  * </pre>
-
+ * Annoying? Yes. See: https://github.com/Microsoft/TypeScript/issues/4881
  */
 export abstract class SakuraApiRoutable {
   static getRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
@@ -36,4 +39,7 @@ export abstract class SakuraApiRoutable {
 
   static sapi?: SakuraApi;
   static sapiConfig?: any;
+
+  sapi?: SakuraApi;
+  sapiConfig?: any;
 }

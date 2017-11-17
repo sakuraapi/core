@@ -262,8 +262,22 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
       get: () => newConstructor[modelSymbols.sapi]
     });
 
+    // Injects sapi as a shortcut property on models pointing to newConstructor[modelSymbols.sapi]
+    Reflect.defineProperty(newConstructor.prototype, 'sapi', {
+      configurable: false,
+      enumerable: false,
+      get: () => newConstructor[modelSymbols.sapi]
+    });
+
     // Injects sapiConfig as a shortcut property on models pointing to newConstructor[modelSymbols.sapi].config
     Reflect.defineProperty(newConstructor, 'sapiConfig', {
+      configurable: false,
+      enumerable: false,
+      get: () => (newConstructor[modelSymbols.sapi] || {} as any).config
+    });
+
+    // Injects sapiConfig as a shortcut property on models pointing to newConstructor[modelSymbols.sapi].config
+    Reflect.defineProperty(newConstructor.prototype, 'sapiConfig', {
       configurable: false,
       enumerable: false,
       get: () => (newConstructor[modelSymbols.sapi] || {} as any).config
