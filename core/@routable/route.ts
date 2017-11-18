@@ -111,7 +111,7 @@ export function Route(options?: IRoutableMethodOptions) {
 
   return (target: any, key: string, value: TypedPropertyDescriptor<any>) => {
 
-    debug('sapi:route')(`@Route decorated '${key}' with options ${JSON.stringify(options)}`);
+    debug('sapi:route')(`@Route decorated '${key}' with options %o`, options);
 
     if (methods.indexOf(options.method) < 0) {
       throw new Error(`@route(...)${(target.constructor || {}).name}.${key} had its 'method' `
