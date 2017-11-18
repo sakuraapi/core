@@ -225,7 +225,7 @@ export function Routable(options?: IRoutableOptions): any {
   // ===================================================================================================================
   return (target: any) => {
 
-    debug.normal(`@Routable decorating '${target.name}' with options: ${JSON.stringify(options)}`);
+    debug.normal(`@Routable decorating '${target.name}' with options: %o`, options);
     debug.normal(`\t@Routable options.model set to ${(options.model || {} as any).name}`);
 
     if (options.model && !options.model[modelSymbols.isSakuraApiModel]) {

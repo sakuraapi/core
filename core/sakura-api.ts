@@ -604,7 +604,7 @@ export class SakuraApi {
     }
 
     for (const route of target[routableSymbols.routes]) {
-      debug.route(`\tadded '${JSON.stringify(route)}'`);
+      debug.route(`\tadded '%o'`, route);
 
       const routeSignature = `${route.httpMethod}:${route.path}`;
       if (this.routeQueue.get(routeSignature)) {
