@@ -1,5 +1,5 @@
 import {ObjectID} from 'mongodb';
-import {testSapi} from '../../spec/helpers/sakuraapi';
+import {testSapi} from '../../../spec/helpers/sakuraapi';
 import {Db} from './db';
 import {Json} from './json';
 import {Model, modelSymbols} from './model';

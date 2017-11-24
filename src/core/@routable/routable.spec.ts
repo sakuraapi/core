@@ -2,7 +2,7 @@
 import {NextFunction, Request, Response} from 'express';
 import {ObjectID} from 'mongodb';
 import {getAllRouteHandler, getRouteHandler} from '../../handlers/basic-handlers';
-import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
+import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
 import {Db, Json, Model, SakuraApiModel} from '../@model';
 import {DUPLICATE_RESOURCE} from '../helpers/http-status';
 import {SakuraApi} from '../sakura-api';

@@ -1,7 +1,6 @@
+import {testMongoDbUrl, testSapi} from '../../spec/helpers/sakuraapi';
 import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
-import {testMongoDbUrl, testSapi} from '../spec/helpers/sakuraapi';
 import {SakuraApiConfig} from './sakura-api-config';
-
 import path = require('path');
 
 describe('sakura-api-config', () => {
@@ -12,12 +11,13 @@ describe('sakura-api-config', () => {
   });
 
   beforeEach(() => {
-    this.path = 'spec/test_config/environment.json';
+    this.path = 'lib/spec/test_config/environment.json';
   });
 
   describe('load(...)', () => {
     it('loads the default config file if config file not found in path', () => {
       this.path = this.path.replace('environment.json', 'not_found.json');
+
       try {
         const cfg = new SakuraApiConfig().load(this.path);
         expect(cfg.SAKURA_API_CONFIG_TEST).toEqual('found');
@@ -27,6 +27,7 @@ describe('sakura-api-config', () => {
     });
 
     it('loads the config file and properly cascades', () => {
+
       try {
         const cfg = new SakuraApiConfig().load(this.path);
         expect(cfg).toBeDefined();

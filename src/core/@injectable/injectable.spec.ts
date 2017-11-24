@@ -1,6 +1,6 @@
 import {NextFunction, Request, Response} from 'express';
 import * as request from 'supertest';
-import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
+import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
 import {Json} from '../@model/json';
 import {Model} from '../@model/model';
 import {SakuraApiModel} from '../@model/sakura-api-model';

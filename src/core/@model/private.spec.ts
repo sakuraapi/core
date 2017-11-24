@@ -1,10 +1,5 @@
-import {testSapi} from '../../spec/helpers/sakuraapi';
-import {
-  Json,
-  Model,
-  Private,
-  SakuraApiModel
-} from './';
+import {testSapi} from '../../../spec/helpers/sakuraapi';
+import {Json, Model, Private, SakuraApiModel} from './';
 
 describe('@Private', () => {
   const sapi = testSapi({
