@@ -525,7 +525,7 @@ function fromJson(json: object): object {
   return mapJsonToModel(json, obj);
 
   ////////////
-  function mapJsonToModel(source, target) {
+  function mapJsonToModel(source: any, target: any) {
     target = target || {};
 
     if (!source) {
@@ -533,18 +533,22 @@ function fromJson(json: object): object {
     }
 
     const propertyNamesByJsonFieldName: Map<string, IJsonOptions>
-      = Reflect.getMetadata(jsonSymbols.jsonByFieldName, target);
+      = Reflect.getMetadata(jsonSymbols.jsonByFieldName, target) || new Map<string, IJsonOptions>();
 
     const propertyNamesByDbPropertyName: Map<string, IDbOptions>
-      = Reflect.getMetadata(dbSymbols.dbByPropertyName, target);
+      = Reflect.getMetadata(dbSymbols.dbByPropertyName, target) || new Map<string, IDbOptions>();
 
     // iterate over each property of the source json object
-    for (const key of Object.getOwnPropertyNames(source)) {
+    const propertyNames = Object.getOwnPropertyNames(source);
+    for (const key of propertyNames) {
 
-      if (shouldRecurse(source[key])) {
+      // convert the DB key name to the Model key name
+      const mapper = keyMapper(key, source[key], propertyNamesByJsonFieldName, target);
 
-        // convert the DB key name to the Model key name
-        const mapper = keyMapper(key, source[key], propertyNamesByJsonFieldName, target);
+      if (mapper.promiscuous) {
+        target[mapper.newKey] = source[key];
+      } else if (shouldRecurse(source[key])) {
+
         const dbModel = propertyNamesByDbPropertyName.get(mapper.newKey) || {};
 
         // if the key should be included, recurse into it
@@ -594,7 +598,8 @@ function fromJson(json: object): object {
           ? key
           : (key === 'id' || key === '_id')
             ? key
-            : undefined
+            : undefined,
+      promiscuous: (jsonFieldOptions || {} as any).promiscuous || false
     };
   }
 }
