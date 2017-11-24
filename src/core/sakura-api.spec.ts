@@ -3,14 +3,13 @@
 import {NextFunction, Request, Response} from 'express';
 import {MongoClient} from 'mongodb';
 import * as request from 'supertest';
-import {SakuraApiConfig} from '../boot/sakura-api-config';
-import {testMongoDbUrl, testSapi, testUrl} from '../spec/helpers/sakuraapi';
+import {testMongoDbUrl, testSapi, testUrl} from '../../spec/helpers/sakuraapi';
+import {SakuraApiConfig} from '../../src/boot/sakura-api-config';
 import {Json} from './@model/json';
 import {Model} from './@model/model';
 import {SakuraApiModel} from './@model/sakura-api-model';
 import {Routable, Route} from './@routable/';
 import {SakuraApi, SakuraApiPluginResult} from './sakura-api';
-import Spy = jasmine.Spy;
 
 describe('core/SakuraApi', () => {
 

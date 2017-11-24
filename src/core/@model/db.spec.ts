@@ -1,6 +1,6 @@
 // tslint:disable:no-shadowed-variable
 import {ObjectID} from 'mongodb';
-import {testSapi} from '../../spec/helpers/sakuraapi';
+import {testSapi} from '../../../spec/helpers/sakuraapi';
 import {Db, dbSymbols, Json} from './';
 import {Model} from './model';
 import {SakuraApiModel} from './sakura-api-model';

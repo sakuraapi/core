@@ -1,5 +1,5 @@
 import * as path from 'path';
-import {SakuraApi, SakuraApiPlugin} from '../../core/sakura-api';
+import {SakuraApi, SakuraApiPlugin} from '../../src/core/sakura-api';
 import bodyParser = require('body-parser');
 import helmet = require('helmet');
 
@@ -19,7 +19,7 @@ export function testSapi(options: ITestSapiOptions): SakuraApi {
 
   const sapi = new SakuraApi({
     baseUrl: baseUri,
-    configPath: 'spec/config/environment.json',
+    configPath: 'lib/spec/config/environment.json',
     models: options.models,
     plugins: options.plugins,
     providers: options.providers,

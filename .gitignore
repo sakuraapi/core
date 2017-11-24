@@ -1,7 +1,6 @@
 .idea
 .project
 .DS_Store
-coverage
 *.sublime*
 *.seed
 *.log
@@ -11,9 +10,11 @@ coverage
 *.pid
 *.swp
 *.swo
-node_modules
-dist
 *xunit.xml
 *.js
 *.d.ts
 *.map
+coverage
+dist
+lib
+node_modules

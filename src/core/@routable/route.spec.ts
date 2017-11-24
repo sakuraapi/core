@@ -1,7 +1,7 @@
 import * as express from 'express';
 import {NextFunction, Request, Response} from 'express';
 import * as request from 'supertest';
-import {testSapi, testUrl} from '../../spec/helpers/sakuraapi';
+import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
 import {Db, Json, Model, SakuraApiModel} from '../@model';
 import {IRoutableLocals, Routable, routableSymbols, Route} from './';
 import {SakuraApiRoutable} from './sakura-api-routable';

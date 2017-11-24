@@ -1,3 +1,4 @@
 import 'colors';
-export * from './boot';
-export * from './core';
+
+export * from './src/boot';
+export * from './src/core';

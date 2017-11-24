@@ -1,5 +1,5 @@
 import {InsertOneWriteOpResult, ObjectID, ReplaceOneOptions, UpdateWriteOpResult} from 'mongodb';
-import {testSapi} from '../../spec/helpers/sakuraapi';
+import {testSapi} from '../../../spec/helpers/sakuraapi';
 import {SakuraApi} from '../sakura-api';
 import {Db, Json, Model, modelSymbols, SakuraApiModel} from './';
 import {SapiDbForModelNotFound, SapiMissingIdErr} from './errors';
