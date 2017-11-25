@@ -34,6 +34,11 @@ export interface IJsonOptions {
    * a json object.
    */
   field?: string;
+
+  /**
+   * If true, sub-documents that aren't part of a model will be mapped to the resulting object.
+   */
+  promiscuous?: boolean;
 }
 
 /**

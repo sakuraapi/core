@@ -718,6 +718,208 @@ describe('@Json', () => {
       });
     });
 
+    describe('promiscuous fields, issue #99', () => {
+      @Model()
+      class DonorIntent extends SakuraApiModel {
+        @Db() @Json()
+        currency: string;
+
+        @Db() @Json()
+        email?: string;
+
+        @Json({promiscuous: true})
+        stripeToken?: any;
+
+        @Json()
+        stripeToken2?: any;
+
+        @Db() @Json()
+        donations: Array<{
+          id: string;
+          amount: number;
+          recurring?: boolean;
+        }>;
+      }
+
+      it('without sub document', () => {
+        const testJson = {
+          'currency': 'USD',
+          'email': 'redacted@gmail.com',
+          'donations': [
+            {
+              'id': 'g',
+              'amount': 6000,
+              'recurring': false
+            }
+          ]
+        };
+        const result = DonorIntent.fromJson(testJson);
+
+        expect(result.currency).toBe(testJson.currency);
+        expect(result.email).toBe(testJson.email);
+        expect(result.stripeToken).toBeUndefined();
+        expect(result.donations.length).toBe(1);
+        expect(result.donations[0].id).toBe(testJson.donations[0].id);
+        expect(result.donations[0].amount).toBe(testJson.donations[0].amount);
+        expect(result.donations[0].recurring).toBe(testJson.donations[0].recurring);
+      });
+
+      it('with sub document', () => {
+        const testJson = {
+          'currency': 'USD',
+          'email': 'redacted@gmail.com',
+          'stripeToken': {
+            'id': 'tok_visa',
+            'object': 'token',
+            'card': {
+              'id': 'tok_visa',
+              'object': 'card',
+              'address_city': 'redacted',
+              'address_country': 'United States',
+              'address_line1': 'redacted',
+              'address_line1_check': 'unchecked',
+              'address_line2': null,
+              'address_state': 'redacted',
+              'address_zip': 'redacted',
+              'address_zip_check': 'unchecked',
+              'brand': 'Visa',
+              'country': 'US',
+              'cvc_check': 'unchecked',
+              'dynamic_last4': null,
+              'exp_month': 11,
+              'exp_year': 2021,
+              'funding': 'credit',
+              'last4': '4242',
+              'metadata': {},
+              'name': null,
+              'tokenization_method': null
+            },
+            'client_ip': '1.2.3.4',
+            'created': 1505528045,
+            'livemode': false,
+            'type': 'card',
+            'used': false
+          },
+          'donations': [
+            {
+              'id': 'g',
+              'amount': 6000,
+              'recurring': false
+            }
+          ]
+
+        };
+
+        const result = DonorIntent.fromJson(testJson);
+
+        expect(result).toBeDefined();
+        expect(result.currency).toBe(testJson.currency);
+        expect(result.email).toBe(testJson.email);
+        expect(result.stripeToken).toBeDefined();
+        expect(result.stripeToken.id).toBe(testJson.stripeToken.id);
+        expect(result.stripeToken.object).toBe(testJson.stripeToken.object);
+        expect(result.stripeToken.card).toBeDefined();
+        expect(result.stripeToken.card.id).toBe(testJson.stripeToken.card.id);
+        expect(result.stripeToken.card.object).toBe(testJson.stripeToken.card.object);
+        expect(result.stripeToken.card.address_city).toBe(testJson.stripeToken.card.address_city);
+        expect(result.stripeToken.card.address_country).toBe(testJson.stripeToken.card.address_country);
+        expect(result.stripeToken.card.address_line1).toBe(testJson.stripeToken.card.address_line1);
+        expect(result.stripeToken.card.address_line1_check).toBe(testJson.stripeToken.card.address_line1_check);
+        expect(result.stripeToken.card.address_line2).toBe(testJson.stripeToken.card.address_line2);
+        expect(result.stripeToken.card.address_state).toBe(testJson.stripeToken.card.address_state);
+        expect(result.stripeToken.card.address_zip).toBe(testJson.stripeToken.card.address_zip);
+        expect(result.stripeToken.card.address_zip_check).toBe(testJson.stripeToken.card.address_zip_check);
+        expect(result.stripeToken.card.brand).toBe(testJson.stripeToken.card.brand);
+        expect(result.stripeToken.card.country).toBe(testJson.stripeToken.card.country);
+        expect(result.stripeToken.card.cvc_check).toBe(testJson.stripeToken.card.cvc_check);
+        expect(result.stripeToken.card.dynamic_last4).toBe(testJson.stripeToken.card.dynamic_last4);
+        expect(result.stripeToken.card.exp_month).toBe(testJson.stripeToken.card.exp_month);
+        expect(result.stripeToken.card.exp_year).toBe(testJson.stripeToken.card.exp_year);
+        expect(result.stripeToken.card.funding).toBe(testJson.stripeToken.card.funding);
+        expect(result.stripeToken.card.last4).toBe(testJson.stripeToken.card.last4);
+        expect(result.stripeToken.card.metadata).toBe(testJson.stripeToken.card.metadata);
+        expect(result.stripeToken.card.name).toBe(testJson.stripeToken.card.name);
+        expect(result.stripeToken.card.tokenization_method).toBe(testJson.stripeToken.card.tokenization_method);
+        expect(result.stripeToken.client_ip).toBe(result.stripeToken.client_ip);
+        expect(result.stripeToken.created).toBe(testJson.stripeToken.created);
+        expect(result.stripeToken.livemode).toBe(testJson.stripeToken.livemode);
+        expect(result.stripeToken.type).toBe(testJson.stripeToken.type);
+        expect(result.stripeToken.used).toBe(testJson.stripeToken.used);
+        expect(result.donations.length).toBe(1);
+        expect(result.donations[0].id).toBe(testJson.donations[0].id);
+        expect(result.donations[0].amount).toBe(testJson.donations[0].amount);
+        expect(result.donations[0].recurring).toBe(testJson.donations[0].recurring);
+
+      });
+
+      it('with sub document', () => {
+        const testJson = {
+          'currency': 'USD',
+          'email': 'redacted@gmail.com',
+          'stripeToken2': {
+            'id': 'tok_visa',
+            'object': 'token',
+            'card': {
+              'id': 'tok_visa',
+              'object': 'card',
+              'address_city': 'redacted',
+              'address_country': 'United States',
+              'address_line1': 'redacted',
+              'address_line1_check': 'unchecked',
+              'address_line2': null,
+              'address_state': 'redacted',
+              'address_zip': 'redacted',
+              'address_zip_check': 'unchecked',
+              'brand': 'Visa',
+              'country': 'US',
+              'cvc_check': 'unchecked',
+              'dynamic_last4': null,
+              'exp_month': 11,
+              'exp_year': 2021,
+              'funding': 'credit',
+              'last4': '4242',
+              'metadata': {},
+              'name': null,
+              'tokenization_method': null
+            },
+            'client_ip': '1.2.3.4',
+            'created': 1505528045,
+            'livemode': false,
+            'type': 'card',
+            'used': false
+          },
+          'donations': [
+            {
+              'id': 'g',
+              'amount': 6000,
+              'recurring': false
+            }
+          ]
+
+        };
+
+        const result = DonorIntent.fromJson(testJson);
+
+        expect(result).toBeDefined();
+        expect(result.currency).toBe(testJson.currency);
+        expect(result.email).toBe(testJson.email);
+        expect(result.stripeToken2).toBeDefined();
+        expect(result.stripeToken2.id).toBe(testJson.stripeToken2.id);
+        expect(result.stripeToken2.object).toBeUndefined();
+        expect(result.stripeToken2.card).toBeUndefined();
+        expect(result.stripeToken2.client_ip).toBeUndefined;
+        expect(result.stripeToken2.created).toBeUndefined;
+        expect(result.stripeToken2.livemode).toBeUndefined;
+        expect(result.stripeToken2.type).toBeUndefined;
+        expect(result.stripeToken2.used).toBeUndefined;
+        expect(result.donations.length).toBe(1);
+        expect(result.donations[0].id).toBe(testJson.donations[0].id);
+        expect(result.donations[0].amount).toBe(testJson.donations[0].amount);
+        expect(result.donations[0].recurring).toBe(testJson.donations[0].recurring);
+
+      });
+    });
+
   });
 
   describe('fromJsonToDb', () => {
