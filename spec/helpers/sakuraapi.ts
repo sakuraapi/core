@@ -54,4 +54,3 @@ export function testSapi(options: ITestSapiOptions): SakuraApi {
 
   return sapi;
 }
-

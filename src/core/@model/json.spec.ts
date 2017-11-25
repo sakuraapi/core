@@ -743,15 +743,15 @@ describe('@Json', () => {
 
       it('without sub document', () => {
         const testJson = {
-          'currency': 'USD',
-          'email': 'redacted@gmail.com',
-          'donations': [
+          currency: 'USD',
+          donations: [
             {
-              'id': 'g',
-              'amount': 6000,
-              'recurring': false
+              amount: 6000,
+              id: 'g',
+              recurring: false
             }
-          ]
+          ],
+          email: 'redacted@gmail.com'
         };
         const result = DonorIntent.fromJson(testJson);
 
@@ -766,47 +766,47 @@ describe('@Json', () => {
 
       it('with sub document', () => {
         const testJson = {
-          'currency': 'USD',
-          'email': 'redacted@gmail.com',
-          'stripeToken': {
-            'id': 'tok_visa',
-            'object': 'token',
-            'card': {
-              'id': 'tok_visa',
-              'object': 'card',
-              'address_city': 'redacted',
-              'address_country': 'United States',
-              'address_line1': 'redacted',
-              'address_line1_check': 'unchecked',
-              'address_line2': null,
-              'address_state': 'redacted',
-              'address_zip': 'redacted',
-              'address_zip_check': 'unchecked',
-              'brand': 'Visa',
-              'country': 'US',
-              'cvc_check': 'unchecked',
-              'dynamic_last4': null,
-              'exp_month': 11,
-              'exp_year': 2021,
-              'funding': 'credit',
-              'last4': '4242',
-              'metadata': {},
-              'name': null,
-              'tokenization_method': null
-            },
-            'client_ip': '1.2.3.4',
-            'created': 1505528045,
-            'livemode': false,
-            'type': 'card',
-            'used': false
-          },
-          'donations': [
+          currency: 'USD',
+          donations: [
             {
-              'id': 'g',
-              'amount': 6000,
-              'recurring': false
+              amount: 6000,
+              id: 'g',
+              recurring: false
             }
-          ]
+          ],
+          email: 'redacted@gmail.com',
+          stripeToken: {
+            card: {
+              address_city: 'redacted',
+              address_country: 'United States',
+              address_line1: 'redacted',
+              address_line1_check: 'unchecked',
+              address_line2: null,
+              address_state: 'redacted',
+              address_zip: 'redacted',
+              address_zip_check: 'unchecked',
+              brand: 'Visa',
+              country: 'US',
+              cvc_check: 'unchecked',
+              dynamic_last4: null,
+              exp_month: 11,
+              exp_year: 2021,
+              funding: 'credit',
+              id: 'tok_visa',
+              last4: '4242',
+              metadata: {},
+              name: null,
+              object: 'card',
+              tokenization_method: null
+            },
+            client_ip: '1.2.3.4',
+            created: 1505528045,
+            id: 'tok_visa',
+            livemode: false,
+            object: 'token',
+            type: 'card',
+            used: false
+          }
 
         };
 
@@ -854,47 +854,47 @@ describe('@Json', () => {
 
       it('with sub document', () => {
         const testJson = {
-          'currency': 'USD',
-          'email': 'redacted@gmail.com',
-          'stripeToken2': {
-            'id': 'tok_visa',
-            'object': 'token',
-            'card': {
-              'id': 'tok_visa',
-              'object': 'card',
-              'address_city': 'redacted',
-              'address_country': 'United States',
-              'address_line1': 'redacted',
-              'address_line1_check': 'unchecked',
-              'address_line2': null,
-              'address_state': 'redacted',
-              'address_zip': 'redacted',
-              'address_zip_check': 'unchecked',
-              'brand': 'Visa',
-              'country': 'US',
-              'cvc_check': 'unchecked',
-              'dynamic_last4': null,
-              'exp_month': 11,
-              'exp_year': 2021,
-              'funding': 'credit',
-              'last4': '4242',
-              'metadata': {},
-              'name': null,
-              'tokenization_method': null
-            },
-            'client_ip': '1.2.3.4',
-            'created': 1505528045,
-            'livemode': false,
-            'type': 'card',
-            'used': false
-          },
-          'donations': [
+          currency: 'USD',
+          donations: [
             {
-              'id': 'g',
-              'amount': 6000,
-              'recurring': false
+              amount: 6000,
+              id: 'g',
+              recurring: false
             }
-          ]
+          ],
+          email: 'redacted@gmail.com',
+          stripeToken2: {
+            card: {
+              address_city: 'redacted',
+              address_country: 'United States',
+              address_line1: 'redacted',
+              address_line1_check: 'unchecked',
+              address_line2: null,
+              address_state: 'redacted',
+              address_zip: 'redacted',
+              address_zip_check: 'unchecked',
+              brand: 'Visa',
+              country: 'US',
+              cvc_check: 'unchecked',
+              dynamic_last4: null,
+              exp_month: 11,
+              exp_year: 2021,
+              funding: 'credit',
+              id: 'tok_visa',
+              last4: '4242',
+              metadata: {},
+              name: null,
+              object: 'card',
+              tokenization_method: null
+            },
+            client_ip: '1.2.3.4',
+            created: 1505528045,
+            id: 'tok_visa',
+            livemode: false,
+            object: 'token',
+            type: 'card',
+            used: false
+          }
 
         };
 
@@ -907,11 +907,11 @@ describe('@Json', () => {
         expect(result.stripeToken2.id).toBe(testJson.stripeToken2.id);
         expect(result.stripeToken2.object).toBeUndefined();
         expect(result.stripeToken2.card).toBeUndefined();
-        expect(result.stripeToken2.client_ip).toBeUndefined;
-        expect(result.stripeToken2.created).toBeUndefined;
-        expect(result.stripeToken2.livemode).toBeUndefined;
-        expect(result.stripeToken2.type).toBeUndefined;
-        expect(result.stripeToken2.used).toBeUndefined;
+        expect(result.stripeToken2.client_ip).toBeUndefined();
+        expect(result.stripeToken2.created).toBeUndefined();
+        expect(result.stripeToken2.livemode).toBeUndefined();
+        expect(result.stripeToken2.type).toBeUndefined();
+        expect(result.stripeToken2.used).toBeUndefined();
         expect(result.donations.length).toBe(1);
         expect(result.donations[0].id).toBe(testJson.donations[0].id);
         expect(result.donations[0].amount).toBe(testJson.donations[0].amount);

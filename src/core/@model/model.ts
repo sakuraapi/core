@@ -572,7 +572,6 @@ function fromJson(json: object): object {
 
       } else {
         // otherwise, map a property that has a primitive value or an ObjectID value
-        const mapper = keyMapper(key, source[key], propertyNamesByJsonFieldName, target);
         if (mapper.newKey !== undefined) {
           let value = source[key];
           if ((mapper.newKey === 'id' || mapper.newKey === '_id') && ObjectID.isValid(value)) {
