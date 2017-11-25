@@ -95,12 +95,14 @@ describe('core/@Model', () => {
 
     describe('injects default CRUD method', () => {
 
+      const dbConfig = {
+        collection: 'users',
+        db: 'userDb',
+        promiscuous: true
+      };
+
       @Model({
-        dbConfig: {
-          collection: 'users',
-          db: 'userDb',
-          promiscuous: true
-        }
+        dbConfig
       })
       class TestDefaultMethods extends SakuraApiModel {
         @Db({
@@ -521,17 +523,132 @@ describe('core/@Model', () => {
           });
 
           describe('save', () => {
-            it('rejects if missing id', (done) => {
-              testDefaultMethods
-                .save()
-                .then(() => {
-                  done.fail(new Error('Expected exception'));
-                })
-                .catch((err) => {
-                  expect(err).toEqual(jasmine.any(SapiMissingIdErr));
-                  expect(err.target).toEqual(testDefaultMethods);
+
+            @Model()
+            class ChildChild {
+              cVal = 'childChild';
+            }
+
+            @Model()
+            class Child {
+              cVal = 'child';
+
+              @Db({model: ChildChild}) @Json()
+              childChild = new ChildChild();
+            }
+
+            @Model({dbConfig})
+            class TestParent extends SakuraApiModel {
+              @Db() @Json()
+              pVal = 'parent';
+
+              @Db({model: Child}) @Json()
+              child: Child = new Child();
+
+              @Db({model: Child}) @Json()
+              child2: Child = new Child();
+            }
+
+            it('rejects if missing id', async (done) => {
+              try {
+                await testDefaultMethods.save();
+                done.fail(new Error('Expected exception'));
+              } catch (err) {
+                expect(err).toEqual(jasmine.any(SapiMissingIdErr));
+                expect(err.target).toEqual(testDefaultMethods);
+                done();
+              }
+            });
+
+            describe('without projection', () => {
+              it('updates entire model if no set parameter is passed', async (done) => {
+
+                expect(testDefaultMethods.id).toBeNull();
+                try {
+                  const createResult = await testDefaultMethods
+                    .create();
+
+                  expect(createResult.insertedCount).toBe(1);
+                  expect(testDefaultMethods.id).toBeTruthy();
+
+                  const changes = {
+                    firstName: 'updatedFirstName',
+                    lastName: 'updatedLastName'
+                  };
+
+                  testDefaultMethods.firstName = changes.firstName;
+                  testDefaultMethods.lastName = changes.lastName;
+
+                  const result: UpdateWriteOpResult = await testDefaultMethods
+                    .save();
+
+                  expect(result.modifiedCount).toBe(1);
+
+                  const updated = await testDefaultMethods
+                    .getCollection()
+                    .find({_id: testDefaultMethods.id})
+                    .limit(1)
+                    .next();
+
+                  expect(updated.fn).toBeDefined();
+                  expect(updated.lastName).toBeDefined();
+
+                  expect(updated.fn).toBe(changes.firstName);
+                  expect(updated.lastName).toBe(changes.lastName);
                   done();
+
+                } catch (err) {
+                  done.fail(err);
+                }
+              });
+
+              it('saves sub documents, issue #98', async (done) => {
+
+                const tsapi = testSapi({
+                  models: [
+                    Child,
+                    ChildChild,
+                    TestParent
+                  ]
                 });
+
+                try {
+
+                  await tsapi.listen({bootMessage: ''});
+                  await TestParent.removeAll({});
+
+                  const createResult = await TestParent.fromJson({}).create();
+                  let testParent = await TestParent.getById(createResult.insertedId);
+
+                  expect(testParent).toBeDefined();
+                  expect(testParent.pVal).toBe('parent');
+                  expect(testParent.child).toBeDefined();
+                  expect(testParent.child.cVal).toBe('child');
+                  expect(testParent.child.childChild).toBeDefined();
+                  expect(testParent.child.childChild.cVal).toBe('childChild');
+
+                  testParent.pVal = 'parentUpdate';
+                  testParent.child.cVal = 'childUpdate';
+                  testParent.child.childChild.cVal = 'childChildUpdate';
+
+                  await testParent.save();
+                  testParent = await TestParent.getById(createResult.insertedId);
+
+                  expect(testParent).toBeDefined();
+                  expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+                  expect(testParent.pVal).toBe('parentUpdate');
+                  expect(testParent.child).toBeDefined();
+                  expect(testParent.child.cVal).toBe('childUpdate');
+                  expect(testParent.child.childChild).toBeDefined();
+                  expect(testParent.child.childChild.cVal).toBe('childChildUpdate');
+
+                  done();
+                } catch (err) {
+                  done.fail(err);
+                } finally {
+                  await tsapi.close();
+                }
+              });
             });
 
             describe('with projection', () => {
@@ -553,7 +670,12 @@ describe('core/@Model', () => {
               }
 
               const sapi2 = testSapi({
-                models: [PartialUpdateTest],
+                models: [
+                  Child,
+                  ChildChild,
+                  PartialUpdateTest,
+                  TestParent
+                ],
                 routables: []
               });
 
@@ -571,41 +693,42 @@ describe('core/@Model', () => {
                   .catch(done.fail);
               });
 
-              it('sets the proper database level fields', (done) => {
+              it('sets the proper database level fields', async (done) => {
                 const pud = new PartialUpdateTest();
 
                 const updateSet = {
                   fn: 'updated'
                 };
 
-                pud
-                  .create()
-                  .then((createResult) => {
-                    expect(createResult.insertedCount).toBe(1);
-                    expect(pud.id).toBeTruthy();
-                  })
-                  .then(() => pud.save(updateSet))
-                  .then((result: UpdateWriteOpResult) => {
-                    expect(result.modifiedCount).toBe(1);
-                    expect(pud.firstName).toBe(updateSet.fn);
+                try {
+                  const createResult = await pud.create();
 
-                    return pud
-                      .getCollection()
-                      .find({_id: pud.id})
-                      .limit(1)
-                      .next();
-                  })
-                  .then((updated: any) => {
-                    expect(updated._id instanceof ObjectID || updated._id.constructor.name === 'ObjectID')
-                      .toBe(true);
-                    expect(updated.fn).toBeDefined();
-                    expect(updated.fn).toBe(updateSet.fn);
-                  })
-                  .then(done)
-                  .catch(done.fail);
+                  expect(createResult.insertedCount).toBe(1);
+                  expect(pud.id).toBeTruthy();
+
+                  const result: UpdateWriteOpResult = await pud.save(updateSet);
+
+                  expect(result.modifiedCount).toBe(1);
+                  expect(pud.firstName).toBe(updateSet.fn);
+
+                  const updated = await pud
+                    .getCollection()
+                    .find({_id: pud.id})
+                    .limit(1)
+                    .next();
+
+                  expect(updated._id instanceof ObjectID || updated._id.constructor.name === 'ObjectID')
+                    .toBe(true);
+                  expect(updated.fn).toBeDefined();
+                  expect(updated.fn).toBe(updateSet.fn);
+
+                  done();
+                } catch (err) {
+                  done.fail();
+                }
               });
 
-              it('performs a partial update without disturbing other fields', (done) => {
+              it('performs a partial update without disturbing other fields', async (done) => {
                 const pud = new PartialUpdateTest();
                 pud.password = 'test-password';
 
@@ -614,67 +737,92 @@ describe('core/@Model', () => {
                   lastName: 'Washington'
                 };
 
-                pud
-                  .create()
-                  .then(() => {
-                    const body = JSON.parse(JSON.stringify(data));
-                    body.id = pud.id.toString();
+                try {
+                  await pud.create();
 
-                    return PartialUpdateTest.fromJson(body).save(body);
-                  })
-                  .then(() => PartialUpdateTest.getById(pud.id))
-                  .then((result) => {
-                    expect(result._id instanceof ObjectID).toBe(true);
-                    expect(result._id.toString()).toBe(pud.id.toString());
-                    expect(result.firstName).toBe(data.firstName);
-                    expect(result.lastName).toBe(data.lastName);
-                    expect(result.password).toBe(pud.password);
+                  const body = JSON.parse(JSON.stringify(data));
+                  body.id = pud.id.toString();
 
-                    done();
-                  })
-                  .catch(done.fail);
+                  await PartialUpdateTest
+                    .fromJson(body)
+                    .save(body);
+
+                  const result = await PartialUpdateTest
+                    .getById(pud.id);
+
+                  expect(result._id instanceof ObjectID).toBe(true);
+                  expect(result._id.toString()).toBe(pud.id.toString());
+                  expect(result.firstName).toBe(data.firstName);
+                  expect(result.lastName).toBe(data.lastName);
+                  expect(result.password).toBe(pud.password);
+
+                  done();
+                } catch (err) {
+                  done.fail(err);
+                }
+              });
+
+              it('saves sub documents, issue #98', async (done) => {
+
+                try {
+
+                  await sapi2.listen({bootMessage: ''});
+                  await TestParent.removeAll({});
+
+                  let testParent = await TestParent.fromJson({});
+                  testParent.child2.childChild.cVal = 'updated';
+                  const createResult = await testParent.create();
+                  testParent = await TestParent.getById(createResult.insertedId);
+
+                  expect(testParent).toBeDefined();
+                  expect(testParent.pVal).toBe('parent');
+                  expect(testParent.child).toBeDefined();
+                  expect(testParent.child.cVal).toBe('child');
+                  expect(testParent.child.childChild).toBeDefined();
+                  expect(testParent.child.childChild.cVal).toBe('childChild');
+                  expect(testParent.child2).toBeDefined();
+                  expect(testParent.child2.cVal).toBe('child');
+                  expect(testParent.child2.childChild).toBeDefined();
+                  expect(testParent.child2.childChild.cVal).toBe('updated');
+
+                  // setting a sub document overwrites all sub documents
+                  await testParent.save({pVal: 'parentUpdateSet'});
+                  testParent = await TestParent.getById(createResult.insertedId);
+
+                  expect(testParent).toBeDefined();
+                  expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+                  expect(testParent.pVal).toBe('parentUpdateSet');
+                  expect(testParent.child).toBeDefined();
+                  expect(testParent.child.cVal).toBe('child');
+                  expect(testParent.child.childChild).toBeDefined();
+                  expect(testParent.child.childChild.cVal).toBe('childChild');
+                  expect(testParent.child2).toBeDefined();
+                  expect(testParent.child2.cVal).toBe('child');
+                  expect(testParent.child2.childChild).toBeDefined();
+                  expect(testParent.child2.childChild.cVal).toBe('updated');
+
+                  await testParent.save({child: {cVal: 'childSet'}});
+                  testParent = await TestParent.getById(createResult.insertedId);
+
+                  expect(testParent).toBeDefined();
+                  expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+                  expect(testParent.pVal).toBe('parentUpdateSet');
+                  expect(testParent.child).toBeDefined();
+                  expect(testParent.child.cVal).toBe('childSet');
+                  expect(testParent.child.childChild).toBeDefined();
+                  expect(testParent.child.childChild.cVal).toBe('childChild');
+                  expect(testParent.child2).toBeDefined();
+                  expect(testParent.child2.cVal).toBe('child');
+                  expect(testParent.child2.childChild).toBeDefined();
+                  expect(testParent.child2.childChild.cVal).toBe('updated');
+
+                  done();
+                } catch (err) {
+                  done.fail(err);
+                }
               });
             });
-          });
 
-          it('updates entire model if no set parameter is passed', (done) => {
-            expect(testDefaultMethods.id).toBeNull();
-            testDefaultMethods
-              .create()
-              .then((createResult) => {
-                expect(createResult.insertedCount).toBe(1);
-                expect(testDefaultMethods.id).toBeTruthy();
-
-                const changes = {
-                  firstName: 'updatedFirstName',
-                  lastName: 'updatedLastName'
-                };
-
-                testDefaultMethods.firstName = changes.firstName;
-                testDefaultMethods.lastName = changes.lastName;
-
-                testDefaultMethods
-                  .save()
-                  .then((result: UpdateWriteOpResult) => {
-                    expect(result.modifiedCount).toBe(1);
-
-                    testDefaultMethods
-                      .getCollection()
-                      .find({_id: testDefaultMethods.id})
-                      .limit(1)
-                      .next()
-                      .then((updated) => {
-                        expect(updated.fn).toBeDefined();
-                        expect(updated.lastName).toBeDefined();
-
-                        expect(updated.fn).toBe(changes.firstName);
-                        expect(updated.lastName).toBe(changes.lastName);
-                        done();
-                      })
-                      .catch(done.fail);
-                  })
-                  .catch(done.fail);
-              });
           });
         });
 
