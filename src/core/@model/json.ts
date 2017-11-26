@@ -11,7 +11,9 @@ export const jsonSymbols = {
 export interface IJsonOptions {
 
   /**
-   * An optional constructor function (ES6 Class) that is used to instantiate the property.
+   * An optional `@`[[Model]] decorated class. If provided, the property will be instantiated as a sub document
+   * with its default values or the values from the json object. `@`[[Json]] will utilize this same model
+   * as the one set in `@`[[Db]] if `model` is not set on this attribute.
    */
   model?: any;
 

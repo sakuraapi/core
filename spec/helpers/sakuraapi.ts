@@ -15,6 +15,21 @@ export interface ITestSapiOptions {
   plugins?: SakuraApiPlugin[];
 }
 
+process.on('unhandledRejection', (r) => {
+
+  // tslint:disable:no-console
+  console.log('Unhandled Rejection'.red.underline);
+  console.log('-'.repeat(process.stdout.columns).red);
+  console.log('↓'.repeat(process.stdout.columns).zebra.red);
+  console.log('-'.repeat(process.stdout.columns).red);
+  console.log(r);
+  console.log('-'.repeat(process.stdout.columns).red);
+  console.log('↑'.repeat(process.stdout.columns).zebra.red);
+  console.log('-'.repeat(process.stdout.columns).red);
+  // tslint:enable:no-console
+
+});
+
 export function testSapi(options: ITestSapiOptions): SakuraApi {
 
   const sapi = new SakuraApi({
@@ -41,12 +56,14 @@ export function testSapi(options: ITestSapiOptions): SakuraApi {
   sapi.addLastErrorHandlers((err, req, res, next) => {
 
     // tslint:disable:no-console
-    console.log('------------------------------------------------'.red);
-    console.log('↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓'.zebra);
+    console.log('-'.repeat(process.stdout.columns).red);
+    console.log('↓'.repeat(process.stdout.columns).zebra.red);
+    console.log('-'.repeat(process.stdout.columns).red);
     console.log('An error bubbled up in an unexpected way during testing');
     console.log(err);
-    console.log('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑'.zebra);
-    console.log('------------------------------------------------'.red);
+    console.log('-'.repeat(process.stdout.columns).red);
+    console.log('↑'.repeat(process.stdout.columns).zebra.red);
+    console.log('-'.repeat(process.stdout.columns).red);
     // tslint:enable:no-console
 
     next(err);

@@ -11,7 +11,9 @@ export const dbSymbols = {
 
 export interface IDbOptions {
   /**
-   * An optional constructor function (ES6 Class) that is used to instantiate the property.
+   * An optional `@`[[Model]] decorated class. If provided, the property will be instantiated as a sub document
+   * with its default values or the values from the database. `@`[[Json]] will utilize this same model
+   * if one is not set on that attribute.
    */
   model?: any;
 

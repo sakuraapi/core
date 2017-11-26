@@ -91,17 +91,18 @@ describe('@Db', () => {
     });
 
     describe('maps db fields to deeply nested model properties', () => {
+      @Model()
       class Address {
-        @Db('st')
+        @Db('st') @Json()
         street = '1600 Pennsylvania Ave NW';
 
-        @Db('c')
+        @Db('c') @Json()
         city = 'Washington';
 
-        @Db('s')
+        @Db('s') @Json()
         state = 'DC';
 
-        @Db('z')
+        @Db('z') @Json()
         zip = '20500';
 
         @Db({field: 'gc', private: true})
@@ -262,6 +263,85 @@ describe('@Db', () => {
         expect(result.lastName).toBeUndefined();
       });
 
+      it('unmarshalls _id', (done) => {
+
+        @Model()
+        class Test extends SakuraApiModel {
+
+          @Db({field: 'ph'})
+          phone: string;
+        }
+
+        const data = {
+          _id: new ObjectID(),
+          ph: '1234567890'
+        };
+
+        const test = Test.fromDb(data);
+
+        expect((test._id || 'missing _id').toString()).toBe(data._id.toString());
+        expect((test.id || 'missing id').toString()).toBe(data._id.toString());
+        done();
+      });
+
+      it('model with default value will take default value if db returns field empty, issue #94', async (done) => {
+
+        @Model({
+          dbConfig: {
+            collection: 'users',
+            db: 'userDb'
+          }
+        })
+        class Test94 extends SakuraApiModel {
+          @Db({field: 'ad', model: Address}) @Json()
+          address = new Address();
+        }
+
+        try {
+          const sapi = testSapi({
+            models: [Address, Test94]
+          });
+          await sapi.listen({bootMessage: ''});
+          await Test94.removeAll({});
+
+          const createResult = await Test94.fromJson({
+            address: {
+              city: '2',
+              gateCode: '5',
+              state: '3',
+              street: '1',
+              zip: '4'
+            }
+          }).create();
+          const fullDoc = await Test94.getById(createResult.insertedId);
+
+          expect(fullDoc.address.street).toBe('1');
+          expect(fullDoc.address.city).toBe('2');
+          expect(fullDoc.address.state).toBe('3');
+          expect(fullDoc.address.zip).toBe('4');
+          expect(fullDoc.address.gateCode).toBe('5');
+
+          delete fullDoc.address;
+          await fullDoc.save({ad: undefined});
+
+          const updated = await Test94.getById(createResult.insertedId);
+          updated.address = updated.address || {} as Address;
+
+          const defaultAddress = new Address();
+
+          expect(updated.address.street).toBe(defaultAddress.street);
+          expect(updated.address.city).toBe(defaultAddress.city);
+          expect(updated.address.state).toBe(defaultAddress.state);
+          expect(updated.address.zip).toBe(defaultAddress.zip);
+          expect(updated.address.gateCode).toBe(defaultAddress.gateCode);
+
+          await sapi.close();
+          done();
+        } catch (err) {
+          done.fail(err);
+        }
+      });
+
       describe('with dbOptions.promiscuous mode', () => {
 
         @Model({
@@ -313,27 +393,6 @@ describe('@Db', () => {
           expect(result._id.toString()).toBe(dbResult._id.toString());
           expect(result._id instanceof ObjectID).toBeTruthy('result._id should have been an instance of ObjectID');
         });
-      });
-
-      it('unmarshalls _id', (done) => {
-
-        @Model()
-        class Test extends SakuraApiModel {
-
-          @Db({field: 'ph'})
-          phone: string;
-        }
-
-        const data = {
-          _id: new ObjectID(),
-          ph: '1234567890'
-        };
-
-        const test = Test.fromDb(data);
-
-        expect((test._id || 'missing _id').toString()).toBe(data._id.toString());
-        expect((test.id || 'missing id').toString()).toBe(data._id.toString());
-        done();
       });
     });
 

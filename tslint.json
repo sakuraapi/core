@@ -26,7 +26,8 @@
     ],
     "interface-name": false,
     "prefer-object-spread": false,
-    "variable-name": false
+    "variable-name": false,
+    "no-object-literal-type-assertion": false
   },
   "jsRules": {
     "curly": true

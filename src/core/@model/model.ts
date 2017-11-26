@@ -408,25 +408,23 @@ function fromDb(json: any, options?: IFromDbOptions): object {
     const propertyNames = Object.getOwnPropertyNames(source);
     for (const key of propertyNames) {
 
+      // convert the DB key name to the Model key name
+      const mapper = map(key, source[key], dbOptionsByFieldName);
+      const model = mapper.model;
+
+      let nextTarget;
+      try {
+        nextTarget = (model)
+          ? Object.assign(new model(), target[mapper.newKey])
+          : target[mapper.newKey];
+      } catch (err) {
+        throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
+          + ` cannot be constructed`);
+      }
+
       if (shouldRecurse(source[key])) {
-
-        // convert the DB key name to the Model key name
-        const mapper = map(key, source[key], dbOptionsByFieldName);
-
         // if the key should be included, recurse into it
         if (mapper.newKey !== undefined) {
-          const model = mapper.model;
-
-          // if recurrsing into a model, set that up, otherwise just pass the target in
-          let nextTarget;
-          try {
-            nextTarget = (model)
-              ? Object.assign(new model(), target[mapper.newKey])
-              : target[mapper.newKey];
-          } catch (err) {
-            throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
-              + ` cannot be constructed`);
-          }
 
           let value = mapDbToModel(source[key], nextTarget, map, ++depth);
 
@@ -441,13 +439,13 @@ function fromDb(json: any, options?: IFromDbOptions): object {
           target[mapper.newKey] = value;
         }
 
-        continue;
-      }
-
-      // otherwise, map a property that has a primitive value or an ObjectID value
-      const mapper = map(key, source[key], dbOptionsByFieldName);
-      if (mapper.newKey !== undefined) {
-        target[mapper.newKey] = source[key];
+      } else {
+        // otherwise, map a property that has a primitive value or an ObjectID value
+        if (mapper.newKey !== undefined) {
+          target[mapper.newKey] = (source[key] !== undefined && source[key] !== null)
+            ? source[key]
+            : nextTarget; // resolves issue #94
+        }
       }
     }
 
@@ -470,12 +468,13 @@ function fromDb(json: any, options?: IFromDbOptions): object {
   function pruneNonDbProperties(source, target) {
     const dbOptionsByProperty: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, target);
 
-    for (const key of Object.getOwnPropertyNames(target)) {
+    const keys = Object.getOwnPropertyNames(target);
+    for (const key of keys) {
 
       const dbOptions = (dbOptionsByProperty) ? dbOptionsByProperty.get(key) || {} : null;
       const fieldName = (dbOptions) ? dbOptions.field || key : key;
 
-      if (!source.hasOwnProperty(fieldName)) {
+      if (!!source && !source.hasOwnProperty(fieldName)) {
         if (key === 'id' && source.hasOwnProperty('_id')) {
           continue;
         }
@@ -836,6 +835,14 @@ function getCursorById(id, project?: any): Cursor<any> {
 function getDb(): Db {
   // can be called as instance or static method, so get the appropriate context
   const constructor = this[modelSymbols.constructor] || this;
+
+  if (!constructor.sapi) {
+    const target = constructor.name || constructor.constructor.name;
+    throw new Error(`getDb called on model ${target} without an instance of ` +
+      `SakuraAPI. Make sure you pass ${target} into the Model injector when you're ` +
+      `instantiating SakuraApi`);
+  }
+
   const db = constructor[modelSymbols.sapi].dbConnections.getDb(constructor[modelSymbols.dbName]);
 
   debug.normal(`.getDb called, dbName: '${constructor[modelSymbols.dbName]}', found?: ${!!db}`);
