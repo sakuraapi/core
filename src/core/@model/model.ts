@@ -401,10 +401,12 @@ function fromDb(json: any, options?: IFromDbOptions): object {
       return source;
     }
 
-    const dbOptionsByFieldName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByFieldName, target);
+    const dbOptionsByFieldName: Map<string, IDbOptions>
+      = Reflect.getMetadata(dbSymbols.dbByFieldName, target) || new Map<string, IDbOptions>();
 
     // iterate over each property of the source json object
-    for (const key of Object.getOwnPropertyNames(source)) {
+    const propertyNames = Object.getOwnPropertyNames(source);
+    for (const key of propertyNames) {
 
       if (shouldRecurse(source[key])) {
 
@@ -413,19 +415,26 @@ function fromDb(json: any, options?: IFromDbOptions): object {
 
         // if the key should be included, recurse into it
         if (mapper.newKey !== undefined) {
-          let value = mapDbToModel(source[key], target[mapper.newKey], map, ++depth);
+          const model = mapper.model;
 
-          if (mapper.model) {
-            try {
-              value = Object.assign(new mapper.model(), value);
+          // if recurrsing into a model, set that up, otherwise just pass the target in
+          let nextTarget;
+          try {
+            nextTarget = (model)
+              ? Object.assign(new model(), target[mapper.newKey])
+              : target[mapper.newKey];
+          } catch (err) {
+            throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
+              + ` cannot be constructed`);
+          }
 
-              if (depth > 0 && (!value.id || !value._id)) { // resolves #106
-                value._id = undefined;
-              }
+          let value = mapDbToModel(source[key], nextTarget, map, ++depth);
 
-            } catch (err) {
-              throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
-                + ` cannot be constructed`);
+          if (model) {
+            value = Object.assign(new model(), value);
+
+            if (depth > 0 && (!value.id || !value._id)) { // resolves #106
+              value._id = undefined;
             }
           }
 
@@ -560,20 +569,20 @@ function fromJson(json: object): object {
           const model = mapper.model || (dbModel || {}).model || null;
 
           // if recurrsing into a model, set that up, otherwise just pass the target in
-          const nextTarget = (model)
-            ? Object.assign(new model(), target[mapper.newKey])
-            : target[mapper.newKey];
+          let nextTarget;
+          try {
+            nextTarget = (model)
+              ? Object.assign(new model(), target[mapper.newKey])
+              : target[mapper.newKey];
+          } catch (err) {
+            throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
+              + ` cannot be constructed`);
+          }
 
           let value = mapJsonToModel(jsonSource[key], nextTarget);
 
           if (model) {
-            try {
-              value = Object.assign(new model(), value);
-
-            } catch (err) {
-              throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
-                + ` cannot be constructed`);
-            }
+            value = Object.assign(new model(), value);
           }
 
           target[mapper.newKey] = value;
