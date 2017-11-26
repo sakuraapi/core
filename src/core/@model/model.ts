@@ -529,11 +529,11 @@ function fromJson(json: object): object {
   return mapJsonToModel(json, obj);
 
   ////////////
-  function mapJsonToModel(source: any, target: any) {
+  function mapJsonToModel(jsonSource: any, target: any) {
     target = target || {};
 
-    if (!source) {
-      return source;
+    if (!jsonSource) {
+      return jsonSource;
     }
 
     const propertyNamesByJsonFieldName: Map<string, IJsonOptions>
@@ -543,28 +543,33 @@ function fromJson(json: object): object {
       = Reflect.getMetadata(dbSymbols.dbByPropertyName, target) || new Map<string, IDbOptions>();
 
     // iterate over each property of the source json object
-    const propertyNames = Object.getOwnPropertyNames(source);
+    const propertyNames = Object.getOwnPropertyNames(jsonSource);
     for (const key of propertyNames) {
-
       // convert the DB key name to the Model key name
-      const mapper = keyMapper(key, source[key], propertyNamesByJsonFieldName, target);
+      const mapper = keyMapper(key, jsonSource[key], propertyNamesByJsonFieldName, target);
 
       if (mapper.promiscuous) {
-        target[mapper.newKey] = source[key];
-      } else if (shouldRecurse(source[key])) {
+        target[mapper.newKey] = jsonSource[key];
+      } else if (shouldRecurse(jsonSource[key])) {
 
         const dbModel = propertyNamesByDbPropertyName.get(mapper.newKey) || {};
 
         // if the key should be included, recurse into it
         if (mapper.newKey !== undefined) {
-          let value = mapJsonToModel(source[key], target[mapper.newKey]);
-
           // use @Json({model:...}) || @Db({model:...})
           const model = mapper.model || (dbModel || {}).model || null;
+
+          // if recurrsing into a model, set that up, otherwise just pass the target in
+          const nextTarget = (model)
+            ? Object.assign(new model(), target[mapper.newKey])
+            : target[mapper.newKey];
+
+          let value = mapJsonToModel(jsonSource[key], nextTarget);
 
           if (model) {
             try {
               value = Object.assign(new model(), value);
+
             } catch (err) {
               throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
                 + ` cannot be constructed`);
@@ -577,7 +582,7 @@ function fromJson(json: object): object {
       } else {
         // otherwise, map a property that has a primitive value or an ObjectID value
         if (mapper.newKey !== undefined) {
-          let value = source[key];
+          let value = jsonSource[key];
           if ((mapper.newKey === 'id' || mapper.newKey === '_id') && ObjectID.isValid(value)) {
             value = new ObjectID(value);
           }
@@ -593,8 +598,9 @@ function fromJson(json: object): object {
   function keyMapper(key: string, value: any, meta: Map<string, IJsonOptions>, target) {
     const jsonFieldOptions = (meta) ? meta.get(key) : null;
 
+    const model = (jsonFieldOptions || {}).model;
     return {
-      model: ((jsonFieldOptions || {}).model),
+      model,
       newKey: (jsonFieldOptions)
         ? jsonFieldOptions[jsonSymbols.propertyName]
         : (target[key])

@@ -477,7 +477,7 @@ describe('@Json', () => {
       contact2 = new Contact();
     }
 
-    it('from is injected into the model as a static member by default', () => {
+    it('fromJson is injected into the model as a static member by default', () => {
       expect(User.fromJson).toBeDefined();
     });
 
@@ -663,6 +663,119 @@ describe('@Json', () => {
 
       expect(result.lastName).toBe(0);
       expect(result.contact.phone).toBe(0);
+    });
+
+    it('model decorated properties can be null or undefined - issue #95', () => {
+
+      @Model()
+      class ChildChild {
+        @Json()
+        test = 'default';
+      }
+
+      @Model()
+      class Child {
+        @Json()
+        test = 'default';
+
+        @Json({model: ChildChild})
+        instantiatedChildChild = new ChildChild();
+
+        @Json({model: ChildChild})
+        nullChildChild: ChildChild = null;
+
+        @Json({model: ChildChild})
+        undefinedChildChild: ChildChild = undefined;
+
+        @Json({model: ChildChild})
+        childChild: ChildChild;
+      }
+
+      @Model()
+      class Parent extends SakuraApiModel {
+
+        @Json({model: Child})
+        instantiatedChild = new Child();
+
+        @Json({model: Child})
+        nullChild = null;
+
+        @Json({model: Child})
+        undefinedChild = undefined;
+
+        @Json({model: Child})
+        child: Child;
+      }
+
+      testSapi({
+        models: [
+          Child,
+          Parent
+        ]
+      });
+
+      let result = Parent.fromJson({
+        child: {test: 'pass'},
+        instantiatedChild: {test: 'pass'},
+        nullChild: {test: 'pass'},
+        undefinedChild: {test: 'pass'}
+      });
+
+      expect(result.instantiatedChild.test).toBe('pass');
+      expect(result.nullChild.test).toBe('pass');
+      expect(result.undefinedChild.test).toBe('pass');
+      expect(result.child.test).toBe('pass');
+
+      result = Parent.fromJson({
+        child: {
+          childChild: {test: 'pass'},
+          instantiatedChildChild: {test: 'pass'},
+          nullChildChild: {test: 'pass'},
+          test: 'pass',
+          undefinedChildChild: {test: 'pass'}
+        },
+        instantiatedChild: {
+          childChild: {test: 'pass'},
+          instantiatedChildChild: {test: 'pass'},
+          nullChildChild: {test: 'pass'},
+          test: 'pass',
+          undefinedChildChild: {test: 'pass'}
+        },
+        nullChild: {
+          childChild: {test: 'pass'},
+          instantiatedChildChild: {test: 'pass'},
+          nullChildChild: {test: 'pass'},
+          test: 'pass',
+          undefinedChildChild: {test: 'pass'}
+        },
+        undefinedChild: {
+          childChild: {test: 'pass'},
+          instantiatedChildChild: {test: 'pass'},
+          nullChildChild: {test: 'pass'},
+          test: 'pass',
+          undefinedChildChild: {test: 'pass'}
+        }
+      });
+
+      expect(result.instantiatedChild.instantiatedChildChild.test).toBe('pass');
+      expect(result.instantiatedChild.nullChildChild.test).toBe('pass');
+      expect(result.instantiatedChild.undefinedChildChild.test).toBe('pass');
+      expect(result.instantiatedChild.childChild.test).toBe('pass');
+
+      expect(result.nullChild.instantiatedChildChild.test).toBe('pass');
+      expect(result.nullChild.nullChildChild.test).toBe('pass');
+      expect(result.nullChild.undefinedChildChild.test).toBe('pass');
+      expect(result.nullChild.childChild.test).toBe('pass');
+
+      expect(result.undefinedChild.instantiatedChildChild.test).toBe('pass');
+      expect(result.undefinedChild.nullChildChild.test).toBe('pass');
+      expect(result.undefinedChild.undefinedChildChild.test).toBe('pass');
+      expect(result.undefinedChild.childChild.test).toBe('pass');
+
+      expect(result.child.childChild.test).toBe('pass');
+      expect(result.child.nullChildChild.test).toBe('pass');
+      expect(result.child.undefinedChildChild.test).toBe('pass');
+      expect(result.child.childChild.test).toBe('pass');
     });
 
     describe('id behavior', () => {
