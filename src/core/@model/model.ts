@@ -346,7 +346,6 @@ async function create(options?: CollectionInsertOneOptions): Promise<InsertOneWr
   }
 
   const dbObj = this.toDb();
-
   const result = await col.insertOne(dbObj, options);
   this.id = result.insertedId;
   return result;
@@ -395,7 +394,7 @@ function fromDb(json: any, options?: IFromDbOptions): object {
   return result;
 
   ////////////
-  function mapDbToModel(source, target, map) {
+  function mapDbToModel(source, target, map, depth = 0) {
     target = target || {};
 
     if (!source) {
@@ -414,11 +413,16 @@ function fromDb(json: any, options?: IFromDbOptions): object {
 
         // if the key should be included, recurse into it
         if (mapper.newKey !== undefined) {
-          let value = mapDbToModel(source[key], target[mapper.newKey], map);
+          let value = mapDbToModel(source[key], target[mapper.newKey], map, ++depth);
 
           if (mapper.model) {
             try {
               value = Object.assign(new mapper.model(), value);
+
+              if (depth > 0 && (!value.id || !value._id)) { // resolves #106
+                value._id = undefined;
+              }
+
             } catch (err) {
               throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
                 + ` cannot be constructed`);
@@ -986,9 +990,9 @@ function toDb(changeSet?: any): object {
   return dbObj;
 
   //////////
-  function mapModelToDb(source) {
+  function mapModelToDb(source, depth = 0) {
 
-    const result = {};
+    const result = {} as any;
     if (!source) {
       return;
     }
@@ -1002,7 +1006,7 @@ function toDb(changeSet?: any): object {
 
         const newKey = keyMapper(key, source[key], dbOptionsByPropertyName);
         if (newKey !== undefined) {
-          const value = mapModelToDb(source[key]);
+          const value = mapModelToDb(source[key], ++depth);
           result[newKey] = value;
         }
 
@@ -1013,6 +1017,18 @@ function toDb(changeSet?: any): object {
       if (newKey !== undefined) {
         result[newKey] = source[key];
       }
+    }
+
+    if (depth > 0 && !result.id) { // resolves #106
+      delete result.id;
+    }
+
+    if (depth > 0 && !result._id) { // resolves #106
+      delete result._id;
+    }
+
+    if (depth > 0 && (result._id && result.id)) { // resolves #106
+      delete result.id;
     }
 
     return result;

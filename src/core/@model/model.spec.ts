@@ -649,6 +649,120 @@ describe('core/@Model', () => {
                   await tsapi.close();
                 }
               });
+
+              it('does not add id/_id to sub documents, issue #106', async (done) => {
+
+                const tsapi = testSapi({
+                  models: [
+                    Child,
+                    ChildChild,
+                    TestParent
+                  ]
+                });
+
+                try {
+                  await tsapi.listen({bootMessage: ''});
+                  await TestParent.removeAll({});
+
+                  const createResult = await TestParent.fromJson({}).create();
+                  let testParent = await TestParent.getById(createResult.insertedId);
+
+                  expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
+                  expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+
+                  expect((testParent.child as any)._id).toBeUndefined();
+                  expect((testParent.child as any).id).toBeUndefined();
+                  expect((testParent.child.childChild as any)._id).toBeUndefined();
+                  expect((testParent.child.childChild as any).id).toBeUndefined();
+
+                  expect((testParent.child2 as any)._id).toBeUndefined();
+                  expect((testParent.child2 as any).id).toBeUndefined();
+                  expect((testParent.child2.childChild as any)._id).toBeUndefined();
+                  expect((testParent.child2.childChild as any).id).toBeUndefined();
+
+                  await testParent.save();
+                  testParent = await TestParent.getById(createResult.insertedId);
+
+                  expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
+                  expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+
+                  expect((testParent.child as any)._id).toBeUndefined();
+                  expect((testParent.child as any).id).toBeUndefined();
+                  expect((testParent.child.childChild as any)._id).toBeUndefined();
+                  expect((testParent.child.childChild as any).id).toBeUndefined();
+
+                  expect((testParent.child2 as any)._id).toBeUndefined();
+                  expect((testParent.child2 as any).id).toBeUndefined();
+                  expect((testParent.child2.childChild as any)._id).toBeUndefined();
+                  expect((testParent.child2.childChild as any).id).toBeUndefined();
+
+                  done();
+                } catch (err) {
+                  done.fail(err);
+                } finally {
+                  await tsapi.close();
+                }
+              });
+
+              it('does allow explicit id/_id in sub documents, issue #106', async (done) => {
+
+                const tsapi = testSapi({
+                  models: [
+                    Child,
+                    ChildChild,
+                    TestParent
+                  ]
+                });
+
+                try {
+                  await tsapi.listen({bootMessage: ''});
+                  await TestParent.removeAll({});
+
+                  let testParent = await TestParent.fromJson({});
+                  (testParent.child as any).id = 'here';
+                  const createResult = await testParent.create();
+                  testParent = await TestParent.getById(createResult.insertedId);
+
+                  expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
+                  expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+
+                  expect((testParent.child as any)._id).toBe('here');
+                  expect((testParent.child as any).id).toBe('here');
+
+                  // make sure that id & _id aren't both saved, just _id
+                  let raw = await TestParent
+                    .getDb()
+                    .collection('users')
+                    .findOne({});
+
+                  expect(raw.child.id).toBeUndefined();
+                  expect(raw.child._id).toBeDefined();
+
+                  await testParent.save();
+                  testParent = await TestParent.getById(createResult.insertedId);
+
+                  expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
+                  expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+
+                  expect((testParent.child as any)._id).toBe('here');
+                  expect((testParent.child as any).id).toBe('here');
+
+                  // make sure that id & _id aren't both saved, just _id
+                  raw = await TestParent
+                    .getDb()
+                    .collection('users')
+                    .findOne({});
+
+                  expect(raw.child.id).toBeUndefined();
+                  expect(raw.child._id).toBeDefined();
+
+                  done();
+                } catch (err) {
+                  done.fail(err);
+                } finally {
+                  await tsapi.close();
+                }
+              });
             });
 
             describe('with projection', () => {
@@ -821,6 +935,7 @@ describe('core/@Model', () => {
                   done.fail(err);
                 }
               });
+
             });
 
           });
