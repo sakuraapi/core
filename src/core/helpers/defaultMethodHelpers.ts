@@ -38,4 +38,5 @@ export function addDefaultStaticMethods(target: any, fn: (...any) => any,
     target[fn.name] = fn;
   }
 }
+
 /* tslint:enable:variable-name */

@@ -10,7 +10,6 @@ import {
 } from '../../handlers/basic-handlers';
 import {getDependencyInjections} from '../@injectable/injectable';
 import {modelSymbols} from '../@model';
-import {addDefaultStaticMethods} from '../helpers';
 
 const debug = {
   normal: require('debug')('sapi:routable')
@@ -238,6 +237,10 @@ export function Routable(options?: IRoutableOptions): any {
         + ` option with a valid @Model must also be provided`);
     }
 
+    if (options.suppressApi && options.exposeApi) {
+      throw new Error(`@Routable '${target.name}' cannot have both 'suppressApi' and 'exposeApi' set at the same time`);
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
     //
@@ -256,17 +259,6 @@ export function Routable(options?: IRoutableOptions): any {
 
         const beforeAll = bindHandlers(constructorProxy, options.beforeAll);
         const afterAll = bindHandlers(constructorProxy, options.afterAll);
-
-        // add the method to the @Routable class
-        if (options.model) {
-          debug.normal(`\t\tbound to model, adding built in handlers`);
-
-          addDefaultStaticMethods(constructorProxy, getRouteHandler, options);
-          addDefaultStaticMethods(constructorProxy, getAllRouteHandler, options);
-          addDefaultStaticMethods(constructorProxy, putRouteHandler, options);
-          addDefaultStaticMethods(constructorProxy, postRouteHandler, options);
-          addDefaultStaticMethods(constructorProxy, deleteRouteHandler, options);
-        }
 
         debug.normal(`\t\tprocessing methods for '${target.name}'`);
         // add routes decorated with @Route (integrator's custom routes)
@@ -396,19 +388,20 @@ export function Routable(options?: IRoutableOptions): any {
         return;
       }
 
-      const isSuppressed = options.suppressApi && (typeof options.suppressApi === 'boolean')
-        ? options.suppressApi
-        : (options.suppressApi as HttpMethod[]).indexOf(method) > -1;
-
-      if (!isSuppressed) {
-        routes.push(generateRoute(method, handler, beforeAll, afterAll, constructorProxy));
-        return;
-      }
-
       if (options.exposeApi && options.exposeApi.indexOf(method) > -1) {
         routes.push(generateRoute(method, handler, beforeAll, afterAll, constructorProxy));
         return;
       }
+
+      const isSuppressed = options.suppressApi && (typeof options.suppressApi === 'boolean')
+        ? options.suppressApi
+        : (options.suppressApi as HttpMethod[] || []).indexOf(method) > -1;
+
+      if (!isSuppressed && !options.exposeApi) {
+        routes.push(generateRoute(method, handler, beforeAll, afterAll, constructorProxy));
+        return;
+      }
+
     }
 
     function generateRoute(method: HttpMethod,

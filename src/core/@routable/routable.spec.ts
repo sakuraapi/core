@@ -439,6 +439,19 @@ describe('core/@Routable', () => {
           .catch(done.fail);
       });
 
+      it('does not allow both suppressApi and exposeApi to be set at the same time', () => {
+        expect(() => {
+          @Routable({
+            exposeApi: ['delete'],
+            model: User,
+            suppressApi: true
+          })
+          class RoutableExposeApiTest {
+          }
+        }).toThrowError('@Routable \'RoutableExposeApiTest\' cannot have both \'suppressApi\' and \'exposeApi\' set at the same time');
+
+      });
+
       describe('GET ./model', () => {
 
         beforeEach((done) => {
@@ -1171,7 +1184,44 @@ describe('core/@Routable', () => {
       });
 
       describe('exposeApi suppresses non exposed endpoints', () => {
-        pending('not implemented');
+        @Routable({
+          exposeApi: ['delete'],
+          model: User
+        })
+        class RoutableExposeApiTest {
+
+        }
+
+        @Routable({
+          exposeApi: ['invalid' as any],
+          model: User
+        })
+        class RoutableExposeApiInvalidTest {
+
+        }
+
+        it('only the exposeApi endpoints are added', () => {
+          testSapi({
+            routables: [RoutableExposeApiTest]
+          });
+
+          const routableExposeApiTest = new RoutableExposeApiTest();
+
+          expect(routableExposeApiTest[routableSymbols.routes].length).toBe(1);
+          expect(routableExposeApiTest[routableSymbols.routes][0].method).toBe('deleteRouteHandler');
+
+        });
+
+        it('invalid exposeApi option', () => {
+          testSapi({
+            routables: [RoutableExposeApiInvalidTest]
+          });
+
+          const routableExposeApiInvalidTest = new RoutableExposeApiInvalidTest();
+          console.log(routableExposeApiInvalidTest);
+
+          expect(routableExposeApiInvalidTest[routableSymbols.routes].length).toBe(0);
+        });
       });
 
       describe('suppressApi exposes non suppressed endpoints', () => {
@@ -1183,17 +1233,36 @@ describe('core/@Routable', () => {
         class RoutableSuppressApiTrueTest {
         }
 
-        it('suppressess all model generated endpoints when suppressApi is set to true rather than an array', (done) => {
-          request(sapi.app)
-            .get(testUrl('/RoutableSuppressApiTrueTest'))
-            .expect(404)
-            .then(done)
-            .catch(done.fail);
+        @Routable({
+          baseUrl: 'RoutableSuppressApiTrueTest',
+          model: User,
+          suppressApi: ['post']
+        })
+        class RoutableSuppressApiPostTest {
+        }
+
+        it('suppressess all model generated endpoints when suppressApi is set to true rather than an array', () => {
+          testSapi({
+            routables: [RoutableSuppressApiTrueTest]
+          });
+
+          const routableSuppressApiTrueTest = new RoutableSuppressApiTrueTest();
+          expect(routableSuppressApiTrueTest[routableSymbols.routes].length).toBe(0);
         });
 
-        it('more thorough testing', () => {
-          pending('not implemented');
+        it('suppressess only generated endpoints that are not suppressed', () => {
+          testSapi({
+            routables: [RoutableSuppressApiPostTest]
+          });
+
+          const routableSuppressApiPostTest = new RoutableSuppressApiPostTest();
+          expect(routableSuppressApiPostTest[routableSymbols.routes].length).toBe(4);
+
+          for (let i = 0; i < routableSuppressApiPostTest[routableSymbols.routes].length; i++) {
+            expect(routableSuppressApiPostTest[routableSymbols.routes][i].httpMethod).not.toBe('post');
+          }
         });
+
       });
     });
   });

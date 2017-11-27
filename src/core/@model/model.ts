@@ -1105,10 +1105,10 @@ function toJson(): any {
       return source;
     }
 
-    let jsonFieldNamesByProperty: Map<string, string>
+    let jsonFieldNamesByProperty: Map<string, IJsonOptions>
       = Reflect.getMetadata(jsonSymbols.jsonByPropertyName, source);
 
-    jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, string>();
+    jsonFieldNamesByProperty = jsonFieldNamesByProperty || new Map<string, IJsonOptions>();
 
     const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
 
