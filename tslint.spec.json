@@ -28,7 +28,8 @@
       }
     ],
     "no-object-literal-type-assertion": false,
-    "prefer-object-spread": false
+    "prefer-object-spread": false,
+    "prefer-for-of": false
   },
   "jsRules": {
     "curly": true

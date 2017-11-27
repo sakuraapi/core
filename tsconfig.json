@@ -8,11 +8,17 @@
     "removeComments": true,
     "noLib": false,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "outDir": "lib"
   },
+  "include": [
+    "spec/**/*",
+    "src/**/*",
+    "index.ts"
+  ],
   "exclude": [
     "node_modules",
     "scripts",
-    "dist"
+    "lib"
   ]
 }

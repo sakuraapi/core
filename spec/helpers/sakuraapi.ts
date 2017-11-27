@@ -1,5 +1,5 @@
 import * as path from 'path';
-import {SakuraApi, SakuraApiPlugin} from '../../core/sakura-api';
+import {SakuraApi, SakuraApiPlugin} from '../../src/core/sakura-api';
 import bodyParser = require('body-parser');
 import helmet = require('helmet');
 
@@ -15,11 +15,26 @@ export interface ITestSapiOptions {
   plugins?: SakuraApiPlugin[];
 }
 
+process.on('unhandledRejection', (r) => {
+
+  // tslint:disable:no-console
+  console.log('Unhandled Rejection'.red.underline);
+  console.log('-'.repeat(process.stdout.columns).red);
+  console.log('↓'.repeat(process.stdout.columns).zebra.red);
+  console.log('-'.repeat(process.stdout.columns).red);
+  console.log(r);
+  console.log('-'.repeat(process.stdout.columns).red);
+  console.log('↑'.repeat(process.stdout.columns).zebra.red);
+  console.log('-'.repeat(process.stdout.columns).red);
+  // tslint:enable:no-console
+
+});
+
 export function testSapi(options: ITestSapiOptions): SakuraApi {
 
   const sapi = new SakuraApi({
     baseUrl: baseUri,
-    configPath: 'spec/config/environment.json',
+    configPath: 'lib/spec/config/environment.json',
     models: options.models,
     plugins: options.plugins,
     providers: options.providers,
@@ -41,12 +56,14 @@ export function testSapi(options: ITestSapiOptions): SakuraApi {
   sapi.addLastErrorHandlers((err, req, res, next) => {
 
     // tslint:disable:no-console
-    console.log('------------------------------------------------'.red);
-    console.log('↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓'.zebra);
+    console.log('-'.repeat(process.stdout.columns).red);
+    console.log('↓'.repeat(process.stdout.columns).zebra.red);
+    console.log('-'.repeat(process.stdout.columns).red);
     console.log('An error bubbled up in an unexpected way during testing');
     console.log(err);
-    console.log('↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑'.zebra);
-    console.log('------------------------------------------------'.red);
+    console.log('-'.repeat(process.stdout.columns).red);
+    console.log('↑'.repeat(process.stdout.columns).zebra.red);
+    console.log('-'.repeat(process.stdout.columns).red);
     // tslint:enable:no-console
 
     next(err);

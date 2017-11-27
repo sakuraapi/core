@@ -2,11 +2,11 @@
   "spec_dir": "",
   "spec_files": [
     "!node_modules/*[sS]pec.js",
-    "spec/bootstrap-tests/**/*.spec.js",
-    "**/*.spec.js"
+    "lib/spec/bootstrap-tests/**/*.spec.js",
+    "lib/**/*.spec.js"
   ],
   "helpers": [
-    "spec/helpers/**/*.js"
+    "lib/spec/helpers/**/*.js"
   ],
   "stopSpecOnExpectationFailure": false,
   "random": false
