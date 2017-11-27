@@ -448,8 +448,8 @@ describe('core/@Routable', () => {
           })
           class RoutableExposeApiTest {
           }
-        }).toThrowError('@Routable \'RoutableExposeApiTest\' cannot have both \'suppressApi\' and \'exposeApi\' set at the same time');
-
+        }).toThrowError(`@Routable \'RoutableExposeApiTest\' cannot have both \'suppressApi\' ` +
+          `and \'exposeApi\' set at the same time`);
       });
 
       describe('GET ./model', () => {
@@ -1218,8 +1218,6 @@ describe('core/@Routable', () => {
           });
 
           const routableExposeApiInvalidTest = new RoutableExposeApiInvalidTest();
-          console.log(routableExposeApiInvalidTest);
-
           expect(routableExposeApiInvalidTest[routableSymbols.routes].length).toBe(0);
         });
       });
@@ -1262,7 +1260,6 @@ describe('core/@Routable', () => {
             expect(routableSuppressApiPostTest[routableSymbols.routes][i].httpMethod).not.toBe('post');
           }
         });
-
       });
     });
   });
