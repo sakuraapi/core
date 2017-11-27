@@ -20,7 +20,6 @@ import {SakuraApi} from '../sakura-api';
  *
  * Annoying? Yes. See: https://github.com/Microsoft/TypeScript/issues/4881
  */
-
 export abstract class SakuraApiInjectable {
   static sapi?: SakuraApi;
   static sapiConfig?: any;

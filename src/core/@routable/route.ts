@@ -2,7 +2,7 @@ import {Handler} from 'express';
 import debug = require('debug');
 
 /**
- * Interface defining the valid properties for the `@Route({})` decorator ([[Route]]).
+ * Interface defining the valid properties for the `@`[[Route]] decorator.
  */
 export interface IRoutableMethodOptions {
   /**
@@ -94,7 +94,7 @@ export interface IRoutableMethodOptions {
 }
 
 /**
- * Decorator applied to methods within an `@Routable` decorated class that designates that method as a route handler.
+ * Decorator applied to methods within an `@`[[Routable]] decorated class that designates that method as a route handler.
  *
  * By default, a route that isn't provided a [[RoutableMethodOptions.method]] option, will default to `GET`. The
  * [[RoutableMethodOptions.path]] defaults to ''.

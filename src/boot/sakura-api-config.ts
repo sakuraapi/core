@@ -8,8 +8,8 @@ const debug = {
 };
 
 /**
- * SakuraApiConfig loads and manages the cascading configuration files of SakuraApi.
- *
+ * SakuraApiConfig loads and manages the cascading configuration files of SakuraApi. The configuration is deep
+ * merged. See [[SakuraApiConfig.load]] for details.
  */
 export class SakuraApiConfig {
 
@@ -81,10 +81,10 @@ export class SakuraApiConfig {
   }
 
   /**
-   * loads the config file specified by path. If no path is provided, load the path/filename defined in environmental
+   * Loads the config file specified by path. If no path is provided, load the path/filename defined in environmental
    * variable SAKURA_API_CONFIG, otherwise load `config/environment.json` from the root of the project.
    *
-   *  SakuraApi looks for a config/ folder in the root of your api project.
+   * SakuraApi looks for a config/ folder in the root of your api project.
    * It cascades the values found in the following order (the last taking precedence over the former):
    *
    * * environment.json

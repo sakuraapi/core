@@ -10,6 +10,10 @@ export const injectableSymbols = {
   sapi: Symbol('sapi')
 };
 
+/**
+ * Thrown when you try to inject a parameter into the constructor of a [[Model]], [[Routable]] or [[Injectable]]
+ * decorated class that has not been decorated with `@`[[Injectable]].
+ */
 export class NonInjectableConstructorParameterError extends Error {
   constructor(target: any, source: any) {
 
@@ -27,6 +31,9 @@ export class NonInjectableConstructorParameterError extends Error {
   }
 }
 
+/**
+ * An attempt was made to use [[SakuraApi.getProvider]] with a parameter that isn't decorated with `@`[[Injectable]].
+ */
 export class ProvidersMustBeDecoratedWithInjectableError extends Error {
   constructor(target: any) {
     const targetName = (target || {} as any).name
@@ -37,6 +44,11 @@ export class ProvidersMustBeDecoratedWithInjectableError extends Error {
   }
 }
 
+/**
+ * Thrown when an attempt is made to use an object as a Provider, which has not been registered with the dependency
+ * injection system. You register providers when you are instantiating the instance of [[SakuraApi]] for your
+ * application.
+ */
 export class ProviderNotRegistered extends Error {
   constructor(target: any) {
     const targetName = (target || {} as any).name
@@ -47,6 +59,35 @@ export class ProviderNotRegistered extends Error {
   }
 }
 
+/**
+ * @decorator Decorates a class to add injectable functionality which allows that class to be defined in the constructor of
+ * other `Injectable` decorated class constructors as well as the constructors of [[Model]]s and [[Routable]]s. These
+ * injectable classes are then "provided" by the dependency injection system at the time of instantiation for that
+ * object.
+ *
+ * ### Example
+ * <pre>
+ *  <span>@</span>Injectable()
+ *  export class SomeService {
+ *    constructor(private someOtherService: SomeOtherService) {
+ *    }
+ *    superMethod() { return 'hello world'; }
+ *  }
+ * </pre>
+ * <pre>
+ *  <span>@</span>Routable()
+ *  export class SomeApi() {
+ *    constructor(private someService:SomeService) {
+ *      console.log(this.someService.superMethod());
+ *    }
+ *  }
+ * </pre>
+ *
+ * When instantiating your application's instance of [[SakuraApi]], don't forget to pass each provider into the provider
+ * array, or it won't be available to the dependency injection system.
+ *
+ * @returns {(object) => any}
+ */
 export function Injectable(): (object) => any {
 
   return (target: any) => {
@@ -117,6 +158,14 @@ export function Injectable(): (object) => any {
   };
 }
 
+/**
+ * Used internally by the Dependency Injection System.
+ * @param target
+ * @param t
+ * @param {SakuraApi} sapi
+ * @returns {Array}
+ * @internal This is not meant for use outside of the internals of the API; the API can change at any time.
+ */
 export function getDependencyInjections(target: any, t: any, sapi: SakuraApi) {
   const expectedDiArgs = Reflect.getMetadata('design:paramtypes', t);
 

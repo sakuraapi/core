@@ -37,7 +37,7 @@ export interface IRoutableLocals {
 }
 
 /**
- * Interface defining the valid properties for the `@Routable({})` decorator ([[Routable]]).
+ * Interface defining the valid options for the `@`[[Routable]] decorator.
  */
 export interface IRoutableOptions {
 

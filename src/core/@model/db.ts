@@ -1,6 +1,7 @@
 /**
- * The symbols used by Reflect to store `@Db()` metadata for use by `@Module`. These symbols are not considered
- * part of the API contract and may change or be removed without notice on patch releases.
+ * The symbols used by Reflect to store `@`[[Db]]() metadata for use by `@`[[Module]].
+ * @internal These symbols are not considered part of the API contract and may change or be removed without
+ * notice on patch releases.
  */
 export const dbSymbols = {
   dbByFieldName: Symbol('sakuraApiDbByFieldName'),
@@ -9,6 +10,9 @@ export const dbSymbols = {
   propertyName: Symbol('sakuraApiDbOptionsPropertyName')
 };
 
+/**
+ * Defines the valid options for `@`[[Db]].
+ */
 export interface IDbOptions {
   /**
    * An optional `@`[[Model]] decorated class. If provided, the property will be instantiated as a sub document

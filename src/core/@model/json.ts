@@ -8,6 +8,9 @@ export const jsonSymbols = {
   propertyName: Symbol('jsonPropertyName')
 };
 
+/**
+ * Defines the valid options for `@`[[Json]].
+ */
 export interface IJsonOptions {
 
   /**

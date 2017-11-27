@@ -124,8 +124,8 @@ export const modelSymbols = {
  *   * [[getOne]]
  *   * [[removeAll]]
  *   * [[removeById]]
- *   * sapi: the @Routable's instance of SakuraApi that was injected during SakuraApi construction
- *   * sapiConfig: the @Routable's SakuraApi config (this is a shortcut to sapi.config)
+ *   * sapi: the `@`[[Routable]]'s instance of [[SakuraApi]] that was injected during SakuraApi construction
+ *   * sapiConfig: the `@`[[Routable]]'s [[SakuraApi]] config (this is a shortcut to sapi.config)
  * * *instance*:
  *   * [[create]]
  *   * [[remove]]

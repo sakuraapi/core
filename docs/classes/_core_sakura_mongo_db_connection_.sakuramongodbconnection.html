@@ -95,6 +95,7 @@
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#connect" class="tsd-kind-icon">connect</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#connectall" class="tsd-kind-icon">connect<wbr>All</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#getconnection" class="tsd-kind-icon">get<wbr>Connection</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#getconnections" class="tsd-kind-icon">get<wbr>Connections</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#getdb" class="tsd-kind-icon">get<wbr>Db</a></li>
 							</ul>
 						</section>
@@ -113,13 +114,14 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/sakura-mongo-db-connection.ts#L27">core/sakura-mongo-db-connection.ts:27</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-mongo-db-connection.ts#L21">core/sakura-mongo-db-connection.ts:21</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
 									<p>Adds the parameters for a connection but doesn&#39;t actually connect to the DB. This is used to queue up
-									connection configurations that are later used for opening connections to MongoDB with <a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#connectall">SakuraMongoDbConnection.connectAll</a>.</p>
+										connection configurations that are later used for opening connections to MongoDB with
+									<a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#connectall">SakuraMongoDbConnection.connectAll</a>.</p>
 								</div>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -142,13 +144,13 @@
 					<a name="close" class="tsd-anchor"></a>
 					<h3>close</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">close<span class="tsd-signature-symbol">(</span>dbName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, forceClose<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">close<span class="tsd-signature-symbol">(</span>dbName<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, forceClose<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/sakura-mongo-db-connection.ts#L105">core/sakura-mongo-db-connection.ts:105</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-mongo-db-connection.ts#L92">core/sakura-mongo-db-connection.ts:92</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -165,7 +167,7 @@
 									<h5><span class="tsd-flag ts-flagOptional">Optional</span> forceClose: <span class="tsd-signature-type">boolean</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -179,7 +181,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/sakura-mongo-db-connection.ts#L122">core/sakura-mongo-db-connection.ts:122</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-mongo-db-connection.ts#L109">core/sakura-mongo-db-connection.ts:109</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -201,7 +203,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/sakura-mongo-db-connection.ts#L37">core/sakura-mongo-db-connection.ts:37</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-mongo-db-connection.ts#L31">core/sakura-mongo-db-connection.ts:31</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -236,7 +238,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/sakura-mongo-db-connection.ts#L77">core/sakura-mongo-db-connection.ts:77</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-mongo-db-connection.ts#L70">core/sakura-mongo-db-connection.ts:70</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -259,7 +261,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/sakura-mongo-db-connection.ts#L162">core/sakura-mongo-db-connection.ts:162</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-mongo-db-connection.ts#L142">core/sakura-mongo-db-connection.ts:142</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -286,6 +288,28 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="getconnections" class="tsd-anchor"></a>
+					<h3>get<wbr>Connections</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Connections<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-mongo-db-connection.ts#L153">core/sakura-mongo-db-connection.ts:153</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Returns a reference to the map of connections currently had.</p>
+								</div>
+							</div>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="getdb" class="tsd-anchor"></a>
 					<h3>get<wbr>Db</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -295,7 +319,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/sakura-mongo-db-connection.ts#L150">core/sakura-mongo-db-connection.ts:150</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-mongo-db-connection.ts#L130">core/sakura-mongo-db-connection.ts:130</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -323,6 +347,12 @@
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_boot_sakura_api_config_.html">"boot/sakura-<wbr>api-<wbr>config"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core__injectable_injectable_.html">"core/@injectable/injectable"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core__injectable_sakura_api_injectable_.html">"core/@injectable/sakura-<wbr>api-<wbr>injectable"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__model_db_.html">"core/@model/db"</a>
@@ -355,6 +385,12 @@
 						<a href="../modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_helpers_http_status_.html">"core/helpers/http-<wbr>status"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_helpers_should_recurse_.html">"core/helpers/should-<wbr>recurse"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
 					</li>
 					<li class="current tsd-kind-external-module">
@@ -362,6 +398,9 @@
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_security_mongo_db_.html">"core/security/mongo-<wbr>db"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_handlers_basic_handlers_.html">"handlers/basic-<wbr>handlers"</a>
 					</li>
 				</ul>
 			</nav>
@@ -391,12 +430,18 @@
 								<a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#getconnection" class="tsd-kind-icon">get<wbr>Connection</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#getconnections" class="tsd-kind-icon">get<wbr>Connections</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="_core_sakura_mongo_db_connection_.sakuramongodbconnection.html#getdb" class="tsd-kind-icon">get<wbr>Db</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
+					<li class=" tsd-kind-object-literal tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core_sakura_mongo_db_connection_.html#debug" class="tsd-kind-icon">debug</a>
+					</li>
 				</ul>
 			</nav>
 		</div>

@@ -67,6 +67,13 @@
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-comment">
+				<div class="tsd-comment tsd-typography">
+					<div class="lead">
+						<p>Defines the valid options for <code>@</code><a href="../modules/_core__model_db_.html#db">Db</a>.</p>
+					</div>
+				</div>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
@@ -98,7 +105,7 @@
 					<div class="tsd-signature tsd-kind-icon">field<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@model/db.ts#L34">core/@model/db.ts:34</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/@model/db.ts#L40">core/@model/db.ts:40</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -124,12 +131,14 @@
 					<div class="tsd-signature tsd-kind-icon">model<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@model/db.ts#L16">core/@model/db.ts:16</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/@model/db.ts#L22">core/@model/db.ts:22</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>An optional constructor function (ES6 Class) that is used to instantiate the property.</p>
+							<p>An optional <code>@</code><a href="../modules/_core__model_model_.html#model">Model</a> decorated class. If provided, the property will be instantiated as a sub document
+								with its default values or the values from the database. <code>@</code><a href="../modules/_core__model_json_.html#json">Json</a> will utilize this same model
+							if one is not set on that attribute.</p>
 						</div>
 					</div>
 				</section>
@@ -139,7 +148,7 @@
 					<div class="tsd-signature tsd-kind-icon">private<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/43318ee/core/@model/db.ts#L54">core/@model/db.ts:54</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/@model/db.ts#L60">core/@model/db.ts:60</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -172,6 +181,12 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_boot_sakura_api_config_.html">"boot/sakura-<wbr>api-<wbr>config"</a>
 					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core__injectable_injectable_.html">"core/@injectable/injectable"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core__injectable_sakura_api_injectable_.html">"core/@injectable/sakura-<wbr>api-<wbr>injectable"</a>
+					</li>
 					<li class="current tsd-kind-external-module">
 						<a href="../modules/_core__model_db_.html">"core/@model/db"</a>
 					</li>
@@ -203,6 +218,12 @@
 						<a href="../modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_helpers_http_status_.html">"core/helpers/http-<wbr>status"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_helpers_should_recurse_.html">"core/helpers/should-<wbr>recurse"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -210,6 +231,9 @@
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_security_mongo_db_.html">"core/security/mongo-<wbr>db"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_handlers_basic_handlers_.html">"handlers/basic-<wbr>handlers"</a>
 					</li>
 				</ul>
 			</nav>

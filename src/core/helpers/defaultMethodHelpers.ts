@@ -5,9 +5,8 @@ export interface IDefaultMethodsOptions {
 }
 
 /**
- * @warning @internal This is an internal helper function used by the SakuraApi framework. It's behavior is not part of
- * the official API and as a result, that behavior may break without notice.
- * @internal This is not part of the API contract.
+ * @internal This is an internal helper function used by the SakuraApi framework. It's behavior is not part of
+ * the official API and as a result, that behavior may break without notice. This is not part of the API contract.
  */
 export function addDefaultInstanceMethods(target: any, fn: (...any) => any,
                                           options?: IDefaultMethodsOptions) {
@@ -22,9 +21,8 @@ export function addDefaultInstanceMethods(target: any, fn: (...any) => any,
 }
 
 /**
- * @warning This is an internal helper function used by the SakuraApi framework. It's behavior is not part of the
- * official API and as a result, that behavior may break without notice.
- * @internal This is not part of the API contract.
+ * @internal This is an internal helper function used by the SakuraApi framework. It's behavior is not part of the
+ * official API and as a result, that behavior may break without notice. This is not part of the API contract.
  */
 export function addDefaultStaticMethods(target: any, fn: (...any) => any,
                                         options?: IDefaultMethodsOptions) {

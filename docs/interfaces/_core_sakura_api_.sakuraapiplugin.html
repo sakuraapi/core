@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>IDefaultMethodsOptions | SakuraApi</title>
+	<title>SakuraApiPlugin | SakuraApi</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -54,13 +54,13 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_core_helpers_defaultmethodhelpers_.html">&quot;core/helpers/defaultMethodHelpers&quot;</a>
+					<a href="../modules/_core_sakura_api_.html">&quot;core/sakura-api&quot;</a>
 				</li>
 				<li>
-					<a href="_core_helpers_defaultmethodhelpers_.idefaultmethodsoptions.html">IDefaultMethodsOptions</a>
+					<a href="_core_sakura_api_.sakuraapiplugin.html">SakuraApiPlugin</a>
 				</li>
 			</ul>
-			<h1>Interface IDefaultMethodsOptions</h1>
+			<h1>Interface SakuraApiPlugin</h1>
 		</div>
 	</div>
 </header>
@@ -71,7 +71,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">IDefaultMethodsOptions</span>
+						<span class="target">SakuraApiPlugin</span>
 					</li>
 				</ul>
 			</section>
@@ -82,7 +82,9 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core_helpers_defaultmethodhelpers_.idefaultmethodsoptions.html#suppressinjection" class="tsd-kind-icon">suppress<wbr>Injection</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core_sakura_api_.sakuraapiplugin.html#options" class="tsd-kind-icon">options</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core_sakura_api_.sakuraapiplugin.html#order" class="tsd-kind-icon">order</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core_sakura_api_.sakuraapiplugin.html#plugin" class="tsd-kind-icon">plugin</a></li>
 							</ul>
 						</section>
 					</div>
@@ -91,14 +93,74 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="suppressinjection" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> suppress<wbr>Injection</h3>
-					<div class="tsd-signature tsd-kind-icon">suppress<wbr>Injection<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
+					<a name="options" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> options</h3>
+					<div class="tsd-signature tsd-kind-icon">options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/helpers/defaultMethodHelpers.ts#L4">core/helpers/defaultMethodHelpers.ts:4</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L26">core/sakura-api.ts:26</a></li>
 						</ul>
 					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Options passed into the plugin (see documentation for the plugin).</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="order" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> order</h3>
+					<div class="tsd-signature tsd-kind-icon">order<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L31">core/sakura-api.ts:31</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If the plugin includes middleware handlers, this is the order in which they&#39;ll be included. See
+							<a href="../classes/_core_sakura_api_.sakuraapi.html#addmiddleware">SakuraApi.addMiddleware</a></p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="plugin" class="tsd-anchor"></a>
+					<h3>plugin</h3>
+					<div class="tsd-signature tsd-kind-icon">plugin<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L35">core/sakura-api.ts:35</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>A SakuraApi plugin that conforms to the interface (SakuraApi, any) =&gt; SakuraApiPluginResult;</p>
+						</div>
+					</div>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-siganture">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-property tsd-is-not-exported">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>sapi<span class="tsd-signature-symbol">: </span><a href="../classes/_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a>, options<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_core_sakura_api_.sakuraapipluginresult.html" class="tsd-signature-type">SakuraApiPluginResult</a></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>sapi: <a href="../classes/_core_sakura_api_.sakuraapi.html" class="tsd-signature-type">SakuraApi</a></h5>
+											</li>
+											<li>
+												<h5>options: <span class="tsd-signature-type">any</span></h5>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <a href="_core_sakura_api_.sakuraapipluginresult.html" class="tsd-signature-type">SakuraApiPluginResult</a></h4>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
 				</section>
 			</section>
 		</div>
@@ -144,7 +206,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__routable_sakura_api_routable_.html">"core/@routable/sakura-<wbr>api-<wbr>routable"</a>
 					</li>
-					<li class="current tsd-kind-external-module">
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -153,7 +215,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_helpers_should_recurse_.html">"core/helpers/should-<wbr>recurse"</a>
 					</li>
-					<li class=" tsd-kind-external-module">
+					<li class="current tsd-kind-external-module">
 						<a href="../modules/_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -169,23 +231,41 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-class tsd-parent-kind-external-module">
+						<a href="../classes/_core_sakura_api_.sakuraapi.html" class="tsd-kind-icon">Sakura<wbr>Api</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="_core_sakura_api_.iprovidercontainer.html" class="tsd-kind-icon">IProvider<wbr>Container</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core_sakura_api_.sakuraapioptions.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Options</a>
+					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_core_helpers_defaultmethodhelpers_.idefaultmethodsoptions.html" class="tsd-kind-icon">IDefault<wbr>Methods<wbr>Options</a>
+						<a href="_core_sakura_api_.sakuraapiplugin.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_core_helpers_defaultmethodhelpers_.idefaultmethodsoptions.html#suppressinjection" class="tsd-kind-icon">suppress<wbr>Injection</a>
+								<a href="_core_sakura_api_.sakuraapiplugin.html#options" class="tsd-kind-icon">options</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core_sakura_api_.sakuraapiplugin.html#order" class="tsd-kind-icon">order</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core_sakura_api_.sakuraapiplugin.html#plugin" class="tsd-kind-icon">plugin</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_core_helpers_defaultmethodhelpers_.html#adddefaultinstancemethods" class="tsd-kind-icon">add<wbr>Default<wbr>Instance<wbr>Methods</a>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core_sakura_api_.sakuraapipluginresult.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin<wbr>Result</a>
 					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="../modules/_core_helpers_defaultmethodhelpers_.html#adddefaultstaticmethods" class="tsd-kind-icon">add<wbr>Default<wbr>Static<wbr>Methods</a>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="_core_sakura_api_.serverconfig.html" class="tsd-kind-icon">Server<wbr>Config</a>
+					</li>
+					<li class=" tsd-kind-object-literal tsd-parent-kind-external-module tsd-is-not-exported">
+						<a href="../modules/_core_sakura_api_.html#debug" class="tsd-kind-icon">debug</a>
 					</li>
 				</ul>
 			</nav>
