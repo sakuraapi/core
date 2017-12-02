@@ -1,6 +1,6 @@
 {
   "name": "@sakuraapi/api",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "MongoDB and TypeScript MEAN Stack Framework for NodeJS",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -16,7 +16,7 @@
     "doc:serve": "nodemon --config nodemon.typedoc.json -e ts --exec 'npm run doc:generate && npm run http-server docs/ -- -a localhost -c-1'",
     "docker:compose-test": "(docker volume prune -f || echo \"skipped docker volume prune\") ; docker-compose up -d --remove-orphans",
     "http-server": "http-server",
-    "install": "chmod +x scripts/*.*",
+    "install": "chmod +x scripts/*.* || true",
     "istanbul": "istanbul",
     "jasmine": "jasmine",
     "lint": "npm run build && npm run lint:code && npm run lint:tests",
