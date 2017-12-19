@@ -268,8 +268,3 @@ There are some properties in the environmental config that are used by the syste
 ```
 Naturally, anything you define is available to you. You get access to the configuration through `SakuraApi.instsance.config`.
 
-# Using SakuraAPI
-
-See the [SakuraAPI Example](https://github.com/sakuraapi/api-example) project for a demonstration of how to use the API.
-
-Make sure the version of the sample project matches the version of SakuraApi. If it does not, it's out of date and may not reflect the current state of affairs in `@sakuraapi/api`.
