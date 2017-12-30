@@ -1,5 +1,6 @@
 import {testSapi} from '../../../spec/helpers/sakuraapi';
-import {Json, Model, Private, SakuraApiModel} from './';
+import {Json, Model, Private} from './';
+import {SapiModelMixin} from './sapi-model-mixin';
 
 describe('@Private', () => {
   const sapi = testSapi({
@@ -8,7 +9,7 @@ describe('@Private', () => {
   });
 
   @Model()
-  class Test implements SakuraApiModel {
+  class Test extends SapiModelMixin() {
 
     @Private()
     aPrivateField1: number = 1;

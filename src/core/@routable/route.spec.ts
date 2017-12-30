@@ -2,16 +2,17 @@ import * as express from 'express';
 import {NextFunction, Request, Response} from 'express';
 import * as request from 'supertest';
 import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
-import {Db, Json, Model, SakuraApiModel} from '../@model';
+import {Db, Json, Model} from '../@model';
+import {SapiModelMixin} from '../@model/sapi-model-mixin';
 import {IRoutableLocals, Routable, routableSymbols, Route} from './';
-import {SakuraApiRoutable} from './sakura-api-routable';
+import {SapiRoutableMixin} from './sapi-routable-mixin';
 
 describe('core/Route', () => {
   @Routable({
     baseUrl: 'testCoreRoute',
     blackList: ['someBlacklistedMethod']
   })
-  class TestCoreRoute extends SakuraApiRoutable {
+  class TestCoreRoute extends SapiRoutableMixin() {
     @Route({
       method: 'get',
       path: '/'
@@ -253,7 +254,7 @@ describe('core/Route', () => {
         db: 'userDb'
       }
     })
-    class AfterHandlerTestModel extends SakuraApiModel {
+    class AfterHandlerTestModel extends SapiModelMixin() {
       @Db() @Json()
       firstName = 'George';
 

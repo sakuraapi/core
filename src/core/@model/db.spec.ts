@@ -3,7 +3,7 @@ import {ObjectID} from 'mongodb';
 import {testSapi} from '../../../spec/helpers/sakuraapi';
 import {Db, dbSymbols, Json} from './';
 import {Model} from './model';
-import {SakuraApiModel} from './sakura-api-model';
+import {SapiModelMixin} from './sapi-model-mixin';
 
 describe('@Db', () => {
 
@@ -25,7 +25,7 @@ describe('@Db', () => {
 
     it('is injected as a static member of an @Model object by default', () => {
       @Model()
-      class Test extends SakuraApiModel {
+      class Test extends SapiModelMixin() {
       }
 
       expect(Test.fromDb).toBeDefined();
@@ -39,7 +39,7 @@ describe('@Db', () => {
       }
 
       @Model()
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
         @Db()
         value;
 
@@ -70,7 +70,7 @@ describe('@Db', () => {
 
     describe('constructor', () => {
       @Model()
-      class Test extends SakuraApiModel {
+      class Test extends SapiModelMixin() {
         val = 777;
       }
 
@@ -123,7 +123,7 @@ describe('@Db', () => {
       }
 
       @Model()
-      class Test extends SakuraApiModel {
+      class Test extends SapiModelMixin() {
 
         @Db('fn')
         firstName: string;
@@ -160,7 +160,7 @@ describe('@Db', () => {
         }
 
         @Model()
-        class Test extends SakuraApiModel {
+        class Test extends SapiModelMixin() {
           @Db({model: Contact})
           contact: Contact = new Contact();
         }
@@ -198,7 +198,7 @@ describe('@Db', () => {
 
       it('throws when IDbOptions.model is invalid constructor function', () => {
         @Model()
-        class TestModelOptionFail extends SakuraApiModel {
+        class TestModelOptionFail extends SapiModelMixin() {
           @Db({model: {}})
           doh = new Order();
         }
@@ -244,7 +244,7 @@ describe('@Db', () => {
 
       it('handles properties with @Db({field}) set', () => {
         @Model()
-        class Test extends SakuraApiModel {
+        class Test extends SapiModelMixin() {
 
           @Db({
             field: 'fn'
@@ -266,7 +266,7 @@ describe('@Db', () => {
       it('unmarshalls _id', (done) => {
 
         @Model()
-        class Test extends SakuraApiModel {
+        class Test extends SapiModelMixin() {
 
           @Db({field: 'ph'})
           phone: string;
@@ -292,7 +292,7 @@ describe('@Db', () => {
             db: 'userDb'
           }
         })
-        class Test94 extends SakuraApiModel {
+        class Test94 extends SapiModelMixin() {
           @Db({field: 'ad', model: Address}) @Json()
           address = new Address();
         }
@@ -351,7 +351,7 @@ describe('@Db', () => {
             promiscuous: true
           }
         })
-        class Test extends SakuraApiModel {
+        class Test extends SapiModelMixin() {
           @Db({field: 'ph'})
           phone: string;
 
@@ -410,7 +410,7 @@ describe('@Db', () => {
           db: 'userDb'
         }
       })
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
 
         @Db('fn') @Json('f')
         firstName: string = 'George';
@@ -508,7 +508,7 @@ describe('@Db', () => {
 
   describe('fromDbArray', () => {
     @Model()
-    class Test extends SakuraApiModel {
+    class Test extends SapiModelMixin() {
       @Db({
         field: 'fn'
       })
@@ -580,7 +580,7 @@ describe('@Db', () => {
         promiscuous: false // default
       }
     })
-    class ChasteModelTest extends SakuraApiModel {
+    class ChasteModelTest extends SapiModelMixin() {
 
       @Db('fn')
       firstName = 'George';
