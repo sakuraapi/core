@@ -3,11 +3,12 @@ import {NextFunction, Request, Response} from 'express';
 import {ObjectID} from 'mongodb';
 import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
 import {getAllRouteHandler, getRouteHandler} from '../../handlers/basic-handlers';
-import {Db, Json, Model, SakuraApiModel} from '../@model';
+import {Db, Json, Model, SapiModelMixin} from '../@model';
 import {DUPLICATE_RESOURCE} from '../helpers/http-status';
 import {SakuraApi} from '../sakura-api';
-import {Routable, routableSymbols, Route, SakuraApiRoutable} from './';
+import {Routable, routableSymbols, Route} from './';
 import {IRoutableLocals} from './routable';
+import {SapiRoutableMixin} from './sapi-routable-mixin';
 import request = require('supertest');
 
 describe('core/@Routable', () => {
@@ -307,7 +308,7 @@ describe('core/@Routable', () => {
         db: 'userDb'
       }
     })
-    class User extends SakuraApiModel {
+    class User extends SapiModelMixin() {
       @Db('fname') @Json('fn')
       firstName: string = 'George';
       @Db('lname') @Json('ln')
@@ -327,7 +328,7 @@ describe('core/@Routable', () => {
         db: 'userDb'
       }
     })
-    class NoDocsCreated extends SakuraApiModel {
+    class NoDocsCreated extends SapiModelMixin() {
     }
 
     @Routable({
@@ -1272,7 +1273,7 @@ describe('core/@Routable', () => {
         db: 'userDb'
       }
     })
-    class UserBeforeAllHandlers extends SakuraApiModel {
+    class UserBeforeAllHandlers extends SapiModelMixin() {
       @Db() @Json()
       firstName = 'George';
       @Db() @Json()
@@ -1380,7 +1381,7 @@ describe('core/@Routable', () => {
         db: 'userDb'
       }
     })
-    class UserAfterAllHandlers extends SakuraApiModel {
+    class UserAfterAllHandlers extends SapiModelMixin() {
       @Db() @Json()
       firstName = 'George';
       @Db() @Json()
@@ -1465,7 +1466,7 @@ describe('core/@Routable', () => {
         db: 'userDb'
       }
     })
-    class UserAfterAllHandlersBeforeAllHandlers extends SakuraApiModel {
+    class UserAfterAllHandlersBeforeAllHandlers extends SapiModelMixin() {
       @Db() @Json()
       firstName = 'George';
       @Db() @Json()
@@ -1555,7 +1556,7 @@ describe('core/@Routable', () => {
           db: 'userDb'
         }
       })
-      class BeforeAfterInjectRouteTestModel extends SakuraApiModel {
+      class BeforeAfterInjectRouteTestModel extends SapiModelMixin() {
         @Db() @Json()
         firstName = 'George';
 
@@ -1567,7 +1568,7 @@ describe('core/@Routable', () => {
         baseUrl: 'GetAllRouteHandlerBeforeAfterTest',
         model: BeforeAfterInjectRouteTestModel
       })
-      class GetAllRouteHandlerBeforeAfterTest extends SakuraApiRoutable {
+      class GetAllRouteHandlerBeforeAfterTest extends SapiRoutableMixin() {
         static getAfterTest(req: Request, res: Response, next: NextFunction) {
 
           const resLocal = res.locals as IRoutableLocals;
@@ -1656,7 +1657,7 @@ describe('core/@Routable', () => {
           db: 'userDb'
         }
       })
-      class BeforeAfterInjectRouteTestModel extends SakuraApiModel {
+      class BeforeAfterInjectRouteTestModel extends SapiModelMixin() {
         @Db() @Json()
         firstName = 'George';
 
@@ -1668,7 +1669,7 @@ describe('core/@Routable', () => {
         baseUrl: 'GetRouteHandlerBeforeAfterTest',
         model: BeforeAfterInjectRouteTestModel
       })
-      class GetRouteHandlerBeforeAfterTest extends SakuraApiRoutable {
+      class GetRouteHandlerBeforeAfterTest extends SapiRoutableMixin() {
         static getAfterTest(req: Request, res: Response, next: NextFunction) {
           const resLocal = res.locals as IRoutableLocals;
 
@@ -1761,7 +1762,7 @@ describe('core/@Routable', () => {
   describe('sapi injected', () => {
 
     @Routable()
-    class TestRoutableSapiInjection extends SakuraApiModel {
+    class TestRoutableSapiInjection extends SapiModelMixin() {
     }
 
     let sapi;

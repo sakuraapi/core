@@ -1,5 +1,5 @@
 import {NextFunction, Request, Response} from 'express';
-import {IDbGetParams, SakuraApiModel} from '../core/@model';
+import {IDbGetParams} from '../core/@model';
 import {IRoutableLocals, routableSymbols} from '../core/@routable/routable';
 import {DUPLICATE_RESOURCE} from '../core/helpers/http-status';
 import {SanitizeMongoDB as Sanitize} from '../core/security/mongo-db';
@@ -216,7 +216,7 @@ export function putRouteHandler(req: Request, res: Response, next: NextFunction)
 
   model
     .getById(id)
-    .then((obj: SakuraApiModel) => {
+    .then((obj) => {
       if (!obj) {
         resLocals.status = 404;
         return next();

@@ -1,14 +1,6 @@
 import {
-  Collection,
-  CollectionInsertOneOptions,
-  CollectionOptions,
-  Cursor,
-  Db,
-  DeleteWriteOpResultObject,
-  InsertOneWriteOpResult,
-  ObjectID,
-  ReplaceOneOptions,
-  UpdateWriteOpResult
+  Collection, CollectionInsertOneOptions, CollectionOptions, Cursor, Db, DeleteWriteOpResultObject,
+  InsertOneWriteOpResult, ObjectID, ReplaceOneOptions, UpdateWriteOpResult
 } from 'mongodb';
 import {getDependencyInjections} from '../@injectable/injectable';
 import {addDefaultInstanceMethods, addDefaultStaticMethods, shouldRecurse} from '../helpers';
@@ -287,19 +279,11 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     // Developer notes:
     //
     // Instance method injection... TypeScript won't know these are part of the type of the object being constructed
-    // since they're dynamically injected. This is best done with TypeScript declaration merging.
-    //     See: https://www.typescriptlang.org/docs/handbook/declaration-merging.html
+    // since they're dynamically injected. You can use the SapiModelMixin to overcome this.
     //
     //  example:
-    //
-    //    interface Example extends IModel {}
-    //
     //    @Model()
-    //    class Example {}
-    //
-    // alternatively:
-    //    @Model()
-    //    class Example extends SakuraApiModel {}
+    //    class Example extends SapiModelMixin() {}
     // =================================================================================================================
 
     // Inject default instance methods for CRUD if not already defined by integrator

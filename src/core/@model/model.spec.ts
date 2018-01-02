@@ -1,19 +1,16 @@
 import {InsertOneWriteOpResult, ObjectID, ReplaceOneOptions, UpdateWriteOpResult} from 'mongodb';
 import {testSapi} from '../../../spec/helpers/sakuraapi';
 import {SakuraApi} from '../sakura-api';
-import {Db, Json, Model, modelSymbols, SakuraApiModel} from './';
+import {Db, Json, Model, modelSymbols} from './';
 import {SapiDbForModelNotFound, SapiMissingIdErr} from './errors';
+import {SapiModelMixin} from './sapi-model-mixin';
 
 describe('core/@Model', () => {
 
   @Model()
-  class Test extends SakuraApiModel {
+  class Test extends SapiModelMixin() {
 
-    static getById(id: string, project?: any): Promise<string> {
-      return new Promise((resolve) => {
-        resolve('custom');
-      });
-    }
+    isCustom = false;
 
     constructor() {
       super();
@@ -29,9 +26,15 @@ describe('core/@Model', () => {
             nModified: -1,
             ok: 1
           }
-        });
+        } as any);
     }
   }
+
+  (Test as any).getById = async (id: string, project?: any): Promise<Test> => {
+    const test = new Test();
+    test.isCustom = true;
+    return test;
+  };
 
   describe('construction', () => {
 
@@ -104,7 +107,7 @@ describe('core/@Model', () => {
       @Model({
         dbConfig
       })
-      class TestDefaultMethods extends SakuraApiModel {
+      class TestDefaultMethods extends SapiModelMixin() {
         @Db({
           field: 'fn'
         })
@@ -123,7 +126,7 @@ describe('core/@Model', () => {
           db: 'bad'
         }
       })
-      class TestBadDb extends SakuraApiModel {
+      class TestBadDb extends SapiModelMixin() {
       }
 
       let sapi = null;
@@ -457,7 +460,7 @@ describe('core/@Model', () => {
                   db: 'userDb'
                 }
               })
-              class UserCreateTest extends SakuraApiModel {
+              class UserCreateTest extends SapiModelMixin() {
                 @Db()
                 firstName = 'George';
                 @Db()
@@ -538,7 +541,7 @@ describe('core/@Model', () => {
             }
 
             @Model({dbConfig})
-            class TestParent extends SakuraApiModel {
+            class TestParent extends SapiModelMixin() {
               @Db() @Json()
               pVal = 'parent';
 
@@ -773,7 +776,7 @@ describe('core/@Model', () => {
                   promiscuous: true
                 }
               })
-              class PartialUpdateTest extends SakuraApiModel {
+              class PartialUpdateTest extends SapiModelMixin() {
                 @Db('fn')
                 firstName = 'George';
 
@@ -976,7 +979,7 @@ describe('core/@Model', () => {
         Test
           .getById('123')
           .then((result) => {
-            expect(result).toBe('custom');
+            expect(result.isCustom).toBe(true);
             done();
           })
           .catch(done.fail);
@@ -995,7 +998,7 @@ describe('core/@Model', () => {
 
     describe('allows integrator to exclude CRUD with suppressInjection: [] in ModelOptions', () => {
       @Model({suppressInjection: ['get', 'save']})
-      class TestSuppressedDefaultMethods extends SakuraApiModel {
+      class TestSuppressedDefaultMethods extends SapiModelMixin() {
       }
 
       beforeEach(() => {
@@ -1022,7 +1025,7 @@ describe('core/@Model', () => {
           promiscuous: true
         }
       })
-      class NestedModel extends SakuraApiModel {
+      class NestedModel extends SapiModelMixin() {
         @Db()
         contact: {
           firstName: string,
@@ -1091,7 +1094,7 @@ describe('core/@Model', () => {
             db: 'userDb'
           }
         })
-        class ModelDateStoreAndRestoreTest extends SakuraApiModel {
+        class ModelDateStoreAndRestoreTest extends SapiModelMixin() {
           @Db() @Json()
           date: Date = new Date();
         }
@@ -1172,7 +1175,7 @@ describe('core/@Model', () => {
             db: 'userDb'
           }
         })
-        class ModelArrayStoreAndRestoreTest extends SakuraApiModel {
+        class ModelArrayStoreAndRestoreTest extends SapiModelMixin() {
           @Db() @Json()
           anArray = ['value1', 'value2'];
         }
@@ -1253,7 +1256,7 @@ describe('core/@Model', () => {
     describe('sapi injected', () => {
 
       @Model()
-      class TestSapiInjection extends SakuraApiModel {
+      class TestSapiInjection extends SapiModelMixin() {
       }
 
       let sapi;
