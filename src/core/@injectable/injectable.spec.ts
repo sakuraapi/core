@@ -13,6 +13,8 @@ import {
   ProvidersMustBeDecoratedWithInjectableError
 } from './injectable';
 
+/* tslint:disable:no-shadowed-variable */
+
 describe('@Injectable', () => {
 
   describe('Error handling', () => {
@@ -403,3 +405,5 @@ describe('@Injectable', () => {
     });
   });
 });
+
+/* tslint:enable:no-shadowed-variable */

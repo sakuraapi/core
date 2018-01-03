@@ -2,10 +2,7 @@ import {Handler} from 'express';
 import * as path from 'path';
 import 'reflect-metadata';
 import {
-  deleteRouteHandler,
-  getAllRouteHandler,
-  getRouteHandler,
-  postRouteHandler,
+  deleteRouteHandler, getAllRouteHandler, getRouteHandler, postRouteHandler,
   putRouteHandler
 } from '../../handlers/basic-handlers';
 import {getDependencyInjections} from '../@injectable/injectable';
@@ -410,7 +407,7 @@ export function Routable(options?: IRoutableOptions): any {
                            afterAll: Handler[],
                            constructorProxy: any): ISakuraApiClassRoute {
 
-      const path = ((method === 'get' || method === 'put' || method === 'delete')
+      const routePath = ((method === 'get' || method === 'put' || method === 'delete')
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
@@ -423,7 +420,7 @@ export function Routable(options?: IRoutableOptions): any {
         httpMethod: httpMethodMap[method],
         method: handler.name,
         name: target.name,
-        path,
+        path: routePath,
         routable: constructorProxy
       };
 

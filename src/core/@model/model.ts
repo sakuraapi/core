@@ -1010,10 +1010,10 @@ function toDb(changeSet?: any): object {
 
       if (shouldRecurse(source[key])) {
 
-        const newKey = keyMapper(key, source[key], dbOptionsByPropertyName);
-        if (newKey !== undefined) {
+        const aNewKey = keyMapper(key, source[key], dbOptionsByPropertyName);
+        if (aNewKey !== undefined) {
           const value = mapModelToDb(source[key], ++depth);
-          result[newKey] = value;
+          result[aNewKey] = value;
         }
 
         continue;
@@ -1129,11 +1129,11 @@ function toJson(): any {
       }
 
       if (shouldRecurse(source[key])) {
-        const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
+        const aNewKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
 
-        if (newKey !== undefined) {
+        if (aNewKey !== undefined) {
           const value = mapModelToJson(source[key]);
-          result[newKey] = value;
+          result[aNewKey] = value;
         }
 
         continue;

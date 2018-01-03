@@ -97,7 +97,7 @@ export class SakuraMongoDbConnection {
     if (db) {
       this.connections.delete(dbName);
       this.dbs.delete(dbName);
-      return await db.close(forceClose);
+      return db.close(forceClose);
     }
 
     return;

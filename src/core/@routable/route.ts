@@ -1,5 +1,5 @@
+import * as debug from 'debug';
 import {Handler} from 'express';
-import debug = require('debug');
 
 /**
  * Interface defining the valid properties for the `@`[[Route]] decorator.

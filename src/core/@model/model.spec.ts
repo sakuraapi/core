@@ -87,11 +87,11 @@ describe('core/@Model', () => {
             db: 'test'
           }
         })
-        class TestDbConfig {
+        class TestDbConfig1 {
         }
 
         expect(() => {
-          new TestDbConfig(); // tslint:disable-line
+          new TestDbConfig1(); // tslint:disable-line
         }).toThrow();
       });
     });

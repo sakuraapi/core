@@ -1,7 +1,7 @@
+import {json} from 'body-parser';
+import * as helmet from 'helmet';
 import * as path from 'path';
 import {SakuraApi, SakuraApiPlugin} from '../../src/core/sakura-api';
-import bodyParser = require('body-parser');
-import helmet = require('helmet');
 
 const baseUri = '/testApi';
 
@@ -28,6 +28,7 @@ process.on('unhandledRejection', (r) => {
   console.log('-'.repeat(process.stdout.columns).red);
   // tslint:enable:no-console
 
+  throw r;
 });
 
 export function testSapi(options: ITestSapiOptions): SakuraApi {
@@ -42,7 +43,7 @@ export function testSapi(options: ITestSapiOptions): SakuraApi {
   });
 
   sapi.addMiddleware(helmet(), 0);
-  sapi.addMiddleware(bodyParser.json(), 0);
+  sapi.addMiddleware(json(), 0);
 
   if (process.env.TRACE_REQ) {
     sapi.addMiddleware((req, res, next) => {

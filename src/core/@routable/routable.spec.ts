@@ -1,6 +1,7 @@
 // tslint:disable:no-shadowed-variable
 import {NextFunction, Request, Response} from 'express';
 import {ObjectID} from 'mongodb';
+import * as request from 'supertest';
 import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
 import {getAllRouteHandler, getRouteHandler} from '../../handlers/basic-handlers';
 import {Db, Json, Model, SapiModelMixin} from '../@model';
@@ -9,7 +10,6 @@ import {SakuraApi} from '../sakura-api';
 import {Routable, routableSymbols, Route} from './';
 import {IRoutableLocals} from './routable';
 import {SapiRoutableMixin} from './sapi-routable-mixin';
-import request = require('supertest');
 
 describe('core/@Routable', () => {
   describe('general functionality', () => {

@@ -13,15 +13,11 @@ import {SakuraApi} from '../sakura-api';
  *
  * See [[SapiModelMixin]] for more details.
  */
-export function SapiRoutableMixin<T extends Constructor<{}>>(Base?: T) {
-  Base = Base || class {
+export function SapiRoutableMixin<T extends Constructor<{}>>(base?: T) {
+  base = base || class {
   } as any;
 
-  return class extends Base {
-    constructor(...args: any[]) {
-      super(...args);
-    }
-
+  return class extends base {
     static getRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
     static getAllRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
     static putRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
@@ -33,5 +29,9 @@ export function SapiRoutableMixin<T extends Constructor<{}>>(Base?: T) {
 
     sapi?: SakuraApi;
     sapiConfig?: any;
+
+    constructor(...args: any[]) {
+      super(...args);
+    }
   };
 }

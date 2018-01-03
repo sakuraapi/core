@@ -482,6 +482,7 @@ describe('core/SakuraApi', () => {
     });
 
     it('can retrieve Model by name', () => {
+      // tslint:disable-next-line:variable-name
       const TestModel = sapi.getModelByName('TestDIModel');
 
       expect(TestModel).toBeDefined('Model should have been defined');
@@ -490,6 +491,7 @@ describe('core/SakuraApi', () => {
     });
 
     it('can retrieve Routable by name', () => {
+      // tslint:disable-next-line:variable-name
       const Routable = sapi.getRoutableByName('TestDIRoutable');
 
       expect(Routable).toBeDefined('Routable should have been defined');
@@ -503,6 +505,7 @@ describe('core/SakuraApi', () => {
         routables: [TestDIRoutable]
       });
 
+      // tslint:disable-next-line:variable-name
       const TestModel = sapi.getModelByName('TestDIModel');
       const testModel = TestModel.fromJson({});
 
@@ -518,6 +521,7 @@ describe('core/SakuraApi', () => {
         routables: [{use: TestDIRoutableOverride, for: TestDIRoutable}]
       });
 
+      // tslint:disable-next-line:variable-name
       const TestRoutable = sapi.getRoutableByName('TestDIRoutable');
       const testRoutable = new TestRoutable();
 

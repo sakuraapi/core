@@ -781,7 +781,7 @@ describe('@Json', () => {
     describe('id behavior', () => {
 
       @Model()
-      class User extends SapiModelMixin() {
+      class User1 extends SapiModelMixin() {
       }
 
       it('unmarshalls id as an ObjectID when it is a valid ObjectID', () => {
@@ -789,10 +789,10 @@ describe('@Json', () => {
           id: new ObjectID().toString()
         };
 
-        const user = User.fromJson(data);
+        const user = User1.fromJson(data);
 
-        expect(new User().id).toBeDefined('nope');
-        expect(user instanceof User).toBeTruthy('Should have gotten back an instance of User');
+        expect(new User1().id).toBeDefined('nope');
+        expect(user instanceof User1).toBeTruthy('Should have gotten back an instance of User');
         expect(user.id instanceof ObjectID).toBeTruthy();
         expect(user._id instanceof ObjectID).toBeTruthy();
       });

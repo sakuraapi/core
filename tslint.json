@@ -12,6 +12,10 @@
       true,
       128
     ],
+    "no-implicit-dependencies": [
+      true,
+      "dev"
+    ],
     "quotemark": [
       true,
       "single",
@@ -26,7 +30,10 @@
     ],
     "interface-name": false,
     "prefer-object-spread": false,
-    "variable-name": false,
+    "variable-name": [
+      true,
+      "allow-leading-underscore"
+    ],
     "no-object-literal-type-assertion": false,
     "prefer-for-of": false
   },

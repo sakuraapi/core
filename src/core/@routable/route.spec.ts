@@ -1,4 +1,3 @@
-import * as express from 'express';
 import {NextFunction, Request, Response} from 'express';
 import * as request from 'supertest';
 import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
@@ -17,7 +16,7 @@ describe('core/Route', () => {
       method: 'get',
       path: '/'
     })
-    someMethod(req: express.Request, res: express.Response) {
+    someMethod(req: Request, res: Response) {
       res
         .status(200)
         .send({someMethodCalled: true});
@@ -27,7 +26,7 @@ describe('core/Route', () => {
       method: 'post',
       path: 'someOtherMethod/'
     })
-    someOtherMethod(req: express.Request, res: express.Response) {
+    someOtherMethod(req: Request, res: Response) {
       res
         .status(200)
         .send({someOtherMethodCalled: true});
@@ -37,7 +36,7 @@ describe('core/Route', () => {
       method: 'post',
       path: 'someBlacklistedMethod/'
     })
-    someBlacklistedMethod(req: express.Request, res: express.Response) {
+    someBlacklistedMethod(req: Request, res: Response) {
       res
         .status(200)
         .send({someOtherMethodCalled: true});

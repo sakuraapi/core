@@ -1,11 +1,10 @@
 import * as debugInit from 'debug';
-import * as express from 'express';
-import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response} from 'express';
+import * as express from 'express'; // tslint:disable-line
+import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response, Router} from 'express'; // tslint:disable-line
 import * as http from 'http';
 import {SakuraApiConfig} from '../boot/sakura-api-config';
 import {
-  injectableSymbols,
-  ProviderNotRegistered,
+  injectableSymbols, ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
 } from './@injectable/injectable';
 import {modelSymbols} from './@model/model';
@@ -421,7 +420,7 @@ export class SakuraApi {
     }
 
     // Setup @Routable routes ----------------------------------------------------------------------------------------
-    router = express.Router();
+    router = Router();
 
     debug.route('\t.listen processing route queue');
     // add routes
@@ -465,9 +464,9 @@ export class SakuraApi {
     // Setup DB Connetions -------------------------------------------------------------------------------------------
     if (this.dbConnections) {
       await this.dbConnections.connectAll();
-      return await listen.bind(this)();
+      return listen.bind(this)();
     } else {
-      return await listen.bind(this)();
+      return listen.bind(this)();
     }
 
     //////////
