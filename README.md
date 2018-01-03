@@ -170,7 +170,7 @@ This is a new tiny community, so if you don't get a response right away, it migh
 
 ## Dependencies:
 
-* TypeScript >= 2.2
+* TypeScript >= 2.6
 * NodeJS >= 8.0
 
 (among other things)
@@ -268,3 +268,31 @@ There are some properties in the environmental config that are used by the syste
 ```
 Naturally, anything you define is available to you. You get access to the configuration through `SakuraApi.instsance.config`.
 
+# Some tips for contributing to SakuraApi
+
+## Dependencies
+To build this project you must have:
+
+* npm 5+
+* node
+* docker
+* a bash compatible terminal
+
+## Building the Project
+
+* `npm run build`: builds the project and outputs the build to `lib/`
+* `npm start`: builds the project and continually monitors for changes, which trigger builds
+* `npm run start:test`: builds the project and continually monitors for changes, which trigger tests to be re-run (continual testing)
+* `doc:generate`: serves up the doc files -- do not commit these unless you are responsible for publishing a release 
+
+## Testing
+
+* `npm test`: runs the full suite of tests
+* `npm run test:db`: runs the full suite of tests and preserves the DB (`docker ps`, connect via port 37001). This is helpful if you need to inspect the state of the database during test development
+* `npm run test:debug`: runs tests with `DEBUG=sapi:*,-sapi:*:verbose` set
+* `npm run test:verbose`: runs tests with `DEBUG=sapi:*` set
+* `npm run test:vverbose`: runs tests with `DEBUG=*` set
+
+## Lint
+
+* `npm run lint`
