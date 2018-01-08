@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>SakuraApiPluginResult | SakuraApi</title>
+	<title>&quot;core/helpers/constructor-type&quot; | SakuraApi</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -54,111 +54,49 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_core_sakura_api_.html">&quot;core/sakura-api&quot;</a>
-				</li>
-				<li>
-					<a href="_core_sakura_api_.sakuraapipluginresult.html">SakuraApiPluginResult</a>
+					<a href="_core_helpers_constructor_type_.html">&quot;core/helpers/constructor-type&quot;</a>
 				</li>
 			</ul>
-			<h1>Interface SakuraApiPluginResult</h1>
+			<h1>External module &quot;core/helpers/constructor-type&quot;</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
-			<section class="tsd-panel tsd-comment">
-				<div class="tsd-comment tsd-typography">
-					<div class="lead">
-						<p>The interface of an object returned from a SakuraApi plugin (for example native-authentication-authority)</p>
-					</div>
-				</div>
-			</section>
-			<section class="tsd-panel tsd-hierarchy">
-				<h3>Hierarchy</h3>
-				<ul class="tsd-hierarchy">
-					<li>
-						<span class="target">SakuraApiPluginResult</span>
-					</li>
-				</ul>
-			</section>
 			<section class="tsd-panel-group tsd-index-group">
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>Properties</h3>
+							<h3>Type aliases</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core_sakura_api_.sakuraapipluginresult.html#middlewarehandlers" class="tsd-kind-icon">middleware<wbr>Handlers</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core_sakura_api_.sakuraapipluginresult.html#models" class="tsd-kind-icon">models</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core_sakura_api_.sakuraapipluginresult.html#providers" class="tsd-kind-icon">providers</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core_sakura_api_.sakuraapipluginresult.html#routables" class="tsd-kind-icon">routables</a></li>
+								<li class="tsd-kind-type-alias tsd-parent-kind-external-module"><a href="_core_helpers_constructor_type_.html#constructor" class="tsd-kind-icon">Constructor</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="middlewarehandlers" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> middleware<wbr>Handlers</h3>
-					<div class="tsd-signature tsd-kind-icon">middleware<wbr>Handlers<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Handler</span><span class="tsd-signature-symbol">[]</span></div>
+				<h2>Type aliases</h2>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-external-module">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>Constructor</h3>
+					<div class="tsd-signature tsd-kind-icon">Constructor<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L50">core/sakura-api.ts:50</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/helpers/constructor-type.ts#L4">core/helpers/constructor-type.ts:4</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>Route handlers that get called before any specific route handlers are called. This is for plugins that
-							inspect all incoming requests before they&#39;re passed off to specific route handlers.</p>
+							<p>Used for mixins</p>
 						</div>
 					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="models" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> models</h3>
-					<div class="tsd-signature tsd-kind-icon">models<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L54">core/sakura-api.ts:54</a></li>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
 						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p><code>@Model</code> decorated models for the plugin.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="providers" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> providers</h3>
-					<div class="tsd-signature tsd-kind-icon">providers<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L45">core/sakura-api.ts:45</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p><code>@Injectable</code> decorated services for the plugin.</p>
-						</div>
-					</div>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="routables" class="tsd-anchor"></a>
-					<h3><span class="tsd-flag ts-flagOptional">Optional</span> routables</h3>
-					<div class="tsd-signature tsd-kind-icon">routables<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">[]</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L58">core/sakura-api.ts:58</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p><code>@Routable</code> decorated models for the plugin.</p>
-						</div>
 					</div>
 				</section>
 			</section>
@@ -170,104 +108,74 @@
 						<a href="../globals.html"><em>Globals</em></a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_boot_sakura_api_config_.html">"boot/sakura-<wbr>api-<wbr>config"</a>
+						<a href="_boot_sakura_api_config_.html">"boot/sakura-<wbr>api-<wbr>config"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__injectable_injectable_.html">"core/@injectable/injectable"</a>
+						<a href="_core__injectable_injectable_.html">"core/@injectable/injectable"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__injectable_sakura_api_injectable_.html">"core/@injectable/sakura-<wbr>api-<wbr>injectable"</a>
+						<a href="_core__injectable_sapi_injectable_mixin_.html">"core/@injectable/sapi-<wbr>injectable-<wbr>mixin"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__model_db_.html">"core/@model/db"</a>
+						<a href="_core__model_db_.html">"core/@model/db"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__model_errors_.html">"core/@model/errors"</a>
+						<a href="_core__model_errors_.html">"core/@model/errors"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__model_json_.html">"core/@model/json"</a>
+						<a href="_core__model_json_.html">"core/@model/json"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__model_model_.html">"core/@model/model"</a>
+						<a href="_core__model_model_.html">"core/@model/model"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__model_private_.html">"core/@model/private"</a>
+						<a href="_core__model_private_.html">"core/@model/private"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__model_sakura_api_model_.html">"core/@model/sakura-<wbr>api-<wbr>model"</a>
+						<a href="_core__model_sapi_model_mixin_.html">"core/@model/sapi-<wbr>model-<wbr>mixin"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__routable_routable_.html">"core/@routable/routable"</a>
+						<a href="_core__routable_routable_.html">"core/@routable/routable"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__routable_route_.html">"core/@routable/route"</a>
+						<a href="_core__routable_route_.html">"core/@routable/route"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__routable_sakura_api_routable_.html">"core/@routable/sakura-<wbr>api-<wbr>routable"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core_helpers_http_status_.html">"core/helpers/http-<wbr>status"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core_helpers_should_recurse_.html">"core/helpers/should-<wbr>recurse"</a>
+						<a href="_core__routable_sapi_routable_mixin_.html">"core/@routable/sapi-<wbr>routable-<wbr>mixin"</a>
 					</li>
 					<li class="current tsd-kind-external-module">
-						<a href="../modules/_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
+						<a href="_core_helpers_constructor_type_.html">"core/helpers/constructor-<wbr>type"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core_sakura_mongo_db_connection_.html">"core/sakura-<wbr>mongo-<wbr>db-<wbr>connection"</a>
+						<a href="_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core_security_mongo_db_.html">"core/security/mongo-<wbr>db"</a>
+						<a href="_core_helpers_http_status_.html">"core/helpers/http-<wbr>status"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_handlers_basic_handlers_.html">"handlers/basic-<wbr>handlers"</a>
+						<a href="_core_helpers_should_recurse_.html">"core/helpers/should-<wbr>recurse"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="_core_plugins_.html">"core/plugins"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="_core_sakura_mongo_db_connection_.html">"core/sakura-<wbr>mongo-<wbr>db-<wbr>connection"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="_core_security_mongo_db_.html">"core/security/mongo-<wbr>db"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="_handlers_basic_handlers_.html">"handlers/basic-<wbr>handlers"</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/_core_sakura_api_.sakuraapi.html" class="tsd-kind-icon">Sakura<wbr>Api</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="_core_sakura_api_.iprovidercontainer.html" class="tsd-kind-icon">IProvider<wbr>Container</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_core_sakura_api_.sakuraapioptions.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_core_sakura_api_.sakuraapiplugin.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin</a>
-					</li>
-				</ul>
-				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_core_sakura_api_.sakuraapipluginresult.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin<wbr>Result</a>
-						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_core_sakura_api_.sakuraapipluginresult.html#middlewarehandlers" class="tsd-kind-icon">middleware<wbr>Handlers</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_core_sakura_api_.sakuraapipluginresult.html#models" class="tsd-kind-icon">models</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_core_sakura_api_.sakuraapipluginresult.html#providers" class="tsd-kind-icon">providers</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_core_sakura_api_.sakuraapipluginresult.html#routables" class="tsd-kind-icon">routables</a>
-							</li>
-						</ul>
-					</li>
-				</ul>
-				<ul class="after-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_core_sakura_api_.serverconfig.html" class="tsd-kind-icon">Server<wbr>Config</a>
-					</li>
-					<li class=" tsd-kind-object-literal tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="../modules/_core_sakura_api_.html#debug" class="tsd-kind-icon">debug</a>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
+						<a href="_core_helpers_constructor_type_.html#constructor" class="tsd-kind-icon">Constructor</a>
 					</li>
 				</ul>
 			</nav>

@@ -90,6 +90,7 @@
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_route_.iroutablemethodoptions.html#after" class="tsd-kind-icon">after</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_route_.iroutablemethodoptions.html#authenticator" class="tsd-kind-icon">authenticator</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_route_.iroutablemethodoptions.html#before" class="tsd-kind-icon">before</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_route_.iroutablemethodoptions.html#blacklist" class="tsd-kind-icon">black<wbr>List</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__routable_route_.iroutablemethodoptions.html#method" class="tsd-kind-icon">method</a></li>
@@ -107,7 +108,7 @@
 					<div class="tsd-signature tsd-kind-icon">after<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">Handler</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Handler</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/@routable/route.ts#L93">core/@routable/route.ts:93</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@routable/route.ts#L102">core/@routable/route.ts:102</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -119,12 +120,29 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="authenticator" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> authenticator</h3>
+					<div class="tsd-signature tsd-kind-icon">authenticator<span class="tsd-signature-symbol">:</span> <a href="_core_plugins_.iauthenticatorconstructor.html" class="tsd-signature-type">IAuthenticatorConstructor</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><a href="_core_plugins_.iauthenticatorconstructor.html" class="tsd-signature-type">IAuthenticatorConstructor</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@routable/route.ts#L15">core/@routable/route.ts:15</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>An array or single <a href="_core_plugins_.iauthenticatorconstructor.html">IAuthenticatorConstructor</a>. <a href="../classes/_core_sakura_api_.sakuraapi.html">SakuraApi</a> works through the authenticators
+								left to right. If <code>@</code><a href="../modules/_core__routable_routable_.html#routable">Routable</a> for this <code>@</code><a href="../modules/_core__routable_route_.html#route">Route</a> defines authenticators, they will be appended to the
+							right of the array when handling the route (i.e., they&#39;ll happen after this routes authenticators).</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="before" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> before</h3>
 					<div class="tsd-signature tsd-kind-icon">before<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">Handler</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Handler</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/@routable/route.ts#L85">core/@routable/route.ts:85</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@routable/route.ts#L94">core/@routable/route.ts:94</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -175,7 +193,7 @@ class UserApi {
 					<div class="tsd-signature tsd-kind-icon">black<wbr>List<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/@routable/route.ts#L43">core/@routable/route.ts:43</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@routable/route.ts#L52">core/@routable/route.ts:52</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -191,7 +209,7 @@ class UserApi {
 					<div class="tsd-signature tsd-kind-icon">method<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/@routable/route.ts#L38">core/@routable/route.ts:38</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@routable/route.ts#L47">core/@routable/route.ts:47</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -208,7 +226,7 @@ class UserApi {
 					<div class="tsd-signature tsd-kind-icon">path<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/@routable/route.ts#L31">core/@routable/route.ts:31</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@routable/route.ts#L40">core/@routable/route.ts:40</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -250,7 +268,7 @@ class User {
 						<a href="../modules/_core__injectable_injectable_.html">"core/@injectable/injectable"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__injectable_sakura_api_injectable_.html">"core/@injectable/sakura-<wbr>api-<wbr>injectable"</a>
+						<a href="../modules/_core__injectable_sapi_injectable_mixin_.html">"core/@injectable/sapi-<wbr>injectable-<wbr>mixin"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__model_db_.html">"core/@model/db"</a>
@@ -268,7 +286,7 @@ class User {
 						<a href="../modules/_core__model_private_.html">"core/@model/private"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__model_sakura_api_model_.html">"core/@model/sakura-<wbr>api-<wbr>model"</a>
+						<a href="../modules/_core__model_sapi_model_mixin_.html">"core/@model/sapi-<wbr>model-<wbr>mixin"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__routable_routable_.html">"core/@routable/routable"</a>
@@ -277,7 +295,10 @@ class User {
 						<a href="../modules/_core__routable_route_.html">"core/@routable/route"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__routable_sakura_api_routable_.html">"core/@routable/sakura-<wbr>api-<wbr>routable"</a>
+						<a href="../modules/_core__routable_sapi_routable_mixin_.html">"core/@routable/sapi-<wbr>routable-<wbr>mixin"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_helpers_constructor_type_.html">"core/helpers/constructor-<wbr>type"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
@@ -287,6 +308,9 @@ class User {
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_helpers_should_recurse_.html">"core/helpers/should-<wbr>recurse"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_plugins_.html">"core/plugins"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
@@ -311,6 +335,9 @@ class User {
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_core__routable_route_.iroutablemethodoptions.html#after" class="tsd-kind-icon">after</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__routable_route_.iroutablemethodoptions.html#authenticator" class="tsd-kind-icon">authenticator</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_core__routable_route_.iroutablemethodoptions.html#before" class="tsd-kind-icon">before</a>

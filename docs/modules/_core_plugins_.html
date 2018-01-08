@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>&quot;core/@model/db&quot; | SakuraApi</title>
+	<title>&quot;core/plugins&quot; | SakuraApi</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -54,10 +54,10 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="_core__model_db_.html">&quot;core/@model/db&quot;</a>
+					<a href="_core_plugins_.html">&quot;core/plugins&quot;</a>
 				</li>
 			</ul>
-			<h1>External module &quot;core/@model/db&quot;</h1>
+			<h1>External module &quot;core/plugins&quot;</h1>
 		</div>
 	</div>
 </header>
@@ -69,76 +69,135 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
+							<h3>Classes</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-class tsd-parent-kind-external-module"><a href="../classes/_core_plugins_.anonymous.html" class="tsd-kind-icon">Anonymous</a></li>
+								<li class="tsd-kind-class tsd-parent-kind-external-module"><a href="../classes/_core_plugins_.authenticatornotregistered.html" class="tsd-kind-icon">Authenticator<wbr>Not<wbr>Registered</a></li>
+								<li class="tsd-kind-class tsd-parent-kind-external-module"><a href="../classes/_core_plugins_.authenticatorsmustbedecoratedwithauthenticatorpluginerror.html" class="tsd-kind-icon">Authenticators<wbr>Must<wbr>BeDecorated<wbr>With<wbr>Authenticator<wbr>Plugin<wbr>Error</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
 							<h3>Interfaces</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_core__model_db_.idboptions.html" class="tsd-kind-icon">IDb<wbr>Options</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-kind-icon">Authenticator<wbr>Plugin<wbr>Result</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_core_plugins_.iauthenticator.html" class="tsd-kind-icon">IAuthenticator</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_core_plugins_.iauthenticatorconstructor.html" class="tsd-kind-icon">IAuthenticator<wbr>Constructor</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_core_plugins_.sakuraapiplugin.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin</a></li>
+								<li class="tsd-kind-interface tsd-parent-kind-external-module"><a href="../interfaces/_core_plugins_.sakuraapipluginresult.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin<wbr>Result</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Type aliases</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-type-alias tsd-parent-kind-external-module"><a href="_core_plugins_.html#authenticationhandler" class="tsd-kind-icon">Authentication<wbr>Handler</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Functions</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_core__model_db_.html#db" class="tsd-kind-icon">Db</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_core_plugins_.html#authenticatorplugin" class="tsd-kind-icon">Authenticator<wbr>Plugin</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Object literals</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-object-literal tsd-parent-kind-external-module"><a href="_core__model_db_.html#dbsymbols" class="tsd-kind-icon">db<wbr>Symbols</a></li>
+								<li class="tsd-kind-object-literal tsd-parent-kind-external-module"><a href="_core_plugins_.html#authenticatorpluginsymbols" class="tsd-kind-icon">authenticator<wbr>Plugin<wbr>Symbols</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Type aliases</h2>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-external-module">
+					<a name="authenticationhandler" class="tsd-anchor"></a>
+					<h3>Authentication<wbr>Handler</h3>
+					<div class="tsd-signature tsd-kind-icon">Authentication<wbr>Handler<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/plugins.ts#L109">core/plugins.ts:109</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Used by [[Authenticator]]</p>
+						</div>
+					</div>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-siganture">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-type-alias tsd-is-not-exported">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>req<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Request</span>, res<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Response</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a><span class="tsd-signature-symbol">&gt;</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>req: <span class="tsd-signature-type">Request</span></h5>
+											</li>
+											<li>
+												<h5>res: <span class="tsd-signature-type">Response</span></h5>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a><span class="tsd-signature-symbol">&gt;</span></h4>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Functions</h2>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module">
-					<a name="db" class="tsd-anchor"></a>
-					<h3>Db</h3>
+					<a name="authenticatorplugin" class="tsd-anchor"></a>
+					<h3>Authenticator<wbr>Plugin</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
-						<li class="tsd-signature tsd-kind-icon">Db<span class="tsd-signature-symbol">(</span>dbOptions<span class="tsd-signature-symbol">?: </span><a href="../interfaces/_core__model_db_.idboptions.html" class="tsd-signature-type">IDbOptions</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span></li>
+						<li class="tsd-signature tsd-kind-icon">Authenticator<wbr>Plugin<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/db.ts#L68">core/@model/db.ts:68</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/plugins.ts#L155">core/plugins.ts:155</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p><code>@</code>AuthenticatorPlugin decorates AuthAuthentication plugin classes. These classes should
+										have the following shape:
+									```</p>
+								</div>
 								<dl class="tsd-comment-tags">
-									<dt>decorator</dt>
-									<dd><p><code>@Db</code> decorates fields in a class decorated by <code>@</code><a href="_core__model_model_.html#model">Model</a>.</p>
+									<dt>authenticatorplugin()</dt>
+									<dd><p>export class AuthAudience {</p>
+										<p>  constructor(private handlers: Handler[]) {
+										}</p>
+										<p>  authenticate(req: Request, res: Response, next: NextFunction) {
+											// do auth checks here. Throw if
+											}
+											}
+										```</p>
 									</dd>
 								</dl>
 							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> dbOptions: <a href="../interfaces/_core__model_db_.idboptions.html" class="tsd-signature-type">IDbOptions</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
-									<div class="tsd-comment tsd-typography">
-										<p>When a string is provided, this sets the <a href="../interfaces/_core__model_db_.idboptions.html#field">IDbOptions.field</a>.</p>
-									</div>
-								</li>
-							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">function</span></h4>
-							<p>Used by the framework to reflect on the <code>@Db</code> properties defined.</p>
 							<ul class="tsd-parameters">
 								<li class="tsd-parameter-siganture">
 									<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
-										<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>target<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+										<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>any<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
 									</ul>
 									<ul class="tsd-descriptions">
 										<li class="tsd-description">
 											<h4 class="tsd-parameters-title">Parameters</h4>
 											<ul class="tsd-parameters">
 												<li>
-													<h5>target: <span class="tsd-signature-type">any</span></h5>
-												</li>
-												<li>
-													<h5>key: <span class="tsd-signature-type">string</span></h5>
+													<h5>any: <span class="tsd-signature-type">any</span></h5>
 												</li>
 											</ul>
-											<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+											<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
 										</li>
 									</ul>
 								</li>
@@ -150,62 +209,53 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Object literals</h2>
 				<section class="tsd-panel tsd-member tsd-kind-object-literal tsd-parent-kind-external-module">
-					<a name="dbsymbols" class="tsd-anchor"></a>
-					<h3>db<wbr>Symbols</h3>
-					<div class="tsd-signature tsd-kind-icon">db<wbr>Symbols<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<a name="authenticatorpluginsymbols" class="tsd-anchor"></a>
+					<h3>authenticator<wbr>Plugin<wbr>Symbols</h3>
+					<div class="tsd-signature tsd-kind-icon">authenticator<wbr>Plugin<wbr>Symbols<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/db.ts#L6">core/@model/db.ts:6</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/plugins.ts#L15">core/plugins.ts:15</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>The symbols used by Reflect to store <code>@</code><a href="_core__model_db_.html#db">Db</a>() metadata for use by <code>@</code>[[Module]].</p>
+							<p>For internal use. Do not rely on this - it can change at any time.</p>
 						</div>
 						<dl class="tsd-comment-tags">
 							<dt>internal</dt>
-							<dd><p>These symbols are not considered part of the API contract and may change or be removed without
-								notice on patch releases.</p>
+							<dd></dd>
+							<dt>type</dt>
+							<dd><p>{{id: symbol; isAuthenticator: symbol; sapi: symbol}}</p>
 							</dd>
 						</dl>
 					</div>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
-						<a name="dbsymbols.dbbyfieldname" class="tsd-anchor"></a>
-						<h3>db<wbr>ByField<wbr>Name</h3>
-						<div class="tsd-signature tsd-kind-icon">db<wbr>ByField<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;sakuraApiDbByFieldName&#x27;)</span></div>
+						<a name="authenticatorpluginsymbols.id" class="tsd-anchor"></a>
+						<h3>id</h3>
+						<div class="tsd-signature tsd-kind-icon">id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;id&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/db.ts#L7">core/@model/db.ts:7</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/plugins.ts#L16">core/plugins.ts:16</a></li>
 							</ul>
 						</aside>
 					</section>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
-						<a name="dbsymbols.dbbypropertyname" class="tsd-anchor"></a>
-						<h3>db<wbr>ByProperty<wbr>Name</h3>
-						<div class="tsd-signature tsd-kind-icon">db<wbr>ByProperty<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;sakuraApiDbByPropertyName&#x27;)</span></div>
+						<a name="authenticatorpluginsymbols.isauthenticator" class="tsd-anchor"></a>
+						<h3>is<wbr>Authenticator</h3>
+						<div class="tsd-signature tsd-kind-icon">is<wbr>Authenticator<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;isAuthenticator&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/db.ts#L8">core/@model/db.ts:8</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/plugins.ts#L17">core/plugins.ts:17</a></li>
 							</ul>
 						</aside>
 					</section>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
-						<a name="dbsymbols.hasnewchildoption" class="tsd-anchor"></a>
-						<h3>has<wbr>New<wbr>Child<wbr>Option</h3>
-						<div class="tsd-signature tsd-kind-icon">has<wbr>New<wbr>Child<wbr>Option<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;sakuraApiHasNewChildOption&#x27;)</span></div>
+						<a name="authenticatorpluginsymbols.sapi" class="tsd-anchor"></a>
+						<h3>sapi</h3>
+						<div class="tsd-signature tsd-kind-icon">sapi<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;sapi&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/db.ts#L9">core/@model/db.ts:9</a></li>
-							</ul>
-						</aside>
-					</section>
-					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
-						<a name="dbsymbols.propertyname" class="tsd-anchor"></a>
-						<h3>property<wbr>Name</h3>
-						<div class="tsd-signature tsd-kind-icon">property<wbr>Name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;sakuraApiDbOptionsPropertyName&#x27;)</span></div>
-						<aside class="tsd-sources">
-							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/db.ts#L10">core/@model/db.ts:10</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/plugins.ts#L18">core/plugins.ts:18</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -227,7 +277,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="_core__injectable_sapi_injectable_mixin_.html">"core/@injectable/sapi-<wbr>injectable-<wbr>mixin"</a>
 					</li>
-					<li class="current tsd-kind-external-module">
+					<li class=" tsd-kind-external-module">
 						<a href="_core__model_db_.html">"core/@model/db"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -266,7 +316,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="_core_helpers_should_recurse_.html">"core/helpers/should-<wbr>recurse"</a>
 					</li>
-					<li class=" tsd-kind-external-module">
+					<li class="current tsd-kind-external-module">
 						<a href="_core_plugins_.html">"core/plugins"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -285,14 +335,38 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-class tsd-parent-kind-external-module">
+						<a href="../classes/_core_plugins_.anonymous.html" class="tsd-kind-icon">Anonymous</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-external-module">
+						<a href="../classes/_core_plugins_.authenticatornotregistered.html" class="tsd-kind-icon">Authenticator<wbr>Not<wbr>Registered</a>
+					</li>
+					<li class=" tsd-kind-class tsd-parent-kind-external-module">
+						<a href="../classes/_core_plugins_.authenticatorsmustbedecoratedwithauthenticatorpluginerror.html" class="tsd-kind-icon">Authenticators<wbr>Must<wbr>BeDecorated<wbr>With<wbr>Authenticator<wbr>Plugin<wbr>Error</a>
+					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/_core__model_db_.idboptions.html" class="tsd-kind-icon">IDb<wbr>Options</a>
+						<a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-kind-icon">Authenticator<wbr>Plugin<wbr>Result</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/_core_plugins_.iauthenticator.html" class="tsd-kind-icon">IAuthenticator</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/_core_plugins_.iauthenticatorconstructor.html" class="tsd-kind-icon">IAuthenticator<wbr>Constructor</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/_core_plugins_.sakuraapiplugin.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
+						<a href="../interfaces/_core_plugins_.sakuraapipluginresult.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin<wbr>Result</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
+						<a href="_core_plugins_.html#authenticationhandler" class="tsd-kind-icon">Authentication<wbr>Handler</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
-						<a href="_core__model_db_.html#db" class="tsd-kind-icon">Db</a>
+						<a href="_core_plugins_.html#authenticatorplugin" class="tsd-kind-icon">Authenticator<wbr>Plugin</a>
 					</li>
 					<li class=" tsd-kind-object-literal tsd-parent-kind-external-module">
-						<a href="_core__model_db_.html#dbsymbols" class="tsd-kind-icon">db<wbr>Symbols</a>
+						<a href="_core_plugins_.html#authenticatorpluginsymbols" class="tsd-kind-icon">authenticator<wbr>Plugin<wbr>Symbols</a>
 					</li>
 				</ul>
 			</nav>
