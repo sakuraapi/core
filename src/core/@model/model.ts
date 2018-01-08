@@ -1,13 +1,35 @@
 import {
-  Collection, CollectionInsertOneOptions, CollectionOptions, Cursor, Db, DeleteWriteOpResultObject,
-  InsertOneWriteOpResult, ObjectID, ReplaceOneOptions, UpdateWriteOpResult
-} from 'mongodb';
+  Collection,
+  CollectionInsertOneOptions,
+  CollectionOptions,
+  Cursor,
+  Db,
+  DeleteWriteOpResultObject,
+  InsertOneWriteOpResult,
+  ObjectID,
+  ReplaceOneOptions,
+  UpdateWriteOpResult
+}                                from 'mongodb';
 import {getDependencyInjections} from '../@injectable/injectable';
-import {addDefaultInstanceMethods, addDefaultStaticMethods, shouldRecurse} from '../helpers';
-import {dbSymbols, IDbOptions} from './db';
-import {SapiDbForModelNotFound, SapiInvalidModelObject, SapiMissingIdErr} from './errors';
-import {IJsonOptions, jsonSymbols} from './json';
-import {privateSymbols} from './private';
+import {
+  addDefaultInstanceMethods,
+  addDefaultStaticMethods,
+  shouldRecurse
+}                                from '../helpers';
+import {
+  dbSymbols,
+  IDbOptions
+}                                from './db';
+import {
+  SapiDbForModelNotFound,
+  SapiInvalidModelObject,
+  SapiMissingIdErr
+}                                from './errors';
+import {
+  IJsonOptions,
+  jsonSymbols
+}                                from './json';
+import {privateSymbols}          from './private';
 
 const debug = {
   normal: require('debug')('sapi:model')
@@ -244,8 +266,7 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     newConstructor.fromJsonToDb = fromJsonToDb;
     newConstructor[modelSymbols.fromJsonToDb] = fromJsonToDb;
 
-    // Injected by SakuraApi in `.mapModels`
-    newConstructor[modelSymbols.sapi] = null;
+    newConstructor[modelSymbols.sapi] = null; // injected by [[SakuraApi.registerModels]]
 
     // Injects sapi as a shortcut property on models pointing to newConstructor[modelSymbols.sapi]
     Reflect.defineProperty(newConstructor, 'sapi', {

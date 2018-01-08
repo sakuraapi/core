@@ -1,61 +1,47 @@
-import * as debugInit from 'debug';
-import * as express from 'express'; // tslint:disable-line
-import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response, Router} from 'express'; // tslint:disable-line
-import * as http from 'http';
-import {SakuraApiConfig} from '../boot/sakura-api-config';
+import * as debugInit            from 'debug';
+import * as express              from 'express';
 import {
-  injectableSymbols, ProviderNotRegistered,
+  ErrorRequestHandler,
+  Express,
+  Handler,
+  NextFunction,
+  Request,
+  Response,
+  Router
+}                                from 'express';
+import * as http                 from 'http';
+import {SakuraApiConfig}         from '../boot';
+import {
+  injectableSymbols,
+  ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
-} from './@injectable/injectable';
-import {modelSymbols} from './@model/model';
-import {ISakuraApiClassRoute, routableSymbols} from './@routable';
-import {IRoutableLocals} from './@routable/routable';
+}                                from './';
+import {modelSymbols}            from './@model';
+import {
+  IRoutableLocals,
+  ISakuraApiClassRoute,
+  routableSymbols
+}                                from './@routable';
+import {
+  AuthenticatorNotRegistered,
+  AuthenticatorPluginResult,
+  authenticatorPluginSymbols,
+  AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError,
+  IAuthenticator,
+  IAuthenticatorConstructor,
+  SakuraApiPlugin,
+  SakuraApiPluginResult
+}                                from './plugins';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 
 const debug = {
+  authenticators: debugInit('sapi:authenticators'),
+  models: debugInit('sapi:models'),
   normal: debugInit('sapi:SakuraApi'),
   providers: debugInit('sapi:providers'),
-  route: debugInit('sapi:route')
+  route: debugInit('sapi:route'),
+  routables: debugInit('sapi:routables')
 };
-
-export interface SakuraApiPlugin {
-  /**
-   * Options passed into the plugin (see documentation for the plugin).
-   */
-  options?: any;
-  /**
-   * If the plugin includes middleware handlers, this is the order in which they'll be included. See
-   * [[SakuraApi.addMiddleware]]
-   */
-  order?: number;
-  /**
-   * A SakuraApi plugin that conforms to the interface (SakuraApi, any) => SakuraApiPluginResult;
-   */
-  plugin: (sapi: SakuraApi, options: any) => SakuraApiPluginResult;
-}
-
-/**
- * The interface of an object returned from a SakuraApi plugin (for example native-authentication-authority)
- */
-export interface SakuraApiPluginResult {
-  /**
-   * `@Injectable` decorated services for the plugin.
-   */
-  providers?: any[];
-  /**
-   * Route handlers that get called before any specific route handlers are called. This is for plugins that
-   * inspect all incoming requests before they're passed off to specific route handlers.
-   */
-  middlewareHandlers?: Handler[];
-  /**
-   * `@Model` decorated models for the plugin.
-   */
-  models?: any[];
-  /**
-   * `@Routable` decorated models for the plugin.
-   */
-  routables?: any[];
-}
 
 /**
  * Used for [[SakuraApi]] constructor
@@ -194,7 +180,6 @@ interface IProviderContainer {
  */
 export class SakuraApi {
 
-  // tslint:disable:variable-name
   private _address: string = '127.0.0.1';
   private _app: Express;
   private _baseUrl;
@@ -202,15 +187,45 @@ export class SakuraApi {
   private _dbConnections: SakuraMongoDbConnection;
   private _port: number = 3000;
   private _server: http.Server;
-  // tslint:enable:variable-name
 
-  private providers = new Map<string, IProviderContainer>();
+  private authenticators = new Map<string, IAuthenticator>();
   private lastErrorHandlers: ErrorRequestHandler[] = [];
   private listenCalled = false;
   private middlewareHandlers: { [key: number]: Handler[] } = {};
   private models = new Map<string, any>();
+  private providers = new Map<string, IProviderContainer>();
   private routables = new Map<string, any>();
   private routeQueue = new Map<string, ISakuraApiClassRoute>();
+
+  /**
+   * If implemented, `onAuthenticationError` will be called if there's [[AuthenticatorPluginResult]] status === false
+   * returned. Implement this to add logging and/or override the values of `authResult` (specifically status and
+   * data), to change what will be returned to the client.
+   *
+   * `AuthenticatorPluginResult`: [[AuthenticatorPluginResult]]
+   * `authenticatorName`: the name of the first authenticator constructor function that failed the user's authentication.
+   */
+  onAuthenticationError: (req: Request, res: Response, authResult?: AuthenticatorPluginResult, authenticatorName?: string) => Promise<AuthenticatorPluginResult>;
+
+  /**
+   * If implemented, `onAuthenticationFatalError` will be called if during authentication there's an unexpected,
+   * and therefore fatal error. The default behavior if not implemented is for SakuraApi to return an generic 500
+   * { error: 'SERVER_ERROR' }.
+   *
+   * You can return null/void to leave the default behavior alone or return an object with `{data: any, status:number}`
+   * to provide your own values.
+   */
+  onAuthenticationFatalError: (req: Request, res: Response, err: Error, authenticatorName?: string) => Promise<{ data: any, status: number } | void | null>;
+
+  /**
+   * If implemented, `onAuthenticationSuccess` will be called if there's [[AuthenticatorPluginResult]] status === true
+   * returned. Implement this to add logging and/or override the values of `authResult` (specifically status and
+   * data), to change what will be returned to the client.
+   *
+   * `AuthenticatorPluginResult`: [[AuthenticatorPluginResult]]
+   * `authenticatorName`: the name of the authenticator constructor function that succeeded the user's authentication.
+   */
+  onAuthenticationSuccess: (req: Request, res: Response, authResult?: AuthenticatorPluginResult, authenticatorName?: string) => Promise<AuthenticatorPluginResult>;
 
   /**
    * Returns the address of the server as a string.
@@ -438,22 +453,31 @@ export class SakuraApi {
         }
       ];
 
+      if (route.authenticators.length > 0) {
+        // add authenticators to middleware for route, if present
+        routeHandlers.push(authHandler.bind(this)(route));
+      }
+
       if (route.beforeAll) {
-        routeHandlers = routeHandlers.concat(route.beforeAll);
+        // add @Routable class beforeAll handlers if defined
+        routeHandlers = [...routeHandlers, ...route.beforeAll as Handler[]];
       }
 
       if (route.before) {
-        routeHandlers = routeHandlers.concat(route.before);
+        // add @Route before handlers if defined
+        routeHandlers = [...routeHandlers, ...route.before as Handler[]];
       }
 
       routeHandlers.push(route.f);
 
       if (route.after) {
-        routeHandlers = routeHandlers.concat(route.after);
+        // add @Route after handlers if defined
+        routeHandlers = [...routeHandlers, ...route.after as Handler[]];
       }
 
       if (route.afterAll) {
-        routeHandlers = routeHandlers.concat(route.afterAll);
+        // add @Routable afterAll handlers if defined
+        routeHandlers = [...routeHandlers, ...route.afterAll as Handler[]];
       }
 
       routeHandlers.push(resLocalsHandler);
@@ -470,6 +494,61 @@ export class SakuraApi {
     }
 
     //////////
+    function authHandler(route: ISakuraApiClassRoute) {
+
+      return async (req: Request, res: Response, next: NextFunction) => {
+        let firstFailure: AuthenticatorPluginResult;
+        let firstFailureAuthenticatorName: string;
+
+        let currentAuthenticatorName: string;
+        try {
+          for (const authenticatorConstructor of route.authenticators) {
+            currentAuthenticatorName = (authenticatorConstructor as any).name;
+            const authenticator = this.getAuthenticator(authenticatorConstructor);
+            const result = await authenticator.authenticate(req, res);
+
+            if (!result.success && !firstFailure) {
+              firstFailure = result;
+              firstFailureAuthenticatorName = (authenticatorConstructor as any).name;
+            } else if (result.success) {
+              // give the integrator the opportunity to change the status and data as well as log the auth failure
+              if (this.onAuthenticationError) {
+                const override = await this.onAuthenticationSuccess(req, res, result, currentAuthenticatorName);
+                if (override && override.status) {
+                  result.status = override.status;
+                }
+                if (override && override.data) {
+                  result.data = override.data;
+                }
+              }
+
+              // authenticator returned success, call next handler in the chain
+              return next();
+            }
+          }
+
+          // give the integrator the opportunity to change the status and data as well as log the auth failure
+          if (this.onAuthenticationError) {
+            const override = await this.onAuthenticationError(req, res, firstFailure, firstFailureAuthenticatorName);
+            if (override && override.status) {
+              firstFailure.status = override.status;
+            }
+            if (override && override.data) {
+              firstFailure.data = override.data;
+            }
+          }
+
+          res
+            .status(firstFailure.status)
+            .json(firstFailure.data);
+        } catch (err) {
+          if (this.onAuthenticationFatalError) {
+            await this.onAuthenticationFatalError(req, res, err, currentAuthenticatorName);
+          }
+        }
+      };
+    }
+
     function catchBodyParserErrors(err, req: Request, res: Response, next: NextFunction): void {
       // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
       if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
@@ -551,6 +630,27 @@ export class SakuraApi {
   }
 
   /**
+   * Gets a `@`[[AuthenticatorPlugin]] that was registered during construction of [[SakuraApi]].
+   * @param {IAuthenticator} target
+   */
+  getAuthenticator(target: IAuthenticatorConstructor) {
+    debug.authenticators(`.getAuthenticator ${(target || {} as any).name}`);
+
+    if (!target || !target[authenticatorPluginSymbols.isAuthenticator]) {
+      throw new AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError(target);
+    }
+
+    const id = target[authenticatorPluginSymbols.id];
+    const authenticator = this.authenticators.get(id);
+
+    if (!authenticator) {
+      throw new AuthenticatorNotRegistered(target);
+    }
+
+    return authenticator;
+  }
+
+  /**
    * Gets a `@`[[Model]] that was registered during construction of [[SakuraApi]] by name.
    * @param name the name of the Model (the name of the class that was decorated with `@`[[Model]]
    * @returns {undefined|any}
@@ -559,6 +659,11 @@ export class SakuraApi {
     return this.models.get(name);
   }
 
+  /**
+   * Gets a `@`[[Injectable]] that was registered during construction of [[SakuraApi]].
+   * @param target Pass in the [[Injectable]] class
+   * @returns {any}
+   */
   getProvider(target: any) {
     debug.providers(`.getProvider ${(target || {} as any).name}`);
 
@@ -615,73 +720,50 @@ export class SakuraApi {
     }
   }
 
-  private registerProviders(options: SakuraApiOptions | SakuraApiPluginResult): void {
-    debug.normal('\tRegistering Providers');
+  private registerAuthenticators(options: SakuraApiPluginResult) {
+    debug.normal('\tRegistering Authenticators');
 
-    const injectables = options.providers || [];
+    const authenticators: IAuthenticator[] = options.authenticators || [];
 
-    for (const injectable of injectables) {
-      const isInjectable = injectable[injectableSymbols.isSakuraApiInjectable];
+    // Allow overriding for mocking
+    for (const authenticator of authenticators) {
+      const isAuthenticator = (authenticator.constructor || {} as any)[authenticatorPluginSymbols.isAuthenticator];
 
-      let injectableSource: any;
-      let injectableRef: any;
+      let authenticatorSource: any;
+      let authenticatorRef: any;
 
-      if (!isInjectable) {
-        if (!injectable.use
-          || !injectable.for
-          || !injectable.use[injectableSymbols.isSakuraApiInjectable]
-          || !injectable.for[injectableSymbols.isSakuraApiInjectable]) {
-          throw new Error('SakuraApi setup error. SakuraApiOptions.providers array must have classes decorated with'
-            + ' @Injectable or an object literal of the form { use: SomeInjectableService, for: SomeRealService },'
-            + ' where SomeMockInjectable and SomeRealInjectable are decorated with @Injectable.');
+      if (!isAuthenticator) {
+        const mockAuthenticator: { use: any, for: any } = authenticator as any;
+        if (!mockAuthenticator.use
+          || !mockAuthenticator.for
+          || !mockAuthenticator.use[injectableSymbols.isSakuraApiInjectable]
+          || !mockAuthenticator.for[injectableSymbols.isSakuraApiInjectable]) {
+          throw new Error('SakuraApi setup error. SakuraApiOptions.authenticators array must have classes decorated with'
+            + ' @AuthenticatorPlugin() or an object literal of the form { use: SomeMockAuthenticatorPlugin, for: SomeAuthenticatorPlugin },'
+            + ' where SomeMockAuthenticatorPlugin and SomeAuthenticatorPlugin are decorated with @AuthenticatorPlugin().');
         }
 
-        injectableSource = injectable.for;
-        injectableRef = injectable.use;
+        authenticatorSource = mockAuthenticator.for;
+        authenticatorRef = mockAuthenticator.use;
       } else {
-        injectableSource = injectable;
-        injectableRef = injectable;
+        authenticatorSource = authenticator;
+        authenticatorRef = authenticator;
       }
 
-      // set the injectable's instance of SakuraApi to this
-      injectableRef[injectableSymbols.sapi] = this;
+      authenticatorRef[authenticatorPluginSymbols.sapi] = this;
 
-      debug.providers(`registering provider ${(injectableRef || {} as any).name}`);
-      this.providers.set(injectableSource[injectableSymbols.id], {target: injectableRef, instance: null});
-    }
-  }
+      debug.authenticators(`registering authenticator ${(authenticatorRef || {} as any).name}`);
 
-  private registerPlugins(options: SakuraApiOptions): void {
-    debug.normal('\tRegistering Modules');
-    const plugins = options.plugins || [];
-
-    for (const plugin of plugins) {
-      if (typeof plugin.plugin !== 'function') {
-        throw new Error('SakuraApi setup error. SakuraApiOptions.plugin array must have objects with a plugin ' +
-          'property that is a function, which accepts an instance of SakuraApi. The module throwing this error is ' +
-          `a ${typeof plugin.plugin} rather than a function.`);
-      }
-      const pluginResults: SakuraApiPluginResult = plugin.plugin(this, plugin.options);
-
-      // Note: this is not a duplicate of the calls found in the constructor... this allows a plugin to user its own
-      // plugins
-      this.registerModels(pluginResults);
-      this.registerRoutables(pluginResults);
-
-      if (pluginResults.middlewareHandlers) {
-        for (const handlers of pluginResults.middlewareHandlers) {
-          for (const handler of pluginResults.middlewareHandlers) {
-            this.addMiddleware(handler, plugin.order || 0);
-          }
-        }
-      }
+      const id = (authenticatorSource.constructor || {} as any)[authenticatorPluginSymbols.id];
+      this.authenticators.set(id, authenticatorRef);
     }
   }
 
   private registerModels(options: SakuraApiOptions | SakuraApiPluginResult): void {
     debug.normal('\tRegistering Models');
-    const models = options.models || [];
+    const models: any[] = options.models || [];
 
+    // Allow overriding for mocking
     for (const model of models) {
       const isModel = model[modelSymbols.isSakuraApiModel];
 
@@ -709,14 +791,83 @@ export class SakuraApi {
       // set the model's instance of SakuraApi to this
       modelRef[modelSymbols.sapi] = this;
 
+      debug.models(`registering models ${(modelRef || {} as any).name}`);
       this.models.set(modelName, modelRef);
+    }
+  }
+
+  private registerPlugins(options: SakuraApiOptions): void {
+    debug.normal('\tRegistering Modules');
+    const plugins = options.plugins || [];
+
+    // Allow overriding for mocking
+    for (const plugin of plugins) {
+      if (typeof plugin.plugin !== 'function') {
+        throw new Error('SakuraApi setup error. SakuraApiOptions.plugin array must have objects with a plugin ' +
+          'property that is a function, which accepts an instance of SakuraApi. The module throwing this error is ' +
+          `a ${typeof plugin.plugin} rather than a function.`);
+      }
+      const pluginResults: SakuraApiPluginResult = plugin.plugin(this, plugin.options);
+
+      this.registerModels(pluginResults);
+      this.registerProviders(pluginResults);
+      this.registerRoutables(pluginResults);
+
+      this.registerAuthenticators(pluginResults);
+
+      if (pluginResults.middlewareHandlers) {
+        for (const handler of pluginResults.middlewareHandlers) {
+          this.addMiddleware(handler, plugin.order || 0);
+        }
+      }
+    }
+  }
+
+  private registerProviders(options: SakuraApiOptions | SakuraApiPluginResult): void {
+    debug.normal('\tRegistering Providers');
+
+    const injectables: any[] = options.providers || [];
+
+    for (const injectable of injectables) {
+      const isInjectable = injectable[injectableSymbols.isSakuraApiInjectable];
+
+      let injectableSource: any;
+      let injectableRef: any;
+
+      // Allow overriding for mocking
+      if (!isInjectable) {
+        if (!injectable.use
+          || !injectable.for
+          || !injectable.use[injectableSymbols.isSakuraApiInjectable]
+          || !injectable.for[injectableSymbols.isSakuraApiInjectable]) {
+          throw new Error('SakuraApi setup error. SakuraApiOptions.providers array must have classes decorated with'
+            + ' @Injectable or an object literal of the form { use: SomeInjectableService, for: SomeRealService },'
+            + ' where SomeMockInjectable and SomeRealInjectable are decorated with @Injectable.');
+        }
+
+        injectableSource = injectable.for;
+        injectableRef = injectable.use;
+      } else {
+        injectableSource = injectable;
+        injectableRef = injectable;
+      }
+
+      // set the injectable's instance of SakuraApi to this
+      injectableRef[injectableSymbols.sapi] = this;
+
+      debug.providers(`registering provider ${(injectableRef || {} as any).name}`);
+      this.providers.set(injectableSource[injectableSymbols.id], {
+        target: injectableRef,
+        instance: null
+      });
     }
   }
 
   private registerRoutables(options: SakuraApiOptions | SakuraApiPluginResult): void {
     debug.normal('\tRegistering Models');
-    const routables = options.routables || [];
+    const routables: any[] = options.routables || [];
 
+    // Allow overriding for mocking
     for (const routable of routables) {
 
       const isRoutable = routable[routableSymbols.isSakuraApiRoutable];
@@ -747,6 +898,7 @@ export class SakuraApi {
 
       // get the routes queued up for .listen
       this.enqueueRoutes(new (routableRef as any)());
+      debug.providers(`registering routable ${(routableRef || {} as any).name}`);
       this.routables.set(routableName, routableRef);
     }
   }

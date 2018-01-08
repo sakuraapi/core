@@ -1,9 +1,31 @@
-import {NextFunction, Request, Response} from 'express';
-import * as request from 'supertest';
-import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
-import {Db, Json, Model} from '../@model';
-import {SapiModelMixin} from '../@model/sapi-model-mixin';
-import {IRoutableLocals, Routable, routableSymbols, Route} from './';
+import {
+  NextFunction,
+  Request,
+  Response
+}                          from 'express';
+import * as request        from 'supertest';
+import {
+  testSapi,
+  testUrl
+}                          from '../../../spec/helpers/sakuraapi';
+import {
+  Db,
+  Json,
+  Model
+}                          from '../@model';
+import {SapiModelMixin}    from '../@model/sapi-model-mixin';
+import {
+  AuthenticatorPlugin,
+  AuthenticatorPluginResult,
+  IAuthenticator,
+  IAuthenticatorConstructor
+}                          from '../plugins';
+import {
+  IRoutableLocals,
+  Routable,
+  routableSymbols,
+  Route
+}                          from './';
 import {SapiRoutableMixin} from './sapi-routable-mixin';
 
 describe('core/Route', () => {
@@ -344,6 +366,94 @@ describe('core/Route', () => {
         })
         .then(done)
         .catch(done.fail);
+    });
+  });
+
+  describe('authenticators', () => {
+    @AuthenticatorPlugin()
+    class RoutableAuthenticator implements IAuthenticator, IAuthenticatorConstructor {
+      async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
+        return {data: {}, status: 200, success: true};
+      }
+    }
+
+    @AuthenticatorPlugin()
+    class RouteAuthenticator implements IAuthenticator, IAuthenticatorConstructor {
+      async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
+        return {data: {}, status: 200, success: true};
+      }
+    }
+
+    it('injects route authenticators array into @Routable metadata', () => {
+
+      @Routable()
+      class TestRoutable extends SapiRoutableMixin() {
+
+        @Route({
+          authenticator: [RouteAuthenticator]
+        })
+        testHandler() {
+
+        }
+      }
+
+      const sapi = testSapi({
+        routables: [TestRoutable]
+      });
+
+      const authenticators = Reflect.getMetadata('authenticators.testHandler', new TestRoutable());
+
+      expect(authenticators).toBeDefined();
+      expect(Array.isArray(authenticators)).toBeTruthy();
+      expect(authenticators[0]).toBe(RouteAuthenticator);
+
+    });
+
+    it('injects route authenticator as array into @Routable metadata', () => {
+
+      @Routable()
+      class TestRoutable extends SapiRoutableMixin() {
+
+        @Route({
+          authenticator: RouteAuthenticator
+        })
+        testHandler() {
+
+        }
+      }
+
+      const sapi = testSapi({
+        routables: [TestRoutable]
+      });
+
+      const authenticators = Reflect.getMetadata('authenticators.testHandler', new TestRoutable());
+
+      expect(authenticators).toBeDefined();
+      expect(Array.isArray(authenticators)).toBeTruthy();
+      expect(authenticators[0]).toBe(RouteAuthenticator);
+
+    });
+
+    it('injects empty with no authenticators into @Routable metadata', () => {
+
+      @Routable()
+      class TestRoutable extends SapiRoutableMixin() {
+
+        @Route()
+        testHandler() {
+        }
+      }
+
+      const sapi = testSapi({
+        routables: [TestRoutable]
+      });
+
+      const authenticators = Reflect.getMetadata('authenticators.testHandler', new TestRoutable());
+
+      expect(authenticators).toBeDefined();
+      expect(Array.isArray(authenticators)).toBeTruthy();
+      expect(authenticators.length).toBe(0);
+
     });
   });
 });

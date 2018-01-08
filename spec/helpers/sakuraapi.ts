@@ -1,7 +1,10 @@
-import {json} from 'body-parser';
+import {json}      from 'body-parser';
 import * as helmet from 'helmet';
-import * as path from 'path';
-import {SakuraApi, SakuraApiPlugin} from '../../src/core/sakura-api';
+import * as path   from 'path';
+import {
+  SakuraApi,
+  SakuraApiPlugin
+}                  from '../../src/core';
 
 const baseUri = '/testApi';
 
