@@ -16,6 +16,7 @@ export interface ITestSapiOptions {
   models?: any[];
   routables?: any[];
   plugins?: SakuraApiPlugin[];
+  suppressAnonymousAuthenticatorInjection?: boolean;
 }
 
 process.on('unhandledRejection', (r) => {
@@ -42,7 +43,8 @@ export function testSapi(options: ITestSapiOptions): SakuraApi {
     models: options.models,
     plugins: options.plugins,
     providers: options.providers,
-    routables: options.routables
+    routables: options.routables,
+    suppressAnonymousAuthenticatorInjection: options.suppressAnonymousAuthenticatorInjection
   });
 
   sapi.addMiddleware(helmet(), 0);

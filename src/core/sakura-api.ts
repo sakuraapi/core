@@ -23,6 +23,7 @@ import {
   routableSymbols
 }                                from './@routable';
 import {
+  Anonymous,
   AuthenticatorNotRegistered,
   AuthenticatorPluginResult,
   authenticatorPluginSymbols,
@@ -47,6 +48,9 @@ const debug = {
  * Used for [[SakuraApi]] constructor
  */
 export interface SakuraApiOptions {
+  /**
+   * Optionally allows you to provide your own instantiated Express app... if you're into that kind of thing.
+   */
   app?: Express;
   /**
    * Optionally sets [[SakuraApiConfig]] manually, otherwise, the configuration will be loaded automatically.
@@ -112,6 +116,13 @@ export interface SakuraApiOptions {
    * `http://localhost:8080/api/user`).
    */
   baseUrl?: string;
+
+  /**
+   * Optionally allows you to suppress the injection of the Anonymous Authenticator. If no authentication
+   * plugins are provided, this is suppressed regardless since the Authenticator would serve no purpose. In that
+   * case, passing [[Anonymous]] into [[Routable]] or [[Route]] has no effect.
+   */
+  suppressAnonymousAuthenticatorInjection?: boolean;
 }
 
 /**
@@ -342,6 +353,10 @@ export class SakuraApi {
     this.middlewareHandlers[order].push(fn);
   }
 
+  /**
+   *
+   * @param {e.ErrorRequestHandler} fn
+   */
   addLastErrorHandlers(fn: ErrorRequestHandler): void {
     debug.normal('.addMiddleware called');
     this.lastErrorHandlers.push(fn);
@@ -497,6 +512,7 @@ export class SakuraApi {
     function authHandler(route: ISakuraApiClassRoute) {
 
       return async (req: Request, res: Response, next: NextFunction) => {
+
         let firstFailure: AuthenticatorPluginResult;
         let firstFailureAuthenticatorName: string;
 
@@ -541,7 +557,13 @@ export class SakuraApi {
           res
             .status(firstFailure.status)
             .json(firstFailure.data);
+          next();
         } catch (err) {
+
+          if (err instanceof AuthenticatorNotRegistered) {
+            throw err;
+          }
+
           if (this.onAuthenticationFatalError) {
             await this.onAuthenticationFatalError(req, res, err, currentAuthenticatorName);
           }
@@ -720,10 +742,17 @@ export class SakuraApi {
     }
   }
 
-  private registerAuthenticators(options: SakuraApiPluginResult) {
+  private registerAuthenticators(options: SakuraApiPluginResult, sapiOptions: SakuraApiOptions) {
     debug.normal('\tRegistering Authenticators');
 
     const authenticators: IAuthenticator[] = options.authenticators || [];
+
+    // inject Anonymous authenticator if other authenticators are provided (i.e., don't include it
+    // if there's no authentication going on as it serves no purpose. Allow the developer to
+    // `suppressAnonymousAuthenticatorInjection` if they don't want Anonymous injected for some reason.
+    if (authenticators.length > 0 && !(sapiOptions || {} as any).suppressAnonymousAuthenticatorInjection) {
+      this.authenticators.set(Anonymous[authenticatorPluginSymbols.id], new Anonymous());
+    }
 
     // Allow overriding for mocking
     for (const authenticator of authenticators) {
@@ -813,7 +842,7 @@ export class SakuraApi {
       this.registerProviders(pluginResults);
       this.registerRoutables(pluginResults);
 
-      this.registerAuthenticators(pluginResults);
+      this.registerAuthenticators(pluginResults, options);
 
       if (pluginResults.middlewareHandlers) {
         for (const handler of pluginResults.middlewareHandlers) {

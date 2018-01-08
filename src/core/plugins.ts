@@ -8,23 +8,45 @@ import {modelSymbols} from './@model/model';
 import {SakuraApi}    from './sakura-api';
 
 /**
- * Passed into [[Routable]] or [[Route]] `authentication` option. Provides authentication behavior per the
- * specifics of the plugin that provided the IAuthenticator(s) via [[SakuraApiPluginResult.authenticators]].
+ * For internal use. Do not rely on this - it can change at any time.
+ * @internal
+ * @type {{id: symbol; isAuthenticator: symbol; sapi: symbol}}
+ */
+export const authenticatorPluginSymbols = {
+  id: Symbol('id'),
+  isAuthenticator: Symbol('isAuthenticator'),
+  sapi: Symbol('sapi')
+};
+
+/**
+ * Implemented by authenticators that are passed into [[Routable]] or [[Route]] `authentication` option.
  *
- * An authenticator returns boolean true if the user is authenticated. It returns false if the user is not authenticated
- * or it returns an object that will be returned to the client. If the object has a status property, that will be
- * returned as the HTTP code upon failing to authenticate.
+ * Authenticators are returned by authentication plugins. Authenticators should implement
+ * [[IAuthenticator]] and [[IAuthenticatorConstructor]].
  *
- * Authenticators fall through until one of them returns true, otherwise, the first failure is returned.
+ * Provides authentication behavior per the specifics of the plugin that provided the IAuthenticator(s)
+ * via [[SakuraApiPluginResult.authenticators]].
+ *
+ * An authenticator's `authenticate` method returns [[AuthenticatorPluginResult]].
+ *
+ * By convention, authenticators fall through until one of them returns true, otherwise, the first failure is returned.
+ * You should follow this convention or make it really clear in your documentation for your plugin if you're not
+ * following this convention.
  */
 export interface IAuthenticator {
   authenticate: (req: Request, res: Response) => Promise<AuthenticatorPluginResult>;
 }
 
+/**
+ * Should be implemented by Classes (constructor functions) that are decorated with `@`[[AuthenticatorPlugin]]
+ */
 export interface IAuthenticatorConstructor {
-  // new(...params: any[]): IAuthenticatorConstructor;
+  // this exists simply to help TypeScript
 }
 
+/**
+ * The interface for plugin definitions expected by [[SakuraApi]]'s [[SakuraApiOptions.plugins]].
+ */
 export interface SakuraApiPlugin {
   /**
    * Options passed into the plugin (see documentation for the plugin).
@@ -86,11 +108,33 @@ export interface AuthenticatorPluginResult {
  */
 export type AuthenticationHandler = (req: Request, res: Response) => Promise<AuthenticatorPluginResult>;
 
-export const authenticatorPluginSymbols = {
-  id: Symbol('id'),
-  isAuthenticator: Symbol('isAuthenticator'),
-  sapi: Symbol('sapi')
-};
+/**
+ * An attempt was made to use [[SakuraApi.getProvider]] with a parameter that isn't decorated with `@`[[Injectable]].
+ */
+export class AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`Invalid attempt to get ${targetName}, must be decorated with @AuthenticatorPlugin`);
+  }
+}
+
+/**
+ * Thrown when an attempt is made to use an object as an Authenticator, which has not been registered with the dependency
+ * injection system. You register Authenticators when you are instantiating the instance of [[SakuraApi]] for your
+ * application.
+ */
+export class AuthenticatorNotRegistered extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`${targetName} is not registered as an Authenticator with SakuraApi`);
+  }
+}
 
 /**
  * `@`AuthenticatorPlugin decorates AuthAuthentication plugin classes. These classes should
@@ -168,30 +212,21 @@ export function AuthenticatorPlugin(): (any) => any {
 }
 
 /**
- * An attempt was made to use [[SakuraApi.getProvider]] with a parameter that isn't decorated with `@`[[Injectable]].
+ * Automatically injected into SakuraApi on instantiation. Allows for anonymous access if passed into `@Routable` or
+ * `@Router` `authenticators` property. Remember, authenticators work from left to right; if you put this first in your
+ * chain, everything will be allowed through on that/those route(s).
  */
-export class AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError extends Error {
-  constructor(target: any) {
-    const targetName = (target || {} as any).name
-      || ((target || {} as any).constructor || {} as any).name
-      || typeof target;
+@AuthenticatorPlugin()
+export class Anonymous implements IAuthenticator, IAuthenticatorConstructor {
 
-    super(`Invalid attempt to get ${targetName}, must be decorated with @AuthenticatorPlugin`);
+  /**
+   * Called by SakuraApi when checking authentication using this authenticator. You don't have to do anything
+   * with this. It's automagic.
+   * @param {e.Request} req
+   * @param {e.Response} res
+   * @returns {Promise<AuthenticatorPluginResult>}
+   */
+  async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
+    return {data: {}, status: 200, success: true};
   }
 }
-
-/**
- * Thrown when an attempt is made to use an object as an Authenticator, which has not been registered with the dependency
- * injection system. You register Authenticators when you are instantiating the instance of [[SakuraApi]] for your
- * application.
- */
-export class AuthenticatorNotRegistered extends Error {
-  constructor(target: any) {
-    const targetName = (target || {} as any).name
-      || ((target || {} as any).constructor || {} as any).name
-      || typeof target;
-
-    super(`${targetName} is not registered as an Authenticator with SakuraApi`);
-  }
-}
-

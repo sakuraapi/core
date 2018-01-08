@@ -166,7 +166,6 @@ describe('core/@Routable', () => {
     it('adds the leading / on a path if its missing', () => {
       @Routable({
         baseUrl: 'CoreRoutableTrailingSlashAddTest'
-
       })
       class CoreRoutableTrailingSlashAddTest {
         @Route({

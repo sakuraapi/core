@@ -1,5 +1,9 @@
 // tslint:disable:no-shadowed-variable
 
+import {
+  Request,
+  Response
+}                        from 'express';
 import {MongoClient}     from 'mongodb';
 import * as request      from 'supertest';
 import {
@@ -12,8 +16,18 @@ import {Model}           from './@model';
 
 import {
   Routable,
-  Route
-} from './@routable/';
+  Route,
+  SapiRoutableMixin
+}                  from './@routable/';
+import {
+  Anonymous,
+  AuthenticatorPlugin,
+  AuthenticatorPluginResult,
+  IAuthenticator,
+  IAuthenticatorConstructor,
+  SakuraApiPluginResult
+}                  from './plugins';
+import {SakuraApi} from './sakura-api';
 
 describe('core/SakuraApi', () => {
 
@@ -401,6 +415,226 @@ describe('core/SakuraApi', () => {
       expect(testRoutable instanceof TestDIRoutableOverride).toBeTruthy('Should have been an instance of ' +
         `TestDIRoutableOverride but instead was an instsance of ` +
         `${(testRoutable.constructor || {} as any).name || testRoutable.name}`);
+    });
+  });
+
+  describe('authentication plugins', () => {
+
+    @AuthenticatorPlugin()
+    class SomeAuthenticatorSuccess implements IAuthenticator, IAuthenticatorConstructor {
+      async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
+        return {data: {}, status: 200, success: true};
+      }
+    }
+
+    @AuthenticatorPlugin()
+    class SomeAuthenticatorFail implements IAuthenticator, IAuthenticatorConstructor {
+      async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
+        return {data: {error: 'AUTHENTICATION_FAILURE'}, status: 401, success: false};
+      }
+    }
+
+    function addMockAuthPlugin(): SakuraApiPluginResult {
+      return {
+        authenticators: [new SomeAuthenticatorSuccess(), new SomeAuthenticatorFail()]
+      };
+    }
+
+    describe('Anonymous Authenticator', () => {
+      it('injects Anonymous authenticator when other Authenticators are provided ', () => {
+        const sapi = testSapi({plugins: [{plugin: addMockAuthPlugin}]});
+
+        expect(sapi.getAuthenticator(Anonymous) instanceof Anonymous).toBeTruthy();
+        expect(sapi.getAuthenticator(SomeAuthenticatorSuccess) instanceof SomeAuthenticatorSuccess).toBeTruthy();
+      });
+
+      it('does not inject anonymous authentication when no other Authenticators are provided', () => {
+        const sapi = testSapi({});
+
+        expect(() => {
+          sapi.getAuthenticator(Anonymous);
+        }).toThrowError('Anonymous is not registered as an Authenticator with SakuraApi');
+
+      });
+
+      it('suppresses Anonymous authenticator when told to do so', () => {
+        const sapi = testSapi({
+          plugins: [{plugin: addMockAuthPlugin}],
+          suppressAnonymousAuthenticatorInjection: true
+        });
+
+        expect(sapi.getAuthenticator(SomeAuthenticatorSuccess) instanceof SomeAuthenticatorSuccess).toBeTruthy();
+        expect(() => {
+          sapi.getAuthenticator(Anonymous);
+        }).toThrowError('Anonymous is not registered as an Authenticator with SakuraApi');
+      });
+    });
+
+    describe('middleware', () => {
+
+      let sapi: SakuraApi;
+
+      afterEach(async (done) => {
+        (sapi)
+          ? await sapi.close()
+          : sapi = null;
+        done();
+      });
+
+      it('@Routable.authenticator adds authentication to all paths when defined', async (done) => {
+        @Routable({
+          authenticator: [SomeAuthenticatorFail],
+          baseUrl: 'someapi'
+        })
+        class SomeApi extends SapiRoutableMixin() {
+          @Route({method: 'get', path: 'routeHandler1'})
+          routeHandler1(req, res, next) {
+            next();
+          }
+
+          @Route({method: 'get', path: 'routeHandler2'})
+          routeHandler2(req, res, next) {
+            next();
+          }
+        }
+
+        sapi = testSapi({
+          plugins: [{
+            plugin: addMockAuthPlugin
+          }],
+          routables: [SomeApi]
+        });
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(401);
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(401);
+
+        done();
+      });
+
+      it('@Routable.authenticator adds authentication to all paths when defined and works left to right through those authenticators', async (done) => {
+        @Routable({
+          authenticator: [SomeAuthenticatorFail, Anonymous],
+          baseUrl: 'someapi'
+        })
+        class SomeApi extends SapiRoutableMixin() {
+          @Route({method: 'get', path: 'routeHandler1'})
+          routeHandler1(req, res, next) {
+            next();
+          }
+
+          @Route({method: 'get', path: 'routeHandler2'})
+          routeHandler2(req, res, next) {
+            next();
+          }
+        }
+
+        sapi = testSapi({
+          plugins: [{
+            plugin: addMockAuthPlugin
+          }],
+          routables: [SomeApi]
+        });
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(200);
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(200);
+
+        done();
+      });
+
+      it('@Routable.authenticator & @Rout.authenticator properly stack left to right (1)', async (done) => {
+        @Routable({
+          authenticator: [SomeAuthenticatorFail],
+          baseUrl: 'someapi'
+        })
+        class SomeApi extends SapiRoutableMixin() {
+          @Route({
+            authenticator: Anonymous,
+            method: 'get',
+            path: 'routeHandler1'
+          })
+          routeHandler1(req, res, next) {
+            next();
+          }
+
+          @Route({method: 'get', path: 'routeHandler2'})
+          routeHandler2(req, res, next) {
+            next();
+          }
+        }
+
+        sapi = testSapi({
+          plugins: [{
+            plugin: addMockAuthPlugin
+          }],
+          routables: [SomeApi]
+        });
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(200);
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler2'))
+          .expect(401);
+
+        done();
+      });
+
+      it('@Routable.authenticator & @Rout.authenticator properly stack left to right (2)', async (done) => {
+        @Routable({
+          authenticator: [Anonymous],
+          baseUrl: 'someapi'
+        })
+        class SomeApi extends SapiRoutableMixin() {
+          @Route({
+            authenticator: SomeAuthenticatorFail,
+            method: 'get',
+            path: 'routeHandler1'
+          })
+          routeHandler1(req, res, next) {
+            next();
+          }
+
+          @Route({
+            method: 'get',
+            path: 'routeHandler2'
+          })
+          routeHandler2(req, res, next) {
+            next();
+          }
+        }
+
+        sapi = testSapi({
+          plugins: [{
+            plugin: addMockAuthPlugin
+          }],
+          routables: [SomeApi]
+        });
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(200);
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler2'))
+          .expect(200);
+
+        done();
+      });
     });
   });
 });
