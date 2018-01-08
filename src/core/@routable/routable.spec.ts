@@ -1,15 +1,40 @@
 // tslint:disable:no-shadowed-variable
-import {NextFunction, Request, Response} from 'express';
-import {ObjectID} from 'mongodb';
-import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
-import {getAllRouteHandler, getRouteHandler} from '../../handlers/basic-handlers';
-import {Db, Json, Model, SapiModelMixin} from '../@model';
+import {
+  NextFunction,
+  Request,
+  Response
+}                           from 'express';
+import {ObjectID}           from 'mongodb';
+import * as request         from 'supertest';
+import {
+  testSapi,
+  testUrl
+}                           from '../../../spec/helpers/sakuraapi';
+import {
+  getAllRouteHandler,
+  getRouteHandler
+}                           from '../../handlers/basic-handlers';
+import {
+  Db,
+  Json,
+  Model,
+  SapiModelMixin
+}                           from '../@model';
 import {DUPLICATE_RESOURCE} from '../helpers/http-status';
-import {SakuraApi} from '../sakura-api';
-import {Routable, routableSymbols, Route} from './';
-import {IRoutableLocals} from './routable';
-import {SapiRoutableMixin} from './sapi-routable-mixin';
-import request = require('supertest');
+import {
+  AuthenticatorPlugin,
+  AuthenticatorPluginResult,
+  IAuthenticator,
+  IAuthenticatorConstructor
+}                           from '../plugins';
+import {SakuraApi}          from '../sakura-api';
+import {
+  Routable,
+  routableSymbols,
+  Route
+}                           from './';
+import {IRoutableLocals}    from './routable';
+import {SapiRoutableMixin}  from './sapi-routable-mixin';
 
 describe('core/@Routable', () => {
   describe('general functionality', () => {
@@ -141,7 +166,6 @@ describe('core/@Routable', () => {
     it('adds the leading / on a path if its missing', () => {
       @Routable({
         baseUrl: 'CoreRoutableTrailingSlashAddTest'
-
       })
       class CoreRoutableTrailingSlashAddTest {
         @Route({
@@ -1792,6 +1816,179 @@ describe('core/@Routable', () => {
     it('@Routable injects sapiConfig to make it easier to get access to sapiConfig', () => {
       expect(TestRoutableSapiInjection.sapiConfig).toBeDefined();
       expect(TestRoutableSapiInjection.sapiConfig.SAKURA_API_CONFIG_TEST).toBe('found');
+    });
+  });
+
+  describe('authenticators', () => {
+
+    @AuthenticatorPlugin()
+    class TestAuthenticator1 implements IAuthenticator, IAuthenticatorConstructor {
+      async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
+        return {data: {}, status: 200, success: true};
+      }
+    }
+
+    @AuthenticatorPlugin()
+    class TestAuthenticator2 implements IAuthenticator, IAuthenticatorConstructor {
+      async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
+        return {data: {}, status: 200, success: true};
+      }
+    }
+
+    it('array of authenticators is injected', async () => {
+      @Routable({authenticator: [TestAuthenticator1]})
+      class TestRoutable extends SapiRoutableMixin() {
+      }
+
+      testSapi({
+        routables: [TestRoutable]
+      });
+
+      expect(TestRoutable[routableSymbols.authenticators]).toBeDefined();
+      expect(Array.isArray(TestRoutable[routableSymbols.authenticators])).toBeTruthy();
+      expect(TestRoutable[routableSymbols.authenticators][0]).toBe(TestAuthenticator1);
+    });
+
+    it('single authenticator is injected as array of authenticators', async () => {
+
+      @Routable({authenticator: TestAuthenticator1})
+      class TestAuthenticatorInjectedArray extends SapiRoutableMixin() {
+      }
+
+      testSapi({
+        routables: [TestAuthenticatorInjectedArray]
+      });
+
+      expect(TestAuthenticatorInjectedArray[routableSymbols.authenticators]).toBeDefined();
+      expect(Array.isArray(TestAuthenticatorInjectedArray[routableSymbols.authenticators])).toBeTruthy();
+      expect(TestAuthenticatorInjectedArray[routableSymbols.authenticators][0]).toBe(TestAuthenticator1);
+    });
+
+    it('no authenticator is injected as empty array of authenticators', async () => {
+
+      @Routable()
+      class TestAuthenticatorInjectedArray extends SapiRoutableMixin() {
+      }
+
+      testSapi({
+        routables: [TestAuthenticatorInjectedArray]
+      });
+
+      expect(TestAuthenticatorInjectedArray[routableSymbols.authenticators]).toBeDefined();
+      expect(Array.isArray(TestAuthenticatorInjectedArray[routableSymbols.authenticators])).toBeTruthy();
+      expect(TestAuthenticatorInjectedArray[routableSymbols.authenticators].length).toBe(0);
+    });
+
+    it('sets up @Routable level routes on route handler middleware meta data', () => {
+      @Routable({
+        authenticator: [TestAuthenticator1, TestAuthenticator2]
+      })
+      class SetsUpRoutableLevelRoutes extends SapiRoutableMixin() {
+        @Route()
+        test() {
+        }
+      }
+
+      const sapi = testSapi({
+        routables: [SetsUpRoutableLevelRoutes]
+      });
+
+      const R = sapi.getRoutableByName('SetsUpRoutableLevelRoutes');
+      const r = new R();
+      const routes = r[routableSymbols.routes];
+
+      expect(routes.length).toBe(1);
+      expect(routes[0].authenticators.length).toBe(2);
+      expect(routes[0].authenticators[0]).toBe(TestAuthenticator1);
+      expect(routes[0].authenticators[1]).toBe(TestAuthenticator2);
+    });
+
+    it('sets up @Route level routes on route handler middleware meta data', () => {
+      @Routable()
+      class SetsUpRoutableLevelRoutes extends SapiRoutableMixin() {
+        @Route({authenticator: [TestAuthenticator1, TestAuthenticator2]})
+        test() {
+        }
+      }
+
+      const sapi = testSapi({
+        routables: [SetsUpRoutableLevelRoutes]
+      });
+
+      const R = sapi.getRoutableByName('SetsUpRoutableLevelRoutes');
+      const r = new R();
+      const routes = r[routableSymbols.routes];
+
+      expect(routes.length).toBe(1);
+      expect(routes[0].authenticators.length).toBe(2);
+      expect(routes[0].authenticators[0]).toBe(TestAuthenticator1);
+      expect(routes[0].authenticators[1]).toBe(TestAuthenticator2);
+    });
+
+    it('sets up @Route and @Routable level routes on route handler middleware meta data', () => {
+      @Routable({authenticator: [TestAuthenticator2, TestAuthenticator1]})
+      class SetsUpRoutableLevelRoutes extends SapiRoutableMixin() {
+        @Route({authenticator: [TestAuthenticator1, TestAuthenticator2]})
+        test() {
+        }
+      }
+
+      const sapi = testSapi({
+        routables: [SetsUpRoutableLevelRoutes]
+      });
+
+      const R = sapi.getRoutableByName('SetsUpRoutableLevelRoutes');
+      const r = new R();
+      const routes = r[routableSymbols.routes];
+
+      expect(routes.length).toBe(1);
+      expect(routes[0].authenticators.length).toBe(4);
+      expect(routes[0].authenticators[0]).toBe(TestAuthenticator1);
+      expect(routes[0].authenticators[1]).toBe(TestAuthenticator2);
+      expect(routes[0].authenticators[2]).toBe(TestAuthenticator2);
+      expect(routes[0].authenticators[3]).toBe(TestAuthenticator1);
+    });
+
+    it('sets up multiple @Route and @Routable level routes on route handler middleware meta data', () => {
+      @Routable({authenticator: [TestAuthenticator2, TestAuthenticator1]})
+      class SetsUpRoutableLevelRoutes extends SapiRoutableMixin() {
+
+        @Route({
+          authenticator: [TestAuthenticator1, TestAuthenticator2]
+        })
+        test() {
+        }
+
+        @Route({
+          authenticator: [TestAuthenticator1, TestAuthenticator1],
+          method: 'post'
+        })
+        test2() {
+        }
+
+      }
+
+      const sapi = testSapi({
+        routables: [SetsUpRoutableLevelRoutes]
+      });
+
+      const R = sapi.getRoutableByName('SetsUpRoutableLevelRoutes');
+      const r = new R();
+      const routes = r[routableSymbols.routes];
+
+      expect(routes.length).toBe(2);
+      expect(routes[0].method).toBe('test');
+      expect(routes[0].authenticators.length).toBe(4);
+      expect(routes[0].authenticators[0]).toBe(TestAuthenticator1);
+      expect(routes[0].authenticators[1]).toBe(TestAuthenticator2);
+      expect(routes[0].authenticators[2]).toBe(TestAuthenticator2);
+      expect(routes[0].authenticators[3]).toBe(TestAuthenticator1);
+      expect(routes[1].method).toBe('test2');
+      expect(routes[1].authenticators.length).toBe(4);
+      expect(routes[1].authenticators[0]).toBe(TestAuthenticator1);
+      expect(routes[1].authenticators[1]).toBe(TestAuthenticator1);
+      expect(routes[1].authenticators[2]).toBe(TestAuthenticator2);
+      expect(routes[1].authenticators[3]).toBe(TestAuthenticator1);
     });
   });
 });

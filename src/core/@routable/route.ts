@@ -1,10 +1,19 @@
-import {Handler} from 'express';
-import debug = require('debug');
+import * as debug                  from 'debug';
+import {Handler}                   from 'express';
+import {IAuthenticatorConstructor} from '../plugins';
 
 /**
  * Interface defining the valid properties for the `@`[[Route]] decorator.
  */
 export interface IRoutableMethodOptions {
+
+  /**
+   * An array or single [[IAuthenticatorConstructor]]. [[SakuraApi]] works through the authenticators
+   * left to right. If `@`[[Routable]] for this `@`[[Route]] defines authenticators, they will be appended to the
+   * right of the array when handling the route (i.e., they'll happen after this routes authenticators).
+   */
+  authenticator?: IAuthenticatorConstructor[] | IAuthenticatorConstructor;
+
   /**
    * String defining the endpoint of the route after the baseUrl set in [[RoutableClassOptions.baseUrl]]. The default
    * is `''`.
@@ -123,12 +132,19 @@ export function Route(options?: IRoutableMethodOptions) {
     };
 
     if (!options.blackList) {
-      Reflect.defineMetadata(`hasRoute.${key}`, true, target);
-      Reflect.defineMetadata(`path.${key}`, options.path, target);
-      Reflect.defineMetadata(`function.${key}`, f, target);
-      Reflect.defineMetadata(`httpMethod.${key}`, options.method.toLowerCase(), target);
-      Reflect.defineMetadata(`before.${key}`, options.before, target);
+
+      options.authenticator = options.authenticator || [];
+      if (!Array.isArray(options.authenticator)) {
+        options.authenticator = [options.authenticator];
+      }
+
       Reflect.defineMetadata(`after.${key}`, options.after, target);
+      Reflect.defineMetadata(`authenticators.${key}`, options.authenticator, target);
+      Reflect.defineMetadata(`before.${key}`, options.before, target);
+      Reflect.defineMetadata(`function.${key}`, f, target);
+      Reflect.defineMetadata(`hasRoute.${key}`, true, target);
+      Reflect.defineMetadata(`httpMethod.${key}`, options.method.toLowerCase(), target);
+      Reflect.defineMetadata(`path.${key}`, options.path, target);
     }
 
     return {

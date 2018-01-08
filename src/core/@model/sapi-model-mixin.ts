@@ -1,3 +1,4 @@
+// tslint:disable:max-line-length
 import {
   Collection, CollectionInsertOneOptions, CollectionOptions, Cursor, Db, DeleteWriteOpResultObject,
   InsertOneWriteOpResult, ObjectID, ReplaceOneOptions, UpdateWriteOpResult
@@ -44,17 +45,15 @@ import {IDbGetParams, IFromDbOptions} from './';
  *
  * Just remember to stick to the interface in case SakuraAPI is calling the method being overriden internally.
  */
-export function SapiModelMixin<T extends Constructor<{}>>(Base?: T) {
-  Base = Base || class {
+
+export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
+  base = base || class {
   } as any;
 
-  return class extends Base {
-    constructor(...args: any[]) {
-      super(...args);
-    }
+  return class extends base {
 
     static fromDb: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
-    static fromJson: <T>(this: { new(...any): T }, json: object) => T;
+    static fromJson: <T>(this: { new(...params): T }, json: object) => T;
     static fromJsonToDb: (json: any) => any;
 
     static fromDbArray: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
@@ -90,5 +89,12 @@ export function SapiModelMixin<T extends Constructor<{}>>(Base?: T) {
     toDb: (changeSet?: object) => any;
     toJson: (projection?: any) => any;
     toJsonString: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
+
+    constructor(...args: any[]) {
+      super(...args);
+    }
+
   };
 }
+
+// tslint:enable:max-line-length

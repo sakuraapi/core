@@ -12,19 +12,19 @@ import {SakuraApi} from '../sakura-api';
  *
  * See [[SapiModelMixin]] for more information.
  */
-export function SapiInjectableMixin<T extends Constructor<{}>>(Base?: T) {
-  Base = Base || class {
+export function SapiInjectableMixin<T extends Constructor<{}>>(base?: T) {
+  base = base || class {
   } as any;
 
-  return class extends Base {
-    constructor(...args: any[]) {
-      super(...args);
-    }
-
+  return class extends base {
     static sapi: SakuraApi;
     static sapiConfig: any;
 
     sapi: SakuraApi;
     sapiConfig: any;
+
+    constructor(...args: any[]) {
+      super(...args);
+    }
   };
 }
