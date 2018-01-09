@@ -517,7 +517,8 @@ describe('core/SakuraApi', () => {
         done();
       });
 
-      it('@Routable.authenticator adds authentication to all paths when defined and works left to right through those authenticators', async (done) => {
+      it('@Routable.authenticator adds authentication to all paths when defined and works left to right ' +
+        'through those authenticators', async (done) => {
         @Routable({
           authenticator: [SomeAuthenticatorFail, Anonymous],
           baseUrl: 'someapi'

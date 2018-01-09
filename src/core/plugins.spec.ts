@@ -27,6 +27,8 @@ import {
 }                   from './plugins';
 import {SakuraApi}  from './sakura-api';
 
+// tslint:disable:no-shadowed-variable
+
 describe('@AuthenticatorPlugin', () => {
 
   it('injects an id', () => {
@@ -213,8 +215,8 @@ describe('@AuthenticatorPlugin', () => {
         sapi = testSapi({
           plugins: [
             {
-              plugin: testPluginA,
-              options: {}
+              options: {},
+              plugin: testPluginA
             }
           ]
         });
@@ -236,3 +238,4 @@ describe('@AuthenticatorPlugin', () => {
     });
   });
 });
+// tslint:enable:no-shadowed-variable

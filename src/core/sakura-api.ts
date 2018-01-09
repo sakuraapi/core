@@ -1,4 +1,5 @@
 import * as debugInit            from 'debug';
+// tslint:disable:no-duplicate-imports
 import * as express              from 'express';
 import {
   ErrorRequestHandler,
@@ -9,6 +10,7 @@ import {
   Response,
   Router
 }                                from 'express';
+// tslint:enable:no-duplicate-imports
 import * as http                 from 'http';
 import {SakuraApiConfig}         from '../boot';
 import {
@@ -40,8 +42,8 @@ const debug = {
   models: debugInit('sapi:models'),
   normal: debugInit('sapi:SakuraApi'),
   providers: debugInit('sapi:providers'),
-  route: debugInit('sapi:route'),
-  routables: debugInit('sapi:routables')
+  routables: debugInit('sapi:routables'),
+  route: debugInit('sapi:route')
 };
 
 /**
@@ -191,6 +193,39 @@ interface IProviderContainer {
  */
 export class SakuraApi {
 
+  /**
+   * If implemented, `onAuthenticationError` will be called if there's [[AuthenticatorPluginResult]] status === false
+   * returned. Implement this to add logging and/or override the values of `authResult` (specifically status and
+   * data), to change what will be returned to the client.
+   *
+   * `AuthenticatorPluginResult`: [[AuthenticatorPluginResult]]
+   * `authenticatorName`: the name of the first authenticator constructor function that failed the user's authentication.
+   */
+  onAuthenticationError: (req: Request, res: Response, authResult?: AuthenticatorPluginResult,
+                          authenticatorName?: string) => Promise<AuthenticatorPluginResult>;
+
+  /**
+   * If implemented, `onAuthenticationFatalError` will be called if during authentication there's an unexpected,
+   * and therefore fatal error. The default behavior if not implemented is for SakuraApi to return an generic 500
+   * { error: 'SERVER_ERROR' }.
+   *
+   * You can return null/void to leave the default behavior alone or return an object with `{data: any, status:number}`
+   * to provide your own values.
+   */
+  onAuthenticationFatalError: (req: Request, res: Response, err: Error,
+                               authenticatorName?: string) => Promise<{ data: any, status: number } | void | null>;
+
+  /**
+   * If implemented, `onAuthenticationSuccess` will be called if there's [[AuthenticatorPluginResult]] status === true
+   * returned. Implement this to add logging and/or override the values of `authResult` (specifically status and
+   * data), to change what will be returned to the client.
+   *
+   * `AuthenticatorPluginResult`: [[AuthenticatorPluginResult]]
+   * `authenticatorName`: the name of the authenticator constructor function that succeeded the user's authentication.
+   */
+  onAuthenticationSuccess: (req: Request, res: Response, authResult?: AuthenticatorPluginResult,
+                            authenticatorName?: string) => Promise<AuthenticatorPluginResult>;
+
   private _address: string = '127.0.0.1';
   private _app: Express;
   private _baseUrl;
@@ -207,36 +242,6 @@ export class SakuraApi {
   private providers = new Map<string, IProviderContainer>();
   private routables = new Map<string, any>();
   private routeQueue = new Map<string, ISakuraApiClassRoute>();
-
-  /**
-   * If implemented, `onAuthenticationError` will be called if there's [[AuthenticatorPluginResult]] status === false
-   * returned. Implement this to add logging and/or override the values of `authResult` (specifically status and
-   * data), to change what will be returned to the client.
-   *
-   * `AuthenticatorPluginResult`: [[AuthenticatorPluginResult]]
-   * `authenticatorName`: the name of the first authenticator constructor function that failed the user's authentication.
-   */
-  onAuthenticationError: (req: Request, res: Response, authResult?: AuthenticatorPluginResult, authenticatorName?: string) => Promise<AuthenticatorPluginResult>;
-
-  /**
-   * If implemented, `onAuthenticationFatalError` will be called if during authentication there's an unexpected,
-   * and therefore fatal error. The default behavior if not implemented is for SakuraApi to return an generic 500
-   * { error: 'SERVER_ERROR' }.
-   *
-   * You can return null/void to leave the default behavior alone or return an object with `{data: any, status:number}`
-   * to provide your own values.
-   */
-  onAuthenticationFatalError: (req: Request, res: Response, err: Error, authenticatorName?: string) => Promise<{ data: any, status: number } | void | null>;
-
-  /**
-   * If implemented, `onAuthenticationSuccess` will be called if there's [[AuthenticatorPluginResult]] status === true
-   * returned. Implement this to add logging and/or override the values of `authResult` (specifically status and
-   * data), to change what will be returned to the client.
-   *
-   * `AuthenticatorPluginResult`: [[AuthenticatorPluginResult]]
-   * `authenticatorName`: the name of the authenticator constructor function that succeeded the user's authentication.
-   */
-  onAuthenticationSuccess: (req: Request, res: Response, authResult?: AuthenticatorPluginResult, authenticatorName?: string) => Promise<AuthenticatorPluginResult>;
 
   /**
    * Returns the address of the server as a string.
@@ -886,8 +891,8 @@ export class SakuraApi {
 
       debug.providers(`registering provider ${(injectableRef || {} as any).name}`);
       this.providers.set(injectableSource[injectableSymbols.id], {
-        target: injectableRef,
-        instance: null
+        instance: null,
+        target: injectableRef
       });
     }
   }
