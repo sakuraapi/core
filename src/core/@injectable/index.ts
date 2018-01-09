@@ -1,2 +1,2 @@
 export * from './injectable';
-export * from './sakura-api-injectable';
+export * from './sapi-injectable-mixin';

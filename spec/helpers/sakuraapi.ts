@@ -1,7 +1,10 @@
-import * as path from 'path';
-import {SakuraApi, SakuraApiPlugin} from '../../src/core/sakura-api';
-import bodyParser = require('body-parser');
-import helmet = require('helmet');
+import {json}      from 'body-parser';
+import * as helmet from 'helmet';
+import * as path   from 'path';
+import {
+  SakuraApi,
+  SakuraApiPlugin
+}                  from '../../src/core';
 
 const baseUri = '/testApi';
 
@@ -13,6 +16,7 @@ export interface ITestSapiOptions {
   models?: any[];
   routables?: any[];
   plugins?: SakuraApiPlugin[];
+  suppressAnonymousAuthenticatorInjection?: boolean;
 }
 
 process.on('unhandledRejection', (r) => {
@@ -28,6 +32,7 @@ process.on('unhandledRejection', (r) => {
   console.log('-'.repeat(process.stdout.columns).red);
   // tslint:enable:no-console
 
+  throw r;
 });
 
 export function testSapi(options: ITestSapiOptions): SakuraApi {
@@ -38,11 +43,12 @@ export function testSapi(options: ITestSapiOptions): SakuraApi {
     models: options.models,
     plugins: options.plugins,
     providers: options.providers,
-    routables: options.routables
+    routables: options.routables,
+    suppressAnonymousAuthenticatorInjection: options.suppressAnonymousAuthenticatorInjection
   });
 
   sapi.addMiddleware(helmet(), 0);
-  sapi.addMiddleware(bodyParser.json(), 0);
+  sapi.addMiddleware(json(), 0);
 
   if (process.env.TRACE_REQ) {
     sapi.addMiddleware((req, res, next) => {

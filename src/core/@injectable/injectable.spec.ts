@@ -1,20 +1,19 @@
 import {NextFunction, Request, Response} from 'express';
 import * as request from 'supertest';
 import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
+import {SapiModelMixin} from '../@model';
 import {Json} from '../@model/json';
 import {Model} from '../@model/model';
-import {SakuraApiModel} from '../@model/sakura-api-model';
+import {SapiRoutableMixin} from '../@routable';
 import {IRoutableLocals, Routable} from '../@routable/routable';
 import {Route} from '../@routable/route';
-import {SakuraApiRoutable} from '../@routable/sakura-api-routable';
 import {SakuraApi} from '../sakura-api';
 import {
-  Injectable,
-  injectableSymbols,
-  NonInjectableConstructorParameterError,
-  ProviderNotRegistered,
+  Injectable, injectableSymbols, NonInjectableConstructorParameterError, ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
 } from './injectable';
+
+/* tslint:disable:no-shadowed-variable */
 
 describe('@Injectable', () => {
 
@@ -294,7 +293,7 @@ describe('@Injectable', () => {
     }
 
     @Model()
-    class TestModel extends SakuraApiModel {
+    class TestModel extends SapiModelMixin() {
 
       @Json()
       test: string;
@@ -340,7 +339,7 @@ describe('@Injectable', () => {
     @Routable({
       baseUrl: 'injectRoutableTest'
     })
-    class AnApi extends SakuraApiRoutable {
+    class AnApi extends SapiRoutableMixin() {
 
       constructor(private testService: TestService) {
         super();
@@ -406,3 +405,5 @@ describe('@Injectable', () => {
     });
   });
 });
+
+/* tslint:enable:no-shadowed-variable */

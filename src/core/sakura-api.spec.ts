@@ -1,15 +1,33 @@
 // tslint:disable:no-shadowed-variable
 
-import {NextFunction, Request, Response} from 'express';
-import {MongoClient} from 'mongodb';
-import * as request from 'supertest';
-import {testMongoDbUrl, testSapi, testUrl} from '../../spec/helpers/sakuraapi';
-import {SakuraApiConfig} from '../../src/boot/sakura-api-config';
-import {Json} from './@model/json';
-import {Model} from './@model/model';
-import {SakuraApiModel} from './@model/sakura-api-model';
-import {Routable, Route} from './@routable/';
-import {SakuraApi, SakuraApiPluginResult} from './sakura-api';
+import {
+  Request,
+  Response
+}                        from 'express';
+import {MongoClient}     from 'mongodb';
+import * as request      from 'supertest';
+import {
+  testMongoDbUrl,
+  testSapi,
+  testUrl
+}                        from '../../spec/helpers/sakuraapi';
+import {SakuraApiConfig} from '../../src/boot';
+import {Model}           from './@model';
+
+import {
+  Routable,
+  Route,
+  SapiRoutableMixin
+}                  from './@routable/';
+import {
+  Anonymous,
+  AuthenticatorPlugin,
+  AuthenticatorPluginResult,
+  IAuthenticator,
+  IAuthenticatorConstructor,
+  SakuraApiPluginResult
+}                  from './plugins';
+import {SakuraApi} from './sakura-api';
 
 describe('core/SakuraApi', () => {
 
@@ -322,138 +340,6 @@ describe('core/SakuraApi', () => {
     });
   });
 
-  describe('plugins', () => {
-
-    function testPluginA(sapi: SakuraApi, options: any): SakuraApiPluginResult {
-
-      function testHandler(req: Request, res: Response, next: NextFunction) {
-        if (!res.locals.handlerTrace) {
-          res.locals.handlerTrace = '';
-        }
-        res.locals.handlerTrace += res.locals.handlerTrace = options.value;
-        next();
-      }
-
-      @Model()
-      class TestModelPlugin extends SakuraApiModel {
-        @Json()
-        modelValue = 'found';
-      }
-
-      @Routable()
-      class TestRoutablePlugin {
-        @Route({
-          method: 'get',
-          path: 'TestRoutablePlugin'
-        })
-        getHandler(req: Request, res: Response, next: NextFunction) {
-          const result = new TestModelPlugin();
-
-          res
-            .status(200)
-            .json(result.toJson());
-        }
-      }
-
-      return {
-        middlewareHandlers: [testHandler],
-        models: [TestModelPlugin],
-        routables: [TestRoutablePlugin]
-      };
-    }
-
-    function testPluginB(sapi: SakuraApi, options: any): SakuraApiPluginResult {
-      function testHandler(req: Request, res: Response, next: NextFunction) {
-        if (!res.locals.handlerTrace) {
-          res.locals.handlerTrace = '';
-        }
-        res.locals.handlerTrace += res.locals.handlerTrace = options.value;
-        next();
-      }
-
-      return {
-        middlewareHandlers: [testHandler]
-      };
-    }
-
-    @Routable()
-    class RoutableTestStub {
-      response = 'testRouterGet worked';
-
-      @Route({
-        method: 'get',
-        path: 'plugins_test'
-      })
-      testRouterGet(req, res) {
-        res
-          .status(200)
-          .json({
-            testHandlerResult: res.locals.handlerTrace
-          });
-      }
-    }
-
-    const sapi = testSapi({
-      plugins: [
-        {
-          options: {
-            value: 'A'
-          },
-          order: 1,
-          plugin: testPluginA
-        },
-        {
-          options: {
-            value: 'B'
-          },
-          order: 0,
-          plugin: testPluginB
-        }
-      ],
-      routables: [
-        RoutableTestStub
-      ]
-    });
-
-    beforeEach((done) => {
-      sapi
-        .listen({bootMessage: ''})
-        .then(done)
-        .catch(done.fail);
-    });
-
-    afterEach((done) => {
-      sapi
-        .close()
-        .then(done)
-        .catch(done.fail);
-    });
-
-    it('adds plugin handlers in the proper order', (done) => {
-      request(sapi.app)
-        .get(testUrl('plugins_test'))
-        .expect(200)
-        .then((result) => {
-          const body = result.body;
-          expect(body.testHandlerResult).toBe('BA');
-        })
-        .then(done)
-        .catch(done.fail);
-    });
-
-    it('adds plugin models and routables', (done) => {
-      request(sapi.app)
-        .get(testUrl('TestRoutablePlugin'))
-        .expect(200)
-        .then((result) => {
-          const body = result.body;
-          expect(body.modelValue).toBe('found');
-        })
-        .then(done)
-        .catch(done.fail);
-    });
-  });
-
   describe('dependency injection', () => {
 
     @Model()
@@ -482,6 +368,7 @@ describe('core/SakuraApi', () => {
     });
 
     it('can retrieve Model by name', () => {
+      // tslint:disable-next-line:variable-name
       const TestModel = sapi.getModelByName('TestDIModel');
 
       expect(TestModel).toBeDefined('Model should have been defined');
@@ -490,6 +377,7 @@ describe('core/SakuraApi', () => {
     });
 
     it('can retrieve Routable by name', () => {
+      // tslint:disable-next-line:variable-name
       const Routable = sapi.getRoutableByName('TestDIRoutable');
 
       expect(Routable).toBeDefined('Routable should have been defined');
@@ -503,6 +391,7 @@ describe('core/SakuraApi', () => {
         routables: [TestDIRoutable]
       });
 
+      // tslint:disable-next-line:variable-name
       const TestModel = sapi.getModelByName('TestDIModel');
       const testModel = TestModel.fromJson({});
 
@@ -518,6 +407,7 @@ describe('core/SakuraApi', () => {
         routables: [{use: TestDIRoutableOverride, for: TestDIRoutable}]
       });
 
+      // tslint:disable-next-line:variable-name
       const TestRoutable = sapi.getRoutableByName('TestDIRoutable');
       const testRoutable = new TestRoutable();
 
@@ -525,6 +415,227 @@ describe('core/SakuraApi', () => {
       expect(testRoutable instanceof TestDIRoutableOverride).toBeTruthy('Should have been an instance of ' +
         `TestDIRoutableOverride but instead was an instsance of ` +
         `${(testRoutable.constructor || {} as any).name || testRoutable.name}`);
+    });
+  });
+
+  describe('authentication plugins', () => {
+
+    @AuthenticatorPlugin()
+    class SomeAuthenticatorSuccess implements IAuthenticator, IAuthenticatorConstructor {
+      async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
+        return {data: {}, status: 200, success: true};
+      }
+    }
+
+    @AuthenticatorPlugin()
+    class SomeAuthenticatorFail implements IAuthenticator, IAuthenticatorConstructor {
+      async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
+        return {data: {error: 'AUTHENTICATION_FAILURE'}, status: 401, success: false};
+      }
+    }
+
+    function addMockAuthPlugin(): SakuraApiPluginResult {
+      return {
+        authenticators: [new SomeAuthenticatorSuccess(), new SomeAuthenticatorFail()]
+      };
+    }
+
+    describe('Anonymous Authenticator', () => {
+      it('injects Anonymous authenticator when other Authenticators are provided ', () => {
+        const sapi = testSapi({plugins: [{plugin: addMockAuthPlugin}]});
+
+        expect(sapi.getAuthenticator(Anonymous) instanceof Anonymous).toBeTruthy();
+        expect(sapi.getAuthenticator(SomeAuthenticatorSuccess) instanceof SomeAuthenticatorSuccess).toBeTruthy();
+      });
+
+      it('does not inject anonymous authentication when no other Authenticators are provided', () => {
+        const sapi = testSapi({});
+
+        expect(() => {
+          sapi.getAuthenticator(Anonymous);
+        }).toThrowError('Anonymous is not registered as an Authenticator with SakuraApi');
+
+      });
+
+      it('suppresses Anonymous authenticator when told to do so', () => {
+        const sapi = testSapi({
+          plugins: [{plugin: addMockAuthPlugin}],
+          suppressAnonymousAuthenticatorInjection: true
+        });
+
+        expect(sapi.getAuthenticator(SomeAuthenticatorSuccess) instanceof SomeAuthenticatorSuccess).toBeTruthy();
+        expect(() => {
+          sapi.getAuthenticator(Anonymous);
+        }).toThrowError('Anonymous is not registered as an Authenticator with SakuraApi');
+      });
+    });
+
+    describe('middleware', () => {
+
+      let sapi: SakuraApi;
+
+      afterEach(async (done) => {
+        (sapi)
+          ? await sapi.close()
+          : sapi = null;
+        done();
+      });
+
+      it('@Routable.authenticator adds authentication to all paths when defined', async (done) => {
+        @Routable({
+          authenticator: [SomeAuthenticatorFail],
+          baseUrl: 'someapi'
+        })
+        class SomeApi extends SapiRoutableMixin() {
+          @Route({method: 'get', path: 'routeHandler1'})
+          routeHandler1(req, res, next) {
+            next();
+          }
+
+          @Route({method: 'get', path: 'routeHandler2'})
+          routeHandler2(req, res, next) {
+            next();
+          }
+        }
+
+        sapi = testSapi({
+          plugins: [{
+            plugin: addMockAuthPlugin
+          }],
+          routables: [SomeApi]
+        });
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(401);
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(401);
+
+        done();
+      });
+
+      it('@Routable.authenticator adds authentication to all paths when defined and works left to right ' +
+        'through those authenticators', async (done) => {
+        @Routable({
+          authenticator: [SomeAuthenticatorFail, Anonymous],
+          baseUrl: 'someapi'
+        })
+        class SomeApi extends SapiRoutableMixin() {
+          @Route({method: 'get', path: 'routeHandler1'})
+          routeHandler1(req, res, next) {
+            next();
+          }
+
+          @Route({method: 'get', path: 'routeHandler2'})
+          routeHandler2(req, res, next) {
+            next();
+          }
+        }
+
+        sapi = testSapi({
+          plugins: [{
+            plugin: addMockAuthPlugin
+          }],
+          routables: [SomeApi]
+        });
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(200);
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(200);
+
+        done();
+      });
+
+      it('@Routable.authenticator & @Rout.authenticator properly stack left to right (1)', async (done) => {
+        @Routable({
+          authenticator: [SomeAuthenticatorFail],
+          baseUrl: 'someapi'
+        })
+        class SomeApi extends SapiRoutableMixin() {
+          @Route({
+            authenticator: Anonymous,
+            method: 'get',
+            path: 'routeHandler1'
+          })
+          routeHandler1(req, res, next) {
+            next();
+          }
+
+          @Route({method: 'get', path: 'routeHandler2'})
+          routeHandler2(req, res, next) {
+            next();
+          }
+        }
+
+        sapi = testSapi({
+          plugins: [{
+            plugin: addMockAuthPlugin
+          }],
+          routables: [SomeApi]
+        });
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(200);
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler2'))
+          .expect(401);
+
+        done();
+      });
+
+      it('@Routable.authenticator & @Rout.authenticator properly stack left to right (2)', async (done) => {
+        @Routable({
+          authenticator: [Anonymous],
+          baseUrl: 'someapi'
+        })
+        class SomeApi extends SapiRoutableMixin() {
+          @Route({
+            authenticator: SomeAuthenticatorFail,
+            method: 'get',
+            path: 'routeHandler1'
+          })
+          routeHandler1(req, res, next) {
+            next();
+          }
+
+          @Route({
+            method: 'get',
+            path: 'routeHandler2'
+          })
+          routeHandler2(req, res, next) {
+            next();
+          }
+        }
+
+        sapi = testSapi({
+          plugins: [{
+            plugin: addMockAuthPlugin
+          }],
+          routables: [SomeApi]
+        });
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(200);
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler2'))
+          .expect(200);
+
+        done();
+      });
     });
   });
 });

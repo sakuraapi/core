@@ -1,5 +1,5 @@
-import {Handler} from 'express';
-import * as path from 'path';
+import {Handler}                   from 'express';
+import * as path                   from 'path';
 import 'reflect-metadata';
 import {
   deleteRouteHandler,
@@ -7,9 +7,10 @@ import {
   getRouteHandler,
   postRouteHandler,
   putRouteHandler
-} from '../../handlers/basic-handlers';
-import {getDependencyInjections} from '../@injectable/injectable';
-import {modelSymbols} from '../@model';
+}                                  from '../../handlers/basic-handlers';
+import {getDependencyInjections}   from '../@injectable/injectable';
+import {modelSymbols}              from '../@model';
+import {IAuthenticatorConstructor} from '../plugins';
 
 const debug = {
   normal: require('debug')('sapi:routable')
@@ -40,6 +41,13 @@ export interface IRoutableLocals {
  * Interface defining the valid options for the `@`[[Routable]] decorator.
  */
 export interface IRoutableOptions {
+
+  /**
+   * An array or single instance of [[IAuthenticatorConstructor]]. [[SakuraApi]] works through the authenticators
+   * left to right. If all of them fail, the first failure is returned. If and `@`[[Route]] method defines
+   * authenticators, those will be handled first (they're appended to the left of the array for that route).
+   */
+  authenticator?: IAuthenticatorConstructor[] | IAuthenticatorConstructor;
 
   /**
    * Array of of method names (strings) defining which routes are ignored during route setup. Defaults to `[]`.
@@ -119,6 +127,11 @@ export interface IRoutableOptions {
  * Internal to SakuraApi's [[Routable]]. This can change without notice since it's not an official part of the API.
  */
 export interface ISakuraApiClassRoute {
+
+  /**
+   * The array of authenticators to apply to the route's middleware
+   */
+  authenticators: IAuthenticatorConstructor[];
   /**
    * the class's baseUrl (if any) + the route's path
    */
@@ -165,6 +178,7 @@ export interface ISakuraApiClassRoute {
  * The symbols used by [[Routable]] decorated objects
  */
 export const routableSymbols = {
+  authenticators: Symbol('authenticators'),
   changeSapi: Symbol('changeSapi'),
   isSakuraApiRoutable: Symbol('isSakuraApiRoutable'),
   model: Symbol('model'),
@@ -255,58 +269,10 @@ export function Routable(options?: IRoutableOptions): any {
 
         const constructorProxy = Reflect.construct(t, diArgs, nt);
 
-        const routes: ISakuraApiClassRoute[] = [];
-
         const beforeAll = bindHandlers(constructorProxy, options.beforeAll);
         const afterAll = bindHandlers(constructorProxy, options.afterAll);
 
-        debug.normal(`\t\tprocessing methods for '${target.name}'`);
-        // add routes decorated with @Route (integrator's custom routes)
-        for (const methodName of Object.getOwnPropertyNames(Object.getPrototypeOf(constructorProxy))) {
-
-          if (!Reflect.getMetadata(`hasRoute.${methodName}`, constructorProxy)) {
-            continue;
-          }
-
-          if (options.blackList.indexOf(methodName) > -1) {
-            debug.normal(`\t\t\t${methodName} is black listed; skipping`);
-            continue;
-          }
-
-          debug.normal(`\t\t\t${methodName}`);
-
-          const afterMeta = Reflect.getMetadata(`after.${methodName}`, constructorProxy);
-          const after = bindHandlers(constructorProxy, afterMeta);
-          const beforeMeta = Reflect.getMetadata(`before.${methodName}`, constructorProxy);
-          const before = bindHandlers(constructorProxy, beforeMeta);
-
-          let endPoint = path
-            .join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, constructorProxy))
-            .replace(/\/$/, '');
-
-          if (!endPoint.startsWith('/')) {
-            endPoint = '/' + endPoint;
-          }
-
-          const routerData: ISakuraApiClassRoute = {
-            after,
-            afterAll,
-            before,
-            beforeAll,
-            f: Reflect
-              .getMetadata(`function.${methodName}`, constructorProxy)
-              // @Route handlers are bound to the context of the instance of the @Routable object
-              .bind(constructorProxy),
-            httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, constructorProxy),
-            method: methodName,
-            name: target.name,
-            path: endPoint,
-            routable: constructorProxy
-          };
-
-          debug.normal(`\t\t\thandler added: '%o'`, routerData);
-          routes.push(routerData);
-        }
+        const routes: ISakuraApiClassRoute[] = addRoutesForRouteMethods(constructorProxy, beforeAll, afterAll);
 
         // add generated routes for Model
         if (options.model) {
@@ -326,45 +292,9 @@ export function Routable(options?: IRoutableOptions): any {
       }
     });
 
-    // isSakuraApiModel hidden property is attached to let other parts of the framework know that this is an @Model obj
-    Reflect.defineProperty(newConstructor.prototype, routableSymbols.isSakuraApiRoutable, {
-      value: true,
-      writable: false
-    });
-    Reflect.defineProperty(newConstructor, routableSymbols.isSakuraApiRoutable, {
-      value: true,
-      writable: false
-    });
-
-    newConstructor[routableSymbols.sapi] = null;
-
-    // Injects sapi as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi]
-    Reflect.defineProperty(newConstructor, 'sapi', {
-      configurable: false,
-      enumerable: false,
-      get: () => newConstructor[routableSymbols.sapi]
-    });
-
-    // Injects sapi as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi]
-    Reflect.defineProperty(newConstructor.prototype, 'sapi', {
-      configurable: false,
-      enumerable: false,
-      get: () => newConstructor[routableSymbols.sapi]
-    });
-
-    // Injects sapiConfig as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi].config
-    Reflect.defineProperty(newConstructor, 'sapiConfig', {
-      configurable: false,
-      enumerable: false,
-      get: () => (newConstructor[routableSymbols.sapi] || {} as any).config
-    });
-
-    // Injects sapiConfig as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi].config
-    Reflect.defineProperty(newConstructor.prototype, 'sapiConfig', {
-      configurable: false,
-      enumerable: false,
-      get: () => (newConstructor[routableSymbols.sapi] || {} as any).config
-    });
+    decorateWithAuthenticators(newConstructor);
+    decorateWithIdentity(newConstructor);
+    decorateWithSapi(newConstructor);
 
     // if a model is present, then add a method that allows that model to be retrieved
     if (options.model) {
@@ -376,6 +306,64 @@ export function Routable(options?: IRoutableOptions): any {
     return newConstructor;
 
     //////////
+    function addRoutesForRouteMethods(constructorProxy: any, beforeAll: Handler[], afterAll: Handler[]): ISakuraApiClassRoute[] {
+      const routes: ISakuraApiClassRoute[] = [];
+
+      debug.normal(`\t\tprocessing methods for '${target.name}'`);
+      // add routes decorated with @Route (integrator's custom routes)
+      for (const methodName of Object.getOwnPropertyNames(Object.getPrototypeOf(constructorProxy))) {
+
+        if (!Reflect.getMetadata(`hasRoute.${methodName}`, constructorProxy)) {
+          continue;
+        }
+
+        if (options.blackList.indexOf(methodName) > -1) {
+          debug.normal(`\t\t\t${methodName} is black listed; skipping`);
+          continue;
+        }
+
+        debug.normal(`\t\t\t${methodName}`);
+
+        const routeAuthenticators = Reflect.getMetadata(`authenticators.${methodName}`, constructorProxy);
+        const authenticators = [...routeAuthenticators, ...newConstructor[routableSymbols.authenticators]];
+
+        const afterMeta = Reflect.getMetadata(`after.${methodName}`, constructorProxy);
+        const after = bindHandlers(constructorProxy, afterMeta);
+        const beforeMeta = Reflect.getMetadata(`before.${methodName}`, constructorProxy);
+        const before = bindHandlers(constructorProxy, beforeMeta);
+
+        let endPoint = path
+          .join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, constructorProxy))
+          .replace(/\/$/, '');
+
+        if (!endPoint.startsWith('/')) {
+          endPoint = '/' + endPoint;
+        }
+
+        const routerData: ISakuraApiClassRoute = {
+          after,
+          afterAll,
+          authenticators,
+          before,
+          beforeAll,
+          f: Reflect
+            .getMetadata(`function.${methodName}`, constructorProxy)
+            // @Route handlers are bound to the context of the instance of the @Routable object
+            .bind(constructorProxy),
+          httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, constructorProxy),
+          method: methodName,
+          name: target.name,
+          path: endPoint,
+          routable: constructorProxy
+        };
+
+        debug.normal(`\t\t\thandler added: '%o'`, routerData);
+        routes.push(routerData);
+      }
+
+      return routes;
+    }
+
     function addRouteHandler(method: HttpMethod,
                              handler: Handler,
                              routes: ISakuraApiClassRoute[],
@@ -410,7 +398,7 @@ export function Routable(options?: IRoutableOptions): any {
                            afterAll: Handler[],
                            constructorProxy: any): ISakuraApiClassRoute {
 
-      const path = ((method === 'get' || method === 'put' || method === 'delete')
+      const routePath = ((method === 'get' || method === 'put' || method === 'delete')
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
@@ -418,12 +406,13 @@ export function Routable(options?: IRoutableOptions): any {
 
       const routerData: ISakuraApiClassRoute = {
         afterAll,
+        authenticators: newConstructor[routableSymbols.authenticators],
         beforeAll,
         f: handler.bind(diModel),
         httpMethod: httpMethodMap[method],
         method: handler.name,
         name: target.name,
-        path,
+        path: routePath,
         routable: constructorProxy
       };
 
@@ -449,4 +438,58 @@ export function Routable(options?: IRoutableOptions): any {
       return boundHandlers;
     }
   };
+
+  function decorateWithAuthenticators(target: any) {
+    // make sure the authenticators option always exists as an array
+    options.authenticator = options.authenticator || [];
+    if (!Array.isArray(options.authenticator)) {
+      options.authenticator = [options.authenticator];
+    }
+
+    target[routableSymbols.authenticators] = options.authenticator;
+  }
+
+  function decorateWithIdentity(target: any) {
+    // isSakuraApiModel hidden property is attached to let other parts of the framework know that this is an @Model obj
+    Reflect.defineProperty(target.prototype, routableSymbols.isSakuraApiRoutable, {
+      value: true,
+      writable: false
+    });
+    Reflect.defineProperty(target, routableSymbols.isSakuraApiRoutable, {
+      value: true,
+      writable: false
+    });
+  }
+
+  function decorateWithSapi(target: any) {
+    target[routableSymbols.sapi] = null;
+
+    // Injects sapi as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi]
+    Reflect.defineProperty(target, 'sapi', {
+      configurable: false,
+      enumerable: false,
+      get: () => target[routableSymbols.sapi]
+    });
+
+    // Injects sapi as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi]
+    Reflect.defineProperty(target.prototype, 'sapi', {
+      configurable: false,
+      enumerable: false,
+      get: () => target[routableSymbols.sapi]
+    });
+
+    // Injects sapiConfig as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi].config
+    Reflect.defineProperty(target, 'sapiConfig', {
+      configurable: false,
+      enumerable: false,
+      get: () => (target[routableSymbols.sapi] || {} as any).config
+    });
+
+    // Injects sapiConfig as a shortcut property on routables pointing to newConstructor[routableSymbols.sapi].config
+    Reflect.defineProperty(target.prototype, 'sapiConfig', {
+      configurable: false,
+      enumerable: false,
+      get: () => (target[routableSymbols.sapi] || {} as any).config
+    });
+  }
 }

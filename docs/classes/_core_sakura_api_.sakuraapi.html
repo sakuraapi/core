@@ -130,6 +130,14 @@ new Server().start();
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
+							<h3>Properties</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#onauthenticationerror" class="tsd-kind-icon">on<wbr>Authentication<wbr>Error</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#onauthenticationfatalerror" class="tsd-kind-icon">on<wbr>Authentication<wbr>Fatal<wbr>Error</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#onauthenticationsuccess" class="tsd-kind-icon">on<wbr>Authentication<wbr>Success</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
 							<h3>Accessors</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-get-signature tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#address" class="tsd-kind-icon">address</a></li>
@@ -148,6 +156,7 @@ new Server().start();
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#addmiddleware" class="tsd-kind-icon">add<wbr>Middleware</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#close" class="tsd-kind-icon">close</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#enqueueroutes" class="tsd-kind-icon">enqueue<wbr>Routes</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#getauthenticator" class="tsd-kind-icon">get<wbr>Authenticator</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#getmodelbyname" class="tsd-kind-icon">get<wbr>Model<wbr>ByName</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#getprovider" class="tsd-kind-icon">get<wbr>Provider</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_core_sakura_api_.sakuraapi.html#getroutablebyname" class="tsd-kind-icon">get<wbr>Routable<wbr>ByName</a></li>
@@ -169,7 +178,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L273">core/sakura-api.ts:273</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L298">core/sakura-api.ts:298</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -184,6 +193,156 @@ new Server().start();
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="onauthenticationerror" class="tsd-anchor"></a>
+					<h3>on<wbr>Authentication<wbr>Error</h3>
+					<div class="tsd-signature tsd-kind-icon">on<wbr>Authentication<wbr>Error<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L219">core/sakura-api.ts:219</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If implemented, <code>onAuthenticationError</code> will be called if there&#39;s <a href="../interfaces/_core_plugins_.authenticatorpluginresult.html">AuthenticatorPluginResult</a> status === false
+								returned. Implement this to add logging and/or override the values of <code>authResult</code> (specifically status and
+							data), to change what will be returned to the client.</p>
+						</div>
+						<p><code>AuthenticatorPluginResult</code>: <a href="../interfaces/_core_plugins_.authenticatorpluginresult.html">AuthenticatorPluginResult</a>
+						<code>authenticatorName</code>: the name of the first authenticator constructor function that failed the user&#39;s authentication.</p>
+					</div>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-siganture">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-property tsd-is-not-exported">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>req<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Request</span>, res<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Response</span>, authResult<span class="tsd-signature-symbol">?: </span><a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a>, authenticatorName<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a><span class="tsd-signature-symbol">&gt;</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>req: <span class="tsd-signature-type">Request</span></h5>
+											</li>
+											<li>
+												<h5>res: <span class="tsd-signature-type">Response</span></h5>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagOptional">Optional</span> authResult: <a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a></h5>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagOptional">Optional</span> authenticatorName: <span class="tsd-signature-type">string</span></h5>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a><span class="tsd-signature-symbol">&gt;</span></h4>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="onauthenticationfatalerror" class="tsd-anchor"></a>
+					<h3>on<wbr>Authentication<wbr>Fatal<wbr>Error</h3>
+					<div class="tsd-signature tsd-kind-icon">on<wbr>Authentication<wbr>Fatal<wbr>Error<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L229">core/sakura-api.ts:229</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If implemented, <code>onAuthenticationFatalError</code> will be called if during authentication there&#39;s an unexpected,
+								and therefore fatal error. The default behavior if not implemented is for SakuraApi to return an generic 500
+							{ error: &#39;SERVER_ERROR&#39; }.</p>
+						</div>
+						<p>You can return null/void to leave the default behavior alone or return an object with <code>{data: any, status:number}</code>
+						to provide your own values.</p>
+					</div>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-siganture">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-property tsd-is-not-exported">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>req<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Request</span>, res<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Response</span>, err<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Error</span>, authenticatorName<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">&gt;</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>req: <span class="tsd-signature-type">Request</span></h5>
+											</li>
+											<li>
+												<h5>res: <span class="tsd-signature-type">Response</span></h5>
+											</li>
+											<li>
+												<h5>err: <span class="tsd-signature-type">Error</span></h5>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagOptional">Optional</span> authenticatorName: <span class="tsd-signature-type">string</span></h5>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">&gt;</span></h4>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="onauthenticationsuccess" class="tsd-anchor"></a>
+					<h3>on<wbr>Authentication<wbr>Success</h3>
+					<div class="tsd-signature tsd-kind-icon">on<wbr>Authentication<wbr>Success<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L239">core/sakura-api.ts:239</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>If implemented, <code>onAuthenticationSuccess</code> will be called if there&#39;s <a href="../interfaces/_core_plugins_.authenticatorpluginresult.html">AuthenticatorPluginResult</a> status === true
+								returned. Implement this to add logging and/or override the values of <code>authResult</code> (specifically status and
+							data), to change what will be returned to the client.</p>
+						</div>
+						<p><code>AuthenticatorPluginResult</code>: <a href="../interfaces/_core_plugins_.authenticatorpluginresult.html">AuthenticatorPluginResult</a>
+						<code>authenticatorName</code>: the name of the authenticator constructor function that succeeded the user&#39;s authentication.</p>
+					</div>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-siganture">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-property tsd-is-not-exported">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>req<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Request</span>, res<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Response</span>, authResult<span class="tsd-signature-symbol">?: </span><a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a>, authenticatorName<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a><span class="tsd-signature-symbol">&gt;</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>req: <span class="tsd-signature-type">Request</span></h5>
+											</li>
+											<li>
+												<h5>res: <span class="tsd-signature-type">Response</span></h5>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagOptional">Optional</span> authResult: <a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a></h5>
+											</li>
+											<li>
+												<h5><span class="tsd-flag ts-flagOptional">Optional</span> authenticatorName: <span class="tsd-signature-type">string</span></h5>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/_core_plugins_.authenticatorpluginresult.html" class="tsd-signature-type">AuthenticatorPluginResult</a><span class="tsd-signature-symbol">&gt;</span></h4>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Accessors</h2>
 				<section class="tsd-panel tsd-member tsd-kind-get-signature tsd-parent-kind-class">
 					<a name="address" class="tsd-anchor"></a>
@@ -195,7 +354,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L219">core/sakura-api.ts:219</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L244">core/sakura-api.ts:244</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -217,7 +376,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L226">core/sakura-api.ts:226</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L251">core/sakura-api.ts:251</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -239,7 +398,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L234">core/sakura-api.ts:234</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L259">core/sakura-api.ts:259</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -263,7 +422,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L243">core/sakura-api.ts:243</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L268">core/sakura-api.ts:268</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -278,7 +437,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L247">core/sakura-api.ts:247</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L272">core/sakura-api.ts:272</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -308,7 +467,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L257">core/sakura-api.ts:257</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L282">core/sakura-api.ts:282</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -333,7 +492,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L264">core/sakura-api.ts:264</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L289">core/sakura-api.ts:289</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -355,7 +514,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L271">core/sakura-api.ts:271</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L296">core/sakura-api.ts:296</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -380,13 +539,17 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L331">core/sakura-api.ts:331</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L360">core/sakura-api.ts:360</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>fn: <span class="tsd-signature-type">ErrorRequestHandler</span></h5>
+									<div class="tsd-comment tsd-typography">
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
@@ -403,7 +566,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L316">core/sakura-api.ts:316</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L341">core/sakura-api.ts:341</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -447,7 +610,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L340">core/sakura-api.ts:340</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L369">core/sakura-api.ts:369</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -470,7 +633,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L597">core/sakura-api.ts:597</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L723">core/sakura-api.ts:723</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -491,6 +654,36 @@ new Server().start();
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="getauthenticator" class="tsd-anchor"></a>
+					<h3>get<wbr>Authenticator</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">get<wbr>Authenticator<span class="tsd-signature-symbol">(</span>target<span class="tsd-signature-symbol">: </span><a href="../interfaces/_core_plugins_.iauthenticatorconstructor.html" class="tsd-signature-type">IAuthenticatorConstructor</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/_core_plugins_.iauthenticator.html" class="tsd-signature-type">IAuthenticator</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L658">core/sakura-api.ts:658</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Gets a <code>@</code><a href="../modules/_core_plugins_.html#authenticatorplugin">AuthenticatorPlugin</a> that was registered during construction of <a href="_core_sakura_api_.sakuraapi.html">SakuraApi</a>.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>target: <a href="../interfaces/_core_plugins_.iauthenticatorconstructor.html" class="tsd-signature-type">IAuthenticatorConstructor</a></h5>
+									<div class="tsd-comment tsd-typography">
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/_core_plugins_.iauthenticator.html" class="tsd-signature-type">IAuthenticator</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="getmodelbyname" class="tsd-anchor"></a>
 					<h3>get<wbr>Model<wbr>ByName</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -500,7 +693,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L559">core/sakura-api.ts:559</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L680">core/sakura-api.ts:680</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -531,13 +724,21 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L563">core/sakura-api.ts:563</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L689">core/sakura-api.ts:689</a></li>
 								</ul>
 							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Gets a <code>@</code><a href="../modules/_core__injectable_injectable_.html#injectable">Injectable</a> that was registered during construction of <a href="_core_sakura_api_.sakuraapi.html">SakuraApi</a>.</p>
+								</div>
+							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>target: <span class="tsd-signature-type">any</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Pass in the <a href="../modules/_core__injectable_injectable_.html#injectable">Injectable</a> class</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
@@ -554,7 +755,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L588">core/sakura-api.ts:588</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L714">core/sakura-api.ts:714</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -585,7 +786,7 @@ new Server().start();
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/6b7b95c/src/core/sakura-api.ts#L367">core/sakura-api.ts:367</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/sakura-api.ts#L396">core/sakura-api.ts:396</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -624,7 +825,7 @@ new Server().start();
 						<a href="../modules/_core__injectable_injectable_.html">"core/@injectable/injectable"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__injectable_sakura_api_injectable_.html">"core/@injectable/sakura-<wbr>api-<wbr>injectable"</a>
+						<a href="../modules/_core__injectable_sapi_injectable_mixin_.html">"core/@injectable/sapi-<wbr>injectable-<wbr>mixin"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__model_db_.html">"core/@model/db"</a>
@@ -642,7 +843,7 @@ new Server().start();
 						<a href="../modules/_core__model_private_.html">"core/@model/private"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__model_sakura_api_model_.html">"core/@model/sakura-<wbr>api-<wbr>model"</a>
+						<a href="../modules/_core__model_sapi_model_mixin_.html">"core/@model/sapi-<wbr>model-<wbr>mixin"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core__routable_routable_.html">"core/@routable/routable"</a>
@@ -651,7 +852,10 @@ new Server().start();
 						<a href="../modules/_core__routable_route_.html">"core/@routable/route"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="../modules/_core__routable_sakura_api_routable_.html">"core/@routable/sakura-<wbr>api-<wbr>routable"</a>
+						<a href="../modules/_core__routable_sapi_routable_mixin_.html">"core/@routable/sapi-<wbr>routable-<wbr>mixin"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_helpers_constructor_type_.html">"core/helpers/constructor-<wbr>type"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_helpers_defaultmethodhelpers_.html">"core/helpers/default<wbr>Method<wbr>Helpers"</a>
@@ -661,6 +865,9 @@ new Server().start();
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_core_helpers_should_recurse_.html">"core/helpers/should-<wbr>recurse"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_core_plugins_.html">"core/plugins"</a>
 					</li>
 					<li class="current tsd-kind-external-module">
 						<a href="../modules/_core_sakura_api_.html">"core/sakura-<wbr>api"</a>
@@ -685,6 +892,15 @@ new Server().start();
 						<ul>
 							<li class=" tsd-kind-constructor tsd-parent-kind-class">
 								<a href="_core_sakura_api_.sakuraapi.html#constructor" class="tsd-kind-icon">constructor</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_core_sakura_api_.sakuraapi.html#onauthenticationerror" class="tsd-kind-icon">on<wbr>Authentication<wbr>Error</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_core_sakura_api_.sakuraapi.html#onauthenticationfatalerror" class="tsd-kind-icon">on<wbr>Authentication<wbr>Fatal<wbr>Error</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_core_sakura_api_.sakuraapi.html#onauthenticationsuccess" class="tsd-kind-icon">on<wbr>Authentication<wbr>Success</a>
 							</li>
 							<li class=" tsd-kind-get-signature tsd-parent-kind-class">
 								<a href="_core_sakura_api_.sakuraapi.html#address" class="tsd-kind-icon">address</a>
@@ -720,6 +936,9 @@ new Server().start();
 								<a href="_core_sakura_api_.sakuraapi.html#enqueueroutes" class="tsd-kind-icon">enqueue<wbr>Routes</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_core_sakura_api_.sakuraapi.html#getauthenticator" class="tsd-kind-icon">get<wbr>Authenticator</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="_core_sakura_api_.sakuraapi.html#getmodelbyname" class="tsd-kind-icon">get<wbr>Model<wbr>ByName</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
@@ -740,12 +959,6 @@ new Server().start();
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 						<a href="../interfaces/_core_sakura_api_.sakuraapioptions.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/_core_sakura_api_.sakuraapiplugin.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="../interfaces/_core_sakura_api_.sakuraapipluginresult.html" class="tsd-kind-icon">Sakura<wbr>Api<wbr>Plugin<wbr>Result</a>
 					</li>
 					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
 						<a href="../interfaces/_core_sakura_api_.serverconfig.html" class="tsd-kind-icon">Server<wbr>Config</a>

@@ -3,7 +3,7 @@ import {testSapi} from '../../../spec/helpers/sakuraapi';
 import {Db} from './db';
 import {Json} from './json';
 import {Model, modelSymbols} from './model';
-import {SakuraApiModel} from './sakura-api-model';
+import {SapiModelMixin} from './sapi-model-mixin';
 
 describe('@Json', () => {
 
@@ -14,7 +14,7 @@ describe('@Json', () => {
       promiscuous: true
     }
   })
-  class Test extends SakuraApiModel {
+  class Test extends SapiModelMixin() {
     @Json('ap')
     aProperty: string = 'test';
 
@@ -61,7 +61,7 @@ describe('@Json', () => {
   describe('toJson', () => {
     it('function is injected into the prototype of the model by default', () => {
       @Model()
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
         firstName = 'George';
         lastName: string;
       }
@@ -95,7 +95,7 @@ describe('@Json', () => {
       }
 
       @Model({})
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
         @Db('fn')
         @Json('fn')
         firstName = 'George';
@@ -148,7 +148,7 @@ describe('@Json', () => {
       }
 
       @Model()
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
         firstName = 'George';
         lastName: string;
         contact = new Contact();
@@ -174,7 +174,7 @@ describe('@Json', () => {
       }
 
       @Model()
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
         firstName = 'George';
         lastName: string;
         contact = new Contact();
@@ -198,7 +198,7 @@ describe('@Json', () => {
       }
 
       @Model()
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
         @Json('fn')
         firstName = 0;
 
@@ -226,7 +226,7 @@ describe('@Json', () => {
           db: 'userDb'
         }
       })
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
         @Db('fn') @Json('fName')
         firstName = 'George';
         @Db('ln') @Json('lName')
@@ -308,7 +308,7 @@ describe('@Json', () => {
           promiscuous: true
         }
       })
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
         firstName = 'George';
         lastName: string;
         contact = new Contact();
@@ -363,7 +363,7 @@ describe('@Json', () => {
       }
 
       @Model()
-      class User extends SakuraApiModel {
+      class User extends SapiModelMixin() {
         @Db({field: 'fn', private: true})
         firstName = 'George';
 
@@ -462,7 +462,7 @@ describe('@Json', () => {
     }
 
     @Model({})
-    class User extends SakuraApiModel {
+    class User extends SapiModelMixin() {
       @Db('fn')
       @Json('fn')
       firstName = 'George';
@@ -483,7 +483,7 @@ describe('@Json', () => {
 
     it('allows the injected functions to be overridden without breaking the internal dependencies', () => {
       @Model()
-      class SymbolTest extends SakuraApiModel {
+      class SymbolTest extends SapiModelMixin() {
         @Json('ap')
         aProperty: number;
       }
@@ -507,7 +507,7 @@ describe('@Json', () => {
 
     it('does not throw if there are no @Json decorators', () => {
       @Model()
-      class C extends SakuraApiModel {
+      class C extends SapiModelMixin() {
         someProperty = 777;
       }
 
@@ -610,7 +610,7 @@ describe('@Json', () => {
 
     it('maps a model property that has no @Json property, but does have a default value', () => {
       @Model()
-      class TestDefaults extends SakuraApiModel {
+      class TestDefaults extends SapiModelMixin() {
         firstName: string = 'George';
         lastName: string = 'Washington';
       }
@@ -692,7 +692,7 @@ describe('@Json', () => {
       }
 
       @Model()
-      class Parent extends SakuraApiModel {
+      class Parent extends SapiModelMixin() {
 
         @Json({model: Child})
         instantiatedChild = new Child();
@@ -781,7 +781,7 @@ describe('@Json', () => {
     describe('id behavior', () => {
 
       @Model()
-      class User extends SakuraApiModel {
+      class User1 extends SapiModelMixin() {
       }
 
       it('unmarshalls id as an ObjectID when it is a valid ObjectID', () => {
@@ -789,10 +789,10 @@ describe('@Json', () => {
           id: new ObjectID().toString()
         };
 
-        const user = User.fromJson(data);
+        const user = User1.fromJson(data);
 
-        expect(new User().id).toBeDefined('nope');
-        expect(user instanceof User).toBeTruthy('Should have gotten back an instance of User');
+        expect(new User1().id).toBeDefined('nope');
+        expect(user instanceof User1).toBeTruthy('Should have gotten back an instance of User');
         expect(user.id instanceof ObjectID).toBeTruthy();
         expect(user._id instanceof ObjectID).toBeTruthy();
       });
@@ -833,7 +833,7 @@ describe('@Json', () => {
 
     describe('promiscuous fields, issue #99', () => {
       @Model()
-      class DonorIntent extends SakuraApiModel {
+      class DonorIntent extends SapiModelMixin() {
         @Db() @Json()
         currency: string;
 
@@ -1052,7 +1052,7 @@ describe('@Json', () => {
     }
 
     @Model()
-    class ChangeSetTest extends SakuraApiModel {
+    class ChangeSetTest extends SapiModelMixin() {
 
       @Db('first')
       @Json('fn')
@@ -1144,7 +1144,7 @@ describe('@Json', () => {
 
     it('allows the injected functions to be overridden without breaking the internal dependencies', () => {
       @Model()
-      class SymbolTest extends SakuraApiModel {
+      class SymbolTest extends SapiModelMixin() {
         @Json('ap')
         aProperty: number;
       }

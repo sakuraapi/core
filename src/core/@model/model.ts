@@ -9,13 +9,27 @@ import {
   ObjectID,
   ReplaceOneOptions,
   UpdateWriteOpResult
-} from 'mongodb';
+}                                from 'mongodb';
 import {getDependencyInjections} from '../@injectable/injectable';
-import {addDefaultInstanceMethods, addDefaultStaticMethods, shouldRecurse} from '../helpers';
-import {dbSymbols, IDbOptions} from './db';
-import {SapiDbForModelNotFound, SapiInvalidModelObject, SapiMissingIdErr} from './errors';
-import {IJsonOptions, jsonSymbols} from './json';
-import {privateSymbols} from './private';
+import {
+  addDefaultInstanceMethods,
+  addDefaultStaticMethods,
+  shouldRecurse
+}                                from '../helpers';
+import {
+  dbSymbols,
+  IDbOptions
+}                                from './db';
+import {
+  SapiDbForModelNotFound,
+  SapiInvalidModelObject,
+  SapiMissingIdErr
+}                                from './errors';
+import {
+  IJsonOptions,
+  jsonSymbols
+}                                from './json';
+import {privateSymbols}          from './private';
 
 const debug = {
   normal: require('debug')('sapi:model')
@@ -252,8 +266,7 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     newConstructor.fromJsonToDb = fromJsonToDb;
     newConstructor[modelSymbols.fromJsonToDb] = fromJsonToDb;
 
-    // Injected by SakuraApi in `.mapModels`
-    newConstructor[modelSymbols.sapi] = null;
+    newConstructor[modelSymbols.sapi] = null; // injected by [[SakuraApi.registerModels]]
 
     // Injects sapi as a shortcut property on models pointing to newConstructor[modelSymbols.sapi]
     Reflect.defineProperty(newConstructor, 'sapi', {
@@ -287,19 +300,11 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     // Developer notes:
     //
     // Instance method injection... TypeScript won't know these are part of the type of the object being constructed
-    // since they're dynamically injected. This is best done with TypeScript declaration merging.
-    //     See: https://www.typescriptlang.org/docs/handbook/declaration-merging.html
+    // since they're dynamically injected. You can use the SapiModelMixin to overcome this.
     //
     //  example:
-    //
-    //    interface Example extends IModel {}
-    //
     //    @Model()
-    //    class Example {}
-    //
-    // alternatively:
-    //    @Model()
-    //    class Example extends SakuraApiModel {}
+    //    class Example extends SapiModelMixin() {}
     // =================================================================================================================
 
     // Inject default instance methods for CRUD if not already defined by integrator
@@ -1026,10 +1031,10 @@ function toDb(changeSet?: any): object {
 
       if (shouldRecurse(source[key])) {
 
-        const newKey = keyMapper(key, source[key], dbOptionsByPropertyName);
-        if (newKey !== undefined) {
+        const aNewKey = keyMapper(key, source[key], dbOptionsByPropertyName);
+        if (aNewKey !== undefined) {
           const value = mapModelToDb(source[key], ++depth);
-          result[newKey] = value;
+          result[aNewKey] = value;
         }
 
         continue;
@@ -1145,11 +1150,11 @@ function toJson(): any {
       }
 
       if (shouldRecurse(source[key])) {
-        const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
+        const aNewKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
 
-        if (newKey !== undefined) {
+        if (aNewKey !== undefined) {
           const value = mapModelToJson(source[key]);
-          result[newKey] = value;
+          result[aNewKey] = value;
         }
 
         continue;
