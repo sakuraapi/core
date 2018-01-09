@@ -97,10 +97,10 @@ export interface SakuraApiPluginResult {
 export interface AuthenticatorPluginResult {
   data: {
     [key: string]: any
-  },
-  error?: Error,
-  status: number,
-  success: boolean,
+  };
+  error?: Error;
+  status: number;
+  success: boolean;
 }
 
 /**

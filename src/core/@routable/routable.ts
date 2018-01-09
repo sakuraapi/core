@@ -131,7 +131,7 @@ export interface ISakuraApiClassRoute {
   /**
    * The array of authenticators to apply to the route's middleware
    */
-  authenticators: IAuthenticatorConstructor[]
+  authenticators: IAuthenticatorConstructor[];
   /**
    * the class's baseUrl (if any) + the route's path
    */
@@ -341,9 +341,9 @@ export function Routable(options?: IRoutableOptions): any {
         }
 
         const routerData: ISakuraApiClassRoute = {
-          authenticators,
           after,
           afterAll,
+          authenticators,
           before,
           beforeAll,
           f: Reflect
@@ -405,8 +405,8 @@ export function Routable(options?: IRoutableOptions): any {
       const diModel = newConstructor[routableSymbols.sapi].getModelByName(options.model.name);
 
       const routerData: ISakuraApiClassRoute = {
-        authenticators: newConstructor[routableSymbols.authenticators],
         afterAll,
+        authenticators: newConstructor[routableSymbols.authenticators],
         beforeAll,
         f: handler.bind(diModel),
         httpMethod: httpMethodMap[method],
