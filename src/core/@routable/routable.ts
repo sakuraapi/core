@@ -67,7 +67,7 @@ export interface IRoutableOptions {
    *    method: 'post'
    *  })
    *  postNewUser(req, res) {
-   *    res.sendStatus(200);
+   *    res.sendStatus(OK);
    *  }
    * }
    * </pre>
@@ -202,7 +202,7 @@ export const routableSymbols = {
  *      method: 'get'
  *    })
  *    getUser(req, res) {
- *      res.status(200).json(someModel.toJson());
+ *      res.status(OK).json(someModel.toJson());
  *    }
  * }
  * </pre>

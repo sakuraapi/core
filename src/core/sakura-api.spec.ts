@@ -19,6 +19,7 @@ import {
   Route,
   SapiRoutableMixin
 }                  from './@routable/';
+import {AUTHORIZATION_FAILURE, OK} from './helpers/http-status';
 import {
   Anonymous,
   AuthenticatorPlugin,
@@ -40,7 +41,7 @@ describe('core/SakuraApi', () => {
       path: 'testRouterGet'
     })
     testRouterGet(req, res) {
-      res.status(200)
+      res.status(OK)
         .json({
           testRouterGet: this.response
         });
@@ -95,7 +96,7 @@ describe('core/SakuraApi', () => {
       })
       test(req, res) {
         res
-          .status(200)
+          .status(OK)
           .json({result: req.bootStrapTest});
       }
     }
@@ -120,7 +121,7 @@ describe('core/SakuraApi', () => {
             .expect('Content-Type', /json/)
             .expect('Content-Length', '14')
             .expect('{"result":778}')
-            .expect(200);
+            .expect(OK);
         })
         .then(() => sapi.close())
         .then(done)
@@ -193,7 +194,7 @@ describe('core/SakuraApi', () => {
             .app
             .get('/middleWareTest', (req, res) => {
               res
-                .status(200)
+                .status(OK)
                 .json({isTest: true});
             });
 
@@ -203,7 +204,7 @@ describe('core/SakuraApi', () => {
             .expect('Content-Type', /json/)
             .expect('Content-Length', '15')
             .expect('{"isTest":true}')
-            .expect(200)
+            .expect(OK)
             .then(() => {
               sapi
                 .close()
@@ -234,7 +235,7 @@ describe('core/SakuraApi', () => {
             .app
             .get('/middleWareTest', (req, res) => {
               res
-                .status(200)
+                .status(OK)
                 .json({isTest: true});
             });
 
@@ -243,7 +244,7 @@ describe('core/SakuraApi', () => {
             .expect('Content-Type', /json/)
             .expect('Content-Length', '15')
             .expect('{"isTest":true}')
-            .expect(200)
+            .expect(OK)
             .then(() => {
               expect(MongoClient.connect).toHaveBeenCalledTimes(1);
 
@@ -300,7 +301,7 @@ describe('core/SakuraApi', () => {
             .expect('Content-Type', /json/)
             .expect('Content-Length', '40')
             .expect('{"testRouterGet":"testRouterGet worked"}')
-            .expect(200);
+            .expect(OK);
         })
         .then(() => sapi.close())
         .then(done)
@@ -423,14 +424,14 @@ describe('core/SakuraApi', () => {
     @AuthenticatorPlugin()
     class SomeAuthenticatorSuccess implements IAuthenticator, IAuthenticatorConstructor {
       async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
-        return {data: {}, status: 200, success: true};
+        return {data: {}, status: OK, success: true};
       }
     }
 
     @AuthenticatorPlugin()
     class SomeAuthenticatorFail implements IAuthenticator, IAuthenticatorConstructor {
       async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
-        return {data: {error: 'AUTHENTICATION_FAILURE'}, status: 401, success: false};
+        return {data: {error: 'AUTHENTICATION_FAILURE'}, status: AUTHORIZATION_FAILURE, success: false};
       }
     }
 
@@ -508,11 +509,11 @@ describe('core/SakuraApi', () => {
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler1'))
-          .expect(401);
+          .expect(AUTHORIZATION_FAILURE);
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler1'))
-          .expect(401);
+          .expect(AUTHORIZATION_FAILURE);
 
         done();
       });
@@ -545,11 +546,11 @@ describe('core/SakuraApi', () => {
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler1'))
-          .expect(200);
+          .expect(OK);
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler1'))
-          .expect(200);
+          .expect(OK);
 
         done();
       });
@@ -585,11 +586,11 @@ describe('core/SakuraApi', () => {
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler1'))
-          .expect(200);
+          .expect(OK);
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler2'))
-          .expect(401);
+          .expect(AUTHORIZATION_FAILURE);
 
         done();
       });
@@ -628,11 +629,11 @@ describe('core/SakuraApi', () => {
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler1'))
-          .expect(200);
+          .expect(OK);
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler2'))
-          .expect(200);
+          .expect(OK);
 
         done();
       });
