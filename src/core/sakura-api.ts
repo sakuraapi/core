@@ -34,6 +34,7 @@ import {
   SakuraApiPluginResult
 }                                from './plugins';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
+import {INVALID_JSON, OK} from './helpers/http-status';
 
 const debug = {
   authenticators: debugInit('sapi:authenticators'),
@@ -573,8 +574,8 @@ export class SakuraApi {
 
     function catchBodyParserErrors(err, req: Request, res: Response, next: NextFunction): void {
       // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
-      if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
-        res.status(400).send({
+      if (err instanceof SyntaxError && (err as any).status === INVALID_JSON && 'body' in err) {
+        res.status(INVALID_JSON).send({
           body: req.body,
           error: 'invalid_body'
         });
@@ -620,7 +621,7 @@ export class SakuraApi {
         res.locals.reqBody = req.body;
       }
       res.locals.data = {};
-      res.locals.status = 200;
+      res.locals.status = OK;
 
       res.locals.send = (status, data): IRoutableLocals => {
         res.locals.status = status;
@@ -643,7 +644,7 @@ export class SakuraApi {
         return next();
       }
       res
-        .status(res.locals.status || 200)
+        .status(res.locals.status || OK)
         .json(res.locals.data);
 
       next();

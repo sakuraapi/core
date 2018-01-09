@@ -14,6 +14,7 @@ import {
   Model
 }                          from '../@model';
 import {SapiModelMixin}    from '../@model/sapi-model-mixin';
+import {OK} from '../helpers/http-status';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
@@ -40,7 +41,7 @@ describe('core/Route', () => {
     })
     someMethod(req: Request, res: Response) {
       res
-        .status(200)
+        .status(OK)
         .send({someMethodCalled: true});
     }
 
@@ -50,7 +51,7 @@ describe('core/Route', () => {
     })
     someOtherMethod(req: Request, res: Response) {
       res
-        .status(200)
+        .status(OK)
         .send({someOtherMethodCalled: true});
     }
 
@@ -60,7 +61,7 @@ describe('core/Route', () => {
     })
     someBlacklistedMethod(req: Request, res: Response) {
       res
-        .status(200)
+        .status(OK)
         .send({someOtherMethodCalled: true});
     }
 
@@ -138,7 +139,7 @@ describe('core/Route', () => {
       })
       testA(req, res) {
         res
-          .status(200)
+          .status(OK)
           .json({result: req.params.id.toString()});
       }
 
@@ -148,7 +149,7 @@ describe('core/Route', () => {
       })
       testB(req, res) {
         res
-          .status(200)
+          .status(OK)
           .json({result: req.params.id.toString()});
       }
     }
@@ -178,7 +179,7 @@ describe('core/Route', () => {
         .expect('Content-Type', /json/)
         .expect('Content-Length', '16')
         .expect('{"result":"777"}')
-        .expect(200)
+        .expect(OK)
         .then(done)
         .catch(done.fail);
     });
@@ -189,7 +190,7 @@ describe('core/Route', () => {
         .expect('Content-Type', /json/)
         .expect('Content-Length', '16')
         .expect('{"result":"888"}')
-        .expect(200)
+        .expect(OK)
         .then(done)
         .catch(done.fail);
     });
@@ -204,7 +205,7 @@ describe('core/Route', () => {
       @Route({
         before: [(req, res, next) => {
           const reqLocals = res.locals as IRoutableLocals;
-          reqLocals.send(200, {
+          reqLocals.send(OK, {
             order: '1b'
           });
           next();
@@ -212,7 +213,7 @@ describe('core/Route', () => {
       })
       testHandler(req: Request, res: Response, next: NextFunction) {
         const reqLocals = res.locals as IRoutableLocals;
-        reqLocals.send(200, {
+        reqLocals.send(OK, {
           order: reqLocals.data.order + '2b'
         });
         next();
@@ -248,7 +249,7 @@ describe('core/Route', () => {
     it('runs before handler before route handler', (done) => {
       request(sapi.app)
         .get(testUrl('/BeforeHandlerTests'))
-        .expect(200)
+        .expect(OK)
         .then((result) => {
           expect(result.body.order).toBe('1b2b');
         })
@@ -259,7 +260,7 @@ describe('core/Route', () => {
     it('does not run before handlers without before route handlers', (done) => {
       request(sapi.app)
         .get(testUrl(`/BeforeHandlerTests/test2Handler`))
-        .expect(200)
+        .expect(OK)
         .then((result) => {
           expect(result.body.order).toBeUndefined();
         })
@@ -292,7 +293,7 @@ describe('core/Route', () => {
           AfterHandlerTestModel
             .getById(res.locals.data.id)
             .then((result) => {
-              res.locals.send(200, {
+              res.locals.send(OK, {
                 dbObj: result,
                 order: 1
               }, res);
@@ -307,7 +308,7 @@ describe('core/Route', () => {
         model
           .create()
           .then((db: any) => {
-            res.locals.send(200, {
+            res.locals.send(OK, {
               id: db.insertedId
             }, res);
             next();
@@ -345,7 +346,7 @@ describe('core/Route', () => {
     it('runs after handler after route handler', (done) => {
       request(sapi.app)
         .get(testUrl('/AfterHandlerTests'))
-        .expect(200)
+        .expect(OK)
         .then((result) => {
           const body = result.body;
           expect(body.dbObj.firstName).toBe('George');
@@ -360,7 +361,7 @@ describe('core/Route', () => {
     it('does not run after handler after other handlers', (done) => {
       request(sapi.app)
         .get(testUrl('/AfterHandlerTests/test2Handler'))
-        .expect(200)
+        .expect(OK)
         .then((result) => {
           expect(result.body.order).toBeUndefined();
         })
@@ -373,14 +374,14 @@ describe('core/Route', () => {
     @AuthenticatorPlugin()
     class RoutableAuthenticator implements IAuthenticator, IAuthenticatorConstructor {
       async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
-        return {data: {}, status: 200, success: true};
+        return {data: {}, status: OK, success: true};
       }
     }
 
     @AuthenticatorPlugin()
     class RouteAuthenticator implements IAuthenticator, IAuthenticatorConstructor {
       async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
-        return {data: {}, status: 200, success: true};
+        return {data: {}, status: OK, success: true};
       }
     }
 

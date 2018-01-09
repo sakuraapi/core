@@ -5,6 +5,7 @@ import {
 }                     from 'express';
 import {v4}           from 'uuid';
 import {modelSymbols} from './@model/model';
+import {OK} from './helpers/http-status';
 import {SakuraApi}    from './sakura-api';
 
 /**
@@ -227,6 +228,6 @@ export class Anonymous implements IAuthenticator, IAuthenticatorConstructor {
    * @returns {Promise<AuthenticatorPluginResult>}
    */
   async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
-    return {data: {}, status: 200, success: true};
+    return {data: {}, status: OK, success: true};
   }
 }
