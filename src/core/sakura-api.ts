@@ -1,6 +1,4 @@
 import * as debugInit            from 'debug';
-// tslint:disable:no-duplicate-imports
-import * as express              from 'express';
 import {
   ErrorRequestHandler,
   Express,
@@ -10,6 +8,8 @@ import {
   Response,
   Router
 }                                from 'express';
+// tslint:disable:no-duplicate-imports
+import * as express              from 'express';
 // tslint:enable:no-duplicate-imports
 import * as http                 from 'http';
 import {SakuraApiConfig}         from '../boot';
@@ -24,6 +24,7 @@ import {
   ISakuraApiClassRoute,
   routableSymbols
 }                                from './@routable';
+import {BAD_REQUEST, OK} from './helpers/http-status';
 import {
   Anonymous,
   AuthenticatorNotRegistered,
@@ -36,7 +37,6 @@ import {
   SakuraApiPluginResult
 }                                from './plugins';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
-import {INVALID_JSON, OK} from './helpers/http-status';
 
 const debug = {
   authenticators: debugInit('sapi:authenticators'),
@@ -579,8 +579,8 @@ export class SakuraApi {
 
     function catchBodyParserErrors(err, req: Request, res: Response, next: NextFunction): void {
       // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
-      if (err instanceof SyntaxError && (err as any).status === INVALID_JSON && 'body' in err) {
-        res.status(INVALID_JSON).send({
+      if (err instanceof SyntaxError && (err as any).status === BAD_REQUEST && 'body' in err) {
+        res.status(BAD_REQUEST).send({
           body: req.body,
           error: 'invalid_body'
         });

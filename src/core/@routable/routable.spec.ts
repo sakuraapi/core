@@ -20,7 +20,7 @@ import {
   Model,
   SapiModelMixin
 }                           from '../@model';
-import {DUPLICATE_RESOURCE, INVALID_JSON, NOT_FOUND, OK} from '../helpers/http-status';
+import {BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK} from '../helpers/http-status';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
@@ -552,7 +552,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for where parameter', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?where={firstName:test}`))
-              .expect(INVALID_JSON)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should have been a body returned with the error');
                 expect(res.body.error).toBe('invalid_where_parameter');
@@ -664,7 +664,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for fields parameter', (done) => {
             request(sapi.app)
               .get(testUrl('/user?fields={blah}'))
-              .expect(INVALID_JSON)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
                 expect(res.body.error).toBe('invalid_fields_parameter');
@@ -677,7 +677,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for fields=', (done) => {
             request(sapi.app)
               .get(testUrl('/user?fields='))
-              .expect(INVALID_JSON)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
                 expect(res.body.error).toBe('invalid_fields_parameter');
@@ -766,7 +766,7 @@ describe('core/@Routable', () => {
           it('returns 400 with no values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?skip=`))
-              .expect(INVALID_JSON)
+              .expect(BAD_REQUEST)
               .then(done)
               .catch(done.fail);
           });
@@ -774,7 +774,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?skip=aaa`))
-              .expect(INVALID_JSON)
+              .expect(BAD_REQUEST)
               .then(done)
               .catch(done.fail);
           });
@@ -806,7 +806,7 @@ describe('core/@Routable', () => {
           it('returns 400 with no values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?limit=`))
-              .expect(INVALID_JSON)
+              .expect(BAD_REQUEST)
               .then(done)
               .catch(done.fail);
           });
@@ -814,7 +814,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?limit=aaa`))
-              .expect(INVALID_JSON)
+              .expect(BAD_REQUEST)
               .then(done)
               .catch(done.fail);
           });
@@ -890,7 +890,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for fields parameter', (done) => {
             request(sapi.app)
               .get(testUrl(`/user/${this.user1.id.toString()}?fields={blah}`))
-              .expect(INVALID_JSON)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
                 expect(res.body.error).toBe('invalid_fields_parameter');
@@ -903,7 +903,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for fields=', (done) => {
             request(sapi.app)
               .get(testUrl(`/user/${this.user1.id.toString()}?fields=`))
-              .expect(INVALID_JSON)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
                 expect(res.body.error).toBe('invalid_fields_parameter');
@@ -971,7 +971,7 @@ describe('core/@Routable', () => {
             .post(testUrl(`/user`))
             .type('application/json')
             .send(`{test:}`)
-            .expect(INVALID_JSON)
+            .expect(BAD_REQUEST)
             .then((res) => {
               expect(res.body.error).toBe('invalid_body');
             })
@@ -1102,7 +1102,7 @@ describe('core/@Routable', () => {
             .put(testUrl(`/user/${this.user1.id.toString()}`))
             .type('application/json')
             .send(`{test:}`)
-            .expect(INVALID_JSON)
+            .expect(BAD_REQUEST)
             .then((res) => {
               expect(res.body.error).toBe('invalid_body');
             })

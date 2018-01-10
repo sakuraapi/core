@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
 import {IDbGetParams} from '../core/@model';
 import {IRoutableLocals, routableSymbols} from '../core/@routable/routable';
-import {DUPLICATE_RESOURCE, INVALID_JSON, NOT_FOUND, OK, SERVER_ERROR} from '../core/helpers/http-status';
+import {BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK, SERVER_ERROR} from '../core/helpers/http-status';
 import {SanitizeMongoDB as Sanitize} from '../core/security/mongo-db';
 
 const debug = {
@@ -194,7 +194,7 @@ export function putRouteHandler(req: Request, res: Response, next: NextFunction)
 
   if (!req.body || typeof req.body !== 'object') {
     resLocals
-      .send(INVALID_JSON, {
+      .send(BAD_REQUEST, {
         body: req.body,
         error: 'invalid_body'
       });
@@ -203,7 +203,7 @@ export function putRouteHandler(req: Request, res: Response, next: NextFunction)
 
   if (!id) {
     resLocals
-      .send(INVALID_JSON, {
+      .send(BAD_REQUEST, {
         body: req.body,
         error: 'invalid_body_missing_id'
       });
@@ -251,7 +251,7 @@ export function postRouteHandler(req: Request, res: Response, next: NextFunction
 
   if (!req.body || typeof req.body !== 'object') {
     resLocals
-      .send(INVALID_JSON, {
+      .send(BAD_REQUEST, {
         body: req.body,
         error: 'invalid_body'
       });
@@ -349,11 +349,11 @@ function sanitizedUserInput(res: Response, errMessage: string, fn: () => any) {
       && (err.message.startsWith('Unexpected token') || err.message.startsWith('Unexpected end of JSON input'))) {
       res
         .locals
-        .send(INVALID_JSON, {
+        .send(BAD_REQUEST, {
           details: err.message,
           error: errMessage
         }, res);
-      (err as any).status = INVALID_JSON;
+      (err as any).status = BAD_REQUEST;
     } else {
       res
         .locals
