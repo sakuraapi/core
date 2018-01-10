@@ -14,6 +14,7 @@ export const NOT_FOUND = 404;
 export const METHOD_NOT_ALLOWED = 405;
 export const NOT_ACCEPTABLE = 406;
 export const DUPLICATE_RESOURCE = 409;
+export const CONFLICT = 409;
 export const PRECONDITION_FAILED = 412;
 export const UNSUPPORTED_MEDIA_TYPE = 415;
 export const IM_A_LITTLE_TEAPOT = 418;
