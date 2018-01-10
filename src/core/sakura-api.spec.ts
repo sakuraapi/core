@@ -19,7 +19,7 @@ import {
   Route,
   SapiRoutableMixin
 }                  from './@routable/';
-import {AUTHORIZATION_FAILURE, OK} from './helpers/http-status';
+import {OK, UNAUTHORIZED} from './helpers/http-status';
 import {
   Anonymous,
   AuthenticatorPlugin,
@@ -431,7 +431,7 @@ describe('core/SakuraApi', () => {
     @AuthenticatorPlugin()
     class SomeAuthenticatorFail implements IAuthenticator, IAuthenticatorConstructor {
       async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
-        return {data: {error: 'AUTHENTICATION_FAILURE'}, status: AUTHORIZATION_FAILURE, success: false};
+        return {data: {error: 'AUTHENTICATION_FAILURE'}, status: UNAUTHORIZED, success: false};
       }
     }
 
@@ -509,11 +509,11 @@ describe('core/SakuraApi', () => {
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler1'))
-          .expect(AUTHORIZATION_FAILURE);
+          .expect(UNAUTHORIZED);
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler1'))
-          .expect(AUTHORIZATION_FAILURE);
+          .expect(UNAUTHORIZED);
 
         done();
       });
@@ -590,7 +590,7 @@ describe('core/SakuraApi', () => {
 
         await request(sapi.app)
           .get(testUrl('/someapi/routeHandler2'))
-          .expect(AUTHORIZATION_FAILURE);
+          .expect(UNAUTHORIZED);
 
         done();
       });
