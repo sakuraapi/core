@@ -1,11 +1,22 @@
 // tslint:disable:max-line-length
 import {
-  Collection, CollectionInsertOneOptions, CollectionOptions, Cursor, Db, DeleteWriteOpResultObject,
-  InsertOneWriteOpResult, ObjectID, ReplaceOneOptions, UpdateWriteOpResult
-} from 'mongodb';
+  Collection,
+  CollectionInsertOneOptions,
+  CollectionOptions,
+  Cursor,
+  Db,
+  DeleteWriteOpResultObject,
+  InsertOneWriteOpResult,
+  ObjectID,
+  ReplaceOneOptions,
+  UpdateWriteOpResult
+}                    from 'mongodb';
 import {Constructor} from '../helpers/constructor-type';
-import {SakuraApi} from '../sakura-api';
-import {IDbGetParams, IFromDbOptions} from './';
+import {SakuraApi}   from '../sakura-api';
+import {
+  IDbGetParams,
+  IFromDbOptions
+}                    from './';
 
 /**
  * Integrators should extend their Models with this Mixin to get type checking.
