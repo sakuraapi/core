@@ -7,6 +7,7 @@ import {Model} from '../@model/model';
 import {SapiRoutableMixin} from '../@routable';
 import {IRoutableLocals, Routable} from '../@routable/routable';
 import {Route} from '../@routable/route';
+import {OK} from '../helpers/http-status';
 import {SakuraApi} from '../sakura-api';
 import {
   Injectable, injectableSymbols, NonInjectableConstructorParameterError, ProviderNotRegistered,
@@ -351,7 +352,7 @@ describe('@Injectable', () => {
       })
       handleGet(req: Request, res: Response, next: NextFunction) {
         const resLocals = res.locals as IRoutableLocals;
-        resLocals.send(200, {
+        resLocals.send(OK, {
           result: this.testService.val
         });
         next();
@@ -377,7 +378,7 @@ describe('@Injectable', () => {
 
       request(sapi.app)
         .get(testUrl('/injectRoutableTest'))
-        .expect(200)
+        .expect(OK)
         .then((result) => {
           expect(result.body.result).toBe('found');
         })
@@ -396,7 +397,7 @@ describe('@Injectable', () => {
 
       request(sapi.app)
         .get(testUrl('/injectRoutableTest'))
-        .expect(200)
+        .expect(OK)
         .then((result) => {
           expect(result.body.result).toBe('mock');
         })

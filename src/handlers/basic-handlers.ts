@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
 import {IDbGetParams} from '../core/@model';
 import {IRoutableLocals, routableSymbols} from '../core/@routable/routable';
-import {DUPLICATE_RESOURCE} from '../core/helpers/http-status';
+import {BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK, SERVER_ERROR} from '../core/helpers/http-status';
 import {SanitizeMongoDB as Sanitize} from '../core/security/mongo-db';
 
 const debug = {
@@ -47,7 +47,7 @@ export function getRouteHandler(req: Request, res: Response, next: NextFunction)
     .getById(id, project)
     .then((result) => {
       const response = (result) ? result.toJson() : null;
-      resLocals.status = 200;
+      resLocals.status = OK;
       resLocals.data = response;
       next();
     })
@@ -135,7 +135,7 @@ export function getAllRouteHandler(req: Request, res: Response, next: NextFuncti
         response.push(result.toJson());
       }
 
-      resLocals.send(200, response);
+      resLocals.send(OK, response);
       next();
     })
     .catch((err) => {
@@ -194,7 +194,7 @@ export function putRouteHandler(req: Request, res: Response, next: NextFunction)
 
   if (!req.body || typeof req.body !== 'object') {
     resLocals
-      .send(400, {
+      .send(BAD_REQUEST, {
         body: req.body,
         error: 'invalid_body'
       });
@@ -203,7 +203,7 @@ export function putRouteHandler(req: Request, res: Response, next: NextFunction)
 
   if (!id) {
     resLocals
-      .send(400, {
+      .send(BAD_REQUEST, {
         body: req.body,
         error: 'invalid_body_missing_id'
       });
@@ -218,7 +218,7 @@ export function putRouteHandler(req: Request, res: Response, next: NextFunction)
     .getById(id)
     .then((obj) => {
       if (!obj) {
-        resLocals.status = 404;
+        resLocals.status = NOT_FOUND;
         return next();
       }
 
@@ -226,7 +226,7 @@ export function putRouteHandler(req: Request, res: Response, next: NextFunction)
         .save(changeSet)
         .then((result) => {
           resLocals
-            .send(200, {
+            .send(OK, {
               modified: (result.result || {} as any).nModified
             });
           next();
@@ -251,7 +251,7 @@ export function postRouteHandler(req: Request, res: Response, next: NextFunction
 
   if (!req.body || typeof req.body !== 'object') {
     resLocals
-      .send(400, {
+      .send(BAD_REQUEST, {
         body: req.body,
         error: 'invalid_body'
       });
@@ -266,7 +266,7 @@ export function postRouteHandler(req: Request, res: Response, next: NextFunction
     .create()
     .then((result) => {
       resLocals
-        .send(200, {
+        .send(OK, {
           count: result.insertedCount,
           id: result.insertedId
         });
@@ -282,20 +282,20 @@ export function postRouteHandler(req: Request, res: Response, next: NextFunction
             });
             break;
           default:
-            err.status = 500;
-            resLocals.send(500, {
+            err.status = SERVER_ERROR;
+            resLocals.send(SERVER_ERROR, {
               error: 'internal_server_error'
             });
         }
       } else {
-        err.status = 500;
-        resLocals.send(500, {
+        err.status = SERVER_ERROR;
+        resLocals.send(SERVER_ERROR, {
           error: 'internal_server_error'
         });
       }
 
       // TODO add some kind of error handling
-      if (err.status === 500) {
+      if (err.status === SERVER_ERROR) {
         console.log(err); // tslint:disable-line:no-console
       }
 
@@ -320,14 +320,14 @@ export function deleteRouteHandler(req: Request, res: Response, next: NextFuncti
   model
     .removeById(id)
     .then((result) => {
-      resLocals.send(200, {
+      resLocals.send(OK, {
         n: (result.result || {}).n || 0
       });
       next();
     })
     .catch((err) => {
-      err.status = 500;
-      resLocals.send(500, {
+      err.status = SERVER_ERROR;
+      resLocals.send(SERVER_ERROR, {
         error: 'internal_server_error'
       });
       // TODO add logging here
@@ -349,18 +349,18 @@ function sanitizedUserInput(res: Response, errMessage: string, fn: () => any) {
       && (err.message.startsWith('Unexpected token') || err.message.startsWith('Unexpected end of JSON input'))) {
       res
         .locals
-        .send(400, {
+        .send(BAD_REQUEST, {
           details: err.message,
           error: errMessage
         }, res);
-      (err as any).status = 400;
+      (err as any).status = BAD_REQUEST;
     } else {
       res
         .locals
-        .send(500, {
+        .send(SERVER_ERROR, {
           error: 'internal_server_error'
         }, res);
-      (err as any).status = 500;
+      (err as any).status = SERVER_ERROR;
       // TODO some kind of error logging here
       console.log(err); // tslint:disable-line:no-console
     }
