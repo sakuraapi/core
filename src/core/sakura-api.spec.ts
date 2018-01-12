@@ -637,6 +637,41 @@ describe('core/SakuraApi', () => {
 
         done();
       });
+
+      it('should not call next on failure (#120)', async (done) => {
+        let fallthrough = false;
+
+        @Routable({
+          authenticator: SomeAuthenticatorFail,
+          baseUrl: 'someapi'
+        })
+        class SomeApi extends SapiRoutableMixin() {
+          @Route({
+            method: 'get',
+            path: 'routeHandler1'
+          })
+          routeHandler1(req, res, next) {
+            fallthrough = true;
+            next();
+          }
+        }
+
+        sapi = testSapi({
+          plugins: [{
+            plugin: addMockAuthPlugin
+          }],
+          routables: [SomeApi]
+        });
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/someapi/routeHandler1'))
+          .expect(401);
+
+        expect(fallthrough).toBeFalsy('Sakura improperly called next on an auth failture');
+
+        done();
+      });
     });
   });
 });
