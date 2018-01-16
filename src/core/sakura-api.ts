@@ -563,7 +563,6 @@ export class SakuraApi {
           res
             .status(firstFailure.status)
             .json(firstFailure.data);
-          next();
         } catch (err) {
 
           if (err instanceof AuthenticatorNotRegistered) {
