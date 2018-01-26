@@ -17,6 +17,7 @@ import {
   Routable,
   Route
 }                   from './@routable';
+import {OK} from './helpers/http-status';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
@@ -77,7 +78,7 @@ describe('@AuthenticatorPlugin', () => {
             const result = new TestModelPlugin();
 
             res
-              .status(200)
+              .status(OK)
               .json(result.toJson());
           }
         }
@@ -113,7 +114,7 @@ describe('@AuthenticatorPlugin', () => {
         })
         testRouterGet(req, res) {
           res
-            .status(200)
+            .status(OK)
             .json({
               testHandlerResult: res.locals.handlerTrace
             });
@@ -159,7 +160,7 @@ describe('@AuthenticatorPlugin', () => {
       it('adds plugin handlers in the proper order', (done) => {
         request(sapi.app)
           .get(testUrl('plugins_test'))
-          .expect(200)
+          .expect(OK)
           .then((result) => {
             const body = result.body;
             expect(body.testHandlerResult).toBe('BA');
@@ -171,7 +172,7 @@ describe('@AuthenticatorPlugin', () => {
       it('adds plugin models and routables', (done) => {
         request(sapi.app)
           .get(testUrl('TestRoutablePlugin'))
-          .expect(200)
+          .expect(OK)
           .then((result) => {
             const body = result.body;
             expect(body.modelValue).toBe('found');
@@ -193,7 +194,7 @@ describe('@AuthenticatorPlugin', () => {
         async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
           return {
             data: {},
-            status: 200,
+            status: OK,
             success: true
           };
         }

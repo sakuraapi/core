@@ -29,7 +29,7 @@ export interface IRoutableMethodOptions {
    *    method: 'get'
    *  })
    *  postNewUser(req, res) {
-   *    res.sendStatus(200);
+   *    res.sendStatus(OK);
    *  }
    * }
    * </pre>
@@ -74,7 +74,7 @@ export interface IRoutableMethodOptions {
    *    before: [UserApi.someHandler]
    *  })
    *  postNewUser(req, res, next) {
-   *    res.sendStatus(200);
+   *    res.sendStatus(OK);
    *    next();
    *  }
    *

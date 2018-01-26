@@ -20,7 +20,7 @@ import {
   Model,
   SapiModelMixin
 }                           from '../@model';
-import {DUPLICATE_RESOURCE} from '../helpers/http-status';
+import {BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK} from '../helpers/http-status';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
@@ -124,7 +124,7 @@ describe('core/@Routable', () => {
             path: 'autoRoutingFalseTest'
           })
           aRouteMethod(req, res) {
-            res.status(200);
+            res.status(OK);
           }
         }
 
@@ -133,7 +133,7 @@ describe('core/@Routable', () => {
           .then(() => {
             return request(sapi.app)
               .get('/autoRoutingFalseTest')
-              .expect(404);
+              .expect(NOT_FOUND);
           })
           .then(() => sapi.close())
           .then(done)
@@ -266,7 +266,7 @@ describe('core/@Routable', () => {
         })
         someMethodTest5(req, res) {
           res
-            .status(200)
+            .status(OK)
             .json({someMethodTest5: 'testRouterGet worked'});
         }
 
@@ -277,7 +277,7 @@ describe('core/@Routable', () => {
           const test = req.params.test;
 
           res
-            .status(200)
+            .status(OK)
             .json({result: test});
         }
 
@@ -288,7 +288,7 @@ describe('core/@Routable', () => {
           const test = req.params.parameter;
 
           res
-            .status(200)
+            .status(OK)
             .json({result: test});
         }
       }
@@ -306,7 +306,7 @@ describe('core/@Routable', () => {
             .expect('Content-Type', /json/)
             .expect('Content-Length', '42')
             .expect('{"someMethodTest5":"testRouterGet worked"}')
-            .expect(200);
+            .expect(OK);
         })
         .then(() => sapi.close())
         .then(done)
@@ -450,7 +450,7 @@ describe('core/@Routable', () => {
         it('uses the model\'s name if there is no baseUrl for the @Routable class', (done) => {
           request(sapi.app)
             .get(testUrl('/user'))
-            .expect(200)
+            .expect(OK)
             .then(done)
             .catch(done.fail);
         });
@@ -459,7 +459,7 @@ describe('core/@Routable', () => {
       it('uses the baseUrl for the @Routable class if one is set', (done) => {
         request(sapi.app)
           .get(testUrl('/testUserApi2'))
-          .expect(200)
+          .expect(OK)
           .then(done)
           .catch(done.fail);
       });
@@ -521,7 +521,7 @@ describe('core/@Routable', () => {
           request(sapi.app)
             .get(testUrl('/user'))
             .expect('Content-Type', /json/)
-            .expect(200)
+            .expect(OK)
             .then((res) => {
               expect(Array.isArray(res.body)).toBeTruthy();
               expect(res.body.length).toBe(5);
@@ -538,7 +538,7 @@ describe('core/@Routable', () => {
           request(sapi.app)
             .get(testUrl('/testUserApi2'))
             .expect('Content-Type', /json/)
-            .expect(200)
+            .expect(OK)
             .then((res) => {
               expect(Array.isArray(res.body)).toBeTruthy();
               expect(res.body.length).toBe(0);
@@ -552,7 +552,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for where parameter', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?where={firstName:test}`))
-              .expect(400)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should have been a body returned with the error');
                 expect(res.body.error).toBe('invalid_where_parameter');
@@ -569,7 +569,7 @@ describe('core/@Routable', () => {
 
             request(sapi.app)
               .get(testUrl(`/user?where=${JSON.stringify(json)}`))
-              .expect(200)
+              .expect(OK)
               .expect('Content-Type', /json/)
               .then((res) => {
                 expect(res.body).toBeDefined();
@@ -587,7 +587,7 @@ describe('core/@Routable', () => {
 
             request(sapi.app)
               .get(testUrl(`/user?where=${JSON.stringify(json)}`))
-              .expect(200)
+              .expect(OK)
               .expect('Content-Type', /json/)
               .then((res) => {
 
@@ -619,7 +619,7 @@ describe('core/@Routable', () => {
             it('with no results expected', (done) => {
               request(sapi.app)
                 .get(testUrl(`/user?where=${JSON.stringify(json)}`))
-                .expect(200)
+                .expect(OK)
                 .expect('Content-Type', /json/)
                 .then((res) => {
                   expect(res.body).toBeDefined();
@@ -635,7 +635,7 @@ describe('core/@Routable', () => {
 
               request(sapi.app)
                 .get(testUrl(`/user?where=${JSON.stringify(json)}`))
-                .expect(200)
+                .expect(OK)
                 .expect('Content-Type', /json/)
                 .then((res) => {
                   expect(res.body).toBeDefined();
@@ -664,7 +664,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for fields parameter', (done) => {
             request(sapi.app)
               .get(testUrl('/user?fields={blah}'))
-              .expect(400)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
                 expect(res.body.error).toBe('invalid_fields_parameter');
@@ -677,7 +677,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for fields=', (done) => {
             request(sapi.app)
               .get(testUrl('/user?fields='))
-              .expect(400)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
                 expect(res.body.error).toBe('invalid_fields_parameter');
@@ -694,7 +694,7 @@ describe('core/@Routable', () => {
 
             request(sapi.app)
               .get(testUrl(`/user?fields=${JSON.stringify(fields)}`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 expect(res.body.length).toBe(5);
                 expect(res.body[0].ln).toBeUndefined('lastName should have been excluded');
@@ -718,7 +718,7 @@ describe('core/@Routable', () => {
 
             request(sapi.app)
               .get(testUrl(`/user?fields=${JSON.stringify(fields)}`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 expect(res.body.length).toBe(5);
                 expect(res.body[0].fn).toBe(this.user1.firstName);
@@ -741,7 +741,7 @@ describe('core/@Routable', () => {
           it('with valid values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?skip=4`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 expect(res.body.length).toBe(1, 'should have skipped to last entry');
                 expect(res.body[0].id).toBe(this.user5.id.toString());
@@ -754,7 +754,7 @@ describe('core/@Routable', () => {
           it('with valid values greater than records available', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?skip=100`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 expect(Array.isArray(res.body)).toBeTruthy('Expected an empty array');
                 expect(res.body.length).toBe(0, 'An empty array should have been retruned');
@@ -766,7 +766,7 @@ describe('core/@Routable', () => {
           it('returns 400 with no values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?skip=`))
-              .expect(400)
+              .expect(BAD_REQUEST)
               .then(done)
               .catch(done.fail);
           });
@@ -774,7 +774,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?skip=aaa`))
-              .expect(400)
+              .expect(BAD_REQUEST)
               .then(done)
               .catch(done.fail);
           });
@@ -784,7 +784,7 @@ describe('core/@Routable', () => {
           it('with valid values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?limit=2`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 expect(res.body.length).toBe(2, 'should have been limited');
               })
@@ -795,7 +795,7 @@ describe('core/@Routable', () => {
           it('limit=0 is the same as unlimited', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?limit=0`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 expect(res.body.length).toBe(5, 'All results should have been returned');
               })
@@ -806,7 +806,7 @@ describe('core/@Routable', () => {
           it('returns 400 with no values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?limit=`))
-              .expect(400)
+              .expect(BAD_REQUEST)
               .then(done)
               .catch(done.fail);
           });
@@ -814,7 +814,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid values', (done) => {
             request(sapi.app)
               .get(testUrl(`/user?limit=aaa`))
-              .expect(400)
+              .expect(BAD_REQUEST)
               .then(done)
               .catch(done.fail);
           });
@@ -823,7 +823,7 @@ describe('core/@Routable', () => {
         it('supports limit + skip', (done) => {
           request(sapi.app)
             .get(testUrl(`/user?limit=2&skip=2`))
-            .expect(200)
+            .expect(OK)
             .then((res) => {
               expect(res.body.length).toBe(2, 'should have been limited to 2 entries');
               expect(res.body[0].id).toBe(this.user3.id.toString(), 'Unexpected skip result');
@@ -858,7 +858,7 @@ describe('core/@Routable', () => {
           request(sapi.app)
             .get(testUrl(`/user/${this.user1.id}`))
             .expect('Content-Type', /json/)
-            .expect(200)
+            .expect(OK)
             .then((res) => {
               const result = res.body;
               expect(Array.isArray(result)).toBeFalsy('Should have returned a single document');
@@ -877,7 +877,7 @@ describe('core/@Routable', () => {
           request(sapi.app)
             .get(testUrl(`/user/123`))
             .expect('Content-Type', /json/)
-            .expect(200)
+            .expect(OK)
             .then((res) => {
               expect(res.body).toBe(null);
             })
@@ -890,7 +890,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for fields parameter', (done) => {
             request(sapi.app)
               .get(testUrl(`/user/${this.user1.id.toString()}?fields={blah}`))
-              .expect(400)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
                 expect(res.body.error).toBe('invalid_fields_parameter');
@@ -903,7 +903,7 @@ describe('core/@Routable', () => {
           it('returns 400 with invalid json for fields=', (done) => {
             request(sapi.app)
               .get(testUrl(`/user/${this.user1.id.toString()}?fields=`))
-              .expect(400)
+              .expect(BAD_REQUEST)
               .then((res) => {
                 expect(res.body).toBeDefined('There should been a body returned with the error');
                 expect(res.body.error).toBe('invalid_fields_parameter');
@@ -920,7 +920,7 @@ describe('core/@Routable', () => {
 
             request(sapi.app)
               .get(testUrl(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 expect(res.body.fn).toBeDefined('firstName should not have been excluded');
                 expect(res.body.ln).toBeUndefined('lastName should have been excluded');
@@ -939,7 +939,7 @@ describe('core/@Routable', () => {
 
             request(sapi.app)
               .get(testUrl(`/user/${this.user1.id.toString()}?fields=${JSON.stringify(fields)}`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 expect(res.body.fn).toBe(this.user1.firstName);
                 expect(res.body.ln).toBe(this.user1.lastName);
@@ -971,7 +971,7 @@ describe('core/@Routable', () => {
             .post(testUrl(`/user`))
             .type('application/json')
             .send(`{test:}`)
-            .expect(400)
+            .expect(BAD_REQUEST)
             .then((res) => {
               expect(res.body.error).toBe('invalid_body');
             })
@@ -992,7 +992,7 @@ describe('core/@Routable', () => {
             .post(testUrl('/user'))
             .type('application/json')
             .send(JSON.stringify(obj))
-            .expect(200)
+            .expect(OK)
             .then((res) => {
               expect(res.body.count).toBe(1, 'One document should have been inserted into the db');
               expect(ObjectID.isValid(res.body.id)).toBeTruthy('A valid ObjectID should have been returned');
@@ -1102,7 +1102,7 @@ describe('core/@Routable', () => {
             .put(testUrl(`/user/${this.user1.id.toString()}`))
             .type('application/json')
             .send(`{test:}`)
-            .expect(400)
+            .expect(BAD_REQUEST)
             .then((res) => {
               expect(res.body.error).toBe('invalid_body');
             })
@@ -1115,7 +1115,7 @@ describe('core/@Routable', () => {
             .put(testUrl(`/user/aaa`))
             .type('application/json')
             .send(JSON.stringify({}))
-            .expect(404)
+            .expect(NOT_FOUND)
             .then(done)
             .catch(done.fail);
         });
@@ -1136,7 +1136,7 @@ describe('core/@Routable', () => {
             .put(testUrl(`/user/${this.user2.id.toString()}`))
             .type('application/json')
             .send(JSON.stringify(obj))
-            .expect(200)
+            .expect(OK)
             .then((res) => {
               expect(res.body.modified).toBe(1, 'One record should have been modified');
             })
@@ -1349,7 +1349,7 @@ describe('core/@Routable', () => {
           firstName: 'Ben',
           lastName: 'Franklin'
         })
-        .expect(200)
+        .expect(OK)
         .then((res) => {
           return UserBeforeAllHandlers
             .getCollection()
@@ -1375,7 +1375,7 @@ describe('core/@Routable', () => {
           lastName: 'Franklin',
           order: '0'
         })
-        .expect(200)
+        .expect(OK)
         .then((res) => {
           return UserBeforeAllHandlers
             .getCollection()
@@ -1468,7 +1468,7 @@ describe('core/@Routable', () => {
           firstName: 'Ben',
           lastName: 'Franklin'
         })
-        .expect(200)
+        .expect(OK)
         .then((response) => {
           const body = response.body;
           expect(body.count).toBe(1);
@@ -1561,7 +1561,7 @@ describe('core/@Routable', () => {
           firstName: 'Ben',
           lastName: 'Franklin'
         })
-        .expect(200)
+        .expect(OK)
         .then((response) => {
           expect(response.body.order).toBe('1b2b1a2a');
           expect(response.body.count).toBe(1);
@@ -1642,7 +1642,7 @@ describe('core/@Routable', () => {
           .then(() => {
             return request(sapi.app)
               .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 const body = res.body;
                 expect(body.length).toBe(1);
@@ -1662,7 +1662,7 @@ describe('core/@Routable', () => {
           .then(() => {
             return request(sapi.app)
               .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 const body = res.body;
                 expect(Array.isArray(body)).toBeTruthy();
@@ -1753,7 +1753,7 @@ describe('core/@Routable', () => {
           .then((db) => {
             return request(sapi.app)
               .get(testUrl(`/GetRouteHandlerBeforeAfterTest/beforeTest/get/${db.insertedId}`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 const body = res.body;
                 expect(body.firstName).toBe('Georgellio');
@@ -1771,7 +1771,7 @@ describe('core/@Routable', () => {
           .then(() => {
             return request(sapi.app)
               .get(testUrl(`/GetRouteHandlerBeforeAfterTest/beforeTest/get2/123`))
-              .expect(200)
+              .expect(OK)
               .then((res) => {
                 const body = res.body;
                 expect(body).toBe('ok');
@@ -1824,14 +1824,14 @@ describe('core/@Routable', () => {
     @AuthenticatorPlugin()
     class TestAuthenticator1 implements IAuthenticator, IAuthenticatorConstructor {
       async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
-        return {data: {}, status: 200, success: true};
+        return {data: {}, status: OK, success: true};
       }
     }
 
     @AuthenticatorPlugin()
     class TestAuthenticator2 implements IAuthenticator, IAuthenticatorConstructor {
       async authenticate(req: Request, res: Response): Promise<AuthenticatorPluginResult> {
-        return {data: {}, status: 200, success: true};
+        return {data: {}, status: OK, success: true};
       }
     }
 

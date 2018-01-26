@@ -2,29 +2,32 @@ import {
   NextFunction,
   Request,
   Response
-}                          from 'express';
-import * as request        from 'supertest';
+}                   from 'express';
+import * as request from 'supertest';
 import {
   testSapi,
   testUrl
-}                          from '../../../spec/helpers/sakuraapi';
-import {SapiModelMixin}    from '../@model';
-import {Json}              from '../@model/json';
-import {Model}             from '../@model/model';
-import {SapiRoutableMixin} from '../@routable';
+}                   from '../../../spec/helpers/sakuraapi';
+import {
+  Json,
+  Model,
+  SapiModelMixin
+}                   from '../@model';
 import {
   IRoutableLocals,
-  Routable
-}                          from '../@routable/routable';
-import {Route}             from '../@routable/route';
-import {SakuraApi}         from '../sakura-api';
+  Routable,
+  Route,
+  SapiRoutableMixin
+}                   from '../@routable';
+import {OK}         from '../helpers';
+import {SakuraApi}  from '../sakura-api';
 import {
   Injectable,
   injectableSymbols,
   NonInjectableConstructorParameterError,
   ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
-}                          from './injectable';
+}                   from './injectable';
 
 /* tslint:disable:no-shadowed-variable */
 
@@ -292,7 +295,7 @@ describe('@Injectable', () => {
       expect(c.b.a.doSomething()).toBe('mock');
     });
   });
-  
+
   describe(`@Model`, () => {
 
     @Injectable()
@@ -364,7 +367,7 @@ describe('@Injectable', () => {
       })
       handleGet(req: Request, res: Response, next: NextFunction) {
         const resLocals = res.locals as IRoutableLocals;
-        resLocals.send(200, {
+        resLocals.send(OK, {
           result: this.testService.val
         });
         next();
@@ -390,7 +393,7 @@ describe('@Injectable', () => {
 
       request(sapi.app)
         .get(testUrl('/injectRoutableTest'))
-        .expect(200)
+        .expect(OK)
         .then((result) => {
           expect(result.body.result).toBe('found');
         })
@@ -409,7 +412,7 @@ describe('@Injectable', () => {
 
       request(sapi.app)
         .get(testUrl('/injectRoutableTest'))
-        .expect(200)
+        .expect(OK)
         .then((result) => {
           expect(result.body.result).toBe('mock');
         })

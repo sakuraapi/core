@@ -1,6 +1,4 @@
 import * as debugInit            from 'debug';
-// tslint:disable:no-duplicate-imports
-import * as express              from 'express';
 import {
   ErrorRequestHandler,
   Express,
@@ -10,6 +8,8 @@ import {
   Response,
   Router
 }                                from 'express';
+// tslint:disable:no-duplicate-imports
+import * as express              from 'express';
 // tslint:enable:no-duplicate-imports
 import * as http                 from 'http';
 import {SakuraApiConfig}         from '../boot';
@@ -24,6 +24,7 @@ import {
   ISakuraApiClassRoute,
   routableSymbols
 }                                from './@routable';
+import {BAD_REQUEST, OK} from './helpers/http-status';
 import {
   Anonymous,
   AuthenticatorNotRegistered,
@@ -577,8 +578,8 @@ export class SakuraApi {
 
     function catchBodyParserErrors(err, req: Request, res: Response, next: NextFunction): void {
       // see: https://github.com/expressjs/body-parser/issues/238#issuecomment-294161839
-      if (err instanceof SyntaxError && (err as any).status === 400 && 'body' in err) {
-        res.status(400).send({
+      if (err instanceof SyntaxError && (err as any).status === BAD_REQUEST && 'body' in err) {
+        res.status(BAD_REQUEST).send({
           body: req.body,
           error: 'invalid_body'
         });
@@ -624,7 +625,7 @@ export class SakuraApi {
         res.locals.reqBody = req.body;
       }
       res.locals.data = {};
-      res.locals.status = 200;
+      res.locals.status = OK;
 
       res.locals.send = (status, data): IRoutableLocals => {
         res.locals.status = status;
@@ -647,7 +648,7 @@ export class SakuraApi {
         return next();
       }
       res
-        .status(res.locals.status || 200)
+        .status(res.locals.status || OK)
         .json(res.locals.data);
 
       next();
