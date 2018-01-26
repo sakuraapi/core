@@ -1,17 +1,30 @@
-import {NextFunction, Request, Response} from 'express';
-import * as request from 'supertest';
-import {testSapi, testUrl} from '../../../spec/helpers/sakuraapi';
-import {SapiModelMixin} from '../@model';
-import {Json} from '../@model/json';
-import {Model} from '../@model/model';
-import {SapiRoutableMixin} from '../@routable';
-import {IRoutableLocals, Routable} from '../@routable/routable';
-import {Route} from '../@routable/route';
-import {SakuraApi} from '../sakura-api';
 import {
-  Injectable, injectableSymbols, NonInjectableConstructorParameterError, ProviderNotRegistered,
+  NextFunction,
+  Request,
+  Response
+}                          from 'express';
+import * as request        from 'supertest';
+import {
+  testSapi,
+  testUrl
+}                          from '../../../spec/helpers/sakuraapi';
+import {SapiModelMixin}    from '../@model';
+import {Json}              from '../@model/json';
+import {Model}             from '../@model/model';
+import {SapiRoutableMixin} from '../@routable';
+import {
+  IRoutableLocals,
+  Routable
+}                          from '../@routable/routable';
+import {Route}             from '../@routable/route';
+import {SakuraApi}         from '../sakura-api';
+import {
+  Injectable,
+  injectableSymbols,
+  NonInjectableConstructorParameterError,
+  ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
-} from './injectable';
+}                          from './injectable';
 
 /* tslint:disable:no-shadowed-variable */
 
@@ -279,7 +292,7 @@ describe('@Injectable', () => {
       expect(c.b.a.doSomething()).toBe('mock');
     });
   });
-
+  
   describe(`@Model`, () => {
 
     @Injectable()

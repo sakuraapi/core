@@ -14,13 +14,6 @@ export const jsonSymbols = {
 export interface IJsonOptions {
 
   /**
-   * An optional `@`[[Model]] decorated class. If provided, the property will be instantiated as a sub document
-   * with its default values or the values from the json object. `@`[[Json]] will utilize this same model
-   * as the one set in `@`[[Db]] if `model` is not set on this attribute.
-   */
-  model?: any;
-
-  /**
    * The json field name that is mapped to and from this property when marshalled to and from json with
    * [[Model]].[[toJson]] or [[Model]].[[fromJson]].
    *
@@ -39,6 +32,29 @@ export interface IJsonOptions {
    * a json object.
    */
   field?: string;
+
+  /**
+   * Allows formatting a property when it's marshalled to Json from an `@`[[Model]].
+   * @param val The value of the property being marshalled to Json.
+   * @param {string} key The name of the property beinng marshalled to Json
+   * @returns any Returns the formatted value
+   */
+  formatToJson?: (val: any, key: string) => any;
+
+  /**
+   * Allows formatting a property when it's marshalled from Json to an `@`[[Model]].
+   * @param val The value of the property being marshalled to Json.
+   * @param {string} key The name of the property beinng marshalled to Json
+   * @returns any Returns the formatted value
+   */
+  formatFromJson?: (val: any, key: string) => any;
+
+  /**
+   * An optional `@`[[Model]] decorated class. If provided, the property will be instantiated as a sub document
+   * with its default values or the values from the json object. `@`[[Json]] will utilize this same model
+   * as the one set in `@`[[Db]] if `model` is not set on this attribute.
+   */
+  model?: any;
 
   /**
    * If true, sub-documents that aren't part of a model will be mapped to the resulting object.
@@ -87,7 +103,10 @@ export function Json(jsonOptions?: IJsonOptions | string): (target: any, key: st
     const metaPropertyFieldMap = getMetaDataMap(target, jsonSymbols.jsonByPropertyName);
     const metaFieldPropertyMap = getMetaDataMap(target, jsonSymbols.jsonByFieldName);
 
+    // allow lookup by the JavaScript key for the property
     metaPropertyFieldMap.set(key, options);
+    // allow lookup by the optional field name defined by @Json({field: 'value'}) or default to the
+    // property name (key).
     metaFieldPropertyMap.set(options.field || key, options);
 
     //////////

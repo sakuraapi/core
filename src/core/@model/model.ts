@@ -561,6 +561,8 @@ function fromJson(json: object): object {
       // convert the DB key name to the Model key name
       const mapper = keyMapper(key, jsonSource[key], propertyNamesByJsonFieldName, target);
 
+      const options = propertyNamesByJsonFieldName.get(key);
+
       if (mapper.promiscuous) {
         target[mapper.newKey] = jsonSource[key];
       } else if (shouldRecurse(jsonSource[key])) {
@@ -589,6 +591,10 @@ function fromJson(json: object): object {
             value = Object.assign(new model(), value);
           }
 
+          if (options && options.formatFromJson) {
+            value = options.formatFromJson(value, key);
+          }
+
           target[mapper.newKey] = value;
         }
 
@@ -598,6 +604,10 @@ function fromJson(json: object): object {
           let value = jsonSource[key];
           if ((mapper.newKey === 'id' || mapper.newKey === '_id') && ObjectID.isValid(value)) {
             value = new ObjectID(value);
+          }
+
+          if (options && options.formatFromJson) {
+            value = options.formatFromJson(value, key);
           }
 
           target[mapper.newKey] = value;
@@ -1123,6 +1133,8 @@ function toJson(): any {
     // iterate over each property
     for (const key of Object.getOwnPropertyNames(source)) {
 
+      const options = jsonFieldNamesByProperty.get(key);
+
       if (typeof source[key] === 'function') {
         continue;
       }
@@ -1153,8 +1165,7 @@ function toJson(): any {
         const aNewKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
 
         if (aNewKey !== undefined) {
-          const value = mapModelToJson(source[key]);
-          result[aNewKey] = value;
+          result[aNewKey] = mapModelToJson(source[key]);
         }
 
         continue;
@@ -1162,7 +1173,11 @@ function toJson(): any {
 
       const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
       if (newKey !== undefined) {
-        result[newKey] = source[key];
+        const value = (options && options.formatToJson)
+          ? options.formatToJson(source[key], key)
+          : source[key];
+
+        result[newKey] = value;
       }
     }
 
