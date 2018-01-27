@@ -13,13 +13,15 @@ import {
 }                        from '../../spec/helpers/sakuraapi';
 import {SakuraApiConfig} from '../../src/boot';
 import {Model}           from './@model';
-
 import {
   Routable,
   Route,
   SapiRoutableMixin
-}                  from './@routable/';
-import {OK, UNAUTHORIZED} from './helpers/http-status';
+}                        from './@routable/';
+import {
+  OK,
+  UNAUTHORIZED
+}                        from './helpers';
 import {
   Anonymous,
   AuthenticatorPlugin,
@@ -27,8 +29,8 @@ import {
   IAuthenticator,
   IAuthenticatorConstructor,
   SakuraApiPluginResult
-}                  from './plugins';
-import {SakuraApi} from './sakura-api';
+}                        from './plugins';
+import {SakuraApi}       from './sakura-api';
 
 describe('core/SakuraApi', () => {
 

@@ -59,7 +59,7 @@ import {
 
 export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
   base = base || class {
-  } as any;
+  } as C;
 
   return class extends base {
 

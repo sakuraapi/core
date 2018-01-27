@@ -1,6 +1,10 @@
-import {NextFunction, Request, Response} from 'express';
+import {
+  NextFunction,
+  Request,
+  Response
+}                    from 'express';
 import {Constructor} from '../helpers/constructor-type';
-import {SakuraApi} from '../sakura-api';
+import {SakuraApi}   from '../sakura-api';
 
 /**
  * Integrators should extend their Models with this Mixin to get type checking.
@@ -15,7 +19,7 @@ import {SakuraApi} from '../sakura-api';
  */
 export function SapiRoutableMixin<T extends Constructor<{}>>(base?: T) {
   base = base || class {
-  } as any;
+  } as T;
 
   return class extends base {
     static getRouteHandler?: (req: Request, res: Response, next: NextFunction) => void;
