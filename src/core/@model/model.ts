@@ -526,10 +526,11 @@ function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
 /**
  * @static Constructs an `@`Model object from a json object (see [[Json]]).
  * @param json The json object to be unmarshaled into an `@`[[Model]] object.
+ * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
  * @returns {{}} Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
  * undefined, or not an object.
  */
-function fromJson(json: object): object {
+function fromJson(json: object, context = 'default'): object {
   const modelName = this.name;
   debug.normal(`.fromJson called, target '${modelName}'`);
 
@@ -561,6 +562,8 @@ function fromJson(json: object): object {
       // convert the DB key name to the Model key name
       const mapper = keyMapper(key, jsonSource[key], propertyNamesByJsonFieldName, target);
 
+      const options = propertyNamesByJsonFieldName.get(`${key}:${context}`);
+
       if (mapper.promiscuous) {
         target[mapper.newKey] = jsonSource[key];
       } else if (shouldRecurse(jsonSource[key])) {
@@ -589,6 +592,10 @@ function fromJson(json: object): object {
             value = Object.assign(new model(), value);
           }
 
+          if (options && options.formatFromJson) {
+            value = options.formatFromJson(value, key);
+          }
+
           target[mapper.newKey] = value;
         }
 
@@ -600,6 +607,10 @@ function fromJson(json: object): object {
             value = new ObjectID(value);
           }
 
+          if (options && options.formatFromJson) {
+            value = options.formatFromJson(value, key);
+          }
+
           target[mapper.newKey] = value;
         }
       }
@@ -609,7 +620,7 @@ function fromJson(json: object): object {
   }
 
   function keyMapper(key: string, value: any, meta: Map<string, IJsonOptions>, target) {
-    const jsonFieldOptions = (meta) ? meta.get(key) : null;
+    const jsonFieldOptions = (meta) ? meta.get(`${key}:${context}`) : null;
 
     const model = (jsonFieldOptions || {}).model;
     return {
@@ -651,12 +662,11 @@ function fromJsonArray(json: object[]): object[] {
 /**
  * @static Takes a json object (probably from something like req.body) and maps its fields to db field names.
  * @param json The json object to be transformed.
- * @param model The Model that has the `@`[[Json]] and/or `@`[[Db]] properties that inform how the json object should
- * be transformed.
+ * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
  * @throws SapiInvalidModelObject if the provided model does not have .fromJson and .toDb methods
  * @returns {any} json object with fields mapped from json fields to db fields.
  */
-function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
+function fromJsonToDb(json: any, context = 'default'): any {
   const modelName = this.name;
   debug.normal(`.fromJsonToDb called, target '${modelName}'`);
 
@@ -664,7 +674,7 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
     return null;
   }
 
-  return mapJsonToDb(new this(...constructorArgs), json);
+  return mapJsonToDb(new this(), json);
 
   //////////
   function mapJsonToDb(model, jsonSrc, result?) {
@@ -680,9 +690,12 @@ function fromJsonToDb(json: any, ...constructorArgs: any[]): any {
       result._id = jsonSrc.id;
     }
 
-    for (const key of jsonByPropertyName.keys()) {
+    for (const contextKey of jsonByPropertyName.keys()) {
+
+      const jsonMeta = (jsonByPropertyName) ? jsonByPropertyName.get(contextKey) : null;
+      const key = jsonMeta[jsonSymbols.propertyName];
+
       const dbMeta = (dbByPropertyName) ? dbByPropertyName.get(key) : null;
-      const jsonMeta = (jsonByPropertyName) ? jsonByPropertyName.get(key) : null;
 
       if (!jsonSrc || !jsonMeta || !dbMeta) {
         continue;
@@ -1094,14 +1107,13 @@ function toDb(changeSet?: any): object {
 
 /**
  * @instance Returns the current object as json, respecting the various decorators like [[Db]]
- * @param project is any valid MongoDB projection objected used to determine what fields are included.
+ * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
  * @returns {{}}
  */
-function toJson(): any {
+function toJson(context = 'default'): any {
   debug.normal(`.toJson called, target '${this.constructor.name}'`);
 
-  const obj = mapModelToJson(this);
-  return obj;
+  return mapModelToJson(this);
 
   //////////
   function mapModelToJson(source) {
@@ -1123,6 +1135,8 @@ function toJson(): any {
     // iterate over each property
     for (const key of Object.getOwnPropertyNames(source)) {
 
+      const options = jsonFieldNamesByProperty.get(`${key}:${context}`);
+
       if (typeof source[key] === 'function') {
         continue;
       }
@@ -1143,7 +1157,7 @@ function toJson(): any {
       const override = (privateFields) ? privateFields.get(key) : null;
 
       // do the function test for private otherwise do the boolean test
-      if (override && typeof source[override] === 'function' && !source[override]()) {
+      if (override && typeof source[override] === 'function' && !source[override](context)) {
         continue;
       } else if (override && !source[override]) {
         continue;
@@ -1153,8 +1167,7 @@ function toJson(): any {
         const aNewKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
 
         if (aNewKey !== undefined) {
-          const value = mapModelToJson(source[key]);
-          result[aNewKey] = value;
+          result[aNewKey] = mapModelToJson(source[key]);
         }
 
         continue;
@@ -1162,7 +1175,11 @@ function toJson(): any {
 
       const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
       if (newKey !== undefined) {
-        result[newKey] = source[key];
+        const value = (options && options.formatToJson)
+          ? options.formatToJson(source[key], key)
+          : source[key];
+
+        result[newKey] = value;
       }
     }
 
@@ -1170,7 +1187,7 @@ function toJson(): any {
   }
 
   function keyMapper(key, value, jsonMeta: Map<string, IJsonOptions>) {
-    const options = (jsonMeta) ? jsonMeta.get(key) || {} : {};
+    const options = (jsonMeta) ? jsonMeta.get(`${key}:${context}`) || {} : {};
     return options.field || key;
   }
 }

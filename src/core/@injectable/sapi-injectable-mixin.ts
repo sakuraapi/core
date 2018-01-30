@@ -1,5 +1,5 @@
 import {Constructor} from '../helpers/constructor-type';
-import {SakuraApi} from '../sakura-api';
+import {SakuraApi}   from '../sakura-api';
 
 /***
  * Integrators should extend their Injectables with this Mixin to get type checking
@@ -14,7 +14,7 @@ import {SakuraApi} from '../sakura-api';
  */
 export function SapiInjectableMixin<T extends Constructor<{}>>(base?: T) {
   base = base || class {
-  } as any;
+  } as T;
 
   return class extends base {
     static sapi: SakuraApi;

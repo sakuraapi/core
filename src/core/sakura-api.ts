@@ -1,4 +1,6 @@
+// tslint:disable:no-duplicate-imports
 import * as debugInit            from 'debug';
+import * as express              from 'express';
 import {
   ErrorRequestHandler,
   Express,
@@ -8,9 +10,6 @@ import {
   Response,
   Router
 }                                from 'express';
-// tslint:disable:no-duplicate-imports
-import * as express              from 'express';
-// tslint:enable:no-duplicate-imports
 import * as http                 from 'http';
 import {SakuraApiConfig}         from '../boot';
 import {
@@ -24,7 +23,10 @@ import {
   ISakuraApiClassRoute,
   routableSymbols
 }                                from './@routable';
-import {BAD_REQUEST, OK} from './helpers/http-status';
+import {
+  BAD_REQUEST,
+  OK
+}                                from './helpers';
 import {
   Anonymous,
   AuthenticatorNotRegistered,
@@ -37,6 +39,7 @@ import {
   SakuraApiPluginResult
 }                                from './plugins';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
+// tslint:enable:no-duplicate-imports
 
 const debug = {
   authenticators: debugInit('sapi:authenticators'),

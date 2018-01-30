@@ -89,7 +89,10 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_json_.ijsonoptions.html#context" class="tsd-kind-icon">context</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_json_.ijsonoptions.html#field" class="tsd-kind-icon">field</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_json_.ijsonoptions.html#formatfromjson" class="tsd-kind-icon">format<wbr>From<wbr>Json</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_json_.ijsonoptions.html#formattojson" class="tsd-kind-icon">format<wbr>ToJson</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_json_.ijsonoptions.html#model" class="tsd-kind-icon">model</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_core__model_json_.ijsonoptions.html#promiscuous" class="tsd-kind-icon">promiscuous</a></li>
 							</ul>
@@ -100,12 +103,43 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="context" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> context</h3>
+					<div class="tsd-signature tsd-kind-icon">context<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/json.ts#L39">core/@model/json.ts:39</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Allows for multiple field mappings when marshalling to and from JSON. Context is helpful in a scenario like
+							the following:</p>
+						</div>
+						<h3 id="example">Example</h3>
+						<pre>
+<span>@</span>Model()
+class SomeModel {
+     <span>@</span>Json('fName')
+     <span>@</span>Json('first_name', 'source2')
+     firstName = 'default';
+}
+</pre>
+						<p><code>SomeModel.fromJson({fName: &#39;John&#39;})</code>
+						<code>SomeModel.fromJson({&#39;first_name&#39;: &#39;John&#39;}, &#39;source2&#39;)</code></p>
+						<p> <code>someModel.toJson()</code>          // =&gt; {&quot;fName&quot;:&quot;John&quot;}
+						<code>someModel.toJson(&#39;source2&#39;)</code> // =&gt; {&quot;first_name&quot;:&quot;John&quot;}</p>
+						<p> <code>@Json</code> can accept a context as either its second parameter or as part of the options <a href="_core__model_json_.ijsonoptions.html">IJsonOptions</a>
+						parameter.</p>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="field" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> field</h3>
 					<div class="tsd-signature tsd-kind-icon">field<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/json.ts#L41">core/@model/json.ts:41</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/json.ts#L59">core/@model/json.ts:59</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -128,12 +162,132 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="formatfromjson" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> format<wbr>From<wbr>Json</h3>
+					<div class="tsd-signature tsd-kind-icon">format<wbr>From<wbr>Json<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/json.ts#L97">core/@model/json.ts:97</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Allows formatting a property when it&#39;s marshalled from Json to an <code>@</code><a href="../modules/_core__model_model_.html#model">Model</a>.</p>
+							<h3 id="example">Example</h3>
+							<pre>
+<span>@</span>Model()
+class SomeModel {
+   @Json({
+     formatFromJson: (val, key) => val.ToUpperCase()
+   })
+   someProperty: string;
+}
+</pre>
+						</div>
+						<dl class="tsd-comment-tags">
+							<dt>param</dt>
+							<dd><p>The value of the property being marshalled to Json.</p>
+							</dd>
+							<dt>param</dt>
+							<dd><p>The name of the property beinng marshalled to Json</p>
+							</dd>
+							<dt>returns</dt>
+							<dd><p>any Returns the formatted value</p>
+							</dd>
+						</dl>
+					</div>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-siganture">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-property tsd-is-not-exported">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>val<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>val: <span class="tsd-signature-type">any</span></h5>
+											</li>
+											<li>
+												<h5>key: <span class="tsd-signature-type">string</span></h5>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="formattojson" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagOptional">Optional</span> format<wbr>ToJson</h3>
+					<div class="tsd-signature tsd-kind-icon">format<wbr>ToJson<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">function</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/json.ts#L79">core/@model/json.ts:79</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Allows formatting a property when it&#39;s marshalled to Json from an <code>@</code><a href="../modules/_core__model_model_.html#model">Model</a>.</p>
+						</div>
+						<h3 id="example">Example</h3>
+						<pre>
+<span>@</span>Model()
+class SomeModel {
+   @Json({
+     formatToJson: (val, key) => val.ToUpperCase()
+   })
+   someProperty: string;
+}
+</pre>
+						<dl class="tsd-comment-tags">
+							<dt>param</dt>
+							<dd><p>The value of the property being marshalled to Json.</p>
+							</dd>
+							<dt>param</dt>
+							<dd><p>The name of the property beinng marshalled to Json</p>
+							</dd>
+							<dt>returns</dt>
+							<dd><p>any Returns the formatted value</p>
+							</dd>
+						</dl>
+					</div>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter-siganture">
+								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-property tsd-is-not-exported">
+									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>val<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span></li>
+								</ul>
+								<ul class="tsd-descriptions">
+									<li class="tsd-description">
+										<h4 class="tsd-parameters-title">Parameters</h4>
+										<ul class="tsd-parameters">
+											<li>
+												<h5>val: <span class="tsd-signature-type">any</span></h5>
+											</li>
+											<li>
+												<h5>key: <span class="tsd-signature-type">string</span></h5>
+											</li>
+										</ul>
+										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">any</span></h4>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="model" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> model</h3>
 					<div class="tsd-signature tsd-kind-icon">model<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">any</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/json.ts#L21">core/@model/json.ts:21</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/json.ts#L104">core/@model/json.ts:104</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -150,7 +304,7 @@
 					<div class="tsd-signature tsd-kind-icon">promiscuous<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/json.ts#L46">core/@model/json.ts:46</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/json.ts#L109">core/@model/json.ts:109</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -240,7 +394,16 @@
 						<a href="_core__model_json_.ijsonoptions.html" class="tsd-kind-icon">IJson<wbr>Options</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__model_json_.ijsonoptions.html#context" class="tsd-kind-icon">context</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_core__model_json_.ijsonoptions.html#field" class="tsd-kind-icon">field</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__model_json_.ijsonoptions.html#formatfromjson" class="tsd-kind-icon">format<wbr>From<wbr>Json</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="_core__model_json_.ijsonoptions.html#formattojson" class="tsd-kind-icon">format<wbr>ToJson</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="_core__model_json_.ijsonoptions.html#model" class="tsd-kind-icon">model</a>

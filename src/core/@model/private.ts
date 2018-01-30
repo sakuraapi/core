@@ -17,7 +17,8 @@ export const privateSymbols = {
  *
  * It's possible to conditionally make a property private by passing in the name (as a string)
  * of a method that returns true or false (true meaning override the privacy setting) or by
- * directly passing in a boolean value.
+ * directly passing in a boolean value. The [[IJsonOptions.context]] will be passed as the first
+ * parameter of the method.
  *
  * ### Example of Override
  * <pre>
@@ -26,7 +27,7 @@ export const privateSymbols = {
  *    <span>@</span>Private('hasSsnAccess')
  *    ssn: string = '';
  *
- *    hasSsnAccess() {
+ *    hasSsnAccess(context:string) {
  *      return someAclChecker(this, 'ssn_access');
  *    }
  * }

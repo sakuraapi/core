@@ -331,7 +331,7 @@ describe('core/Route', () => {
 
     beforeEach((done) => {
       sapi
-        .listen()
+        .listen({bootMessage: ''})
         .then(done)
         .catch(done.fail);
     });
