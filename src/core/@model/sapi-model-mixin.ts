@@ -64,8 +64,8 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
   return class extends base {
 
     static fromDb: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
-    static fromJson: <T>(this: { new(...params): T }, json: object) => T;
-    static fromJsonToDb: (json: any) => any;
+    static fromJson: <T>(this: { new(...params): T }, json: object, context?: string) => T;
+    static fromJsonToDb: (json: any, context?: string) => any;
 
     static fromDbArray: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
     static fromJsonArray: <T>(this: { new(): T }, jsons: object[]) => T[];
@@ -77,8 +77,6 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     static getCursorById: (id, project?: any) => Cursor<any>;
     static getDb: () => Db;
     static getOne: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
-
-    static mapJsonToDb: (json: object) => object;
 
     static removeAll: (filter: any, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
     static removeById: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
@@ -98,7 +96,7 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     save: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
 
     toDb: (changeSet?: object) => any;
-    toJson: (projection?: any) => any;
+    toJson: (projection?: any, context?: string) => any;
     toJsonString: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
 
     constructor(...args: any[]) {

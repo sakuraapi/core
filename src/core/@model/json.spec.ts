@@ -6,6 +6,7 @@ import {
   Model,
   modelSymbols
 }                       from './model';
+import {Private}        from './private';
 import {SapiModelMixin} from './sapi-model-mixin';
 
 describe('@Json', () => {
@@ -422,6 +423,104 @@ describe('@Json', () => {
       });
 
     });
+
+    describe('context', () => {
+      it('builds a default context when none is provided', () => {
+
+        @Model()
+        class TestContext extends SapiModelMixin() {
+          @Json('fn')
+          firstName = 'George';
+
+          @Json() @Private()
+          lastName = 'Washington';
+        }
+
+        const testContext = new TestContext();
+        const result = testContext.toJson('default');
+
+        expect(result.fn).toBe(testContext.firstName);
+        expect(result.lastName).toBeUndefined();
+
+      });
+
+      it('falls back to using property names when an invalid context is passed in', () => {
+        @Model()
+        class TestContext extends SapiModelMixin() {
+          @Json('fn')
+          firstName = 'George';
+
+          @Json() @Private()
+          lastName = 'Washington';
+        }
+
+        const testContext = new TestContext();
+        const result = testContext.toJson('non-existent');
+
+        expect(result.firstName).toBe(testContext.firstName);
+        expect(result.lastName).toBeUndefined();
+      });
+
+      it('supports multiple contexts', () => {
+        @Model()
+        class TestContext extends SapiModelMixin() {
+          @Json('fn', 'context1')
+          @Json('fName', 'context2')
+          firstName = 'George';
+
+          @Private()
+          lastName = 'Washington';
+        }
+
+        const testContext = new TestContext();
+        const result1 = testContext.toJson('context1');
+        const result2 = testContext.toJson('context2');
+
+        expect(result1.fn).toBe(testContext.firstName);
+        expect(result1.lastName).toBeUndefined();
+
+        expect(result2.fName).toBe(testContext.firstName);
+        expect(result2.lastName).toBeUndefined();
+
+      });
+
+      it('falls back on default when no context is given', () => {
+        @Model()
+        class TestContext extends SapiModelMixin() {
+          @Json('f')
+          @Json('fn', 'context1')
+          @Json('fName', 'context2')
+          firstName = 'George';
+
+          @Private()
+          lastName = 'Washington';
+        }
+
+        const testContext = new TestContext();
+        const result = testContext.toJson();
+
+        expect(result.f).toBe(testContext.firstName);
+        expect(result.lastName).toBeUndefined();
+      });
+
+      it('takes context as an option', () => {
+        @Model()
+        class TestContext extends SapiModelMixin() {
+
+          @Json({field: 'fn', context: 'context1'})
+          firstName = 'George';
+
+          @Private()
+          lastName = 'Washington';
+        }
+
+        const testContext = new TestContext();
+        const result = testContext.toJson('context1');
+
+        expect(result.fn).toBe(testContext.firstName);
+        expect(result.lastName).toBeUndefined();
+      });
+    });
   });
 
   describe('toJsonString', () => {
@@ -817,8 +916,8 @@ describe('@Json', () => {
           expect(result1.someProperty).toBe('not-default-1');
 
           const result2 = TestBug.fromJson({
-            sp: 'not-default-2-b',
-            someProperty: 'not-default-2-a'
+            someProperty: 'not-default-2-a',
+            sp: 'not-default-2-b'
           });
           expect(result2.someProperty).toBe('not-default-2-b');
 
@@ -1126,7 +1225,7 @@ describe('@Json', () => {
           expect(result.someThirdProperty).toBe('default');
         });
 
-        it('deep objects', function() {
+        it('deep objects', () => {
 
           let valSet;
           let keySet;
@@ -1263,8 +1362,8 @@ describe('@Json', () => {
           }
 
           const someModel = SomeModel.fromJson({
-            someOtherProperty: 'hello',
-            someDeepModel: {}
+            someDeepModel: {},
+            someOtherProperty: 'hello'
           });
           const json = someModel.toJson();
 
@@ -1275,6 +1374,83 @@ describe('@Json', () => {
           expect(json.someDeepModel.someProperty).toBe('override');
           expect(json.someDeepModel.sp2).toBe('override2');
         });
+      });
+    });
+
+    describe('context', () => {
+      it('builds a default context when none is provided', () => {
+
+        @Model()
+        class TestContext extends SapiModelMixin() {
+          @Json('fn')
+          firstName = 'George';
+
+          @Json() @Private()
+          lastName = 'Washington';
+        }
+
+        const testContext = TestContext.fromJson({fn: 'John', lastName: 'Adams'}, 'default');
+
+        expect(testContext.firstName).toBe('John');
+        expect(testContext.lastName).toBe('Adams');
+
+      });
+
+      it('falls back to using property names when an invalid context is passed in', () => {
+        @Model()
+        class TestContext extends SapiModelMixin() {
+          @Json('fn')
+          firstName = 'George';
+
+          @Json('ln') @Private()
+          lastName = 'Washington';
+        }
+
+        const testContext = TestContext.fromJson({firstName: 'John', lastName: 'Adams'}, 'non-existent');
+
+        expect(testContext.firstName).toBe('John');
+        expect(testContext.lastName).toBe('Adams');
+      });
+
+      it('supports multiple contexts', () => {
+        @Model()
+        class TestContext extends SapiModelMixin() {
+          @Json('fn', 'context1')
+          @Json('fName', 'context2')
+          firstName = 'George';
+
+          @Private()
+          @Json('ln', 'context2')
+          lastName = 'Washington';
+        }
+
+        const result1 = TestContext.fromJson({fn: 'John', lastName: 'Adams'}, 'context1');
+        const result2 = TestContext.fromJson({fName: 'Abigail', ln: 'Smith'}, 'context2');
+
+        expect(result1.firstName).toBe('John');
+        expect(result1.lastName).toBe('Adams');
+
+        expect(result2.firstName).toBe('Abigail');
+        expect(result2.lastName).toBe('Smith');
+
+      });
+
+      it('falls back on default when no context is given', () => {
+        @Model()
+        class TestContext extends SapiModelMixin() {
+          @Json('f')
+          @Json('fn', 'context1')
+          @Json('fName', 'context2')
+          firstName = 'George';
+
+          @Private()
+          lastName = 'Washington';
+        }
+
+        const testContext = TestContext.fromJson({f: 'John', lastName: 'Adams'});
+
+        expect(testContext.firstName).toBe('John');
+        expect(testContext.lastName).toBe('Adams');
       });
     });
   });
@@ -1326,9 +1502,9 @@ describe('@Json', () => {
       const dbObj = ChangeSetTest.fromJsonToDb(json);
       expect(dbObj instanceof ChangeSetTest).toBe(false);
       expect(dbObj.first).toBe(json.fn, 'should have been able to handle a property without any value');
-      expect(dbObj.lastName).toBe(json.ln);
+      expect(dbObj.lastName).toBe(json.ln, 'last name should have mapped');
       expect(dbObj.cn).toBeDefined('contact should have been included');
-      expect(dbObj.cn.p).toBe('000');
+      expect(dbObj.cn.p).toBe('000', 'phone should have mapped');
     });
 
     it('converts id to _id', () => {
@@ -1378,6 +1554,41 @@ describe('@Json', () => {
       const result = ChangeSetTest.fromJsonToDb(json);
       expect(result.lastName).toBe(0);
       expect(result.cn.p).toBe(0);
+    });
+
+    describe('context', () => {
+      it('respects context when converting to Db field names', () => {
+
+        @Model()
+        class TestContext extends SapiModelMixin() {
+
+          @Json('first_name')
+          @Json('fn', 'context1')
+          @Json('fName', 'context2')
+          @Db('f')
+          firstName: string;
+
+          @Json('last_name')
+          @Json('ln', 'context1')
+          @Json('lName', 'context2')
+          @Db('l')
+          lastName: string;
+        }
+
+        const testContext = TestContext.fromJsonToDb({first_name: 'John', last_name: 'Adams'});
+        const testContext1 = TestContext.fromJsonToDb({fn: 'John1', ln: 'Adams1'}, 'context1');
+        const testContext2 = TestContext.fromJsonToDb({fName: 'John2', lName: 'Adams2'}, 'context2');
+
+        expect(testContext.f).toBe('John');
+        expect(testContext.l).toBe('Adams');
+
+        expect(testContext1.f).toBe('John1');
+        expect(testContext1.l).toBe('Adams1');
+
+        expect(testContext2.f).toBe('John2');
+        expect(testContext2.l).toBe('Adams2');
+
+      });
     });
   });
 

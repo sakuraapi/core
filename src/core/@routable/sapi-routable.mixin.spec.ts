@@ -96,7 +96,9 @@ describe('SapiRoutableMixin', () => {
     } catch (err) {
       done.fail(err);
     } finally {
-      if (sapi) sapi.close();
+      if (sapi) {
+        sapi.close();
+      }
     }
 
   });

@@ -14,6 +14,31 @@ export const jsonSymbols = {
 export interface IJsonOptions {
 
   /**
+   * Allows for multiple field mappings when marshalling to and from JSON. Context is helpful in a scenario like
+   * the following:
+   *
+   * ### Example
+   * <pre>
+   * <span>@</span>Model()
+   * class SomeModel {
+   *      <span>@</span>Json('fName')
+   *      <span>@</span>Json('first_name', 'source2')
+   *      firstName = 'default';
+   * }
+   * </pre>
+   *
+   * `SomeModel.fromJson({fName: 'John'})`
+   * `SomeModel.fromJson({'first_name': 'John'}, 'source2')`
+   *
+   *  `someModel.toJson()`          // => {"fName":"John"}
+   *  `someModel.toJson('source2')` // => {"first_name":"John"}
+   *
+   *  `@Json` can accept a context as either it's second parameter or as part of the options [[IJsonOptions]]
+   *  parameter.
+   */
+  context?: string;
+
+  /**
    * The json field name that is mapped to and from this property when marshalled to and from json with
    * [[Model]].[[toJson]] or [[Model]].[[fromJson]].
    *
@@ -92,22 +117,24 @@ export interface IJsonOptions {
  * @param jsonOptions sets [[IJsonOptions.field]] when a string is passed.
  * @returns Returns a function that is used internally by the framework.
  */
-export function Json(jsonOptions?: IJsonOptions | string): (target: any, key: string) => void {
+export function Json(jsonOptions?: IJsonOptions | string, context?: string): (target: any, key: string) => void {
   const options = (typeof jsonOptions === 'string')
     ? {field: jsonOptions}
     : jsonOptions || {};
 
   return (target: any, key: string) => {
+    context = context || options.context || 'default';
+
     options[jsonSymbols.propertyName] = key;
 
     const metaPropertyFieldMap = getMetaDataMap(target, jsonSymbols.jsonByPropertyName);
     const metaFieldPropertyMap = getMetaDataMap(target, jsonSymbols.jsonByFieldName);
 
     // allow lookup by the JavaScript key for the property
-    metaPropertyFieldMap.set(key, options);
+    metaPropertyFieldMap.set(`${key}:${context}`, options);
     // allow lookup by the optional field name defined by @Json({field: 'value'}) or default to the
     // property name (key).
-    metaFieldPropertyMap.set(options.field || key, options);
+    metaFieldPropertyMap.set(`${options.field || key}:${context}`, options);
 
     //////////
     function getMetaDataMap(source, symbol): Map<string, IJsonOptions> {

@@ -20,8 +20,8 @@ describe('SapiModelMixin', () => {
 
     @Model({
       dbConfig: {
-        db: 'userDb',
-        collection: 'model-inheritance-test'
+        collection: 'model-inheritance-test',
+        db: 'userDb'
       }
     })
     class BaseModel extends SapiModelMixin() {
@@ -40,8 +40,8 @@ describe('SapiModelMixin', () => {
     @Model({
       // remember, decorators are not inherited
       dbConfig: {
-        db: 'userDb',
-        collection: 'model-inheritance-test2'
+        collection: 'model-inheritance-test2',
+        db: 'userDb'
       }
     })
     class DerivedModel extends SapiModelMixin(BaseModel) {
@@ -63,12 +63,12 @@ describe('SapiModelMixin', () => {
 
       await sapi.listen({bootMessage: ''});
 
-      const Model = sapi.getModelByName('DerivedModel');
-      const model = new Model();
+      const M = sapi.getModelByName('DerivedModel');
+      const model = new M();
 
       await model.create();
 
-      const savedModel = await Model.getById(model.id);
+      const savedModel = await M.getById(model.id);
       expect(savedModel.firstName).toBe('John');
       expect(savedModel.lastName).toBe('Doe');
       expect(savedModel.eyeColor).toBe('hazel');
@@ -77,7 +77,9 @@ describe('SapiModelMixin', () => {
     } catch (err) {
       done.fail(err);
     } finally {
-      if (sapi) await sapi.close();
+      if (sapi) {
+        await sapi.close();
+      }
     }
 
   });
