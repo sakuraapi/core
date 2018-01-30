@@ -1,6 +1,6 @@
 import * as debugInit from 'debug';
-import {v4} from 'uuid';
-import {SakuraApi} from '../sakura-api';
+import {v4}           from 'uuid';
+import {SakuraApi}    from '../sakura-api';
 
 const debug = debugInit('sapi:Injectable');
 
@@ -17,16 +17,21 @@ export const injectableSymbols = {
 export class NonInjectableConstructorParameterError extends Error {
   constructor(target: any, source: any) {
 
-    const targetName = (target || {} as any).name
-      || ((target || {} as any).constructor || {} as any).name
-      || typeof  target;
+    const targetName = (!target) ? target : (target || {}).name
+      || ((target || {}).constructor || {}).name
+      || typeof target;
 
-    const sourceName = (source || {} as any).name
-      || ((source || {} as any).constructor || {} as any).name
-      || typeof  source;
+    const sourceName = (source || {}).name
+      || ((source || {}).constructor || {}).name
+      || typeof source;
 
-    const message = `Unable to inject ${targetName} into ${sourceName}. Only classes decorated with '@Injectable' can`
-      + ` be passed into the ${sourceName} constructor.`;
+    const baseMessage = `Unable to inject ${targetName} into ${sourceName}. Only classes decorated with '@Injectable' can` +
+      ` be passed into the ${sourceName} constructor.`;
+
+    const message = (target)
+      ? baseMessage
+      : `It's possible you have a circular dependency. ${baseMessage}`;
+
     super(message);
   }
 }
@@ -172,7 +177,11 @@ export function getDependencyInjections(target: any, t: any, sapi: SakuraApi) {
   const diArgs = [];
 
   for (const arg of expectedDiArgs || []) {
-    debug(`injecting ${arg.name} into ${target.name}`);
+    if (!arg) {
+      throw new NonInjectableConstructorParameterError(arg, target);
+    }
+
+    debug(`injecting %s into %s`, arg.name, target.name);
 
     const isInjectable = !!arg[injectableSymbols.isSakuraApiInjectable];
     if (typeof arg !== 'function' || !isInjectable) {
