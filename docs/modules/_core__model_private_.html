@@ -96,7 +96,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/private.ts#L35">core/@model/private.ts:35</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/private.ts#L36">core/@model/private.ts:36</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -114,7 +114,8 @@ class User {
 </pre>
 								<p>It&#39;s possible to conditionally make a property private by passing in the name (as a string)
 									of a method that returns true or false (true meaning override the privacy setting) or by
-								directly passing in a boolean value.</p>
+									directly passing in a boolean value. The <a href="../interfaces/_core__model_json_.ijsonoptions.html#context">IJsonOptions.context</a> will be passed as the first
+								parameter of the method.</p>
 								<h3 id="example-of-override">Example of Override</h3>
 								<pre>
 <span>@</span>Model()
@@ -122,7 +123,7 @@ class User {
    <span>@</span>Private('hasSsnAccess')
    ssn: string = '';
 
-   hasSsnAccess() {
+   hasSsnAccess(context:string) {
      return someAclChecker(this, 'ssn_access');
    }
 }
@@ -148,7 +149,7 @@ class User {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/private.ts#L56">core/@model/private.ts:56</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/private.ts#L57">core/@model/private.ts:57</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -170,7 +171,7 @@ class User {
 					<div class="tsd-signature tsd-kind-icon">private<wbr>Symbols<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/private.ts#L1">core/@model/private.ts:1</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/private.ts#L1">core/@model/private.ts:1</a></li>
 						</ul>
 					</aside>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
@@ -179,7 +180,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">sakura<wbr>Api<wbr>Private<wbr>Property<wbr>ToField<wbr>Names<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;sakuraApiPrivatePropertyToFieldNames&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/a797acc/src/core/@model/private.ts#L2">core/@model/private.ts:2</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/private.ts#L2">core/@model/private.ts:2</a></li>
 							</ul>
 						</aside>
 					</section>

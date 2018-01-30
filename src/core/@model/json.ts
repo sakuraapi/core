@@ -33,7 +33,7 @@ export interface IJsonOptions {
    *  `someModel.toJson()`          // => {"fName":"John"}
    *  `someModel.toJson('source2')` // => {"first_name":"John"}
    *
-   *  `@Json` can accept a context as either it's second parameter or as part of the options [[IJsonOptions]]
+   *  `@Json` can accept a context as either its second parameter or as part of the options [[IJsonOptions]]
    *  parameter.
    */
   context?: string;
@@ -60,6 +60,18 @@ export interface IJsonOptions {
 
   /**
    * Allows formatting a property when it's marshalled to Json from an `@`[[Model]].
+   *
+   * ### Example
+   * <pre>
+   * <span>@</span>Model()
+   * class SomeModel {
+   *    @Json({
+   *      formatToJson: (val, key) => val.ToUpperCase()
+   *    })
+   *    someProperty: string;
+   * }
+   * </pre>
+   *
    * @param val The value of the property being marshalled to Json.
    * @param {string} key The name of the property beinng marshalled to Json
    * @returns any Returns the formatted value
@@ -68,6 +80,16 @@ export interface IJsonOptions {
 
   /**
    * Allows formatting a property when it's marshalled from Json to an `@`[[Model]].
+   * ### Example
+   * <pre>
+   * <span>@</span>Model()
+   * class SomeModel {
+   *    @Json({
+   *      formatFromJson: (val, key) => val.ToUpperCase()
+   *    })
+   *    someProperty: string;
+   * }
+   * </pre>
    * @param val The value of the property being marshalled to Json.
    * @param {string} key The name of the property beinng marshalled to Json
    * @returns any Returns the formatted value
