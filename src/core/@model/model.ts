@@ -25,6 +25,8 @@ import {
   SapiInvalidModelObject,
   SapiMissingIdErr
 }                                from './errors';
+import {formatFromJsonSymbols}   from './format-from-json';
+import {formatToJsonSymbols}     from './format-to-json';
 import {
   IJsonOptions,
   jsonSymbols
@@ -540,7 +542,18 @@ function fromJson(json: object, context = 'default'): object {
 
   const obj = new this();
 
-  return mapJsonToModel(json, obj);
+  let resultModel = mapJsonToModel(json, obj);
+
+  // @FormatFromJson
+  const formatFromJsonMeta = Reflect.getMetadata(formatFromJsonSymbols.functionMap, resultModel);
+  if (formatFromJsonMeta) {
+    const formatters = formatFromJsonMeta.get(context) || [];
+    for (const formatter of formatters) {
+      resultModel = formatter(json, resultModel, context);
+    }
+  }
+
+  return resultModel;
 
   ////////////
   function mapJsonToModel(jsonSource: any, target: any) {
@@ -622,9 +635,8 @@ function fromJson(json: object, context = 'default'): object {
   function keyMapper(key: string, value: any, meta: Map<string, IJsonOptions>, target) {
     const jsonFieldOptions = (meta) ? meta.get(`${key}:${context}`) : null;
 
-    const model = (jsonFieldOptions || {}).model;
     return {
-      model,
+      model: (jsonFieldOptions || {}).model,
       newKey: (jsonFieldOptions)
         ? jsonFieldOptions[jsonSymbols.propertyName]
         : (target[key])
@@ -1113,7 +1125,18 @@ function toDb(changeSet?: any): object {
 function toJson(context = 'default'): any {
   debug.normal(`.toJson called, target '${this.constructor.name}'`);
 
-  return mapModelToJson(this);
+  let json = mapModelToJson(this);
+
+  // @FormatToJson
+  const formatToJson = Reflect.getMetadata(formatToJsonSymbols.functionMap, this);
+  if (formatToJson) {
+    const formatters = formatToJson.get(context) || [];
+    for (const formatter of formatters) {
+      json = formatter(json, this, context);
+    }
+  }
+
+  return json;
 
   //////////
   function mapModelToJson(source) {
