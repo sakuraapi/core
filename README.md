@@ -5,16 +5,23 @@
 | Develop   |[![Build Status](https://travis-ci.org/sakuraapi/api.svg?branch=develop)](https://travis-ci.org/sakuraapi/api)| 
 | Master    |[![Build Status](https://travis-ci.org/sakuraapi/api.svg?branch=master)](https://travis-ci.org/sakuraapi/api)|
 
-Note: Rapid development is taking place on the 0.7.0 release; as a result, docs may be out of date.
-API Documentation: https://sakuraapi.github.io/api/
+`@sakuraApi/core` was previously [`@sakuraapi/api`](https://www.npmjs.com/package/@sakuraapi/api).  
 
 # SakuraApi
-SakuraAPI is a NodeJS API framework that utilizes modern and emerging webs standards like TypeScript and ES6 in a way that feels familiar to programmers that are responsible for full-stack MEAN development. 
+SakuraAPI is a NodeJS API framework that utilizes modern and emerging webs standards like TypeScript and ES6 in a way that feels familiar to programmers that are responsible for full-stack MEAN development.
 
 ## Install
 ```
-npm install @sakuraapi/api
+npm install @sakuraapi/core
 ```
+
+## Docs
+
+* API Documentation: https://sakuraapi.github.io/api/
+* Manual: https://github.com/sakuraapi/manual
+* Updates: http://blog.sakuraapi.com
+
+Rapid development is taking place; as a result, docs may be out of date.
 
 ## Examples
 The example projects and some of the documentation has fallen behind, so the following is a quick sample of what a project utilizing SakuraApi looks like. Updated documentation and a getting started guide is coming.

@@ -6,6 +6,8 @@ export const privateSymbols = {
  * Decorates a [[Model]] property and signals SakuraApi to not include that property
  * when generating a json representation of the model.
  *
+ * You can include multiple `@Private` decorators to a property with different contexts.
+ *
  * ### Example
  * <pre>
  * <span>@</span>Model()
@@ -14,46 +16,20 @@ export const privateSymbols = {
  *    password: string = '';
  * }
  * </pre>
- *
- * It's possible to conditionally make a property private by passing in the name (as a string)
- * of a method that returns true or false (true meaning override the privacy setting) or by
- * directly passing in a boolean value. The [[IJsonOptions.context]] will be passed as the first
- * parameter of the method.
- *
- * ### Example of Override
- * <pre>
- * <span>@</span>Model()
- * class User {
- *    <span>@</span>Private('hasSsnAccess')
- *    ssn: string = '';
- *
- *    hasSsnAccess(context:string) {
- *      return someAclChecker(this, 'ssn_access');
- *    }
- * }
- * </pre>
+ * @param context Sets the context under which this @Json applies (see [[IJsonOptions.context]])
  */
-export function Private(override?: string | boolean) {
-  override = override as any || defaultOverride;
+export function Private(context = 'default') {
 
   return (target: any, key: string) => {
 
-    let metaPropertyFieldMap: Map<string, any>
+    let metaPropertyFieldMap: Map<string, boolean>
       = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, target);
 
     if (!metaPropertyFieldMap) {
-      metaPropertyFieldMap = new Map<string, any>();
+      metaPropertyFieldMap = new Map<string, boolean>();
       Reflect.defineMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, metaPropertyFieldMap, target);
     }
 
-    metaPropertyFieldMap.set(key, override);
+    metaPropertyFieldMap.set(`${key}:${context}`, true);
   };
-}
-
-/**
- * Used by [[Private]] to assign a default override set to false if an override is not provided by the integrator.
- * This is an internal implementation and can change at any time since it's not an official part of the API.
- */
-function defaultOverride() {
-  return false;
 }
