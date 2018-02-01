@@ -1,114 +1,114 @@
-import {testSapi} from '../../../spec/helpers/sakuraapi';
-import {Json, Model, Private} from './';
+import {Model}          from './';
+import {Json}           from './json';
+import {Private}        from './private';
 import {SapiModelMixin} from './sapi-model-mixin';
 
 describe('@Private', () => {
-  const sapi = testSapi({
-    models: [],
-    routables: []
-  });
-
-  @Model()
-  class Test extends SapiModelMixin() {
-
-    @Private()
-    aPrivateField1: number = 1;
-
-    @Private('overrideFn')
-    aPrivateField2: number = 2;
-
-    @Private('denyOverrideFn')
-    aPrivateField3: number = 3;
-
-    @Private('allowOverride')
-    aPrivateField4: number = 4;
-
-    @Private('denyOverride')
-    aPrivateField5: number = 5;
-
-    @Json('apf4') @Private()
-    aPrivateField6: number = 6;
-
-    @Private(true)
-    aPrivateField7: number = 7;
-
-    @Private(false)
-    aPrivateField8: number = 8;
-
-    aPublicField: number = 777;
-
-    @Private()
-    private allowOverride = true;
-
-    @Private()
-    private denyOverride = false;
-
-    private overrideFn() {
-      return this.allowOverride;
-    }
-
-    private denyOverrideFn() {
-      return this.denyOverride;
-    }
-  }
-
-  beforeEach(() => {
-    this.t = new Test();
-  });
 
   describe('toJson', () => {
-    it('excludes a field decorated with @Private()', () => {
-      const json = this.t.toJson();
-      expect(json.aPrivateField1)
-        .toBeUndefined();
+
+    it('simple scenario', () => {
+      @Model()
+      class Test extends SapiModelMixin() {
+        firstName = 'John';
+        @Private()
+        lastName = 'Adams';
+      }
+
+      const result = (new Test()).toJson();
+
+      expect(result.firstName).toBe('John');
+      expect(result.lastName).toBeUndefined();
     });
 
-    it(`includes a field decorated with @Private('a_function_returning_true')`, () => {
-      const json = this.t.toJson();
-      expect(json.aPrivateField2)
-        .toBe(2);
+    it('scenario with @Json()', () => {
+      @Model()
+      class Test extends SapiModelMixin() {
+
+        firstName = 'John';
+        @Private() @Json('ln')
+        lastName = 'Adams';
+        @Private() @Json()
+        middleName = 'Quincy';
+
+      }
+
+      const result = (new Test()).toJson();
+
+      expect(result.firstName).toBe('John');
+      expect(result.ln).toBeUndefined();
+      expect(result.lastName).toBeUndefined();
+      expect(result.middleName).toBeUndefined();
     });
 
-    it(`excludes a field decorated with @Private('a_function_returning_false')`, () => {
-      const json = this.t.toJson();
-      expect(json.aPrivateField3)
-        .toBeUndefined();
+    it('scenario with context', () => {
+      @Model()
+      class Test extends SapiModelMixin() {
+
+        firstName = 'John';
+
+        @Private() @Json('ln')
+        lastName = 'Adams';
+
+        @Private('source2') @Private()
+        middleName = 'Quincy';
+
+      }
+
+      const result1 = (new Test()).toJson();
+      const result2 = (new Test()).toJson('source2');
+
+      expect(result1.firstName).toBe('John');
+      expect(result2.firstName).toBe('John');
+
+      expect(result1.lastName).toBeUndefined();
+      expect(result1.ln).toBeUndefined();
+
+      expect(result2.lastName).toBe('Adams');
+      expect(result2.ln).toBeUndefined();
+
+      expect(result1.middleName).toBeUndefined();
+      expect(result2.middleName).toBeUndefined();
     });
 
-    it(`includes a field decorated with @Private('a_property_that_is_truthy`, () => {
-      const json = this.t.toJson();
-      expect(json.aPrivateField4)
-        .toBe(4);
+    it('json can be marshalled to a private field', () => {
+      @Model()
+      class Test extends SapiModelMixin() {
+        @Private() @Json('ln')
+        lastName = '';
+      }
+
+      const result1 = Test.fromJson({ln: 'Adams'});
+      const result2 = result1.toJson();
+
+      expect(result1.lastName).toBe('Adams');
+      expect(result2.ln).toBeUndefined();
+      expect(result2.lastName).toBeUndefined();
     });
 
-    it(`excludes a field decorated with @Private('a_property_that_is_falsy`, () => {
-      const json = this.t.toJson();
-      expect(json.aPrivateField5)
-        .toBeUndefined();
-    });
+    it('supports * context for applying private to everything', () => {
+      @Model()
+      class Test extends SapiModelMixin() {
+        @Private('*') @Json() @Json({context: 'source2'})
+        firstName = 'John';
 
-    it('excludes a field that is decorated with both @Private and @Json with an alias', () => {
-      const json = this.t.toJson();
-      expect(json.aPrivateField6)
-        .toBeUndefined();
-    });
+        @Private('*') @Json() @Json({context: 'source2'})
+        lastName = 'Adams';
 
-    it('includes a field that is decorated with @Private and has a truth value', () => {
-      const json = this.t.toJson();
-      expect(json.aPrivateField7)
-        .toBeUndefined();
-    });
+        @Json() @Json({context: 'source2'})
+        middleName = 'Quincy';
+      }
 
-    it('excludes a field that is decorated with @Private and has a falsy value', () => {
-      const json = this.t.toJson();
-      expect(json.aPrivateField8)
-        .toBeUndefined();
-    });
+      const result1 = (new Test()).toJson();
+      const result2 = (new Test()).toJson('source2');
 
-    it('does not exclude a field that is not decorated with @Private', () => {
-      const json = this.t.toJson();
-      expect(json.aPublicField)
-        .toBe(777);
+      expect(result1.firstName).toBeUndefined();
+      expect(result1.lastName).toBeUndefined();
+      expect(result1.middleName).toBe('Quincy');
+
+      expect(result2.firstName).toBeUndefined();
+      expect(result2.lastName).toBeUndefined();
+      expect(result2.middleName).toBe('Quincy');
     });
   });
 });

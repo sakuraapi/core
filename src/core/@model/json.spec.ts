@@ -444,7 +444,7 @@ describe('@Json', () => {
 
       });
 
-      it('falls back to using property names when an invalid context is passed in', () => {
+      it('falls back to using property names (no context) when an invalid context is passed in', () => {
         @Model()
         class TestContext extends SapiModelMixin() {
           @Json('fn')
@@ -458,7 +458,7 @@ describe('@Json', () => {
         const result = testContext.toJson('non-existent');
 
         expect(result.firstName).toBe(testContext.firstName);
-        expect(result.lastName).toBeUndefined();
+        expect(result.lastName).toBe(testContext.lastName);
       });
 
       it('supports multiple contexts', () => {
@@ -468,7 +468,7 @@ describe('@Json', () => {
           @Json('fName', 'context2')
           firstName = 'George';
 
-          @Private()
+          @Private('*')
           lastName = 'Washington';
         }
 
@@ -510,7 +510,7 @@ describe('@Json', () => {
           @Json({field: 'fn', context: 'context1'})
           firstName = 'George';
 
-          @Private()
+          @Private('*')
           lastName = 'Washington';
         }
 

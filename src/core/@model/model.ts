@@ -10,7 +10,7 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 }                                from 'mongodb';
-import {getDependencyInjections} from '../@injectable/injectable';
+import {getDependencyInjections} from '../@injectable';
 import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods,
@@ -1152,8 +1152,9 @@ function toJson(context = 'default'): any {
 
     const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
 
-    const privateFields: Map<string, string>
-      = Reflect.getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, source);
+    const privateFields: Map<string, boolean> = Reflect
+        .getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, source)
+      || new Map<string, boolean>();
 
     // iterate over each property
     for (const key of Object.getOwnPropertyNames(source)) {
@@ -1177,12 +1178,9 @@ function toJson(context = 'default'): any {
         }
       }
 
-      const override = (privateFields) ? privateFields.get(key) : null;
-
-      // do the function test for private otherwise do the boolean test
-      if (override && typeof source[override] === 'function' && !source[override](context)) {
-        continue;
-      } else if (override && !source[override]) {
+      // skip if the field is private in this context
+      const isPrivate = privateFields.get(`${key}:${context}`) || privateFields.get(`${key}:*`);
+      if (isPrivate) {
         continue;
       }
 
