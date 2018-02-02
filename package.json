@@ -1,6 +1,6 @@
 {
-  "name": "@sakuraapi/api",
-  "version": "0.9.0",
+  "name": "@sakuraapi/core",
+  "version": "0.10.0",
   "description": "MongoDB and TypeScript MEAN Stack Framework for NodeJS",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -30,7 +30,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sakuraapi/api.git"
+    "url": "git+https://github.com/sakuraapi/core.git"
   },
   "keywords": [
     "REST",
@@ -41,9 +41,9 @@
   "author": "Jean-Pierre E. Poveda",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/sakuraapi/api/issues"
+    "url": "https://github.com/sakuraapi/core/issues"
   },
-  "homepage": "https://github.com/sakuraapi/api#readme",
+  "homepage": "https://github.com/sakuraapi/core#readme",
   "engines": {
     "node": ">=8.0.0"
   },

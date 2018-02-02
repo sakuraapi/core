@@ -113,6 +113,9 @@ export interface IJsonOptions {
  * Decorates properties in an `@`[[Model]] class to describe how a property will be marshaled to json
  * ([[Model]].[[toJson]]) and from json ([[Model]].[[fromJson]]).
  *
+ * You can apply multiple `@`[[Json]] decorators to a property with different contexts. If the same context
+ * is applied more than once, the latter wins.
+ *
  * ### Example
  * <pre>
  * import {Model, Json} from '@sakuraapi/api';
@@ -137,6 +140,7 @@ export interface IJsonOptions {
  * And `User.fromJson(json)` will map the json object back to an instantiated `User`.
  *
  * @param jsonOptions sets [[IJsonOptions.field]] when a string is passed.
+ * @param context Sets the context under which this @Json applies (see [[IJsonOptions.context]])
  * @returns Returns a function that is used internally by the framework.
  */
 export function Json(jsonOptions?: IJsonOptions | string, context?: string): (target: any, key: string) => void {

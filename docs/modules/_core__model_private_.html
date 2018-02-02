@@ -72,7 +72,6 @@
 							<h3>Functions</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-function tsd-parent-kind-external-module"><a href="_core__model_private_.html#private" class="tsd-kind-icon">Private</a></li>
-								<li class="tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported"><a href="_core__model_private_.html#defaultoverride" class="tsd-kind-icon">default<wbr>Override</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -90,13 +89,13 @@
 					<a name="private" class="tsd-anchor"></a>
 					<h3>Private</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module">
-						<li class="tsd-signature tsd-kind-icon">Private<span class="tsd-signature-symbol">(</span>override<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">(Anonymous function)</span></li>
+						<li class="tsd-signature tsd-kind-icon">Private<span class="tsd-signature-symbol">(</span>context<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">(Anonymous function)</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/private.ts#L36">core/@model/private.ts:36</a></li>
+									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/04c982e/src/core/@model/private.ts#L21">core/@model/private.ts:21</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -104,6 +103,7 @@
 									<p>Decorates a <a href="_core__model_model_.html#model">Model</a> property and signals SakuraApi to not include that property
 									when generating a json representation of the model.</p>
 								</div>
+								<p>You can include multiple <code>@Private</code> decorators to a property with different contexts.</p>
 								<h3 id="example">Example</h3>
 								<pre>
 <span>@</span>Model()
@@ -112,53 +112,17 @@ class User {
    password: string = '';
 }
 </pre>
-								<p>It&#39;s possible to conditionally make a property private by passing in the name (as a string)
-									of a method that returns true or false (true meaning override the privacy setting) or by
-									directly passing in a boolean value. The <a href="../interfaces/_core__model_json_.ijsonoptions.html#context">IJsonOptions.context</a> will be passed as the first
-								parameter of the method.</p>
-								<h3 id="example-of-override">Example of Override</h3>
-								<pre>
-<span>@</span>Model()
-class User {
-   <span>@</span>Private('hasSsnAccess')
-   ssn: string = '';
-
-   hasSsnAccess(context:string) {
-     return someAclChecker(this, 'ssn_access');
-   }
-}
-</pre>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> override: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">boolean</span></h5>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> context: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;&quot;default&quot;</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Sets the context under which this @Json applies (see <a href="../interfaces/_core__model_json_.ijsonoptions.html#context">IJsonOptions.context</a>)</p>
+									</div>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">(Anonymous function)</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-					<a name="defaultoverride" class="tsd-anchor"></a>
-					<h3>default<wbr>Override</h3>
-					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">default<wbr>Override<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/private.ts#L57">core/@model/private.ts:57</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p>Used by <a href="_core__model_private_.html#private">Private</a> to assign a default override set to false if an override is not provided by the integrator.
-									This is an internal implementation and can change at any time since it&#39;s not an official part of the API.</p>
-								</div>
-							</div>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">boolean</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -171,7 +135,7 @@ class User {
 					<div class="tsd-signature tsd-kind-icon">private<wbr>Symbols<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/private.ts#L1">core/@model/private.ts:1</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/04c982e/src/core/@model/private.ts#L1">core/@model/private.ts:1</a></li>
 						</ul>
 					</aside>
 					<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-object-literal">
@@ -180,7 +144,7 @@ class User {
 						<div class="tsd-signature tsd-kind-icon">sakura<wbr>Api<wbr>Private<wbr>Property<wbr>ToField<wbr>Names<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">symbol</span><span class="tsd-signature-symbol"> =&nbsp;Symbol(&#x27;sakuraApiPrivatePropertyToFieldNames&#x27;)</span></div>
 						<aside class="tsd-sources">
 							<ul>
-								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/2fcd586/src/core/@model/private.ts#L2">core/@model/private.ts:2</a></li>
+								<li>Defined in <a href="https://github.com/sakuraapi/api/blob/04c982e/src/core/@model/private.ts#L2">core/@model/private.ts:2</a></li>
 							</ul>
 						</aside>
 					</section>
@@ -207,6 +171,12 @@ class User {
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="_core__model_errors_.html">"core/@model/errors"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="_core__model_format_from_json_.html">"core/@model/format-<wbr>from-<wbr>json"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="_core__model_format_to_json_.html">"core/@model/format-<wbr>to-<wbr>json"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="_core__model_json_.html">"core/@model/json"</a>
@@ -262,9 +232,6 @@ class User {
 				<ul class="before-current">
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
 						<a href="_core__model_private_.html#private" class="tsd-kind-icon">Private</a>
-					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="_core__model_private_.html#defaultoverride" class="tsd-kind-icon">default<wbr>Override</a>
 					</li>
 					<li class=" tsd-kind-object-literal tsd-parent-kind-external-module">
 						<a href="_core__model_private_.html#privatesymbols" class="tsd-kind-icon">private<wbr>Symbols</a>
