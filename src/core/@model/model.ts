@@ -10,6 +10,7 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 }                                from 'mongodb';
+import {v4}                      from 'uuid';
 import {getDependencyInjections} from '../@injectable';
 import {
   addDefaultInstanceMethods,
@@ -102,6 +103,7 @@ export const modelSymbols = {
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
   fromJsonToDb: Symbol('fromJsonToDb'),
+  id: Symbol('modelId'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
   modelOptions: Symbol('modelOptions'),
   sapi: Symbol('sapi'),
@@ -109,6 +111,34 @@ export const modelSymbols = {
   toJson: Symbol('toJson'),
   toJsonString: Symbol('toJsonString')
 };
+
+/**
+ * An attempt was made to use [[SakuraApi.getModel]] with a parameter that isn't decorated with `@`[[Model]].
+ */
+export class ModelsMustBeDecoratedWithModelError extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`Invalid attempt to get ${targetName} must be decorated with @Model`);
+  }
+}
+
+/**
+ * Thrown when an attempt is made to use an object as a Model, which has not been registered with the dependency
+ * injection system. You register models when you are instantiating the instance of [[SakuraApi]] for your
+ * application.
+ */
+export class ModelNotRegistered extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`${targetName} is not registered as a model with SakuraApi`);
+  }
+}
 
 /**
  * Decorator applied to classes that represent models for SakuraApi.
@@ -202,6 +232,11 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
         }
         return c;
       }
+    });
+
+    Reflect.defineProperty(newConstructor, modelSymbols.id, {
+      value: v4(),
+      writable: false
     });
 
     // isSakuraApiModel hidden property is attached to let other parts of the framework know that this is an @Model obj

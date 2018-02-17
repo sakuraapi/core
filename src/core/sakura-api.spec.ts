@@ -349,10 +349,6 @@ describe('core/SakuraApi', () => {
     class TestDIModel {
     }
 
-    @Model()
-    class TestDIModelOverride {
-    }
-
     @Routable({
       model: TestDIModel
     })
@@ -365,46 +361,23 @@ describe('core/SakuraApi', () => {
     class TestDIRoutableOverride {
     }
 
-    const sapi = testSapi({
-      models: [TestDIModel],
-      routables: [TestDIRoutable]
-    });
-
-    it('can retrieve Model by name', () => {
-      // tslint:disable-next-line:variable-name
-      const TestModel = sapi.getModelByName('TestDIModel');
-
-      expect(TestModel).toBeDefined('Model should have been defined');
-      expect(TestModel.fromJson({}) instanceof TestDIModel).toBeTruthy('Should have been an instance of TestDIModel ' +
-        `but instead was an instsance of ${(TestModel.constructor || {} as any).name || TestModel.name}`);
-    });
-
     it('can retrieve Routable by name', () => {
+      const sapi = testSapi({
+        models: [TestDIModel],
+        routables: [TestDIRoutable]
+      });
+
       // tslint:disable-next-line:variable-name
       const Routable = sapi.getRoutableByName('TestDIRoutable');
 
       expect(Routable).toBeDefined('Routable should have been defined');
       expect(new Routable() instanceof TestDIRoutable).toBeTruthy('Should have been an instance of TestDIRoutable ' +
         `but instead was an instsance of ${(Routable.constructor || {} as any).name || Routable.name}`);
+
+      sapi.deregisterDependencies();
     });
 
-    it('allows allows overriding of @Model decorated class', () => {
-      const sapi = testSapi({
-        models: [{use: TestDIModelOverride, for: TestDIModel}],
-        routables: [TestDIRoutable]
-      });
-
-      // tslint:disable-next-line:variable-name
-      const TestModel = sapi.getModelByName('TestDIModel');
-      const testModel = TestModel.fromJson({});
-
-      expect(TestModel).toBeDefined('Model should have been defined');
-      expect(testModel instanceof TestDIModelOverride).toBeTruthy('Should have been an instance of ' +
-        `TestDIModelOverride but instead was an instsance of ` +
-        `${(testModel.constructor || {} as any).name || testModel.name}`);
-    });
-
-    it('allows allows overriding of @Routable decorated class', () => {
+    it('allows overriding of @Routable decorated class', () => {
       const sapi = testSapi({
         models: [TestDIModel],
         routables: [{use: TestDIRoutableOverride, for: TestDIRoutable}]
@@ -418,6 +391,8 @@ describe('core/SakuraApi', () => {
       expect(testRoutable instanceof TestDIRoutableOverride).toBeTruthy('Should have been an instance of ' +
         `TestDIRoutableOverride but instead was an instsance of ` +
         `${(testRoutable.constructor || {} as any).name || testRoutable.name}`);
+
+      sapi.deregisterDependencies();
     });
   });
 

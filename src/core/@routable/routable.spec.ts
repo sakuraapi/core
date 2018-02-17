@@ -3,38 +3,43 @@ import {
   NextFunction,
   Request,
   Response
-}                           from 'express';
-import {ObjectID}           from 'mongodb';
-import * as request         from 'supertest';
+}                          from 'express';
+import {ObjectID}          from 'mongodb';
+import * as request        from 'supertest';
 import {
   testSapi,
   testUrl
-}                           from '../../../spec/helpers/sakuraapi';
+}                          from '../../../spec/helpers/sakuraapi';
 import {
   getAllRouteHandler,
   getRouteHandler
-}                           from '../../handlers/basic-handlers';
+}                          from '../../handlers/basic-handlers';
 import {
   Db,
   Json,
   Model,
   SapiModelMixin
-}                           from '../@model';
-import {BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK} from '../helpers/http-status';
+}                          from '../@model';
+import {
+  BAD_REQUEST,
+  DUPLICATE_RESOURCE,
+  NOT_FOUND,
+  OK
+}                          from '../helpers/http-status';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
   IAuthenticator,
   IAuthenticatorConstructor
-}                           from '../plugins';
-import {SakuraApi}          from '../sakura-api';
+}                          from '../plugins';
+import {SakuraApi}         from '../sakura-api';
 import {
   Routable,
   routableSymbols,
   Route
-}                           from './';
-import {IRoutableLocals}    from './routable';
-import {SapiRoutableMixin}  from './sapi-routable-mixin';
+}                          from './';
+import {IRoutableLocals}   from './routable';
+import {SapiRoutableMixin} from './sapi-routable-mixin';
 
 describe('core/@Routable', () => {
   describe('general functionality', () => {
@@ -1209,24 +1214,21 @@ describe('core/@Routable', () => {
       });
 
       describe('exposeApi suppresses non exposed endpoints', () => {
-        @Routable({
-          exposeApi: ['delete'],
-          model: User
-        })
-        class RoutableExposeApiTest {
-
-        }
-
-        @Routable({
-          exposeApi: ['invalid' as any],
-          model: User
-        })
-        class RoutableExposeApiInvalidTest {
-
-        }
-
         it('only the exposeApi endpoints are added', () => {
+          @Model()
+          class TestModel {
+          }
+
+          @Routable({
+            exposeApi: ['delete'],
+            model: TestModel
+          })
+          class RoutableExposeApiTest {
+
+          }
+
           testSapi({
+            models: [TestModel],
             routables: [RoutableExposeApiTest]
           });
 
@@ -1234,11 +1236,23 @@ describe('core/@Routable', () => {
 
           expect(routableExposeApiTest[routableSymbols.routes].length).toBe(1);
           expect(routableExposeApiTest[routableSymbols.routes][0].method).toBe('deleteRouteHandler');
-
         });
 
         it('invalid exposeApi option', () => {
+          @Model()
+          class TestModel {
+          }
+
+          @Routable({
+            exposeApi: ['invalid' as any],
+            model: User
+          })
+          class RoutableExposeApiInvalidTest {
+
+          }
+
           testSapi({
+            models: [TestModel],
             routables: [RoutableExposeApiInvalidTest]
           });
 
@@ -1248,9 +1262,14 @@ describe('core/@Routable', () => {
       });
 
       describe('suppressApi exposes non suppressed endpoints', () => {
+
+        @Model()
+        class Bob {
+        }
+
         @Routable({
           baseUrl: 'RoutableSuppressApiTrueTest',
-          model: User,
+          model: Bob,
           suppressApi: true
         })
         class RoutableSuppressApiTrueTest {
@@ -1258,23 +1277,26 @@ describe('core/@Routable', () => {
 
         @Routable({
           baseUrl: 'RoutableSuppressApiTrueTest',
-          model: User,
+          model: Bob,
           suppressApi: ['post']
         })
         class RoutableSuppressApiPostTest {
         }
 
         it('suppressess all model generated endpoints when suppressApi is set to true rather than an array', () => {
-          testSapi({
+          const sapi2 = testSapi({
             routables: [RoutableSuppressApiTrueTest]
           });
 
           const routableSuppressApiTrueTest = new RoutableSuppressApiTrueTest();
           expect(routableSuppressApiTrueTest[routableSymbols.routes].length).toBe(0);
+
+          sapi2.deregisterDependencies();
         });
 
         it('suppressess only generated endpoints that are not suppressed', () => {
-          testSapi({
+          const sapi2 = testSapi({
+            models: [Bob],
             routables: [RoutableSuppressApiPostTest]
           });
 
@@ -1284,6 +1306,8 @@ describe('core/@Routable', () => {
           for (let i = 0; i < routableSuppressApiPostTest[routableSymbols.routes].length; i++) {
             expect(routableSuppressApiPostTest[routableSymbols.routes][i].httpMethod).not.toBe('post');
           }
+
+          sapi2.deregisterDependencies();
         });
       });
     });

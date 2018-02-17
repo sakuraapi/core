@@ -299,7 +299,7 @@ export function Routable(options?: IRoutableOptions): any {
     // if a model is present, then add a method that allows that model to be retrieved
     if (options.model) {
       newConstructor.prototype[routableSymbols.model] = () => {
-        return newConstructor[routableSymbols.sapi].getModelByName(options.model.name);
+        return newConstructor[routableSymbols.sapi].getModel(options.model);
       };
     }
 
@@ -402,7 +402,7 @@ export function Routable(options?: IRoutableOptions): any {
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
-      const diModel = newConstructor[routableSymbols.sapi].getModelByName(options.model.name);
+      const diModel = newConstructor[routableSymbols.sapi].getModel(options.model);
 
       const routerData: ISakuraApiClassRoute = {
         afterAll,

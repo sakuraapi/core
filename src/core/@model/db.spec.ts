@@ -1,8 +1,13 @@
 // tslint:disable:no-shadowed-variable
-import {ObjectID} from 'mongodb';
-import {testSapi} from '../../../spec/helpers/sakuraapi';
-import {Db, dbSymbols, Json} from './';
-import {Model} from './model';
+import {ObjectID}       from 'mongodb';
+import {testSapi}       from '../../../spec/helpers/sakuraapi';
+import {SakuraApi}      from '../sakura-api';
+import {
+  Db,
+  dbSymbols,
+  Json
+}                       from './';
+import {Model}          from './model';
 import {SapiModelMixin} from './sapi-model-mixin';
 
 describe('@Db', () => {
@@ -423,8 +428,9 @@ describe('@Db', () => {
 
       }
 
+      let sapi: SakuraApi;
       beforeEach((done) => {
-        const sapi = testSapi({
+        sapi = testSapi({
           models: [
             User
           ],
@@ -447,6 +453,16 @@ describe('@Db', () => {
               .catch(done.fail);
           })
           .catch(done.fail);
+      });
+
+      afterEach(async (done) => {
+        try {
+          await sapi.close();
+          sapi.deregisterDependencies();
+          done();
+        } catch (err) {
+          done.fail(err);
+        }
       });
 
       it('via projection', (done) => {

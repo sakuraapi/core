@@ -1,5 +1,6 @@
 import {ObjectID}       from 'mongodb';
 import {testSapi}       from '../../../spec/helpers/sakuraapi';
+import {SakuraApi}      from '../sakura-api';
 import {Db}             from './db';
 import {Json}           from './json';
 import {
@@ -240,8 +241,9 @@ describe('@Json', () => {
         contact = new Contact();
       }
 
+      let sapi: SakuraApi;
       beforeEach((done) => {
-        const sapi = testSapi({
+        sapi = testSapi({
           models: [
             User
           ],
@@ -255,6 +257,16 @@ describe('@Json', () => {
           .then(() => new User().create())
           .then(done)
           .catch(done.fail);
+      });
+
+      afterEach(async (done) => {
+        try {
+          await sapi.close();
+          sapi.deregisterDependencies();
+          done();
+        } catch (err) {
+          done.fail(err);
+        }
       });
 
       it('returns only projected fields', (done) => {

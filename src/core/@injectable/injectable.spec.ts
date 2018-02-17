@@ -52,6 +52,8 @@ describe('@Injectable', () => {
     it('decorates @Injectable class', () => {
       expect(TestInjectable[injectableSymbols.isSakuraApiInjectable]).toBeTruthy();
       expect(TestInjectable[injectableSymbols.id].split('-').length).toBe(5);
+      expect(() => TestInjectable[injectableSymbols.id] = null).toThrowError(`Cannot assign to read only ` +
+        `property 'Symbol(injectableId)' of function '[object Function]'`);
     });
 
     it('is initialized by SakuraApi', () => {
@@ -95,21 +97,23 @@ describe('@Injectable', () => {
 
     });
 
-    it('does not allow a non @Injectable in sapi.getProvider', () => {
-      expect(() => sapi.getProvider('test')).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
-      expect(() => sapi.getProvider('')).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
-      expect(() => sapi.getProvider(1)).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
-      expect(() => sapi.getProvider({})).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
-      expect(() => sapi.getProvider(null)).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
-      expect(() => sapi.getProvider(undefined)).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
-    });
+    describe('SakuraApi.getProvider', () => {
+      it('does not allow a non @Injectable in sapi.getProvider', () => {
+        expect(() => sapi.getProvider('test')).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
+        expect(() => sapi.getProvider('')).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
+        expect(() => sapi.getProvider(1)).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
+        expect(() => sapi.getProvider({})).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
+        expect(() => sapi.getProvider(null)).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
+        expect(() => sapi.getProvider(undefined)).toThrowError(ProvidersMustBeDecoratedWithInjectableError);
+      });
 
-    it('throws ProviderNotRegistered when attempting to get unregistered provider', () => {
-      @Injectable()
-      class Invalid {
-      }
+      it('throws ProviderNotRegistered when attempting to get unregistered provider', () => {
+        @Injectable()
+        class Invalid {
+        }
 
-      expect(() => sapi.getProvider(Invalid)).toThrowError(ProviderNotRegistered);
+        expect(() => sapi.getProvider(Invalid)).toThrowError(ProviderNotRegistered);
+      });
     });
   });
 
@@ -320,8 +324,13 @@ describe('@Injectable', () => {
       }
     }
 
+    let sapi: SakuraApi;
+    afterEach(() => {
+      sapi.deregisterDependencies();
+    });
+
     it('supports injection', () => {
-      testSapi({
+      sapi = testSapi({
         models: [TestModel],
         providers: [TestService]
       });
@@ -331,7 +340,7 @@ describe('@Injectable', () => {
     });
 
     it('supports mocking', () => {
-      testSapi({
+      sapi = testSapi({
         models: [TestModel],
         providers: [{for: TestService, use: TestServiceMock}]
       });
