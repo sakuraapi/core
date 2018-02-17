@@ -1,5 +1,8 @@
-import {DisplayProcessor, SpecReporter} from 'jasmine-spec-reporter';
-import 'source-map-support';
+import {
+  DisplayProcessor,
+  SpecReporter
+} from 'jasmine-spec-reporter';
+import 'source-map-support/register';
 import SuiteInfo = jasmine.SuiteInfo;
 
 class CustomProcessor extends DisplayProcessor {
