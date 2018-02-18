@@ -49,6 +49,10 @@ describe('@Injectable', () => {
       });
     });
 
+    afterEach(() => {
+      sapi.deregisterDependencies();
+    });
+
     it('decorates @Injectable class', () => {
       expect(TestInjectable[injectableSymbols.isSakuraApiInjectable]).toBeTruthy();
       expect(TestInjectable[injectableSymbols.id].split('-').length).toBe(5);

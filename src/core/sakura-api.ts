@@ -961,8 +961,9 @@ export class SakuraApi {
     for (const injectable of injectables) {
       const isInjectable = injectable[injectableSymbols.isSakuraApiInjectable];
 
-      let injectableSource: any;
+      let injectableName: string;
       let injectableRef: any;
+      let injectableSource: any;
 
       // Allow overriding for mocking
       if (!isInjectable) {
@@ -975,14 +976,21 @@ export class SakuraApi {
             + ' where SomeMockInjectable and SomeRealInjectable are decorated with @Injectable.');
         }
 
-        injectableSource = injectable.for;
+        injectableName = injectable.for.name;
         injectableRef = injectable.use;
+        injectableSource = injectable.for;
 
-        debug.providers(`registering provider ${injectableRef.name} for ${injectableSource.name}`);
+        debug.providers(`registering provider ${injectableRef.name} for ${injectableName}`);
       } else {
-        injectableSource = injectable;
+        injectableName = injectable.name;
         injectableRef = injectable;
-        debug.providers(`registering provider ${(injectableRef || {} as any).name}`);
+        injectableSource = injectable;
+
+        debug.providers(`registering provider ${injectableName}`);
+      }
+
+      if (injectableRef[injectableSymbols.sapi]) {
+        throw new DependencyAlreadyInjectedError('Injectable', injectableName);
       }
 
       // set the injectable's instance of SakuraApi to this
