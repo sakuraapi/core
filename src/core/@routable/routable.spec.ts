@@ -2047,12 +2047,15 @@ describe('core/@Routable', () => {
       class TestRoutableSapiInjection extends SapiModelMixin() {
       }
 
-      let sapi;
+      let sapi: SakuraApi;
       beforeEach(() => {
         sapi = testSapi({
-          models: [],
           routables: [TestRoutableSapiInjection]
         });
+      });
+
+      afterEach(() => {
+        sapi.deregisterDependencies();
       });
 
       it('@Routable has reference to sapi injected as symbol when SakuraApi is constructed', () => {

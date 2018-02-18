@@ -433,10 +433,9 @@ export class SakuraApi {
     const routableKeys = (this.routables) ? this.routables.keys() : [];
     for (const key of routableKeys) {
       const routable = this.routables.get(key);
-      this.routables[routableSymbols.sapi] = null;
+      routable[routableSymbols.sapi] = null;
       this.routables.delete(key);
     }
-
   }
 
   /**
@@ -1032,6 +1031,9 @@ export class SakuraApi {
         debug.providers(`registering routable ${routableName}`);
       }
 
+      if (routableRef[routableSymbols.sapi]) {
+        throw new DependencyAlreadyInjectedError('Routable', routableName);
+      }
       routableRef[routableSymbols.sapi] = this;
 
       // get the routes queued up for .listen

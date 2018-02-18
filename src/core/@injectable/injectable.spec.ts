@@ -384,49 +384,56 @@ describe('@Injectable', () => {
     }
 
     let sapi: SakuraApi;
-    afterEach((done) => {
-      sapi
-        .close()
-        .then(done)
-        .catch(done.fail);
+    afterEach(async (done) => {
+      try {
+        await sapi.close();
+        sapi.deregisterDependencies();
+        done();
+      } catch (err) {
+        done.fail(err);
+      }
     });
 
     it('supports injection', async (done) => {
+      try {
+        sapi = testSapi({
+          providers: [TestService],
+          routables: [AnApi]
+        });
 
-      sapi = testSapi({
-        providers: [TestService],
-        routables: [AnApi]
-      });
+        await sapi.listen({bootMessage: ''});
 
-      await sapi.listen({bootMessage: ''});
+        const result = await request(sapi.app)
+          .get(testUrl('/injectRoutableTest'))
+          .expect(OK);
 
-      request(sapi.app)
-        .get(testUrl('/injectRoutableTest'))
-        .expect(OK)
-        .then((result) => {
-          expect(result.body.result).toBe('found');
-        })
-        .then(done)
-        .catch(done.fail);
+        expect(result.body.result).toBe('found');
+
+        done();
+      } catch (err) {
+        done.fail(err);
+      }
     });
 
     it('supports mocking', async (done) => {
+      try {
+        sapi = testSapi({
+          providers: [{for: TestService, use: TestServiceMock}],
+          routables: [AnApi]
+        });
 
-      sapi = testSapi({
-        providers: [{for: TestService, use: TestServiceMock}],
-        routables: [AnApi]
-      });
+        await sapi.listen({bootMessage: ''});
 
-      await sapi.listen({bootMessage: ''});
+        const result = await request(sapi.app)
+          .get(testUrl('/injectRoutableTest'))
+          .expect(OK);
 
-      request(sapi.app)
-        .get(testUrl('/injectRoutableTest'))
-        .expect(OK)
-        .then((result) => {
-          expect(result.body.result).toBe('mock');
-        })
-        .then(done)
-        .catch(done.fail);
+        expect(result.body.result).toBe('mock');
+
+        done();
+      } catch (err) {
+        done.fail(err);
+      }
     });
   });
 });
