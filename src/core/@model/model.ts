@@ -234,6 +234,7 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
       }
     });
 
+    // DI unique identifier
     Reflect.defineProperty(newConstructor, modelSymbols.id, {
       value: v4(),
       writable: false

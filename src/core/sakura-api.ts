@@ -1,6 +1,6 @@
 // tslint:disable:no-duplicate-imports
-import * as debugInit                        from 'debug';
-import * as express                          from 'express';
+import * as debugInit            from 'debug';
+import * as express              from 'express';
 import {
   ErrorRequestHandler,
   Express,
@@ -9,28 +9,30 @@ import {
   Request,
   Response,
   Router
-}                                            from 'express';
-import * as http                             from 'http';
-import {SakuraApiConfig}                     from '../boot';
+}                                from 'express';
+import * as http                 from 'http';
+import {SakuraApiConfig}         from '../boot';
 import {
   injectableSymbols,
   ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
-}                                            from './';
+}                                from './';
 import {
   ModelNotRegistered,
+  ModelsMustBeDecoratedWithModelError,
   modelSymbols
-}                                            from './@model';
-import {ModelsMustBeDecoratedWithModelError} from './@model/model';
+}                                from './@model';
 import {
   IRoutableLocals,
   ISakuraApiClassRoute,
+  RoutableNotRegistered,
+  RoutablesMustBeDecoratedWithRoutableError,
   routableSymbols
-}                                            from './@routable';
+}                                from './@routable';
 import {
   BAD_REQUEST,
   OK
-}                                            from './helpers';
+}                                from './helpers';
 import {
   Anonymous,
   AuthenticatorNotRegistered,
@@ -41,8 +43,8 @@ import {
   IAuthenticatorConstructor,
   SakuraApiPlugin,
   SakuraApiPluginResult
-}                                            from './plugins';
-import {SakuraMongoDbConnection}             from './sakura-mongo-db-connection';
+}                                from './plugins';
+import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 // tslint:enable:no-duplicate-imports
 
 const debug = {
@@ -500,7 +502,7 @@ export class SakuraApi {
    * @param target pass in the [[Model]] class
    * @returns {any} the constructor for the [[Model]] class
    */
-  getModel(target: any) {
+  getModel(target: any): any {
     if (!target || !target[modelSymbols.isSakuraApiModel]) {
       throw new ModelsMustBeDecoratedWithModelError(target);
     }
@@ -518,7 +520,7 @@ export class SakuraApi {
    * @param target Pass in the [[Injectable]] class
    * @returns {any} the singleton instance of the [[Injectable]] class
    */
-  getProvider(target: any) {
+  getProvider(target: any): any {
     debug.providers(`.getProvider ${(target || {} as any).name}`);
 
     if (!target || !target[injectableSymbols.isSakuraApiInjectable]) {
@@ -546,6 +548,24 @@ export class SakuraApi {
    */
   getRoutableByName(name: string): any {
     return this.routables.get(name);
+  }
+
+  /**
+   * Gets a `@`[[Routable] that was registered during construction of [[SakuraApi]]
+   * @param target pass in the [[Routable]] class
+   * @returns {any} the constructor for the [[Routable]] class
+   */
+  getRoutable(target: any): any {
+    if (!target || !target[routableSymbols.isSakuraApiRoutable]) {
+      throw new RoutablesMustBeDecoratedWithRoutableError(target);
+    }
+
+    const routable = this.routables.get(target[routableSymbols.id]);
+    if (!routable) {
+      throw new RoutableNotRegistered(target);
+    }
+
+    return routable;
   }
 
   /**
@@ -869,9 +889,9 @@ export class SakuraApi {
     for (const model of models) {
       const isModel = model[modelSymbols.isSakuraApiModel];
 
+      let modelId: string;
       let modelName: string; // this will be removed
       let modelRef: any;
-      let modelId: string;
 
       // must be decorated with @Model or { use: SomeModel, for: SomeOriginalModel }
       if (!isModel) {
@@ -884,20 +904,18 @@ export class SakuraApi {
             + ' SomeRealModel are decorated with @Model.');
         }
 
-        modelName = model.for.name;
         modelId = model.for[modelSymbols.id];
+        modelName = model.for.name;
         modelRef = model.use;
 
         debug.models(`registering model ${modelRef.name} for ${modelName}`);
       } else {
-        modelName = model.name;
         modelId = model[modelSymbols.id];
+        modelName = model.name;
         modelRef = model;
 
         debug.models(`registering model ${modelName}`);
       }
-
-      // set the model's instance of SakuraApi to this
 
       if (modelRef[modelSymbols.sapi]) {
         throw new DependencyAlreadyInjectedError('Model', modelName);
@@ -986,8 +1004,9 @@ export class SakuraApi {
 
       const isRoutable = routable[routableSymbols.isSakuraApiRoutable];
 
+      let routableId: string;
       let routableName: string;
-      let routableRef: string;
+      let routableRef: any;
 
       // must be decorated with @Routable or { use: Routable, for: Routable }
       if (!isRoutable) {
@@ -997,23 +1016,28 @@ export class SakuraApi {
           || !routable.for[routableSymbols.isSakuraApiRoutable]) {
           throw new Error('SakuraApi setup error. SakuraApiOptions.routables array must have classes decorated with '
             + ' @Routable or an object literal of the form { use: SomeMockRoutable, for: SomeRealRoutable }, where'
-            + ' SomeMockRoutable and SomeRealRoutable are decorated with @Model.');
+            + ' SomeMockRoutable and SomeRealRoutable are decorated with @Routable.');
         }
 
+        routableId = routable.for[routableSymbols.id];
         routableName = routable.for.name;
         routableRef = routable.use;
+
+        debug.providers(`registering routable ${routableRef.name} for ${routableName}`);
       } else {
+        routableId = routable[routableSymbols.id];
         routableName = routable.name;
         routableRef = routable;
+
+        debug.providers(`registering routable ${routableName}`);
       }
 
-      // set the routable's instance of SakuraApi to this
       routableRef[routableSymbols.sapi] = this;
 
       // get the routes queued up for .listen
       this.enqueueRoutes(new (routableRef as any)());
-      debug.providers(`registering routable ${(routableRef || {} as any).name}`);
       this.routables.set(routableName, routableRef);
+      this.routables.set(routableId, routableRef);
     }
   }
 }

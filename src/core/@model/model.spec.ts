@@ -154,8 +154,8 @@ describe('core/@Model', () => {
 
         it('removeAll', async (done) => {
           try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
-            const testDefaultMethods2 = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
+            const testDefaultMethods2 = new (sapi.getModel(DefaultCrud))();
 
             const createdResult = await testDefaultMethods.create();
             expect(createdResult.insertedCount).toBe(1);
@@ -179,8 +179,8 @@ describe('core/@Model', () => {
 
         it('removeById', async (done) => {
           try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
-            const testDefaultMethods2 = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
+            const testDefaultMethods2 = new (sapi.getModel(DefaultCrud))();
 
             expect(testDefaultMethods.id).toBeNull();
 
@@ -225,7 +225,7 @@ describe('core/@Model', () => {
 
         it('get', async (done) => {
           try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
             const createdResult = await testDefaultMethods.create();
             expect(createdResult.insertedCount).toBe(1);
@@ -246,7 +246,7 @@ describe('core/@Model', () => {
 
         it('getOne', async (done) => {
           try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
             const createdResult = await testDefaultMethods.create();
             expect(createdResult.insertedCount).toBe(1);
@@ -266,7 +266,7 @@ describe('core/@Model', () => {
 
         it('getById', async (done) => {
           try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
             const createdResult = await testDefaultMethods.create();
 
@@ -286,7 +286,7 @@ describe('core/@Model', () => {
 
         it('getCursor', async (done) => {
           try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
             const createdResult = await testDefaultMethods.create();
 
@@ -314,7 +314,7 @@ describe('core/@Model', () => {
 
         it('getCursor supports projection', async (done) => {
           try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
             const createResults: InsertOneWriteOpResult = await testDefaultMethods.create();
 
@@ -336,7 +336,7 @@ describe('core/@Model', () => {
 
         it('getCursorById', async (done) => {
           try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
             const createdResult = await testDefaultMethods.create();
 
@@ -367,7 +367,7 @@ describe('core/@Model', () => {
 
           it('inserts model into db', async (done) => {
             try {
-              const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+              const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
               const result = await testDefaultMethods.create();
               expect(result.insertedCount).toBe(1);
@@ -395,7 +395,7 @@ describe('core/@Model', () => {
 
           it('sets the models Id before writing if Id is not set', async (done) => {
             try {
-              const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+              const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
               const result = await testDefaultMethods.create();
               expect(result.insertedCount).toBe(1);
@@ -476,7 +476,7 @@ describe('core/@Model', () => {
 
         describe('getCollection', () => {
           it('returns a valid MongoDB Collection for the current model', () => {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
             const col = testDefaultMethods.getCollection();
             expect(col.s.dbName).toBe('userDb');
           });
@@ -485,7 +485,7 @@ describe('core/@Model', () => {
         describe('getDb', () => {
 
           it('returns a valid MongoDB Db for the current model', () => {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
             const db = testDefaultMethods.getDb();
             expect(db.s.databaseName).toBe('userDb');
           });
@@ -531,7 +531,7 @@ describe('core/@Model', () => {
           }
 
           it('rejects if missing id', async (done) => {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
             try {
               await testDefaultMethods.save();
@@ -546,7 +546,7 @@ describe('core/@Model', () => {
 
           describe('without projection', () => {
             it('updates entire model if no set parameter is passed', async (done) => {
-              const testDefaultMethods = new (sapi.getModel(DefaultCrud));
+              const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
               expect(testDefaultMethods.id).toBeNull();
               try {
@@ -933,8 +933,8 @@ describe('core/@Model', () => {
       describe('remove', () => {
         it('itself', async (done) => {
           try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud));
-            const testDefaultMethods2 = new (sapi.getModel(DefaultCrud));
+            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
+            const testDefaultMethods2 = new (sapi.getModel(DefaultCrud))();
 
             expect(testDefaultMethods.id).toBeNull();
 
@@ -1002,7 +1002,7 @@ describe('core/@Model', () => {
         }
 
         try {
-          let testModel = new TestModel();
+          const testModel = new TestModel();
 
           const op = await testModel.save();
           expect(op.result.nModified).toBe(-777);
@@ -1327,7 +1327,7 @@ describe('core/@Model', () => {
     class TestDiOverride {
     }
 
-    it('decorates @Model class', () => {
+    it('decorates @Model class with DI id', () => {
       const test = new TestDi();
 
       expect(TestDi[modelSymbols.id].split('-').length).toBe(5);
@@ -1444,7 +1444,7 @@ describe('core/@Model', () => {
     });
 
     describe('SakuraApi.getModel', () => {
-      it('does not allow non @Model parameters in sapi.getModel', () => {
+      it('does not allow non @Model parameter in sapi.getModel', () => {
         class TestClass {
         }
 
@@ -1466,6 +1466,22 @@ describe('core/@Model', () => {
         const sapi = testSapi({});
 
         expect(() => sapi.getModel(Invalid)).toThrowError(ModelNotRegistered);
+      });
+
+      it('gets a model', () => {
+        @Model()
+        class TestModel {
+        }
+
+        const sapi2 = testSapi({
+          models: [TestModel]
+        });
+
+        const result = sapi2.getModel(TestModel);
+
+        expect(result.constructor).toEqual(TestModel.constructor);
+
+        sapi2.deregisterDependencies();
       });
     });
   });

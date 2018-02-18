@@ -2,7 +2,7 @@ import {
   DisplayProcessor,
   SpecReporter
 } from 'jasmine-spec-reporter';
-import 'source-map-support/register';
+import 'source-map-support/register'; // tslint:disable-line
 import SuiteInfo = jasmine.SuiteInfo;
 
 class CustomProcessor extends DisplayProcessor {

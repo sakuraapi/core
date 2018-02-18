@@ -12,7 +12,6 @@ import {
   testUrl
 }                        from '../../spec/helpers/sakuraapi';
 import {SakuraApiConfig} from '../../src/boot';
-import {Model}           from './@model';
 import {
   Routable,
   Route,
@@ -340,59 +339,6 @@ describe('core/SakuraApi', () => {
         .then(() => sapi.close())
         .then(done)
         .catch(done.fail);
-    });
-  });
-
-  describe('dependency injection', () => {
-
-    @Model()
-    class TestDIModel {
-    }
-
-    @Routable({
-      model: TestDIModel
-    })
-    class TestDIRoutable {
-    }
-
-    @Routable({
-      model: TestDIModel
-    })
-    class TestDIRoutableOverride {
-    }
-
-    it('can retrieve Routable by name', () => {
-      const sapi = testSapi({
-        models: [TestDIModel],
-        routables: [TestDIRoutable]
-      });
-
-      // tslint:disable-next-line:variable-name
-      const Routable = sapi.getRoutableByName('TestDIRoutable');
-
-      expect(Routable).toBeDefined('Routable should have been defined');
-      expect(new Routable() instanceof TestDIRoutable).toBeTruthy('Should have been an instance of TestDIRoutable ' +
-        `but instead was an instsance of ${(Routable.constructor || {} as any).name || Routable.name}`);
-
-      sapi.deregisterDependencies();
-    });
-
-    it('allows overriding of @Routable decorated class', () => {
-      const sapi = testSapi({
-        models: [TestDIModel],
-        routables: [{use: TestDIRoutableOverride, for: TestDIRoutable}]
-      });
-
-      // tslint:disable-next-line:variable-name
-      const TestRoutable = sapi.getRoutableByName('TestDIRoutable');
-      const testRoutable = new TestRoutable();
-
-      expect(TestRoutable).toBeDefined('Routable should have been defined');
-      expect(testRoutable instanceof TestDIRoutableOverride).toBeTruthy('Should have been an instance of ' +
-        `TestDIRoutableOverride but instead was an instsance of ` +
-        `${(testRoutable.constructor || {} as any).name || testRoutable.name}`);
-
-      sapi.deregisterDependencies();
     });
   });
 
