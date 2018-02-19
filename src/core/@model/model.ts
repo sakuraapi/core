@@ -562,7 +562,10 @@ function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
 }
 
 /**
- * @static Constructs an `@`Model object from a json object (see [[Json]]).
+ * @static Constructs an `@`Model object from a json object (see [[Json]]). Supports '*' context. If you provide both
+ * a specific context and a '*' context, the specific options win and fall back to '*' options (if any). In the case
+ * of formatter, the more specific context formatter is run before the '*' formatter.
+ *
  * @param json The json object to be unmarshaled into an `@`[[Model]] object.
  * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
  * @returns {{}} Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
@@ -608,28 +611,26 @@ function fromJson(json: object, context = 'default'): object {
     // iterate over each property of the source json object
     const propertyNames = Object.getOwnPropertyNames(jsonSource);
     for (const key of propertyNames) {
-      // convert the DB key name to the Model key name
-      const mapper = keyMapper(key, jsonSource[key], propertyNamesByJsonFieldName, target);
+      // convert the field name to the Model property name
+      const meta = getMeta(key, jsonSource[key], propertyNamesByJsonFieldName, target);
 
-      const options = propertyNamesByJsonFieldName.get(`${key}:${context}`);
-
-      if (mapper.promiscuous) {
-        target[mapper.newKey] = jsonSource[key];
+      if (meta.promiscuous) {
+        target[meta.newKey] = jsonSource[key];
       } else if (shouldRecurse(jsonSource[key])) {
 
-        const dbModel = propertyNamesByDbPropertyName.get(mapper.newKey) || {};
+        const dbModel = propertyNamesByDbPropertyName.get(meta.newKey) || {};
 
         // if the key should be included, recurse into it
-        if (mapper.newKey !== undefined) {
+        if (meta.newKey !== undefined) {
           // use @Json({model:...}) || @Db({model:...})
-          const model = mapper.model || (dbModel || {}).model || null;
+          const model = meta.model || (dbModel || {}).model || null;
 
           // if recurrsing into a model, set that up, otherwise just pass the target in
           let nextTarget;
           try {
             nextTarget = (model)
-              ? Object.assign(new model(), target[mapper.newKey])
-              : target[mapper.newKey];
+              ? Object.assign(new model(), target[meta.newKey])
+              : target[meta.newKey];
           } catch (err) {
             throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
               + ` cannot be constructed`);
@@ -641,26 +642,34 @@ function fromJson(json: object, context = 'default'): object {
             value = Object.assign(new model(), value);
           }
 
-          if (options && options.formatFromJson) {
-            value = options.formatFromJson(value, key);
+          // @json({formatFromJson})
+          if (meta.formatFromJson) {
+            value = meta.formatFromJson(value, key);
+          }
+          if (meta.formatFromJsonStar) {
+            value = meta.formatFromJsonStar(value, key);
           }
 
-          target[mapper.newKey] = value;
+          target[meta.newKey] = value;
         }
 
       } else {
         // otherwise, map a property that has a primitive value or an ObjectID value
-        if (mapper.newKey !== undefined) {
+        if (meta.newKey !== undefined) {
           let value = jsonSource[key];
-          if ((mapper.newKey === 'id' || mapper.newKey === '_id') && ObjectID.isValid(value)) {
+          if ((meta.newKey === 'id' || meta.newKey === '_id') && ObjectID.isValid(value)) {
             value = new ObjectID(value);
           }
 
-          if (options && options.formatFromJson) {
-            value = options.formatFromJson(value, key);
+          // @json({formatFromJson})
+          if (meta.formatFromJson) {
+            value = meta.formatFromJson(value, key);
+          }
+          if (meta.formatFromJsonStar) {
+            value = meta.formatFromJsonStar(value, key);
           }
 
-          target[mapper.newKey] = value;
+          target[meta.newKey] = value;
         }
       }
     }
@@ -668,19 +677,31 @@ function fromJson(json: object, context = 'default'): object {
     return target;
   }
 
-  function keyMapper(key: string, value: any, meta: Map<string, IJsonOptions>, target) {
-    const jsonFieldOptions = (meta) ? meta.get(`${key}:${context}`) : null;
+  function getMeta(key: string, value: any, meta: Map<string, IJsonOptions>, target) {
+    let jsonFieldOptions = (meta) ? meta.get(`${key}:${context}`) : null;
+    let jsonFieldOptionsStar = (meta) ? meta.get(`${key}:*`) : null;
+
+    const hasOptions = !!jsonFieldOptions || !!jsonFieldOptionsStar;
+
+    jsonFieldOptions = jsonFieldOptions || {};
+    jsonFieldOptionsStar = jsonFieldOptionsStar || {};
+
+    const model = jsonFieldOptions.model || jsonFieldOptionsStar.model;
+    const propertyName = jsonFieldOptions[jsonSymbols.propertyName] || jsonFieldOptionsStar[jsonSymbols.propertyName];
+    const promiscuous = jsonFieldOptions.promiscuous || jsonFieldOptionsStar.promiscuous || false;
 
     return {
-      model: (jsonFieldOptions || {}).model,
-      newKey: (jsonFieldOptions)
-        ? jsonFieldOptions[jsonSymbols.propertyName]
+      formatFromJson: jsonFieldOptions.formatFromJson,
+      formatFromJsonStar: jsonFieldOptionsStar.formatFromJson,
+      model,
+      newKey: (hasOptions)
+        ? propertyName
         : (target[key])
           ? key
           : (key === 'id' || key === '_id')
             ? key
             : undefined,
-      promiscuous: (jsonFieldOptions || {} as any).promiscuous || false
+      promiscuous
     };
   }
 }
@@ -1232,6 +1253,7 @@ function toJson(context = 'default'): any {
 
       const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
       if (newKey !== undefined) {
+        // check for @json({formatToJson})
         const value = (options && options.formatToJson)
           ? options.formatToJson(source[key], key)
           : source[key];

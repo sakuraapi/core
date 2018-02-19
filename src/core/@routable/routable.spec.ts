@@ -2015,11 +2015,11 @@ describe('core/@Routable', () => {
       });
 
       // tslint:disable-next-line:variable-name
-      const Routable = sapi.getRoutableByName('TestDi');
+      const R = sapi.getRoutableByName('TestDi');
 
-      expect(Routable).toBeDefined('Routable should have been defined');
-      expect(new Routable() instanceof TestDi).toBeTruthy('Should have been an instance of TestDIRoutable ' +
-        `but instead was an instsance of ${(Routable.constructor || {} as any).name || Routable.name}`);
+      expect(R).toBeDefined('Routable should have been defined');
+      expect(new R() instanceof TestDi).toBeTruthy('Should have been an instance of TestDIRoutable ' +
+        `but instead was an instsance of ${(R.constructor || {} as any).name || R.name}`);
 
       sapi.deregisterDependencies();
     });
