@@ -1,5 +1,6 @@
 import {ObjectID}       from 'mongodb';
 import {testSapi}       from '../../../spec/helpers/sakuraapi';
+import {SakuraApi}      from '../sakura-api';
 import {Db}             from './db';
 import {Json}           from './json';
 import {
@@ -240,8 +241,9 @@ describe('@Json', () => {
         contact = new Contact();
       }
 
+      let sapi: SakuraApi;
       beforeEach((done) => {
-        const sapi = testSapi({
+        sapi = testSapi({
           models: [
             User
           ],
@@ -255,6 +257,16 @@ describe('@Json', () => {
           .then(() => new User().create())
           .then(done)
           .catch(done.fail);
+      });
+
+      afterEach(async (done) => {
+        try {
+          await sapi.close();
+          sapi.deregisterDependencies();
+          done();
+        } catch (err) {
+          done.fail(err);
+        }
       });
 
       it('returns only projected fields', (done) => {
@@ -519,6 +531,191 @@ describe('@Json', () => {
 
         expect(result.fn).toBe(testContext.firstName);
         expect(result.lastName).toBeUndefined();
+      });
+
+      describe('* context', () => {
+        it('can be set by @Json decorator', () => {
+
+          @Model()
+          class TestModel extends SapiModelMixin() {
+            @Json('p1', 'context1')
+            prop1 = 'val1';
+
+            @Json('p2', '*')
+            prop2 = 'val2';
+
+            @Json('p3')
+            prop3 = 'val3';
+          }
+
+          const resultNoContext = (new TestModel()).toJson();
+          expect(resultNoContext.p1).toBeUndefined();
+          expect(resultNoContext.p2).toBe('val2');
+          expect(resultNoContext.p3).toBe('val3');
+
+          const resultWithContext = (new TestModel()).toJson('context1');
+          expect(resultWithContext.p1).toBe('val1');
+          expect(resultWithContext.p2).toBe('val2');
+          expect(resultWithContext.p3).toBeUndefined();
+        });
+
+        describe('formatToJson support', () => {
+          let order = '';
+          let prop1FormatterCalled = false;
+          let prop2FormatterCalled = false;
+
+          @Model()
+          class TestModel extends SapiModelMixin() {
+            @Json({
+              context: 'context1',
+              field: 'p1',
+              formatToJson: () => prop1FormatterCalled = true
+            })
+            prop1 = 'val1';
+
+            @Json({
+              context: '*',
+              field: 'p2',
+              formatToJson: () => prop2FormatterCalled = true
+            })
+            prop2 = 'val2';
+
+            @Json({
+              context: 'context1',
+              field: 'p3',
+              formatToJson: () => order += '1'
+            })
+            @Json({
+              context: '*',
+              field: 'p3',
+              formatToJson: () => order += '2'
+            })
+            prop3 = 'val3';
+          }
+
+          const data = {p1: 'val1', p2: 'val2', p3: 'val3'};
+
+          afterEach(() => {
+            order = '';
+            prop1FormatterCalled = false;
+            prop2FormatterCalled = false;
+          });
+
+          it('calls when no matching context but @Json context * present', () => {
+            (new TestModel()).toJson();
+            expect(prop1FormatterCalled).toBeFalsy();
+            expect(prop2FormatterCalled).toBeTruthy();
+          });
+
+          it('calls when matching context', () => {
+            (new TestModel()).toJson('context1');
+            expect(prop1FormatterCalled).toBeTruthy();
+            expect(prop2FormatterCalled).toBeTruthy();
+          });
+
+          it('calls more specific context then * context formatter', () => {
+            (new TestModel()).toJson('context1');
+            expect(order).toBe('12');
+            expect(prop1FormatterCalled).toBeTruthy();
+            expect(prop2FormatterCalled).toBeTruthy();
+          });
+        });
+      });
+    });
+
+    describe('formatToJson', () => {
+      it('flat objects', () => {
+
+        let valSet;
+        let keySet;
+
+        @Model({})
+        class SomeModel extends SapiModelMixin() {
+
+          @Json({
+            formatToJson: (val, key) => 'override'
+          })
+          someProperty = 'default';
+
+          @Json({
+            field: 'sp2',
+            formatToJson: (val, key) => {
+              valSet = val;
+              keySet = key;
+              return 'override2';
+            }
+          })
+          someProperty2 = 'default';
+
+          @Json()
+          someOtherProperty: string;
+
+        }
+
+        const someModel = SomeModel.fromJson({
+          someOtherProperty: 'hello'
+        });
+        const json = someModel.toJson();
+
+        expect(json.someProperty).toBe('override');
+        expect(json.sp2).toBe('override2');
+        expect(json.someOtherProperty).toBe('hello');
+        expect(valSet).toBe('default');
+        expect(keySet).toBe('someProperty2');
+
+      });
+
+      it('deep objects', () => {
+        @Model()
+        class SomeDeepModel extends SapiModelMixin() {
+          @Json({
+            formatToJson: (val, key) => 'override'
+          })
+          someProperty = 'default';
+
+          @Json({
+            field: 'sp2',
+            formatToJson: (val, key) => 'override2'
+          })
+          someProperty2 = 'default';
+
+          @Json()
+          someOtherProperty: string;
+        }
+
+        @Model()
+        class SomeModel extends SapiModelMixin() {
+
+          @Json({
+            formatToJson: (val, key) => 'override'
+          })
+          someProperty = 'default';
+
+          @Json({
+            field: 'sp2',
+            formatToJson: (val, key) => 'override2'
+          })
+          someProperty2 = 'default';
+
+          @Json()
+          someOtherProperty: string;
+
+          @Json({model: SomeDeepModel})
+          someDeepModel: SomeDeepModel;
+        }
+
+        const someModel = SomeModel.fromJson({
+          someDeepModel: {},
+          someOtherProperty: 'hello'
+        });
+        const json = someModel.toJson();
+
+        expect(json.someProperty).toBe('override');
+        expect(json.sp2).toBe('override2');
+        expect(json.someOtherProperty).toBe('hello');
+
+        expect(json.someDeepModel.someProperty).toBe('override');
+        expect(json.someDeepModel.sp2).toBe('override2');
       });
     });
   });
@@ -881,6 +1078,207 @@ describe('@Json', () => {
     });
 
     describe('bugs', () => {
+      describe('#99, promiscuous fields', () => {
+        @Model()
+        class DonorIntent extends SapiModelMixin() {
+          @Db() @Json()
+          currency: string;
+
+          @Db() @Json()
+          email?: string;
+
+          @Json({promiscuous: true})
+          stripeToken?: any;
+
+          @Json()
+          stripeToken2?: any;
+
+          @Db() @Json()
+          donations: Array<{
+            id: string;
+            amount: number;
+            recurring?: boolean;
+          }>;
+        }
+
+        it('without sub document', () => {
+          const testJson = {
+            currency: 'USD',
+            donations: [
+              {
+                amount: 6000,
+                id: 'g',
+                recurring: false
+              }
+            ],
+            email: 'redacted@gmail.com'
+          };
+          const result = DonorIntent.fromJson(testJson);
+
+          expect(result.currency).toBe(testJson.currency);
+          expect(result.email).toBe(testJson.email);
+          expect(result.stripeToken).toBeUndefined();
+          expect(result.donations.length).toBe(1);
+          expect(result.donations[0].id).toBe(testJson.donations[0].id);
+          expect(result.donations[0].amount).toBe(testJson.donations[0].amount);
+          expect(result.donations[0].recurring).toBe(testJson.donations[0].recurring);
+        });
+
+        it('with sub document', () => {
+          const testJson = {
+            currency: 'USD',
+            donations: [
+              {
+                amount: 6000,
+                id: 'g',
+                recurring: false
+              }
+            ],
+            email: 'redacted@gmail.com',
+            stripeToken: {
+              card: {
+                address_city: 'redacted',
+                address_country: 'United States',
+                address_line1: 'redacted',
+                address_line1_check: 'unchecked',
+                address_line2: null,
+                address_state: 'redacted',
+                address_zip: 'redacted',
+                address_zip_check: 'unchecked',
+                brand: 'Visa',
+                country: 'US',
+                cvc_check: 'unchecked',
+                dynamic_last4: null,
+                exp_month: 11,
+                exp_year: 2021,
+                funding: 'credit',
+                id: 'tok_visa',
+                last4: '4242',
+                metadata: {},
+                name: null,
+                object: 'card',
+                tokenization_method: null
+              },
+              client_ip: '1.2.3.4',
+              created: 1505528045,
+              id: 'tok_visa',
+              livemode: false,
+              object: 'token',
+              type: 'card',
+              used: false
+            }
+
+          };
+
+          const result = DonorIntent.fromJson(testJson);
+
+          expect(result).toBeDefined();
+          expect(result.currency).toBe(testJson.currency);
+          expect(result.email).toBe(testJson.email);
+          expect(result.stripeToken).toBeDefined();
+          expect(result.stripeToken.id).toBe(testJson.stripeToken.id);
+          expect(result.stripeToken.object).toBe(testJson.stripeToken.object);
+          expect(result.stripeToken.card).toBeDefined();
+          expect(result.stripeToken.card.id).toBe(testJson.stripeToken.card.id);
+          expect(result.stripeToken.card.object).toBe(testJson.stripeToken.card.object);
+          expect(result.stripeToken.card.address_city).toBe(testJson.stripeToken.card.address_city);
+          expect(result.stripeToken.card.address_country).toBe(testJson.stripeToken.card.address_country);
+          expect(result.stripeToken.card.address_line1).toBe(testJson.stripeToken.card.address_line1);
+          expect(result.stripeToken.card.address_line1_check).toBe(testJson.stripeToken.card.address_line1_check);
+          expect(result.stripeToken.card.address_line2).toBe(testJson.stripeToken.card.address_line2);
+          expect(result.stripeToken.card.address_state).toBe(testJson.stripeToken.card.address_state);
+          expect(result.stripeToken.card.address_zip).toBe(testJson.stripeToken.card.address_zip);
+          expect(result.stripeToken.card.address_zip_check).toBe(testJson.stripeToken.card.address_zip_check);
+          expect(result.stripeToken.card.brand).toBe(testJson.stripeToken.card.brand);
+          expect(result.stripeToken.card.country).toBe(testJson.stripeToken.card.country);
+          expect(result.stripeToken.card.cvc_check).toBe(testJson.stripeToken.card.cvc_check);
+          expect(result.stripeToken.card.dynamic_last4).toBe(testJson.stripeToken.card.dynamic_last4);
+          expect(result.stripeToken.card.exp_month).toBe(testJson.stripeToken.card.exp_month);
+          expect(result.stripeToken.card.exp_year).toBe(testJson.stripeToken.card.exp_year);
+          expect(result.stripeToken.card.funding).toBe(testJson.stripeToken.card.funding);
+          expect(result.stripeToken.card.last4).toBe(testJson.stripeToken.card.last4);
+          expect(result.stripeToken.card.metadata).toBe(testJson.stripeToken.card.metadata);
+          expect(result.stripeToken.card.name).toBe(testJson.stripeToken.card.name);
+          expect(result.stripeToken.card.tokenization_method).toBe(testJson.stripeToken.card.tokenization_method);
+          expect(result.stripeToken.client_ip).toBe(result.stripeToken.client_ip);
+          expect(result.stripeToken.created).toBe(testJson.stripeToken.created);
+          expect(result.stripeToken.livemode).toBe(testJson.stripeToken.livemode);
+          expect(result.stripeToken.type).toBe(testJson.stripeToken.type);
+          expect(result.stripeToken.used).toBe(testJson.stripeToken.used);
+          expect(result.donations.length).toBe(1);
+          expect(result.donations[0].id).toBe(testJson.donations[0].id);
+          expect(result.donations[0].amount).toBe(testJson.donations[0].amount);
+          expect(result.donations[0].recurring).toBe(testJson.donations[0].recurring);
+
+        });
+
+        it('with sub document', () => {
+          const testJson = {
+            currency: 'USD',
+            donations: [
+              {
+                amount: 6000,
+                id: 'g',
+                recurring: false
+              }
+            ],
+            email: 'redacted@gmail.com',
+            stripeToken2: {
+              card: {
+                address_city: 'redacted',
+                address_country: 'United States',
+                address_line1: 'redacted',
+                address_line1_check: 'unchecked',
+                address_line2: null,
+                address_state: 'redacted',
+                address_zip: 'redacted',
+                address_zip_check: 'unchecked',
+                brand: 'Visa',
+                country: 'US',
+                cvc_check: 'unchecked',
+                dynamic_last4: null,
+                exp_month: 11,
+                exp_year: 2021,
+                funding: 'credit',
+                id: 'tok_visa',
+                last4: '4242',
+                metadata: {},
+                name: null,
+                object: 'card',
+                tokenization_method: null
+              },
+              client_ip: '1.2.3.4',
+              created: 1505528045,
+              id: 'tok_visa',
+              livemode: false,
+              object: 'token',
+              type: 'card',
+              used: false
+            }
+
+          };
+
+          const result = DonorIntent.fromJson(testJson);
+
+          expect(result).toBeDefined();
+          expect(result.currency).toBe(testJson.currency);
+          expect(result.email).toBe(testJson.email);
+          expect(result.stripeToken2).toBeDefined();
+          expect(result.stripeToken2.id).toBe(testJson.stripeToken2.id);
+          expect(result.stripeToken2.object).toBeUndefined();
+          expect(result.stripeToken2.card).toBeUndefined();
+          expect(result.stripeToken2.client_ip).toBeUndefined();
+          expect(result.stripeToken2.created).toBeUndefined();
+          expect(result.stripeToken2.livemode).toBeUndefined();
+          expect(result.stripeToken2.type).toBeUndefined();
+          expect(result.stripeToken2.used).toBeUndefined();
+          expect(result.donations.length).toBe(1);
+          expect(result.donations[0].id).toBe(testJson.donations[0].id);
+          expect(result.donations[0].amount).toBe(testJson.donations[0].amount);
+          expect(result.donations[0].recurring).toBe(testJson.donations[0].recurring);
+
+        });
+      });
       describe('#121', () => {
         pending('see #121 -- this needs to be evaluated and fixed');
 
@@ -978,402 +1376,101 @@ describe('@Json', () => {
       });
     });
 
-    describe('promiscuous fields, issue #99', () => {
-      @Model()
-      class DonorIntent extends SapiModelMixin() {
-        @Db() @Json()
-        currency: string;
+    describe('formatFromJson', () => {
+      it('flat objects', () => {
 
-        @Db() @Json()
-        email?: string;
+        let valCheck;
+        let keyCheck;
 
-        @Json({promiscuous: true})
-        stripeToken?: any;
-
-        @Json()
-        stripeToken2?: any;
-
-        @Db() @Json()
-        donations: Array<{
-          id: string;
-          amount: number;
-          recurring?: boolean;
-        }>;
-      }
-
-      it('without sub document', () => {
-        const testJson = {
-          currency: 'USD',
-          donations: [
-            {
-              amount: 6000,
-              id: 'g',
-              recurring: false
+        @Model()
+        class TestFormat extends SapiModelMixin() {
+          @Json({
+            formatFromJson: (val, key) => {
+              valCheck = val;
+              keyCheck = key;
+              return 'formatFromJson set1';
             }
-          ],
-          email: 'redacted@gmail.com'
-        };
-        const result = DonorIntent.fromJson(testJson);
+          })
+          someProperty: string = 'default';
 
-        expect(result.currency).toBe(testJson.currency);
-        expect(result.email).toBe(testJson.email);
-        expect(result.stripeToken).toBeUndefined();
-        expect(result.donations.length).toBe(1);
-        expect(result.donations[0].id).toBe(testJson.donations[0].id);
-        expect(result.donations[0].amount).toBe(testJson.donations[0].amount);
-        expect(result.donations[0].recurring).toBe(testJson.donations[0].recurring);
-      });
+          @Json({
+            field: 'sop',
+            formatFromJson: (val, key) => 'formatFromJson set2'
+          })
+          someOtherProperty: string = 'default';
 
-      it('with sub document', () => {
-        const testJson = {
-          currency: 'USD',
-          donations: [
-            {
-              amount: 6000,
-              id: 'g',
-              recurring: false
-            }
-          ],
-          email: 'redacted@gmail.com',
-          stripeToken: {
-            card: {
-              address_city: 'redacted',
-              address_country: 'United States',
-              address_line1: 'redacted',
-              address_line1_check: 'unchecked',
-              address_line2: null,
-              address_state: 'redacted',
-              address_zip: 'redacted',
-              address_zip_check: 'unchecked',
-              brand: 'Visa',
-              country: 'US',
-              cvc_check: 'unchecked',
-              dynamic_last4: null,
-              exp_month: 11,
-              exp_year: 2021,
-              funding: 'credit',
-              id: 'tok_visa',
-              last4: '4242',
-              metadata: {},
-              name: null,
-              object: 'card',
-              tokenization_method: null
-            },
-            client_ip: '1.2.3.4',
-            created: 1505528045,
-            id: 'tok_visa',
-            livemode: false,
-            object: 'token',
-            type: 'card',
-            used: false
-          }
+          @Json({
+            field: 'stp',
+            formatFromJson: (val, key) => 'formatFromJson set3'
+          })
+          someThirdProperty: string = 'default';
+        }
 
-        };
-
-        const result = DonorIntent.fromJson(testJson);
-
-        expect(result).toBeDefined();
-        expect(result.currency).toBe(testJson.currency);
-        expect(result.email).toBe(testJson.email);
-        expect(result.stripeToken).toBeDefined();
-        expect(result.stripeToken.id).toBe(testJson.stripeToken.id);
-        expect(result.stripeToken.object).toBe(testJson.stripeToken.object);
-        expect(result.stripeToken.card).toBeDefined();
-        expect(result.stripeToken.card.id).toBe(testJson.stripeToken.card.id);
-        expect(result.stripeToken.card.object).toBe(testJson.stripeToken.card.object);
-        expect(result.stripeToken.card.address_city).toBe(testJson.stripeToken.card.address_city);
-        expect(result.stripeToken.card.address_country).toBe(testJson.stripeToken.card.address_country);
-        expect(result.stripeToken.card.address_line1).toBe(testJson.stripeToken.card.address_line1);
-        expect(result.stripeToken.card.address_line1_check).toBe(testJson.stripeToken.card.address_line1_check);
-        expect(result.stripeToken.card.address_line2).toBe(testJson.stripeToken.card.address_line2);
-        expect(result.stripeToken.card.address_state).toBe(testJson.stripeToken.card.address_state);
-        expect(result.stripeToken.card.address_zip).toBe(testJson.stripeToken.card.address_zip);
-        expect(result.stripeToken.card.address_zip_check).toBe(testJson.stripeToken.card.address_zip_check);
-        expect(result.stripeToken.card.brand).toBe(testJson.stripeToken.card.brand);
-        expect(result.stripeToken.card.country).toBe(testJson.stripeToken.card.country);
-        expect(result.stripeToken.card.cvc_check).toBe(testJson.stripeToken.card.cvc_check);
-        expect(result.stripeToken.card.dynamic_last4).toBe(testJson.stripeToken.card.dynamic_last4);
-        expect(result.stripeToken.card.exp_month).toBe(testJson.stripeToken.card.exp_month);
-        expect(result.stripeToken.card.exp_year).toBe(testJson.stripeToken.card.exp_year);
-        expect(result.stripeToken.card.funding).toBe(testJson.stripeToken.card.funding);
-        expect(result.stripeToken.card.last4).toBe(testJson.stripeToken.card.last4);
-        expect(result.stripeToken.card.metadata).toBe(testJson.stripeToken.card.metadata);
-        expect(result.stripeToken.card.name).toBe(testJson.stripeToken.card.name);
-        expect(result.stripeToken.card.tokenization_method).toBe(testJson.stripeToken.card.tokenization_method);
-        expect(result.stripeToken.client_ip).toBe(result.stripeToken.client_ip);
-        expect(result.stripeToken.created).toBe(testJson.stripeToken.created);
-        expect(result.stripeToken.livemode).toBe(testJson.stripeToken.livemode);
-        expect(result.stripeToken.type).toBe(testJson.stripeToken.type);
-        expect(result.stripeToken.used).toBe(testJson.stripeToken.used);
-        expect(result.donations.length).toBe(1);
-        expect(result.donations[0].id).toBe(testJson.donations[0].id);
-        expect(result.donations[0].amount).toBe(testJson.donations[0].amount);
-        expect(result.donations[0].recurring).toBe(testJson.donations[0].recurring);
-
-      });
-
-      it('with sub document', () => {
-        const testJson = {
-          currency: 'USD',
-          donations: [
-            {
-              amount: 6000,
-              id: 'g',
-              recurring: false
-            }
-          ],
-          email: 'redacted@gmail.com',
-          stripeToken2: {
-            card: {
-              address_city: 'redacted',
-              address_country: 'United States',
-              address_line1: 'redacted',
-              address_line1_check: 'unchecked',
-              address_line2: null,
-              address_state: 'redacted',
-              address_zip: 'redacted',
-              address_zip_check: 'unchecked',
-              brand: 'Visa',
-              country: 'US',
-              cvc_check: 'unchecked',
-              dynamic_last4: null,
-              exp_month: 11,
-              exp_year: 2021,
-              funding: 'credit',
-              id: 'tok_visa',
-              last4: '4242',
-              metadata: {},
-              name: null,
-              object: 'card',
-              tokenization_method: null
-            },
-            client_ip: '1.2.3.4',
-            created: 1505528045,
-            id: 'tok_visa',
-            livemode: false,
-            object: 'token',
-            type: 'card',
-            used: false
-          }
-
-        };
-
-        const result = DonorIntent.fromJson(testJson);
-
-        expect(result).toBeDefined();
-        expect(result.currency).toBe(testJson.currency);
-        expect(result.email).toBe(testJson.email);
-        expect(result.stripeToken2).toBeDefined();
-        expect(result.stripeToken2.id).toBe(testJson.stripeToken2.id);
-        expect(result.stripeToken2.object).toBeUndefined();
-        expect(result.stripeToken2.card).toBeUndefined();
-        expect(result.stripeToken2.client_ip).toBeUndefined();
-        expect(result.stripeToken2.created).toBeUndefined();
-        expect(result.stripeToken2.livemode).toBeUndefined();
-        expect(result.stripeToken2.type).toBeUndefined();
-        expect(result.stripeToken2.used).toBeUndefined();
-        expect(result.donations.length).toBe(1);
-        expect(result.donations[0].id).toBe(testJson.donations[0].id);
-        expect(result.donations[0].amount).toBe(testJson.donations[0].amount);
-        expect(result.donations[0].recurring).toBe(testJson.donations[0].recurring);
-
-      });
-    });
-
-    describe('formatters', () => {
-
-      describe('formatFromJson', () => {
-        it('flat objects', () => {
-
-          let valCheck;
-          let keyCheck;
-
-          @Model()
-          class TestFormat extends SapiModelMixin() {
-            @Json({
-              formatFromJson: (val, key) => {
-                valCheck = val;
-                keyCheck = key;
-                return 'formatFromJson set1';
-              }
-            })
-            someProperty: string = 'default';
-
-            @Json({
-              field: 'sop',
-              formatFromJson: (val, key) => 'formatFromJson set2'
-            })
-            someOtherProperty: string = 'default';
-
-            @Json({
-              field: 'stp',
-              formatFromJson: (val, key) => 'formatFromJson set3'
-            })
-            someThirdProperty: string = 'default';
-          }
-
-          const result = TestFormat.fromJson({
-            someProperty: 'testValue',
-            sop: 'testValue2'
-          });
-
-          expect(result.someProperty).toBe('formatFromJson set1');
-          expect(valCheck).toBe('testValue');
-          expect(keyCheck).toBe('someProperty');
-
-          expect(result.someOtherProperty).toBe('formatFromJson set2');
-          expect(result.someThirdProperty).toBe('default');
+        const result = TestFormat.fromJson({
+          someProperty: 'testValue',
+          sop: 'testValue2'
         });
 
-        it('deep objects', () => {
+        expect(result.someProperty).toBe('formatFromJson set1');
+        expect(valCheck).toBe('testValue');
+        expect(keyCheck).toBe('someProperty');
 
-          let valSet;
-          let keySet;
-
-          @Model()
-          class TestDeep extends SapiModelMixin() {
-
-            @Json()
-            property1: string = 'default';
-
-            @Json({
-              formatFromJson: (val, key) => {
-                valSet = val;
-                keySet = key;
-
-                return 'formatted-1';
-              }
-            })
-            property2: string = 'default';
-          }
-
-          @Model()
-          class TestFormat extends SapiModelMixin() {
-
-            @Json({model: TestDeep})
-            someProperty: TestDeep;
-          }
-
-          const result = TestFormat.fromJson({
-            someProperty: {
-              property1: 'hi',
-              property2: 'yo'
-            }
-          });
-
-          expect(result.someProperty.property1).toBe('hi');
-          expect(result.someProperty.property2).toBe('formatted-1');
-          expect(valSet).toBe('yo');
-          expect(keySet).toBe('property2');
-
-          const result2 = TestFormat.fromJson({
-            someProperty: {
-              property1: 'hi'
-            }
-          });
-
-          expect(result2.someProperty.property1).toBe('hi');
-          expect(result2.someProperty.property2).toBe('default');
-          expect(valSet).toBe('yo');
-          expect(keySet).toBe('property2');
-
-        });
+        expect(result.someOtherProperty).toBe('formatFromJson set2');
+        expect(result.someThirdProperty).toBe('default');
       });
 
-      describe('formatToJson', () => {
-        it('flat objects', () => {
+      it('deep objects', () => {
 
-          let valSet;
-          let keySet;
+        let valSet;
+        let keySet;
 
-          @Model({})
-          class SomeModel extends SapiModelMixin() {
+        @Model()
+        class TestDeep extends SapiModelMixin() {
 
-            @Json({
-              formatToJson: (val, key) => 'override'
-            })
-            someProperty = 'default';
+          @Json()
+          property1: string = 'default';
 
-            @Json({
-              field: 'sp2',
-              formatToJson: (val, key) => {
-                valSet = val;
-                keySet = key;
-                return 'override2';
-              }
-            })
-            someProperty2 = 'default';
+          @Json({
+            formatFromJson: (val, key) => {
+              valSet = val;
+              keySet = key;
 
-            @Json()
-            someOtherProperty: string;
+              return 'formatted-1';
+            }
+          })
+          property2: string = 'default';
+        }
 
+        @Model()
+        class TestFormat extends SapiModelMixin() {
+
+          @Json({model: TestDeep})
+          someProperty: TestDeep;
+        }
+
+        const result = TestFormat.fromJson({
+          someProperty: {
+            property1: 'hi',
+            property2: 'yo'
           }
-
-          const someModel = SomeModel.fromJson({
-            someOtherProperty: 'hello'
-          });
-          const json = someModel.toJson();
-
-          expect(json.someProperty).toBe('override');
-          expect(json.sp2).toBe('override2');
-          expect(json.someOtherProperty).toBe('hello');
-          expect(valSet).toBe('default');
-          expect(keySet).toBe('someProperty2');
-
         });
 
-        it('deep objects', () => {
-          @Model()
-          class SomeDeepModel extends SapiModelMixin() {
-            @Json({
-              formatToJson: (val, key) => 'override'
-            })
-            someProperty = 'default';
+        expect(result.someProperty.property1).toBe('hi');
+        expect(result.someProperty.property2).toBe('formatted-1');
+        expect(valSet).toBe('yo');
+        expect(keySet).toBe('property2');
 
-            @Json({
-              field: 'sp2',
-              formatToJson: (val, key) => 'override2'
-            })
-            someProperty2 = 'default';
-
-            @Json()
-            someOtherProperty: string;
+        const result2 = TestFormat.fromJson({
+          someProperty: {
+            property1: 'hi'
           }
-
-          @Model()
-          class SomeModel extends SapiModelMixin() {
-
-            @Json({
-              formatToJson: (val, key) => 'override'
-            })
-            someProperty = 'default';
-
-            @Json({
-              field: 'sp2',
-              formatToJson: (val, key) => 'override2'
-            })
-            someProperty2 = 'default';
-
-            @Json()
-            someOtherProperty: string;
-
-            @Json({model: SomeDeepModel})
-            someDeepModel: SomeDeepModel;
-          }
-
-          const someModel = SomeModel.fromJson({
-            someDeepModel: {},
-            someOtherProperty: 'hello'
-          });
-          const json = someModel.toJson();
-
-          expect(json.someProperty).toBe('override');
-          expect(json.sp2).toBe('override2');
-          expect(json.someOtherProperty).toBe('hello');
-
-          expect(json.someDeepModel.someProperty).toBe('override');
-          expect(json.someDeepModel.sp2).toBe('override2');
         });
+
+        expect(result2.someProperty.property1).toBe('hi');
+        expect(result2.someProperty.property2).toBe('default');
+        expect(valSet).toBe('yo');
+        expect(keySet).toBe('property2');
+
       });
     });
 
@@ -1451,6 +1548,97 @@ describe('@Json', () => {
 
         expect(testContext.firstName).toBe('John');
         expect(testContext.lastName).toBe('Adams');
+      });
+
+      describe('* context', () => {
+        it('can be set by @Json decorator', () => {
+
+          @Model()
+          class TestModel extends SapiModelMixin() {
+            @Json('p1', 'context1')
+            prop1;
+
+            @Json('p2', '*')
+            prop2;
+
+            @Json('p3')
+            prop3;
+          }
+
+          const data = {p1: 'val1', p2: 'val2', p3: 'val3'};
+          const resultNoContext = TestModel.fromJson(data);
+          expect(resultNoContext.prop1).toBeUndefined();
+          expect(resultNoContext.prop2).toBe('val2');
+          expect(resultNoContext.prop3).toBe('val3');
+
+          const resultWithContext = TestModel.fromJson(data, 'context1');
+          expect(resultWithContext.prop1).toBe('val1');
+          expect(resultWithContext.prop2).toBe('val2');
+          expect(resultWithContext.prop3).toBeUndefined();
+
+        });
+
+        describe('formatFromJson support', () => {
+          let order = '';
+          let prop1FormatterCalled = false;
+          let prop2FormatterCalled = false;
+
+          @Model()
+          class TestModel extends SapiModelMixin() {
+            @Json({
+              context: 'context1',
+              field: 'p1',
+              formatFromJson: () => prop1FormatterCalled = true
+            })
+            prop1;
+
+            @Json({
+              context: '*',
+              field: 'p2',
+              formatFromJson: () => prop2FormatterCalled = true
+            })
+            prop2;
+
+            @Json({
+              context: 'context1',
+              field: 'p3',
+              formatFromJson: () => order += '1'
+            })
+            @Json({
+              context: '*',
+              field: 'p3',
+              formatFromJson: () => order += '2'
+            })
+            prop3;
+          }
+
+          const data = {p1: 'val1', p2: 'val2', p3: 'val3'};
+
+          afterEach(() => {
+            order = '';
+            prop1FormatterCalled = false;
+            prop2FormatterCalled = false;
+          });
+
+          it('calls when no matching context but @Json context * present', () => {
+            TestModel.fromJson(data);
+            expect(prop1FormatterCalled).toBeFalsy();
+            expect(prop2FormatterCalled).toBeTruthy();
+          });
+
+          it('calls when matching context', () => {
+            TestModel.fromJson(data, 'context1');
+            expect(prop1FormatterCalled).toBeTruthy();
+            expect(prop2FormatterCalled).toBeTruthy();
+          });
+
+          it('calls more specific context then * context formatter', () => {
+            TestModel.fromJson(data, 'context1');
+            expect(order).toBe('12');
+            expect(prop1FormatterCalled).toBeTruthy();
+            expect(prop2FormatterCalled).toBeTruthy();
+          });
+        });
       });
     });
   });

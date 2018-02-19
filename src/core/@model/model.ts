@@ -10,6 +10,7 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 }                                from 'mongodb';
+import {v4}                      from 'uuid';
 import {getDependencyInjections} from '../@injectable';
 import {
   addDefaultInstanceMethods,
@@ -102,6 +103,7 @@ export const modelSymbols = {
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
   fromJsonToDb: Symbol('fromJsonToDb'),
+  id: Symbol('modelId'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
   modelOptions: Symbol('modelOptions'),
   sapi: Symbol('sapi'),
@@ -109,6 +111,34 @@ export const modelSymbols = {
   toJson: Symbol('toJson'),
   toJsonString: Symbol('toJsonString')
 };
+
+/**
+ * An attempt was made to use [[SakuraApi.getModel]] with a parameter that isn't decorated with `@`[[Model]].
+ */
+export class ModelsMustBeDecoratedWithModelError extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`Invalid attempt to get ${targetName} must be decorated with @Model`);
+  }
+}
+
+/**
+ * Thrown when an attempt is made to use an object as a Model, which has not been registered with the dependency
+ * injection system. You register models when you are instantiating the instance of [[SakuraApi]] for your
+ * application.
+ */
+export class ModelNotRegistered extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`${targetName} is not registered as a model with SakuraApi`);
+  }
+}
 
 /**
  * Decorator applied to classes that represent models for SakuraApi.
@@ -202,6 +232,12 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
         }
         return c;
       }
+    });
+
+    // DI unique identifier
+    Reflect.defineProperty(newConstructor, modelSymbols.id, {
+      value: v4(),
+      writable: false
     });
 
     // isSakuraApiModel hidden property is attached to let other parts of the framework know that this is an @Model obj
@@ -526,7 +562,10 @@ function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
 }
 
 /**
- * @static Constructs an `@`Model object from a json object (see [[Json]]).
+ * @static Constructs an `@`Model object from a json object (see [[Json]]). Supports '*' context. If you provide both
+ * a specific context and a '*' context, the specific options win and fall back to '*' options (if any). In the case
+ * of formatter, the more specific context formatter is run before the '*' formatter, but both run.
+ *
  * @param json The json object to be unmarshaled into an `@`[[Model]] object.
  * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
  * @returns {{}} Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
@@ -547,7 +586,10 @@ function fromJson(json: object, context = 'default'): object {
   // @FormatFromJson
   const formatFromJsonMeta = Reflect.getMetadata(formatFromJsonSymbols.functionMap, resultModel);
   if (formatFromJsonMeta) {
-    const formatters = formatFromJsonMeta.get(context) || [];
+    const formatters = [
+      ...formatFromJsonMeta.get(context) || [],
+      ...formatFromJsonMeta.get('*') || []
+    ];
     for (const formatter of formatters) {
       resultModel = formatter(json, resultModel, context);
     }
@@ -572,28 +614,26 @@ function fromJson(json: object, context = 'default'): object {
     // iterate over each property of the source json object
     const propertyNames = Object.getOwnPropertyNames(jsonSource);
     for (const key of propertyNames) {
-      // convert the DB key name to the Model key name
-      const mapper = keyMapper(key, jsonSource[key], propertyNamesByJsonFieldName, target);
+      // convert the field name to the Model property name
+      const meta = getMeta(key, jsonSource[key], propertyNamesByJsonFieldName, target);
 
-      const options = propertyNamesByJsonFieldName.get(`${key}:${context}`);
-
-      if (mapper.promiscuous) {
-        target[mapper.newKey] = jsonSource[key];
+      if (meta.promiscuous) {
+        target[meta.newKey] = jsonSource[key];
       } else if (shouldRecurse(jsonSource[key])) {
 
-        const dbModel = propertyNamesByDbPropertyName.get(mapper.newKey) || {};
+        const dbModel = propertyNamesByDbPropertyName.get(meta.newKey) || {};
 
         // if the key should be included, recurse into it
-        if (mapper.newKey !== undefined) {
+        if (meta.newKey !== undefined) {
           // use @Json({model:...}) || @Db({model:...})
-          const model = mapper.model || (dbModel || {}).model || null;
+          const model = meta.model || (dbModel || {}).model || null;
 
           // if recurrsing into a model, set that up, otherwise just pass the target in
           let nextTarget;
           try {
             nextTarget = (model)
-              ? Object.assign(new model(), target[mapper.newKey])
-              : target[mapper.newKey];
+              ? Object.assign(new model(), target[meta.newKey])
+              : target[meta.newKey];
           } catch (err) {
             throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
               + ` cannot be constructed`);
@@ -605,26 +645,34 @@ function fromJson(json: object, context = 'default'): object {
             value = Object.assign(new model(), value);
           }
 
-          if (options && options.formatFromJson) {
-            value = options.formatFromJson(value, key);
+          // @json({formatFromJson})
+          if (meta.formatFromJson) {
+            value = meta.formatFromJson(value, key);
+          }
+          if (meta.formatFromJsonStar) {
+            value = meta.formatFromJsonStar(value, key);
           }
 
-          target[mapper.newKey] = value;
+          target[meta.newKey] = value;
         }
 
       } else {
         // otherwise, map a property that has a primitive value or an ObjectID value
-        if (mapper.newKey !== undefined) {
+        if (meta.newKey !== undefined) {
           let value = jsonSource[key];
-          if ((mapper.newKey === 'id' || mapper.newKey === '_id') && ObjectID.isValid(value)) {
+          if ((meta.newKey === 'id' || meta.newKey === '_id') && ObjectID.isValid(value)) {
             value = new ObjectID(value);
           }
 
-          if (options && options.formatFromJson) {
-            value = options.formatFromJson(value, key);
+          // @json({formatFromJson})
+          if (meta.formatFromJson) {
+            value = meta.formatFromJson(value, key);
+          }
+          if (meta.formatFromJsonStar) {
+            value = meta.formatFromJsonStar(value, key);
           }
 
-          target[mapper.newKey] = value;
+          target[meta.newKey] = value;
         }
       }
     }
@@ -632,19 +680,31 @@ function fromJson(json: object, context = 'default'): object {
     return target;
   }
 
-  function keyMapper(key: string, value: any, meta: Map<string, IJsonOptions>, target) {
-    const jsonFieldOptions = (meta) ? meta.get(`${key}:${context}`) : null;
+  function getMeta(key: string, value: any, meta: Map<string, IJsonOptions>, target) {
+    let jsonFieldOptions = (meta) ? meta.get(`${key}:${context}`) : null;
+    let jsonFieldOptionsStar = (meta) ? meta.get(`${key}:*`) : null;
+
+    const hasOptions = !!jsonFieldOptions || !!jsonFieldOptionsStar;
+
+    jsonFieldOptions = jsonFieldOptions || {};
+    jsonFieldOptionsStar = jsonFieldOptionsStar || {};
+
+    const model = jsonFieldOptions.model || jsonFieldOptionsStar.model;
+    const propertyName = jsonFieldOptions[jsonSymbols.propertyName] || jsonFieldOptionsStar[jsonSymbols.propertyName];
+    const promiscuous = jsonFieldOptions.promiscuous || jsonFieldOptionsStar.promiscuous || false;
 
     return {
-      model: (jsonFieldOptions || {}).model,
-      newKey: (jsonFieldOptions)
-        ? jsonFieldOptions[jsonSymbols.propertyName]
+      formatFromJson: jsonFieldOptions.formatFromJson,
+      formatFromJsonStar: jsonFieldOptionsStar.formatFromJson,
+      model,
+      newKey: (hasOptions)
+        ? propertyName
         : (target[key])
           ? key
           : (key === 'id' || key === '_id')
             ? key
             : undefined,
-      promiscuous: (jsonFieldOptions || {} as any).promiscuous || false
+      promiscuous
     };
   }
 }
@@ -1118,19 +1178,26 @@ function toDb(changeSet?: any): object {
 }
 
 /**
- * @instance Returns the current object as json, respecting the various decorators like [[Db]]
+ * @instance Returns the current object as json, respecting the various decorators like [[Db]]. Supports '*' context. If
+ * you provide both a specific context and a '*' context, the specific options win and fall back to '*' options
+ * (if any). In the case of a formatter, the more specific context formatter is run before the '*' formatter, but both
+ * run.
  * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
  * @returns {{}}
  */
 function toJson(context = 'default'): any {
-  debug.normal(`.toJson called, target '${this.constructor.name}'`);
+  const modelName = (this.constructor || {} as any).name;
+  debug.normal(`.toJson called, target '${modelName}'`);
 
   let json = mapModelToJson(this);
 
   // @FormatToJson
   const formatToJson = Reflect.getMetadata(formatToJsonSymbols.functionMap, this);
   if (formatToJson) {
-    const formatters = formatToJson.get(context) || [];
+    const formatters = [
+      ...formatToJson.get(context) || [],
+      ...formatToJson.get('*') || []
+    ];
     for (const formatter of formatters) {
       json = formatter(json, this, context);
     }
@@ -1159,7 +1226,8 @@ function toJson(context = 'default'): any {
     // iterate over each property
     for (const key of Object.getOwnPropertyNames(source)) {
 
-      const options = jsonFieldNamesByProperty.get(`${key}:${context}`);
+      const options = jsonFieldNamesByProperty.get(`${key}:${context}`) || {};
+      const optionsStar = jsonFieldNamesByProperty.get(`${key}:*`) || {};
 
       if (typeof source[key] === 'function') {
         continue;
@@ -1185,7 +1253,7 @@ function toJson(context = 'default'): any {
       }
 
       if (shouldRecurse(source[key])) {
-        const aNewKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
+        const aNewKey = keyMapper(key, source[key], options, optionsStar);
 
         if (aNewKey !== undefined) {
           result[aNewKey] = mapModelToJson(source[key]);
@@ -1194,11 +1262,17 @@ function toJson(context = 'default'): any {
         continue;
       }
 
-      const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
+      const newKey = keyMapper(key, source[key], options, optionsStar);
       if (newKey !== undefined) {
-        const value = (options && options.formatToJson)
-          ? options.formatToJson(source[key], key)
-          : source[key];
+        let value = source[key];
+
+        // check for @json({formatToJson})
+        if (options.formatToJson) {
+          value = options.formatToJson(value, key);
+        }
+        if (optionsStar.formatToJson) {
+          value = optionsStar.formatToJson(value, key);
+        }
 
         result[newKey] = value;
       }
@@ -1207,9 +1281,8 @@ function toJson(context = 'default'): any {
     return result;
   }
 
-  function keyMapper(key, value, jsonMeta: Map<string, IJsonOptions>) {
-    const options = (jsonMeta) ? jsonMeta.get(`${key}:${context}`) || {} : {};
-    return options.field || key;
+  function keyMapper(key, value, options: IJsonOptions, optionsStar: IJsonOptions) {
+    return options.field || optionsStar.field || key;
   }
 }
 

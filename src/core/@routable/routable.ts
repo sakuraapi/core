@@ -1,6 +1,7 @@
 import {Handler}                   from 'express';
 import * as path                   from 'path';
 import 'reflect-metadata';
+import {v4}                        from 'uuid';
 import {
   deleteRouteHandler,
   getAllRouteHandler,
@@ -180,11 +181,40 @@ export interface ISakuraApiClassRoute {
 export const routableSymbols = {
   authenticators: Symbol('authenticators'),
   changeSapi: Symbol('changeSapi'),
+  id: Symbol('routableId'),
   isSakuraApiRoutable: Symbol('isSakuraApiRoutable'),
   model: Symbol('model'),
   routes: Symbol('routes'),
   sapi: Symbol('sapi')
 };
+
+/**
+ * An attempt was made to use [[SakuraApi.getRoutable]] with a parameter that isn't decorated with `@`[[Model]].
+ */
+export class RoutablesMustBeDecoratedWithRoutableError extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`Invalid attempt to get ${targetName}; must be decorated with @Routable`);
+  }
+}
+
+/**
+ * Thrown when an attempt is made to use an object as a Routable, which has not been registered with the dependency
+ * injection system. You register models when you are instantiating the instance of [[SakuraApi]] for your
+ * application.
+ */
+export class RoutableNotRegistered extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`${targetName} is not registered as a routable api with SakuraApi`);
+  }
+}
 
 /**
  * Decorator applied to classes that represent routing logic for SakuraApi.
@@ -292,6 +322,12 @@ export function Routable(options?: IRoutableOptions): any {
       }
     });
 
+    // DI unique identifier
+    Reflect.defineProperty(newConstructor, routableSymbols.id, {
+      value: v4(),
+      writable: false
+    });
+
     decorateWithAuthenticators(newConstructor);
     decorateWithIdentity(newConstructor);
     decorateWithSapi(newConstructor);
@@ -299,7 +335,7 @@ export function Routable(options?: IRoutableOptions): any {
     // if a model is present, then add a method that allows that model to be retrieved
     if (options.model) {
       newConstructor.prototype[routableSymbols.model] = () => {
-        return newConstructor[routableSymbols.sapi].getModelByName(options.model.name);
+        return newConstructor[routableSymbols.sapi].getModel(options.model);
       };
     }
 
@@ -402,7 +438,7 @@ export function Routable(options?: IRoutableOptions): any {
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
-      const diModel = newConstructor[routableSymbols.sapi].getModelByName(options.model.name);
+      const diModel = newConstructor[routableSymbols.sapi].getModel(options.model);
 
       const routerData: ISakuraApiClassRoute = {
         afterAll,

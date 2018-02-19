@@ -63,7 +63,7 @@ describe('SapiModelMixin', () => {
 
       await sapi.listen({bootMessage: ''});
 
-      const M = sapi.getModelByName('DerivedModel');
+      const M = sapi.getModel(DerivedModel);
       const model = new M();
 
       await model.create();
