@@ -586,7 +586,10 @@ function fromJson(json: object, context = 'default'): object {
   // @FormatFromJson
   const formatFromJsonMeta = Reflect.getMetadata(formatFromJsonSymbols.functionMap, resultModel);
   if (formatFromJsonMeta) {
-    const formatters = formatFromJsonMeta.get(context) || [];
+    const formatters = [
+      ...formatFromJsonMeta.get(context) || [],
+      ...formatFromJsonMeta.get('*') || []
+    ];
     for (const formatter of formatters) {
       resultModel = formatter(json, resultModel, context);
     }
@@ -1191,7 +1194,10 @@ function toJson(context = 'default'): any {
   // @FormatToJson
   const formatToJson = Reflect.getMetadata(formatToJsonSymbols.functionMap, this);
   if (formatToJson) {
-    const formatters = formatToJson.get(context) || [];
+    const formatters = [
+      ...formatToJson.get(context) || [],
+      ...formatToJson.get('*') || []
+    ];
     for (const formatter of formatters) {
       json = formatter(json, this, context);
     }
