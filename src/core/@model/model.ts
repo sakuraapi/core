@@ -564,7 +564,7 @@ function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
 /**
  * @static Constructs an `@`Model object from a json object (see [[Json]]). Supports '*' context. If you provide both
  * a specific context and a '*' context, the specific options win and fall back to '*' options (if any). In the case
- * of formatter, the more specific context formatter is run before the '*' formatter.
+ * of formatter, the more specific context formatter is run before the '*' formatter, but both run.
  *
  * @param json The json object to be unmarshaled into an `@`[[Model]] object.
  * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
@@ -1175,12 +1175,16 @@ function toDb(changeSet?: any): object {
 }
 
 /**
- * @instance Returns the current object as json, respecting the various decorators like [[Db]]
+ * @instance Returns the current object as json, respecting the various decorators like [[Db]]. Supports '*' context. If
+ * you provide both a specific context and a '*' context, the specific options win and fall back to '*' options
+ * (if any). In the case of a formatter, the more specific context formatter is run before the '*' formatter, but both
+ * run.
  * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
  * @returns {{}}
  */
 function toJson(context = 'default'): any {
-  debug.normal(`.toJson called, target '${this.constructor.name}'`);
+  const modelName = (this.constructor || {} as any).name;
+  debug.normal(`.toJson called, target '${modelName}'`);
 
   let json = mapModelToJson(this);
 
@@ -1216,7 +1220,8 @@ function toJson(context = 'default'): any {
     // iterate over each property
     for (const key of Object.getOwnPropertyNames(source)) {
 
-      const options = jsonFieldNamesByProperty.get(`${key}:${context}`);
+      const options = jsonFieldNamesByProperty.get(`${key}:${context}`) || {};
+      const optionsStar = jsonFieldNamesByProperty.get(`${key}:*`) || {};
 
       if (typeof source[key] === 'function') {
         continue;
@@ -1242,7 +1247,7 @@ function toJson(context = 'default'): any {
       }
 
       if (shouldRecurse(source[key])) {
-        const aNewKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
+        const aNewKey = keyMapper(key, source[key], options, optionsStar);
 
         if (aNewKey !== undefined) {
           result[aNewKey] = mapModelToJson(source[key]);
@@ -1251,12 +1256,17 @@ function toJson(context = 'default'): any {
         continue;
       }
 
-      const newKey = keyMapper(key, source[key], jsonFieldNamesByProperty);
+      const newKey = keyMapper(key, source[key], options, optionsStar);
       if (newKey !== undefined) {
+        let value = source[key];
+
         // check for @json({formatToJson})
-        const value = (options && options.formatToJson)
-          ? options.formatToJson(source[key], key)
-          : source[key];
+        if (options.formatToJson) {
+          value = options.formatToJson(value, key);
+        }
+        if (optionsStar.formatToJson) {
+          value = optionsStar.formatToJson(value, key);
+        }
 
         result[newKey] = value;
       }
@@ -1265,9 +1275,8 @@ function toJson(context = 'default'): any {
     return result;
   }
 
-  function keyMapper(key, value, jsonMeta: Map<string, IJsonOptions>) {
-    const options = (jsonMeta) ? jsonMeta.get(`${key}:${context}`) || {} : {};
-    return options.field || key;
+  function keyMapper(key, value, options: IJsonOptions, optionsStar: IJsonOptions) {
+    return options.field || optionsStar.field || key;
   }
 }
 

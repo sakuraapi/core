@@ -218,104 +218,6 @@ describe('@Json', () => {
       expect(result.deep.value).toBe(0);
     });
 
-    describe('formatFromJson', () => {
-      it('flat objects', () => {
-
-        let valCheck;
-        let keyCheck;
-
-        @Model()
-        class TestFormat extends SapiModelMixin() {
-          @Json({
-            formatFromJson: (val, key) => {
-              valCheck = val;
-              keyCheck = key;
-              return 'formatFromJson set1';
-            }
-          })
-          someProperty: string = 'default';
-
-          @Json({
-            field: 'sop',
-            formatFromJson: (val, key) => 'formatFromJson set2'
-          })
-          someOtherProperty: string = 'default';
-
-          @Json({
-            field: 'stp',
-            formatFromJson: (val, key) => 'formatFromJson set3'
-          })
-          someThirdProperty: string = 'default';
-        }
-
-        const result = TestFormat.fromJson({
-          someProperty: 'testValue',
-          sop: 'testValue2'
-        });
-
-        expect(result.someProperty).toBe('formatFromJson set1');
-        expect(valCheck).toBe('testValue');
-        expect(keyCheck).toBe('someProperty');
-
-        expect(result.someOtherProperty).toBe('formatFromJson set2');
-        expect(result.someThirdProperty).toBe('default');
-      });
-
-      it('deep objects', () => {
-
-        let valSet;
-        let keySet;
-
-        @Model()
-        class TestDeep extends SapiModelMixin() {
-
-          @Json()
-          property1: string = 'default';
-
-          @Json({
-            formatFromJson: (val, key) => {
-              valSet = val;
-              keySet = key;
-
-              return 'formatted-1';
-            }
-          })
-          property2: string = 'default';
-        }
-
-        @Model()
-        class TestFormat extends SapiModelMixin() {
-
-          @Json({model: TestDeep})
-          someProperty: TestDeep;
-        }
-
-        const result = TestFormat.fromJson({
-          someProperty: {
-            property1: 'hi',
-            property2: 'yo'
-          }
-        });
-
-        expect(result.someProperty.property1).toBe('hi');
-        expect(result.someProperty.property2).toBe('formatted-1');
-        expect(valSet).toBe('yo');
-        expect(keySet).toBe('property2');
-
-        const result2 = TestFormat.fromJson({
-          someProperty: {
-            property1: 'hi'
-          }
-        });
-
-        expect(result2.someProperty.property1).toBe('hi');
-        expect(result2.someProperty.property2).toBe('default');
-        expect(valSet).toBe('yo');
-        expect(keySet).toBe('property2');
-
-      });
-    });
-
     describe('integrates with fromDb in strict mode', () => {
 
       class Contact {
@@ -629,6 +531,191 @@ describe('@Json', () => {
 
         expect(result.fn).toBe(testContext.firstName);
         expect(result.lastName).toBeUndefined();
+      });
+
+      describe('* context', () => {
+        it('can be set by @Json decorator', () => {
+
+          @Model()
+          class TestModel extends SapiModelMixin() {
+            @Json('p1', 'context1')
+            prop1 = 'val1';
+
+            @Json('p2', '*')
+            prop2 = 'val2';
+
+            @Json('p3')
+            prop3 = 'val3';
+          }
+
+          const resultNoContext = (new TestModel()).toJson();
+          expect(resultNoContext.p1).toBeUndefined();
+          expect(resultNoContext.p2).toBe('val2');
+          expect(resultNoContext.p3).toBe('val3');
+
+          const resultWithContext = (new TestModel()).toJson('context1');
+          expect(resultWithContext.p1).toBe('val1');
+          expect(resultWithContext.p2).toBe('val2');
+          expect(resultWithContext.p3).toBeUndefined();
+        });
+
+        describe('formatToJson support', () => {
+          let order = '';
+          let prop1FormatterCalled = false;
+          let prop2FormatterCalled = false;
+
+          @Model()
+          class TestModel extends SapiModelMixin() {
+            @Json({
+              context: 'context1',
+              field: 'p1',
+              formatToJson: () => prop1FormatterCalled = true
+            })
+            prop1 = 'val1';
+
+            @Json({
+              context: '*',
+              field: 'p2',
+              formatToJson: () => prop2FormatterCalled = true
+            })
+            prop2 = 'val2';
+
+            @Json({
+              context: 'context1',
+              field: 'p3',
+              formatToJson: () => order += '1'
+            })
+            @Json({
+              context: '*',
+              field: 'p3',
+              formatToJson: () => order += '2'
+            })
+            prop3 = 'val3';
+          }
+
+          const data = {p1: 'val1', p2: 'val2', p3: 'val3'};
+
+          afterEach(() => {
+            order = '';
+            prop1FormatterCalled = false;
+            prop2FormatterCalled = false;
+          });
+
+          it('calls when no matching context but @Json context * present', () => {
+            (new TestModel()).toJson();
+            expect(prop1FormatterCalled).toBeFalsy();
+            expect(prop2FormatterCalled).toBeTruthy();
+          });
+
+          it('calls when matching context', () => {
+            (new TestModel()).toJson('context1');
+            expect(prop1FormatterCalled).toBeTruthy();
+            expect(prop2FormatterCalled).toBeTruthy();
+          });
+
+          it('calls more specific context then * context formatter', () => {
+            (new TestModel()).toJson('context1');
+            expect(order).toBe('12');
+            expect(prop1FormatterCalled).toBeTruthy();
+            expect(prop2FormatterCalled).toBeTruthy();
+          });
+        });
+      });
+    });
+
+    describe('formatToJson', () => {
+      it('flat objects', () => {
+
+        let valSet;
+        let keySet;
+
+        @Model({})
+        class SomeModel extends SapiModelMixin() {
+
+          @Json({
+            formatToJson: (val, key) => 'override'
+          })
+          someProperty = 'default';
+
+          @Json({
+            field: 'sp2',
+            formatToJson: (val, key) => {
+              valSet = val;
+              keySet = key;
+              return 'override2';
+            }
+          })
+          someProperty2 = 'default';
+
+          @Json()
+          someOtherProperty: string;
+
+        }
+
+        const someModel = SomeModel.fromJson({
+          someOtherProperty: 'hello'
+        });
+        const json = someModel.toJson();
+
+        expect(json.someProperty).toBe('override');
+        expect(json.sp2).toBe('override2');
+        expect(json.someOtherProperty).toBe('hello');
+        expect(valSet).toBe('default');
+        expect(keySet).toBe('someProperty2');
+
+      });
+
+      it('deep objects', () => {
+        @Model()
+        class SomeDeepModel extends SapiModelMixin() {
+          @Json({
+            formatToJson: (val, key) => 'override'
+          })
+          someProperty = 'default';
+
+          @Json({
+            field: 'sp2',
+            formatToJson: (val, key) => 'override2'
+          })
+          someProperty2 = 'default';
+
+          @Json()
+          someOtherProperty: string;
+        }
+
+        @Model()
+        class SomeModel extends SapiModelMixin() {
+
+          @Json({
+            formatToJson: (val, key) => 'override'
+          })
+          someProperty = 'default';
+
+          @Json({
+            field: 'sp2',
+            formatToJson: (val, key) => 'override2'
+          })
+          someProperty2 = 'default';
+
+          @Json()
+          someOtherProperty: string;
+
+          @Json({model: SomeDeepModel})
+          someDeepModel: SomeDeepModel;
+        }
+
+        const someModel = SomeModel.fromJson({
+          someDeepModel: {},
+          someOtherProperty: 'hello'
+        });
+        const json = someModel.toJson();
+
+        expect(json.someProperty).toBe('override');
+        expect(json.sp2).toBe('override2');
+        expect(json.someOtherProperty).toBe('hello');
+
+        expect(json.someDeepModel.someProperty).toBe('override');
+        expect(json.someDeepModel.sp2).toBe('override2');
       });
     });
   });
@@ -1289,99 +1376,101 @@ describe('@Json', () => {
       });
     });
 
-    describe('formatToJson', () => {
+    describe('formatFromJson', () => {
       it('flat objects', () => {
+
+        let valCheck;
+        let keyCheck;
+
+        @Model()
+        class TestFormat extends SapiModelMixin() {
+          @Json({
+            formatFromJson: (val, key) => {
+              valCheck = val;
+              keyCheck = key;
+              return 'formatFromJson set1';
+            }
+          })
+          someProperty: string = 'default';
+
+          @Json({
+            field: 'sop',
+            formatFromJson: (val, key) => 'formatFromJson set2'
+          })
+          someOtherProperty: string = 'default';
+
+          @Json({
+            field: 'stp',
+            formatFromJson: (val, key) => 'formatFromJson set3'
+          })
+          someThirdProperty: string = 'default';
+        }
+
+        const result = TestFormat.fromJson({
+          someProperty: 'testValue',
+          sop: 'testValue2'
+        });
+
+        expect(result.someProperty).toBe('formatFromJson set1');
+        expect(valCheck).toBe('testValue');
+        expect(keyCheck).toBe('someProperty');
+
+        expect(result.someOtherProperty).toBe('formatFromJson set2');
+        expect(result.someThirdProperty).toBe('default');
+      });
+
+      it('deep objects', () => {
 
         let valSet;
         let keySet;
 
-        @Model({})
-        class SomeModel extends SapiModelMixin() {
+        @Model()
+        class TestDeep extends SapiModelMixin() {
+
+          @Json()
+          property1: string = 'default';
 
           @Json({
-            formatToJson: (val, key) => 'override'
-          })
-          someProperty = 'default';
-
-          @Json({
-            field: 'sp2',
-            formatToJson: (val, key) => {
+            formatFromJson: (val, key) => {
               valSet = val;
               keySet = key;
-              return 'override2';
+
+              return 'formatted-1';
             }
           })
-          someProperty2 = 'default';
-
-          @Json()
-          someOtherProperty: string;
-
-        }
-
-        const someModel = SomeModel.fromJson({
-          someOtherProperty: 'hello'
-        });
-        const json = someModel.toJson();
-
-        expect(json.someProperty).toBe('override');
-        expect(json.sp2).toBe('override2');
-        expect(json.someOtherProperty).toBe('hello');
-        expect(valSet).toBe('default');
-        expect(keySet).toBe('someProperty2');
-
-      });
-
-      it('deep objects', () => {
-        @Model()
-        class SomeDeepModel extends SapiModelMixin() {
-          @Json({
-            formatToJson: (val, key) => 'override'
-          })
-          someProperty = 'default';
-
-          @Json({
-            field: 'sp2',
-            formatToJson: (val, key) => 'override2'
-          })
-          someProperty2 = 'default';
-
-          @Json()
-          someOtherProperty: string;
+          property2: string = 'default';
         }
 
         @Model()
-        class SomeModel extends SapiModelMixin() {
+        class TestFormat extends SapiModelMixin() {
 
-          @Json({
-            formatToJson: (val, key) => 'override'
-          })
-          someProperty = 'default';
-
-          @Json({
-            field: 'sp2',
-            formatToJson: (val, key) => 'override2'
-          })
-          someProperty2 = 'default';
-
-          @Json()
-          someOtherProperty: string;
-
-          @Json({model: SomeDeepModel})
-          someDeepModel: SomeDeepModel;
+          @Json({model: TestDeep})
+          someProperty: TestDeep;
         }
 
-        const someModel = SomeModel.fromJson({
-          someDeepModel: {},
-          someOtherProperty: 'hello'
+        const result = TestFormat.fromJson({
+          someProperty: {
+            property1: 'hi',
+            property2: 'yo'
+          }
         });
-        const json = someModel.toJson();
 
-        expect(json.someProperty).toBe('override');
-        expect(json.sp2).toBe('override2');
-        expect(json.someOtherProperty).toBe('hello');
+        expect(result.someProperty.property1).toBe('hi');
+        expect(result.someProperty.property2).toBe('formatted-1');
+        expect(valSet).toBe('yo');
+        expect(keySet).toBe('property2');
 
-        expect(json.someDeepModel.someProperty).toBe('override');
-        expect(json.someDeepModel.sp2).toBe('override2');
+        const result2 = TestFormat.fromJson({
+          someProperty: {
+            property1: 'hi'
+          }
+        });
+
+        expect(result2.someProperty.property1).toBe('hi');
+        expect(result2.someProperty.property2).toBe('default');
+        expect(valSet).toBe('yo');
+        expect(keySet).toBe('property2');
+
       });
     });
 
@@ -1462,7 +1551,7 @@ describe('@Json', () => {
       });
 
       describe('* context', () => {
-        it('field support', () => {
+        it('can be set by @Json decorator', () => {
 
           @Model()
           class TestModel extends SapiModelMixin() {
