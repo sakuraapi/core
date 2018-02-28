@@ -7,15 +7,15 @@ import {IDbGetParams}                from '../core/@model';
 import {
   IRoutableLocals,
   routableSymbols
-}                                    from '../core/@routable/routable';
+}                                    from '../core/@routable';
 import {
   BAD_REQUEST,
   DUPLICATE_RESOURCE,
   NOT_FOUND,
   OK,
   SERVER_ERROR
-}                                    from '../core/helpers/http-status';
-import {SanitizeMongoDB as Sanitize} from '../core/security/mongo-db';
+}                                    from '../core/helpers';
+import {SanitizeMongoDB as Sanitize} from '../core/security';
 
 const debug = {
   normal: require('debug')('sapi:handlers:basic')

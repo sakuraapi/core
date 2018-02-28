@@ -22,7 +22,7 @@ import {
   putRouteHandler
 }                   from './basic-handlers';
 
-fdescribe('basic-handlers', () => {
+describe('basic-handlers', () => {
 
   describe('getAllRouteHandler', () => {
 
@@ -67,6 +67,7 @@ fdescribe('basic-handlers', () => {
       try {
         await TestModel.removeAll({});
         await sapi.close();
+        sapi.deregisterDependencies();
         done();
       } catch (err) {
         done.fail(err);
