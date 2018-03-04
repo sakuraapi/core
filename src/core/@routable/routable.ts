@@ -8,8 +8,8 @@ import {
   getRouteHandler,
   postRouteHandler,
   putRouteHandler
-}                                  from '../../handlers/basic-handlers';
-import {getDependencyInjections}   from '../@injectable/injectable';
+}                                  from '../../handlers';
+import {getDependencyInjections}   from '../@injectable';
 import {modelSymbols}              from '../@model';
 import {IAuthenticatorConstructor} from '../plugins';
 

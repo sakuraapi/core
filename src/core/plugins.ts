@@ -11,7 +11,6 @@ import {SakuraApi}    from './sakura-api';
 /**
  * For internal use. Do not rely on this - it can change at any time.
  * @internal
- * @type {{id: symbol; isAuthenticator: symbol; sapi: symbol}}
  */
 export const authenticatorPluginSymbols = {
   id: Symbol('id'),

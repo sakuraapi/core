@@ -362,7 +362,7 @@ export class SakuraApi {
    * will be added: [C, Z, A, B].
    */
   addMiddleware(fn: Handler, order: number = 0): void {
-    debug.normal(`.addMiddleware called: '${(fn || {} as any).name}', orderr: ${order}`);
+    debug.normal(`.addMiddleware called: '${(fn || {} as any).name}', order: ${order}`);
 
     if (!fn) {
       debug.normal(`handler rejected because it's null or undefined`);
@@ -445,15 +445,15 @@ export class SakuraApi {
    */
   enqueueRoutes(target: any): void {
 
-    debug.route(`SakuraApi.route called for %o`, target);
+    debug.route(`SakuraApi.route called for %O`, target);
 
     if (!target[routableSymbols.routes]) {
-      debug.route(`.route '%o' is not a routable class`, target);
+      debug.route(`.route '%O' is not a routable class`, target);
       return;
     }
 
     for (const route of target[routableSymbols.routes]) {
-      debug.route(`\tadded '%o'`, route);
+      debug.route(`\tadded '%O'`, route);
 
       const routeSignature = `${route.httpMethod}:${route.path}`;
       if (this.routeQueue.get(routeSignature)) {
@@ -640,7 +640,7 @@ export class SakuraApi {
     // add routes
     for (const route of this.routeQueue.values()) {
 
-      debug.route('\t\t.listen route %o', route);
+      debug.route('\t\t.listen route %O', route);
 
       let routeHandlers: Handler[] = [
         // injects an initial handler that injects the reference to the instantiated @Routable decorated object
