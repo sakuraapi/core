@@ -22,7 +22,7 @@ export class SakuraApiConfig {
 
     if (!config.dbConnections) {
       debug.normal(`.dataSources, no config (config: ${!!config},`
-        + `config.dbConnections: ${!!(config || {} as any).dbConnections})`);
+        + `config.dbConnections: ${!!config.dbConnections})`);
 
       config.dbConnections = [];
     }

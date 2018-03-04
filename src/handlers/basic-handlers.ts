@@ -225,7 +225,7 @@ export function putRouteHandler(req: Request, res: Response, next: NextFunction)
 
   const changeSet = model.fromJsonToDb(req.body);
 
-  debug.normal(`.putRouteHandler called with id: '%o' changeSet: %o`, id, changeSet);
+  debug.normal(`.putRouteHandler called with id: '%O' changeSet: %O`, id, changeSet);
 
   model
     .getById(id)
@@ -273,7 +273,7 @@ export function postRouteHandler(req: Request, res: Response, next: NextFunction
 
   const obj = model.fromJson(req.body);
 
-  debug.normal(`.postRouteHandler called with obj: %o`, obj);
+  debug.normal(`.postRouteHandler called with obj: %O`, obj);
 
   obj
     .create()
@@ -328,7 +328,7 @@ export function deleteRouteHandler(req: Request, res: Response, next: NextFuncti
       + ` which requires ${(this.constructor || {} as any).name || this.name} to be bound to a model`);
   }
 
-  debug.normal(`.deleteRouteHandler called with id: '%o'`, id);
+  debug.normal(`.deleteRouteHandler called with id: '%O'`, id);
 
   model
     .removeById(id)

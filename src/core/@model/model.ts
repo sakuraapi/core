@@ -381,11 +381,11 @@ async function create(options?: CollectionInsertOneOptions): Promise<InsertOneWr
 
   const col = constructor.getCollection();
 
-  debug
-    .normal(`.create called, dbName: '${constructor[modelSymbols.dbName].name}', found?: ${!!col}, set: %O`, this);
+  debug.normal(`.create called, dbName: '${(constructor[modelSymbols.dbName] || {} as any).name}', found?: ${!!col}` +
+    `, set: %O`, this);
 
   if (!col) {
-    throw new Error(`Database '${constructor[modelSymbols.dbName].name}' not found`);
+    throw new Error(`Database '${(constructor[modelSymbols.dbName] || {} as any).name}' not found`);
   }
 
   const dbObj = this.toDb();
@@ -542,9 +542,13 @@ function fromDb(json: any, options?: IFromDbOptions): object {
  * All of the resulting constructed objects will share the same constructor parameters.
  * @returns {object[]} Returns an array of instantiated objects which are instances of the [[Model]]'s class. Returns
  * null if the `jsons` parameter is null, undefined, or not an Array.
+ *
+ * @param {object[]} jsons
+ * @param {IFromDbOptions} options
+ * @returns {object[]}
  */
 function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
-  debug.normal(`.fromDbArray called, target '${this.name}'`);
+  debug.normal(`.fromDbArray called, target '${(this || {} as any).name}'`);
 
   if (!jsons || !Array.isArray(jsons)) {
     return [];
@@ -572,7 +576,7 @@ function fromDbArray(jsons: object[], options?: IFromDbOptions): object[] {
  * undefined, or not an object.
  */
 function fromJson(json: object, context = 'default'): object {
-  const modelName = this.name;
+  const modelName = (this || {} as any).name;
   debug.normal(`.fromJson called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
@@ -718,7 +722,7 @@ function fromJson(json: object, context = 'default'): object {
  * parameter is null, undefined, or not an array.
  */
 function fromJsonArray(json: object[]): object[] {
-  debug.normal(`.fromJsonArray called, target '${this.name}'`);
+  debug.normal(`.fromJsonArray called, target '${(this || {} as any).name}'`);
 
   const result = [];
 
@@ -739,7 +743,7 @@ function fromJsonArray(json: object[]): object[] {
  * @returns {any} json object with fields mapped from json fields to db fields.
  */
 function fromJsonToDb(json: any, context = 'default'): any {
-  const modelName = this.name;
+  const modelName = (this || {} as any).name;
   debug.normal(`.fromJsonToDb called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
@@ -802,6 +806,9 @@ function fromJsonToDb(json: any, context = 'default'): any {
  * @returns {Promise<T>} Returns a Promise that resolves with an array of instantiated [[Model]] objects based on the
  * documents returned from the database using MongoDB's find method. Returns an empty array if no matches are found
  * in the database.
+ *
+ * @param {IDbGetParams} params
+ * @returns {Promise<object[]>}
  */
 async function get(params?: IDbGetParams): Promise<object[]> {
   debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
@@ -970,7 +977,7 @@ async function getOne(filter: any, project?: any): Promise<any> {
  */
 function remove(options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
   const constructor = this.constructor;
-  debug.normal(`.remove called for ${this.id}`);
+  debug.normal(`.remove called for ${(this || {} as any).id}`);
   return constructor.removeById(this.id, options);
 }
 
@@ -983,7 +990,8 @@ function remove(options?: CollectionOptions): Promise<DeleteWriteOpResultObject>
 function removeAll(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
   const col = this.getCollection();
 
-  debug.normal(`.removeAll called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`, this.id);
+  debug.normal(`.removeAll called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`,
+    (this || {} as any).id);
 
   if (!col) {
     throw new Error(`Database '${this[modelSymbols.dbName]}' not found`);
@@ -1088,7 +1096,7 @@ function toDb(changeSet?: any): object {
   const constructor = this[modelSymbols.constructor] || this;
 
   const modelOptions = constructor[modelSymbols.modelOptions];
-  debug.normal(`.toDb called, target '${constructor.name}'`);
+  debug.normal(`.toDb called, target '${(constructor || {} as any).name}'`);
 
   changeSet = changeSet || this;
 
@@ -1293,6 +1301,6 @@ function toJson(context = 'default'): any {
  * @returns {string}
  */
 function toJsonString(replacer?: () => any | Array<string | number>, space?: string | number): string {
-  debug.normal(`.toJsonString called, target '${this.constructor.name}'`);
+  debug.normal(`.toJsonString called, target '${((this || {} as any).constructor || {} as any).name}'`);
   return JSON.stringify(this[modelSymbols.toJson](), replacer, space);
 }
