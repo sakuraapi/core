@@ -17,7 +17,7 @@ const debug = {
   normal: require('debug')('sapi:routable')
 };
 
-export type HttpMethod = 'get' | 'getAll' | 'put' | 'post' | 'delete';
+export type ApiMethod = 'get' | 'getAll' | 'put' | 'post' | 'delete';
 const httpMethodMap = {
   delete: 'delete',
   get: 'get',
@@ -87,7 +87,7 @@ export interface IRoutableOptions {
    *
    * If `suppressApi` is set, `exposeApi` will throw an error.
    */
-  exposeApi?: HttpMethod[];
+  exposeApi?: ApiMethod[];
 
   /**
    * An array of strings for which APIs to suppress when `@`[[Routable]] is bound to a model. Valid values include:
@@ -103,7 +103,7 @@ export interface IRoutableOptions {
    *
    * If `exposeApi` is set, `suppressApi` will throw an error.
    */
-  suppressApi?: HttpMethod[] | boolean;
+  suppressApi?: ApiMethod[] | boolean;
 
   /**
    * A class that is decorated with `@`[[Model]] for which this `@Routable` class will automatically create CRUD
@@ -142,9 +142,9 @@ export interface ISakuraApiClassRoute {
    */
   f: Handler;
   /**
-   * the http verb (e.g., GET, PUT, POST, DELETE)
+   * Array of HTTP verbs supported by this route (e.g., GET, PUT, POST, DELETE)
    */
-  httpMethod: string;
+  httpMethods: string[];
   /**
    * the classes's method name that handles the route (the name of f)
    */
@@ -295,24 +295,25 @@ export function Routable(options?: IRoutableOptions): any {
       construct: (t, args, nt) => {
         debug.normal(`\tconstructing ${target.name}`);
 
+        // Replace constructor params with their @Injectable singleton instances
         const diArgs = getDependencyInjections(target, t, target[routableSymbols.sapi]);
 
         const constructorProxy = Reflect.construct(t, diArgs, nt);
 
+        // (1) process beforeAll, afterAll and @Route routes
         const beforeAll = bindHandlers(constructorProxy, options.beforeAll);
         const afterAll = bindHandlers(constructorProxy, options.afterAll);
-
         const routes: ISakuraApiClassRoute[] = addRoutesForRouteMethods(constructorProxy, beforeAll, afterAll);
 
-        // add generated routes for Model
+        // (2) if there's a model, then conditionally add generated routes for that Model
         if (options.model) {
           debug.normal(`\t\tbound to model, adding default routes`);
 
-          addRouteHandler('get', getRouteHandler, routes, beforeAll, afterAll, constructorProxy);
-          addRouteHandler('getAll', getAllRouteHandler, routes, beforeAll, afterAll, constructorProxy);
-          addRouteHandler('put', putRouteHandler, routes, beforeAll, afterAll, constructorProxy);
-          addRouteHandler('post', postRouteHandler, routes, beforeAll, afterAll, constructorProxy);
-          addRouteHandler('delete', deleteRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('get', getRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('getAll', getAllRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('put', putRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('post', postRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('delete', deleteRouteHandler, routes, beforeAll, afterAll, constructorProxy);
         }
 
         // set the routes property for the @Routable class
@@ -376,6 +377,7 @@ export function Routable(options?: IRoutableOptions): any {
           endPoint = '/' + endPoint;
         }
 
+        const httpMethods = Reflect.getMetadata(`httpMethod.${methodName}`, constructorProxy);
         const routerData: ISakuraApiClassRoute = {
           after,
           afterAll,
@@ -386,7 +388,7 @@ export function Routable(options?: IRoutableOptions): any {
             .getMetadata(`function.${methodName}`, constructorProxy)
             // @Route handlers are bound to the context of the instance of the @Routable object
             .bind(constructorProxy),
-          httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, constructorProxy),
+          httpMethods,
           method: methodName,
           name: target.name,
           path: endPoint,
@@ -400,39 +402,32 @@ export function Routable(options?: IRoutableOptions): any {
       return routes;
     }
 
-    function addRouteHandler(method: HttpMethod,
-                             handler: Handler,
-                             routes: ISakuraApiClassRoute[],
-                             beforeAll: Handler[],
-                             afterAll: Handler[],
-                             constructorProxy: any) {
+    function addModelBasedRouteHandlers(method: ApiMethod, handler: Handler, routes: ISakuraApiClassRoute[],
+                                        beforeAll: Handler[], afterAll: Handler[], constructorProxy: any) {
 
       if (!options.suppressApi && !options.exposeApi) {
-        routes.push(generateRoute(method, handler, beforeAll, afterAll, constructorProxy));
+        routes.push(createModelRoute(method, handler, beforeAll, afterAll, constructorProxy));
         return;
       }
 
       if (options.exposeApi && options.exposeApi.indexOf(method) > -1) {
-        routes.push(generateRoute(method, handler, beforeAll, afterAll, constructorProxy));
+        routes.push(createModelRoute(method, handler, beforeAll, afterAll, constructorProxy));
         return;
       }
 
       const isSuppressed = options.suppressApi && (typeof options.suppressApi === 'boolean')
         ? options.suppressApi
-        : (options.suppressApi as HttpMethod[] || []).indexOf(method) > -1;
+        : (options.suppressApi as ApiMethod[] || []).indexOf(method) > -1;
 
       if (!isSuppressed && !options.exposeApi) {
-        routes.push(generateRoute(method, handler, beforeAll, afterAll, constructorProxy));
+        routes.push(createModelRoute(method, handler, beforeAll, afterAll, constructorProxy));
         return;
       }
 
     }
 
-    function generateRoute(method: HttpMethod,
-                           handler: Handler,
-                           beforeAll: Handler[],
-                           afterAll: Handler[],
-                           constructorProxy: any): ISakuraApiClassRoute {
+    function createModelRoute(method: ApiMethod, handler: Handler, beforeAll: Handler[], afterAll: Handler[],
+                              constructorProxy: any): ISakuraApiClassRoute {
 
       const routePath = ((method === 'get' || method === 'put' || method === 'delete')
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
@@ -445,7 +440,7 @@ export function Routable(options?: IRoutableOptions): any {
         authenticators: newConstructor[routableSymbols.authenticators],
         beforeAll,
         f: handler.bind(diModel),
-        httpMethod: httpMethodMap[method],
+        httpMethods: [httpMethodMap[method]],
         method: handler.name,
         name: target.name,
         path: routePath,

@@ -28,8 +28,8 @@ describe('basic-handlers', () => {
 
     @Model({
       dbConfig: {
-        db: 'userDb',
-        collection: 'getAllRouteHandler'
+        collection: 'getAllRouteHandler',
+        db: 'userDb'
       }
     })
     class TestModel extends SapiModelMixin() {

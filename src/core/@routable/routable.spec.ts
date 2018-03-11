@@ -39,6 +39,7 @@ import {
 }                          from './';
 import {
   IRoutableLocals,
+  ISakuraApiClassRoute,
   RoutableNotRegistered,
   RoutablesMustBeDecoratedWithRoutableError
 }                          from './routable';
@@ -65,7 +66,7 @@ describe('core/@Routable', () => {
         }
 
         const router = new CoreRoutableAddBaseUrlTest();
-        const routes = router[routableSymbols.routes];
+        const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
         expect(routes).toBeDefined('@Routable class should have had route metadata');
         expect(routes.length).toBe(1, 'There should have been one route defined');
         expect(routes[0].path).toBe('/coreRoutableAddBaseUrlTest', 'baseUrl was not properly set by @Routable');
@@ -88,7 +89,7 @@ describe('core/@Routable', () => {
         }
 
         const router = new CoreRoutableIgnoreRoutableBlacklisted();
-        const routes = router[routableSymbols.routes];
+        const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
         expect(routes).toBeDefined('@Routable class should have had route metadata');
 
         let found = false;
@@ -118,7 +119,7 @@ describe('core/@Routable', () => {
         }
 
         const router = new CoreRoutableNoBaseMethodWorks();
-        const routes = router[routableSymbols.routes];
+        const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
         expect(routes).toBeDefined('@Routable class should have had route metadata');
         expect(routes.length).toBe(2, 'There should have been one route defined');
         expect(routes[0].path).toBe('/', 'baseUrl was not properly set by @Routable');
@@ -164,7 +165,7 @@ describe('core/@Routable', () => {
       }
 
       const router = new CoreRoutableTrailingSlashDropTest();
-      const routes = router[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
       expect(routes).toBeDefined('@Routable class should have had route metadata');
       expect(routes.length).toBe(1, 'There should have been one route defined');
       expect(routes[0].path)
@@ -185,7 +186,7 @@ describe('core/@Routable', () => {
       }
 
       const router = new CoreRoutableTrailingSlashAddTest();
-      const routes = router[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
       expect(routes).toBeDefined('@Routable class should have had route metadata');
       expect(routes.length).toBe(1, 'There should have been one route defined');
       expect(routes[0].path)
@@ -215,20 +216,20 @@ describe('core/@Routable', () => {
       }
 
       const router = new CoreRoutableRoutesWork();
-      const routes = router[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
+
       expect(routes).toBeDefined('@Routable class should have had route metadata');
       expect(routes.length).toBe(2, 'There should have been one route defined');
       expect(routes[0].path).toBe('/CoreRoutableRoutesWork/a');
       expect(routes[1].path).toBe('/CoreRoutableRoutesWork/b');
       expect(routes[0].method).toBe('aRouteMethod');
       expect(routes[1].method).toBe('bRouteMethod');
-      expect(routes[0].httpMethod).toBe('get');
-      expect(routes[1].httpMethod).toBe('put');
+      expect(routes[0].httpMethods).toEqual(['get']);
+      expect(routes[1].httpMethods).toEqual(['put']);
       expect(routes[0].name).toBe('CoreRoutableRoutesWork');
       expect(routes[1].name).toBe('CoreRoutableRoutesWork');
       expect(typeof routes[0].f).toBe('function');
       expect(typeof routes[1].f).toBe('function');
-
     });
 
     it('maintains the prototype chain', () => {
@@ -1888,7 +1889,7 @@ describe('core/@Routable', () => {
 
       const R = sapi.getRoutable(SetsUpRoutableLevelRoutes);
       const r = new R();
-      const routes = r[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = r[routableSymbols.routes];
 
       expect(routes.length).toBe(1);
       expect(routes[0].authenticators.length).toBe(2);
@@ -1910,7 +1911,7 @@ describe('core/@Routable', () => {
 
       const R = sapi.getRoutable(SetsUpRoutableLevelRoutes);
       const r = new R();
-      const routes = r[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = r[routableSymbols.routes];
 
       expect(routes.length).toBe(1);
       expect(routes[0].authenticators.length).toBe(2);
@@ -1932,7 +1933,7 @@ describe('core/@Routable', () => {
 
       const R = sapi.getRoutable(SetsUpRoutableLevelRoutes);
       const r = new R();
-      const routes = r[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = r[routableSymbols.routes];
 
       expect(routes.length).toBe(1);
       expect(routes[0].authenticators.length).toBe(4);
@@ -1967,7 +1968,7 @@ describe('core/@Routable', () => {
 
       const R = sapi.getRoutable(SetsUpRoutableLevelRoutes);
       const r = new R();
-      const routes = r[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = r[routableSymbols.routes];
 
       expect(routes.length).toBe(2);
       expect(routes[0].method).toBe('test');

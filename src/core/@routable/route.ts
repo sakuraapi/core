@@ -2,6 +2,16 @@ import * as debug                  from 'debug';
 import {Handler}                   from 'express';
 import {IAuthenticatorConstructor} from '../plugins';
 
+export enum HttpMethod {'connect', 'delete', 'get', 'head', 'post', 'put', 'patch', 'trace'}
+
+export type HttpMethods = 'connect' | 'delete' | 'get' | 'head' | 'post' | 'put' | 'patch' | 'trace' | '*';
+
+// extract valid http methods array from enum
+export const validHttpMethods = Object
+  .keys(HttpMethod)
+  .splice(Object.keys(HttpMethod).length / 2)
+  .map((k) => k);
+
 /**
  * Interface defining the valid properties for the `@`[[Route]] decorator.
  */
@@ -39,12 +49,13 @@ export interface IRoutableMethodOptions {
    */
   path?: string;
   /**
-   * String defining the HTTP method for which this route handler will respond. See the example for
+   * Optionally defines the HTTP method to attach to this `@`[[Route]]'s handler. See the example for
    * [[RoutableMethodOptions.path]].
    *
-   * Valid methods are: `['get', 'post', 'put', 'delete', 'head']`.
+   * Defaults to HTTP method 'GET' if not method is provided.
    */
-  method?: string;
+  method?: HttpMethods | HttpMethods[] | HttpMethod | [HttpMethod];
+
   /**
    * Boolean value that sets this route to blacklisted when set to true. This is a quick way to turn off a route when
    * testing. The default value is false.
@@ -112,19 +123,51 @@ export interface IRoutableMethodOptions {
  */
 export function Route(options?: IRoutableMethodOptions) {
   options = options || {};
-  options.path = options.path || '';
-  options.method = options.method || 'get';
-  options.blackList = options.blackList || false;
+  if (options.method === '' as any) {
+    // this would be confusing. Typing should catch this; this prevents a user from doing method: '' as any;
+    throw new Error('Route method option is an empty string. Provide a valid HTTP method');
+  }
 
-  const methods = ['get', 'post', 'put', 'delete', 'head'];
+  options.path = options.path || '';
+  options.method = options.method || ['get'];
+  options.blackList = options.blackList || false;
 
   return (target: any, key: string, value: TypedPropertyDescriptor<any>) => {
 
     debug('sapi:route')(`@Route decorated '${key}' with options %o`, options);
 
-    if (methods.indexOf(options.method) < 0) {
-      throw new Error(`@route(...)${(target.constructor || {}).name}.${key} had its 'method' `
-        + `property set to '${options.method}', which is invalid. Valid options are: ${methods.join(', ')}`);
+    // normalize options.method to array of methods
+    const methods = [];
+
+    if (typeof options.method === 'string') {
+
+      methods.push(options.method);
+
+    } else if (!Array.isArray(options.method)) {
+
+      throw new Error('Route method option must be HttpMethods, HttpMethods[], HttpMethod or an ' +
+        `HttpMethods[]. Value was: ${options.method}, typeof ${typeof options.method}.`);
+
+    } else if (options.method.length === 0) {
+
+      throw new Error('Route method option is an empty array. Provide at least one HTTP method');
+
+    } else {
+
+      methods.push(...options.method);
+
+    }
+
+    for (let i = 0; i < methods.length; i++) {
+      const method = methods[i];
+
+      if (method !== '*' && validHttpMethods.indexOf(method) < 0) {
+        throw new Error(`@route(...)${(target.constructor || {}).name}.${key} has its 'method' ` +
+          `property set to '${options.method}' typeof '${typeof method}', which is invalid. Valid options are: ` +
+          `${validHttpMethods.join(', ')}`);
+      }
+
+      methods[i] = method.toLowerCase();
     }
 
     const f = function(...args: any[]) {
@@ -143,7 +186,7 @@ export function Route(options?: IRoutableMethodOptions) {
       Reflect.defineMetadata(`before.${key}`, options.before, target);
       Reflect.defineMetadata(`function.${key}`, f, target);
       Reflect.defineMetadata(`hasRoute.${key}`, true, target);
-      Reflect.defineMetadata(`httpMethod.${key}`, options.method.toLowerCase(), target);
+      Reflect.defineMetadata(`httpMethod.${key}`, methods, target);
       Reflect.defineMetadata(`path.${key}`, options.path, target);
     }
 
