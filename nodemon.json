@@ -3,6 +3,7 @@
   "ignore": [
     "**/*.js",
     "**/*.d.ts",
+    "lib",
     "node_modules"
   ],
   "ext": "ts, json"

@@ -439,9 +439,7 @@ export class SakuraApi {
   }
 
   /**
-   * Primarily used internally by [[Routable]] during bootstrapping. However, if an `@Routable` class has
-   * [[RoutableClassOptions.autoRoute]] set to false, the integrator will have to pass that `@Routable` class in to
-   * this method manually if he wants to routes to be bound.
+   * Used internally by [[Routable]] during bootstrapping.
    */
   enqueueRoutes(target: any): void {
 
@@ -452,10 +450,11 @@ export class SakuraApi {
       return;
     }
 
-    for (const route of target[routableSymbols.routes]) {
+    for (const route of target[routableSymbols.routes] as ISakuraApiClassRoute[]) {
       debug.route(`\tadded '%O'`, route);
 
-      const routeSignature = `${route.httpMethod}:${route.path}`;
+      const methodSignature = route.httpMethods.join('');
+      const routeSignature = `${methodSignature}:${route.path}`;
       if (this.routeQueue.get(routeSignature)) {
         throw new Error(`Duplicate route (${routeSignature}) registered by ${target.name || target.constructor.name}.`);
       }
@@ -638,7 +637,8 @@ export class SakuraApi {
 
     debug.route('\t.listen processing route queue');
     // add routes
-    for (const route of this.routeQueue.values()) {
+    const routes = this.routeQueue.values();
+    for (const route of routes) {
 
       debug.route('\t\t.listen route %O', route);
 
@@ -681,7 +681,13 @@ export class SakuraApi {
 
       routeHandlers.push(resLocalsHandler);
 
-      router[route.httpMethod](route.path, routeHandlers);
+      const routeMethods = route.httpMethods;
+      for (let method of routeMethods) {
+        if (method === '*') {
+          method = 'all';
+        }
+        router[method](route.path, routeHandlers);
+      }
     }
 
     // Setup DB Connetions -------------------------------------------------------------------------------------------
