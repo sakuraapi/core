@@ -1,14 +1,15 @@
 import {Handler}                   from 'express';
 import * as path                   from 'path';
 import 'reflect-metadata';
+import {v4}                        from 'uuid';
 import {
   deleteRouteHandler,
   getAllRouteHandler,
   getRouteHandler,
   postRouteHandler,
   putRouteHandler
-}                                  from '../../handlers/basic-handlers';
-import {getDependencyInjections}   from '../@injectable/injectable';
+}                                  from '../../handlers';
+import {getDependencyInjections}   from '../@injectable';
 import {modelSymbols}              from '../@model';
 import {IAuthenticatorConstructor} from '../plugins';
 
@@ -16,7 +17,7 @@ const debug = {
   normal: require('debug')('sapi:routable')
 };
 
-export type HttpMethod = 'get' | 'getAll' | 'put' | 'post' | 'delete';
+export type ApiMethod = 'get' | 'getAll' | 'put' | 'post' | 'delete';
 const httpMethodMap = {
   delete: 'delete',
   get: 'get',
@@ -86,7 +87,7 @@ export interface IRoutableOptions {
    *
    * If `suppressApi` is set, `exposeApi` will throw an error.
    */
-  exposeApi?: HttpMethod[];
+  exposeApi?: ApiMethod[];
 
   /**
    * An array of strings for which APIs to suppress when `@`[[Routable]] is bound to a model. Valid values include:
@@ -102,7 +103,7 @@ export interface IRoutableOptions {
    *
    * If `exposeApi` is set, `suppressApi` will throw an error.
    */
-  suppressApi?: HttpMethod[] | boolean;
+  suppressApi?: ApiMethod[] | boolean;
 
   /**
    * A class that is decorated with `@`[[Model]] for which this `@Routable` class will automatically create CRUD
@@ -141,9 +142,9 @@ export interface ISakuraApiClassRoute {
    */
   f: Handler;
   /**
-   * the http verb (e.g., GET, PUT, POST, DELETE)
+   * Array of HTTP verbs supported by this route (e.g., GET, PUT, POST, DELETE)
    */
-  httpMethod: string;
+  httpMethods: string[];
   /**
    * the classes's method name that handles the route (the name of f)
    */
@@ -180,11 +181,40 @@ export interface ISakuraApiClassRoute {
 export const routableSymbols = {
   authenticators: Symbol('authenticators'),
   changeSapi: Symbol('changeSapi'),
+  id: Symbol('routableId'),
   isSakuraApiRoutable: Symbol('isSakuraApiRoutable'),
   model: Symbol('model'),
   routes: Symbol('routes'),
   sapi: Symbol('sapi')
 };
+
+/**
+ * An attempt was made to use [[SakuraApi.getRoutable]] with a parameter that isn't decorated with `@`[[Model]].
+ */
+export class RoutablesMustBeDecoratedWithRoutableError extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`Invalid attempt to get ${targetName}; must be decorated with @Routable`);
+  }
+}
+
+/**
+ * Thrown when an attempt is made to use an object as a Routable, which has not been registered with the dependency
+ * injection system. You register models when you are instantiating the instance of [[SakuraApi]] for your
+ * application.
+ */
+export class RoutableNotRegistered extends Error {
+  constructor(target: any) {
+    const targetName = (target || {} as any).name
+      || ((target || {} as any).constructor || {} as any).name
+      || typeof target;
+
+    super(`${targetName} is not registered as a routable api with SakuraApi`);
+  }
+}
 
 /**
  * Decorator applied to classes that represent routing logic for SakuraApi.
@@ -265,24 +295,25 @@ export function Routable(options?: IRoutableOptions): any {
       construct: (t, args, nt) => {
         debug.normal(`\tconstructing ${target.name}`);
 
+        // Replace constructor params with their @Injectable singleton instances
         const diArgs = getDependencyInjections(target, t, target[routableSymbols.sapi]);
 
         const constructorProxy = Reflect.construct(t, diArgs, nt);
 
+        // (1) process beforeAll, afterAll and @Route routes
         const beforeAll = bindHandlers(constructorProxy, options.beforeAll);
         const afterAll = bindHandlers(constructorProxy, options.afterAll);
-
         const routes: ISakuraApiClassRoute[] = addRoutesForRouteMethods(constructorProxy, beforeAll, afterAll);
 
-        // add generated routes for Model
+        // (2) if there's a model, then conditionally add generated routes for that Model
         if (options.model) {
           debug.normal(`\t\tbound to model, adding default routes`);
 
-          addRouteHandler('get', getRouteHandler, routes, beforeAll, afterAll, constructorProxy);
-          addRouteHandler('getAll', getAllRouteHandler, routes, beforeAll, afterAll, constructorProxy);
-          addRouteHandler('put', putRouteHandler, routes, beforeAll, afterAll, constructorProxy);
-          addRouteHandler('post', postRouteHandler, routes, beforeAll, afterAll, constructorProxy);
-          addRouteHandler('delete', deleteRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('get', getRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('getAll', getAllRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('put', putRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('post', postRouteHandler, routes, beforeAll, afterAll, constructorProxy);
+          addModelBasedRouteHandlers('delete', deleteRouteHandler, routes, beforeAll, afterAll, constructorProxy);
         }
 
         // set the routes property for the @Routable class
@@ -292,6 +323,12 @@ export function Routable(options?: IRoutableOptions): any {
       }
     });
 
+    // DI unique identifier
+    Reflect.defineProperty(newConstructor, routableSymbols.id, {
+      value: v4(),
+      writable: false
+    });
+
     decorateWithAuthenticators(newConstructor);
     decorateWithIdentity(newConstructor);
     decorateWithSapi(newConstructor);
@@ -299,7 +336,7 @@ export function Routable(options?: IRoutableOptions): any {
     // if a model is present, then add a method that allows that model to be retrieved
     if (options.model) {
       newConstructor.prototype[routableSymbols.model] = () => {
-        return newConstructor[routableSymbols.sapi].getModelByName(options.model.name);
+        return newConstructor[routableSymbols.sapi].getModel(options.model);
       };
     }
 
@@ -340,6 +377,7 @@ export function Routable(options?: IRoutableOptions): any {
           endPoint = '/' + endPoint;
         }
 
+        const httpMethods = Reflect.getMetadata(`httpMethod.${methodName}`, constructorProxy);
         const routerData: ISakuraApiClassRoute = {
           after,
           afterAll,
@@ -350,7 +388,7 @@ export function Routable(options?: IRoutableOptions): any {
             .getMetadata(`function.${methodName}`, constructorProxy)
             // @Route handlers are bound to the context of the instance of the @Routable object
             .bind(constructorProxy),
-          httpMethod: Reflect.getMetadata(`httpMethod.${methodName}`, constructorProxy),
+          httpMethods,
           method: methodName,
           name: target.name,
           path: endPoint,
@@ -364,52 +402,45 @@ export function Routable(options?: IRoutableOptions): any {
       return routes;
     }
 
-    function addRouteHandler(method: HttpMethod,
-                             handler: Handler,
-                             routes: ISakuraApiClassRoute[],
-                             beforeAll: Handler[],
-                             afterAll: Handler[],
-                             constructorProxy: any) {
+    function addModelBasedRouteHandlers(method: ApiMethod, handler: Handler, routes: ISakuraApiClassRoute[],
+                                        beforeAll: Handler[], afterAll: Handler[], constructorProxy: any) {
 
       if (!options.suppressApi && !options.exposeApi) {
-        routes.push(generateRoute(method, handler, beforeAll, afterAll, constructorProxy));
+        routes.push(createModelRoute(method, handler, beforeAll, afterAll, constructorProxy));
         return;
       }
 
       if (options.exposeApi && options.exposeApi.indexOf(method) > -1) {
-        routes.push(generateRoute(method, handler, beforeAll, afterAll, constructorProxy));
+        routes.push(createModelRoute(method, handler, beforeAll, afterAll, constructorProxy));
         return;
       }
 
       const isSuppressed = options.suppressApi && (typeof options.suppressApi === 'boolean')
         ? options.suppressApi
-        : (options.suppressApi as HttpMethod[] || []).indexOf(method) > -1;
+        : (options.suppressApi as ApiMethod[] || []).indexOf(method) > -1;
 
       if (!isSuppressed && !options.exposeApi) {
-        routes.push(generateRoute(method, handler, beforeAll, afterAll, constructorProxy));
+        routes.push(createModelRoute(method, handler, beforeAll, afterAll, constructorProxy));
         return;
       }
 
     }
 
-    function generateRoute(method: HttpMethod,
-                           handler: Handler,
-                           beforeAll: Handler[],
-                           afterAll: Handler[],
-                           constructorProxy: any): ISakuraApiClassRoute {
+    function createModelRoute(method: ApiMethod, handler: Handler, beforeAll: Handler[], afterAll: Handler[],
+                              constructorProxy: any): ISakuraApiClassRoute {
 
       const routePath = ((method === 'get' || method === 'put' || method === 'delete')
         ? `/${(options.baseUrl || (options.model as any).name.toLowerCase())}/:id`
         : `/${options.baseUrl || (options.model as any).name.toLowerCase()}`);
 
-      const diModel = newConstructor[routableSymbols.sapi].getModelByName(options.model.name);
+      const diModel = newConstructor[routableSymbols.sapi].getModel(options.model);
 
       const routerData: ISakuraApiClassRoute = {
         afterAll,
         authenticators: newConstructor[routableSymbols.authenticators],
         beforeAll,
         f: handler.bind(diModel),
-        httpMethod: httpMethodMap[method],
+        httpMethods: [httpMethodMap[method]],
         method: handler.name,
         name: target.name,
         path: routePath,

@@ -1,40 +1,49 @@
-// tslint:disable:no-shadowed-variable
 import {
   NextFunction,
   Request,
   Response
-}                           from 'express';
-import {ObjectID}           from 'mongodb';
-import * as request         from 'supertest';
+}                          from 'express';
+import {ObjectID}          from 'mongodb';
+import * as request        from 'supertest';
 import {
   testSapi,
   testUrl
-}                           from '../../../spec/helpers/sakuraapi';
+}                          from '../../../spec/helpers/sakuraapi';
 import {
   getAllRouteHandler,
   getRouteHandler
-}                           from '../../handlers/basic-handlers';
+}                          from '../../handlers';
 import {
   Db,
   Json,
   Model,
   SapiModelMixin
-}                           from '../@model';
-import {BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK} from '../helpers/http-status';
+}                          from '../@model';
+import {
+  BAD_REQUEST,
+  DUPLICATE_RESOURCE,
+  NOT_FOUND,
+  OK
+}                          from '../helpers';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
   IAuthenticator,
   IAuthenticatorConstructor
-}                           from '../plugins';
-import {SakuraApi}          from '../sakura-api';
+}                          from '../plugins';
+import {SakuraApi}         from '../sakura-api';
 import {
   Routable,
   routableSymbols,
   Route
-}                           from './';
-import {IRoutableLocals}    from './routable';
-import {SapiRoutableMixin}  from './sapi-routable-mixin';
+}                          from './';
+import {
+  IRoutableLocals,
+  ISakuraApiClassRoute,
+  RoutableNotRegistered,
+  RoutablesMustBeDecoratedWithRoutableError
+}                          from './routable';
+import {SapiRoutableMixin} from './sapi-routable-mixin';
 
 describe('core/@Routable', () => {
   describe('general functionality', () => {
@@ -57,7 +66,7 @@ describe('core/@Routable', () => {
         }
 
         const router = new CoreRoutableAddBaseUrlTest();
-        const routes = router[routableSymbols.routes];
+        const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
         expect(routes).toBeDefined('@Routable class should have had route metadata');
         expect(routes.length).toBe(1, 'There should have been one route defined');
         expect(routes[0].path).toBe('/coreRoutableAddBaseUrlTest', 'baseUrl was not properly set by @Routable');
@@ -80,7 +89,7 @@ describe('core/@Routable', () => {
         }
 
         const router = new CoreRoutableIgnoreRoutableBlacklisted();
-        const routes = router[routableSymbols.routes];
+        const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
         expect(routes).toBeDefined('@Routable class should have had route metadata');
 
         let found = false;
@@ -110,7 +119,7 @@ describe('core/@Routable', () => {
         }
 
         const router = new CoreRoutableNoBaseMethodWorks();
-        const routes = router[routableSymbols.routes];
+        const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
         expect(routes).toBeDefined('@Routable class should have had route metadata');
         expect(routes.length).toBe(2, 'There should have been one route defined');
         expect(routes[0].path).toBe('/', 'baseUrl was not properly set by @Routable');
@@ -156,7 +165,7 @@ describe('core/@Routable', () => {
       }
 
       const router = new CoreRoutableTrailingSlashDropTest();
-      const routes = router[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
       expect(routes).toBeDefined('@Routable class should have had route metadata');
       expect(routes.length).toBe(1, 'There should have been one route defined');
       expect(routes[0].path)
@@ -177,7 +186,7 @@ describe('core/@Routable', () => {
       }
 
       const router = new CoreRoutableTrailingSlashAddTest();
-      const routes = router[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
       expect(routes).toBeDefined('@Routable class should have had route metadata');
       expect(routes.length).toBe(1, 'There should have been one route defined');
       expect(routes[0].path)
@@ -207,20 +216,20 @@ describe('core/@Routable', () => {
       }
 
       const router = new CoreRoutableRoutesWork();
-      const routes = router[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = router[routableSymbols.routes];
+
       expect(routes).toBeDefined('@Routable class should have had route metadata');
       expect(routes.length).toBe(2, 'There should have been one route defined');
       expect(routes[0].path).toBe('/CoreRoutableRoutesWork/a');
       expect(routes[1].path).toBe('/CoreRoutableRoutesWork/b');
       expect(routes[0].method).toBe('aRouteMethod');
       expect(routes[1].method).toBe('bRouteMethod');
-      expect(routes[0].httpMethod).toBe('get');
-      expect(routes[1].httpMethod).toBe('put');
+      expect(routes[0].httpMethods).toEqual(['get']);
+      expect(routes[1].httpMethods).toEqual(['put']);
       expect(routes[0].name).toBe('CoreRoutableRoutesWork');
       expect(routes[1].name).toBe('CoreRoutableRoutesWork');
       expect(typeof routes[0].f).toBe('function');
       expect(typeof routes[1].f).toBe('function');
-
     });
 
     it('maintains the prototype chain', () => {
@@ -293,24 +302,520 @@ describe('core/@Routable', () => {
         }
       }
 
-      const sapi = testSapi({
+      const sapi2 = testSapi({
         models: [],
         routables: [CoreRouteAutoRouteTest]
       });
 
-      sapi
+      sapi2
         .listen({bootMessage: ''})
         .then(() => {
-          return request(sapi.app)
+          return request(sapi2.app)
             .get(testUrl('/someMethodTest5'))
             .expect('Content-Type', /json/)
             .expect('Content-Length', '42')
             .expect('{"someMethodTest5":"testRouterGet worked"}')
             .expect(OK);
         })
-        .then(() => sapi.close())
+        .then(() => sapi2.close())
         .then(done)
         .catch(done.fail);
+    });
+  });
+
+  describe('before and after handlers', () => {
+    describe('beforeAll handlers', () => {
+
+      @Model({
+        dbConfig: {
+          collection: 'users',
+          db: 'userDb'
+        }
+      })
+      class UserBeforeAllHandlers extends SapiModelMixin() {
+        @Db() @Json()
+        firstName = 'George';
+        @Db() @Json()
+        lastName = 'Washington';
+        @Db() @Json()
+        handlerWasRightInstanceOf = false;
+        @Db() @Json()
+        order = '';
+      }
+
+      @Routable({
+        beforeAll: [UserBeforeAllHandlersApi.beforeHandler, testHandler],
+        model: UserBeforeAllHandlers
+      })
+      class UserBeforeAllHandlersApi {
+        static beforeHandler(req: Request, res: Response, next: NextFunction): any {
+          req.body.firstName = 'Abe';
+          req.body.handlerWasRightInstanceOf = this instanceof UserBeforeAllHandlersApi;
+          req.body.order += '1';
+          next();
+        }
+      }
+
+      const sapi = testSapi({
+        models: [UserBeforeAllHandlers],
+        routables: [UserBeforeAllHandlersApi]
+      });
+
+      beforeAll((done) => {
+        sapi
+          .listen({bootMessage: ''})
+          .then(() => UserBeforeAllHandlers.removeAll({}))
+          .then(done)
+          .catch(done.fail);
+      });
+
+      afterAll((done) => {
+        sapi
+          .close()
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('run before each @Route method', (done) => {
+        request(sapi.app)
+          .post(testUrl('/userbeforeallhandlers'))
+          .type('application/json')
+          .send({
+            firstName: 'Ben',
+            lastName: 'Franklin'
+          })
+          .expect(OK)
+          .then((res) => {
+            return UserBeforeAllHandlers
+              .getCollection()
+              .find({_id: new ObjectID(res.body.id)})
+              .next();
+          })
+          .then((res: any) => {
+            expect(res.firstName).toBe('Abe');
+            expect(res.lastName).toBe('Lincoln');
+            expect(res.handlerWasRightInstanceOf).toBeTruthy('UserBeforeAllHandlersApi.beforeHandler should have set' +
+              'this value to true if the handler was bound to the proper context (the handler\'s @Routable class)');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('run in the correct order', (done) => {
+        request(sapi.app)
+          .post(testUrl('/userbeforeallhandlers'))
+          .type('application/json')
+          .send({
+            firstName: 'Ben',
+            lastName: 'Franklin',
+            order: '0'
+          })
+          .expect(OK)
+          .then((res) => {
+            return UserBeforeAllHandlers
+              .getCollection()
+              .find({_id: new ObjectID(res.body.id)})
+              .next();
+          })
+          .then((res: any) => {
+            expect(res.order).toBe('012', 'The beforeAll handlers have run out of order');
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+
+      function testHandler(req: Request, res: Response, next: NextFunction) {
+        req.body.lastName = 'Lincoln';
+        req.body.order += '2';
+        next();
+      }
+    });
+
+    describe('afterAll handlers', () => {
+      let test = 0;
+
+      @Model({
+        dbConfig: {
+          collection: 'users',
+          db: 'userDb'
+        }
+      })
+      class UserAfterAllHandlers extends SapiModelMixin() {
+        @Db() @Json()
+        firstName = 'George';
+        @Db() @Json()
+        lastName = 'Washington';
+        @Db() @Json()
+        handlerWasRightInstanceOf = false;
+        @Db() @Json()
+        order = '1';
+      }
+
+      @Routable({
+        afterAll: [UserAfterAllHandlersApi.afterHandler, testAfterHandler],
+        model: UserAfterAllHandlers
+      })
+      class UserAfterAllHandlersApi {
+        static afterHandler(req: Request, res: Response, next: NextFunction): any {
+          const resLocal = res.locals as IRoutableLocals;
+          UserAfterAllHandlers
+            .getById(resLocal.data.id)
+            .then((result) => {
+              resLocal.data.order = '1';
+              resLocal.data.user = UserAfterAllHandlers.fromDb(result).toJson();
+              next();
+            })
+            .catch(next);
+        }
+      }
+
+      const sapi = testSapi({
+        models: [UserAfterAllHandlers],
+        routables: [UserAfterAllHandlersApi]
+      });
+
+      function testAfterHandler(req: Request, res: Response, next: NextFunction) {
+        const resLocal = res.locals as IRoutableLocals;
+        resLocal.data.order += '2';
+        next();
+      }
+
+      beforeEach((done) => {
+        sapi
+          .listen({bootMessage: ''})
+          .then(() => UserAfterAllHandlers.removeAll({}))
+          .then(done)
+          .catch(done.fail);
+      });
+
+      afterEach((done) => {
+        sapi
+          .close()
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('run after each @Route method', (done) => {
+        request(sapi.app)
+          .post(testUrl(`/UserAfterAllHandlers?test=${++test}`))
+          .type('application/json')
+          .send({
+            firstName: 'Ben',
+            lastName: 'Franklin'
+          })
+          .expect(OK)
+          .then((response) => {
+            const body = response.body;
+            expect(body.count).toBe(1);
+            expect(body.user).toBeDefined();
+            expect(body.user.firstName).toBe('Ben');
+            expect(body.user.lastName).toBe('Franklin');
+            expect(body.user.id).toBe(body.id);
+            expect(body.count).toBe(1);
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+    });
+
+    describe('beforeAll and afterAll handlers play nice together', () => {
+      @Model({
+        dbConfig: {
+          collection: 'users',
+          db: 'userDb'
+        }
+      })
+      class UserAfterAllHandlersBeforeAllHandlers extends SapiModelMixin() {
+        @Db() @Json()
+        firstName = 'George';
+        @Db() @Json()
+        lastName = 'Washington';
+        @Db() @Json()
+        handlerWasRightInstanceOf = false;
+        @Db() @Json()
+        order = '1';
+      }
+
+      @Routable({
+        afterAll: [UserAfterAllHandlersBeforeAllHandlersApi.afterHandler, testAfterHandler],
+        beforeAll: [UserAfterAllHandlersBeforeAllHandlersApi.beforeHandler, testBeforeHandler],
+        model: UserAfterAllHandlersBeforeAllHandlers
+      })
+      class UserAfterAllHandlersBeforeAllHandlersApi {
+        static beforeHandler(req: Request, res: Response, next: NextFunction): any {
+          const resLocal = res.locals as IRoutableLocals;
+          resLocal.data.order = '1b';
+          next();
+        }
+
+        static afterHandler(req: Request, res: Response, next: NextFunction): any {
+          const resLocal = res.locals as IRoutableLocals;
+          resLocal.data.order += '1a';
+          next();
+        }
+      }
+
+      function testBeforeHandler(req: Request, res: Response, next: NextFunction) {
+        const resLocal = res.locals as IRoutableLocals;
+        resLocal.data.order += '2b';
+        next();
+      }
+
+      function testAfterHandler(req: Request, res: Response, next: NextFunction) {
+        const resLocal = res.locals as IRoutableLocals;
+        resLocal.data.order += '2a';
+        next();
+      }
+
+      const sapi = testSapi({
+        models: [UserAfterAllHandlersBeforeAllHandlers],
+        routables: [UserAfterAllHandlersBeforeAllHandlersApi]
+      });
+
+      beforeEach((done) => {
+        sapi
+          .listen({bootMessage: ''})
+          .then(() => UserAfterAllHandlersBeforeAllHandlers.removeAll({}))
+          .then(done)
+          .catch(done.fail);
+      });
+
+      afterEach((done) => {
+        sapi
+          .close()
+          .then(done)
+          .catch(done.fail);
+      });
+
+      it('run after each @Route method', (done) => {
+
+        request(sapi.app)
+          .post(testUrl('/UserAfterAllHandlersBeforeAllHandlers'))
+          .type('application/json')
+          .send({
+            firstName: 'Ben',
+            lastName: 'Franklin'
+          })
+          .expect(OK)
+          .then((response) => {
+            expect(response.body.order).toBe('1b2b1a2a');
+            expect(response.body.count).toBe(1);
+          })
+          .then(done)
+          .catch(done.fail);
+      });
+    });
+
+    describe('before and after handlers can utilize injected route handlers', () => {
+
+      describe('getAllHandler', () => {
+        @Model({
+          dbConfig: {
+            collection: 'BeforeAfterInjectRouteTestModel',
+            db: 'userDb'
+          }
+        })
+        class BeforeAfterInjectRouteTestModel extends SapiModelMixin() {
+          @Db() @Json()
+          firstName = 'George';
+
+          @Db() @Json()
+          lastName = 'Washington';
+        }
+
+        @Routable({
+          baseUrl: 'GetAllRouteHandlerBeforeAfterTest',
+          model: BeforeAfterInjectRouteTestModel
+        })
+        class GetAllRouteHandlerBeforeAfterTest extends SapiRoutableMixin() {
+          static getAfterTest(req: Request, res: Response, next: NextFunction) {
+
+            const resLocal = res.locals as IRoutableLocals;
+            if (Array.isArray(resLocal.data) && resLocal.data.length > 0) {
+              expect(resLocal.data[0].firstName).toBe('Georgie');
+              resLocal.data[0].firstName = 'Georgellio';
+            }
+
+            next();
+          }
+
+          @Route({
+            after: GetAllRouteHandlerBeforeAfterTest.getAfterTest,
+            before: [getAllRouteHandler],
+            method: 'get',
+            path: 'beforeTest/get'
+          })
+          getBeforeTest(req: Request, res: Response, next: NextFunction) {
+
+            const resLocal = res.locals as IRoutableLocals;
+            if (Array.isArray(resLocal.data) && resLocal.data.length > 0) {
+              expect(resLocal.data[0].firstName).toBe('George');
+              resLocal.data[0].firstName = 'Georgie';
+            }
+
+            next();
+          }
+        }
+
+        const sapi = testSapi({
+          models: [BeforeAfterInjectRouteTestModel],
+          routables: [GetAllRouteHandlerBeforeAfterTest]
+        });
+
+        afterEach((done) => {
+          sapi
+            .close()
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('with result', (done) => {
+
+          sapi
+            .listen({bootMessage: ''})
+            .then(() => new BeforeAfterInjectRouteTestModel().create())
+            .then(() => {
+              return request(sapi.app)
+                .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
+                .expect(OK)
+                .then((res) => {
+                  const body = res.body;
+                  expect(body.length).toBe(1);
+                  expect(body[0].firstName).toBe('Georgellio');
+                  expect(body[0].lastName).toBe('Washington');
+                  expect(body[0].id).toBeDefined();
+                });
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('without results', (done) => {
+          sapi
+            .listen({bootMessage: ''})
+            .then(() => BeforeAfterInjectRouteTestModel.removeAll({}))
+            .then(() => {
+              return request(sapi.app)
+                .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
+                .expect(OK)
+                .then((res) => {
+                  const body = res.body;
+                  expect(Array.isArray(body)).toBeTruthy();
+                  expect(body.length).toBe(0);
+                });
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+      });
+
+      describe('get handler', () => {
+        @Model({
+          dbConfig: {
+            collection: 'BeforeAfterInjectRouteTestModel',
+            db: 'userDb'
+          }
+        })
+        class BeforeAfterInjectRouteTestModel extends SapiModelMixin() {
+          @Db() @Json()
+          firstName = 'George';
+
+          @Db() @Json()
+          lastName = 'Washington';
+        }
+
+        @Routable({
+          baseUrl: 'GetRouteHandlerBeforeAfterTest',
+          model: BeforeAfterInjectRouteTestModel
+        })
+        class GetRouteHandlerBeforeAfterTest extends SapiRoutableMixin() {
+          static getAfterTest(req: Request, res: Response, next: NextFunction) {
+            const resLocal = res.locals as IRoutableLocals;
+
+            if (resLocal.data !== null) {
+              expect(resLocal.data.firstName).toBe('Georgie');
+              resLocal.data.firstName = 'Georgellio';
+            } else {
+              resLocal.data = 'ok';
+            }
+
+            next();
+          }
+
+          @Route({
+            after: GetRouteHandlerBeforeAfterTest.getAfterTest,
+            before: [getRouteHandler],
+            method: 'get',
+            path: 'beforeTest/get/:id'
+          })
+          getBeforeTest(req: Request, res: Response, next: NextFunction) {
+            const resLocal = res.locals as IRoutableLocals;
+            expect(resLocal.data.firstName).toBe('George');
+            resLocal.data.firstName = 'Georgie';
+            next();
+          }
+
+          @Route({
+            after: GetRouteHandlerBeforeAfterTest.getAfterTest,
+            before: [getRouteHandler],
+            method: 'get',
+            path: 'beforeTest/get2/:id'
+          })
+          get2BeforeTest(req: Request, res: Response, next: NextFunction) {
+            const resLocal = res.locals as IRoutableLocals;
+            expect(resLocal.data).toBe(null);
+            next();
+          }
+
+        }
+
+        const sapi = testSapi({
+          models: [BeforeAfterInjectRouteTestModel],
+          routables: [GetRouteHandlerBeforeAfterTest]
+        });
+
+        afterEach((done) => {
+          sapi
+            .close()
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('with valid id', (done) => {
+          sapi
+            .listen({bootMessage: ''})
+            .then(() => new BeforeAfterInjectRouteTestModel().create())
+            .then((db) => {
+              return request(sapi.app)
+                .get(testUrl(`/GetRouteHandlerBeforeAfterTest/beforeTest/get/${db.insertedId}`))
+                .expect(OK)
+                .then((res) => {
+                  const body = res.body;
+                  expect(body.firstName).toBe('Georgellio');
+                  expect(body.lastName).toBe('Washington');
+                  expect(body.id).toBeDefined();
+                });
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+
+        it('with invalid id', (done) => {
+          sapi
+            .listen({bootMessage: ''})
+            .then(() => {
+              return request(sapi.app)
+                .get(testUrl(`/GetRouteHandlerBeforeAfterTest/beforeTest/get2/123`))
+                .expect(OK)
+                .then((res) => {
+                  const body = res.body;
+                  expect(body).toBe('ok');
+                });
+            })
+            .then(done)
+            .catch(done.fail);
+        });
+      });
     });
   });
 
@@ -1209,24 +1714,21 @@ describe('core/@Routable', () => {
       });
 
       describe('exposeApi suppresses non exposed endpoints', () => {
-        @Routable({
-          exposeApi: ['delete'],
-          model: User
-        })
-        class RoutableExposeApiTest {
-
-        }
-
-        @Routable({
-          exposeApi: ['invalid' as any],
-          model: User
-        })
-        class RoutableExposeApiInvalidTest {
-
-        }
-
         it('only the exposeApi endpoints are added', () => {
+          @Model()
+          class TestModel {
+          }
+
+          @Routable({
+            exposeApi: ['delete'],
+            model: TestModel
+          })
+          class RoutableExposeApiTest {
+
+          }
+
           testSapi({
+            models: [TestModel],
             routables: [RoutableExposeApiTest]
           });
 
@@ -1234,11 +1736,23 @@ describe('core/@Routable', () => {
 
           expect(routableExposeApiTest[routableSymbols.routes].length).toBe(1);
           expect(routableExposeApiTest[routableSymbols.routes][0].method).toBe('deleteRouteHandler');
-
         });
 
         it('invalid exposeApi option', () => {
+          @Model()
+          class TestModel {
+          }
+
+          @Routable({
+            exposeApi: ['invalid' as any],
+            model: User
+          })
+          class RoutableExposeApiInvalidTest {
+
+          }
+
           testSapi({
+            models: [TestModel],
             routables: [RoutableExposeApiInvalidTest]
           });
 
@@ -1248,9 +1762,14 @@ describe('core/@Routable', () => {
       });
 
       describe('suppressApi exposes non suppressed endpoints', () => {
+
+        @Model()
+        class Bob {
+        }
+
         @Routable({
           baseUrl: 'RoutableSuppressApiTrueTest',
-          model: User,
+          model: Bob,
           suppressApi: true
         })
         class RoutableSuppressApiTrueTest {
@@ -1258,23 +1777,26 @@ describe('core/@Routable', () => {
 
         @Routable({
           baseUrl: 'RoutableSuppressApiTrueTest',
-          model: User,
+          model: Bob,
           suppressApi: ['post']
         })
         class RoutableSuppressApiPostTest {
         }
 
         it('suppressess all model generated endpoints when suppressApi is set to true rather than an array', () => {
-          testSapi({
+          const sapi2 = testSapi({
             routables: [RoutableSuppressApiTrueTest]
           });
 
           const routableSuppressApiTrueTest = new RoutableSuppressApiTrueTest();
           expect(routableSuppressApiTrueTest[routableSymbols.routes].length).toBe(0);
+
+          sapi2.deregisterDependencies();
         });
 
         it('suppressess only generated endpoints that are not suppressed', () => {
-          testSapi({
+          const sapi2 = testSapi({
+            models: [Bob],
             routables: [RoutableSuppressApiPostTest]
           });
 
@@ -1284,538 +1806,10 @@ describe('core/@Routable', () => {
           for (let i = 0; i < routableSuppressApiPostTest[routableSymbols.routes].length; i++) {
             expect(routableSuppressApiPostTest[routableSymbols.routes][i].httpMethod).not.toBe('post');
           }
+
+          sapi2.deregisterDependencies();
         });
       });
-    });
-  });
-
-  describe('beforeAll handlers', () => {
-
-    @Model({
-      dbConfig: {
-        collection: 'users',
-        db: 'userDb'
-      }
-    })
-    class UserBeforeAllHandlers extends SapiModelMixin() {
-      @Db() @Json()
-      firstName = 'George';
-      @Db() @Json()
-      lastName = 'Washington';
-      @Db() @Json()
-      handlerWasRightInstanceOf = false;
-      @Db() @Json()
-      order = '';
-    }
-
-    @Routable({
-      beforeAll: [UserBeforeAllHandlersApi.beforeHandler, testHandler],
-      model: UserBeforeAllHandlers
-    })
-    class UserBeforeAllHandlersApi {
-      static beforeHandler(req: Request, res: Response, next: NextFunction): any {
-        req.body.firstName = 'Abe';
-        req.body.handlerWasRightInstanceOf = this instanceof UserBeforeAllHandlersApi;
-        req.body.order += '1';
-        next();
-      }
-    }
-
-    const sapi = testSapi({
-      models: [UserBeforeAllHandlers],
-      routables: [UserBeforeAllHandlersApi]
-    });
-
-    beforeAll((done) => {
-      sapi
-        .listen({bootMessage: ''})
-        .then(() => UserBeforeAllHandlers.removeAll({}))
-        .then(done)
-        .catch(done.fail);
-    });
-
-    afterAll((done) => {
-      sapi
-        .close()
-        .then(done)
-        .catch(done.fail);
-    });
-
-    it('run before each @Route method', (done) => {
-      request(sapi.app)
-        .post(testUrl('/userbeforeallhandlers'))
-        .type('application/json')
-        .send({
-          firstName: 'Ben',
-          lastName: 'Franklin'
-        })
-        .expect(OK)
-        .then((res) => {
-          return UserBeforeAllHandlers
-            .getCollection()
-            .find({_id: new ObjectID(res.body.id)})
-            .next();
-        })
-        .then((res: any) => {
-          expect(res.firstName).toBe('Abe');
-          expect(res.lastName).toBe('Lincoln');
-          expect(res.handlerWasRightInstanceOf).toBeTruthy('UserBeforeAllHandlersApi.beforeHandler should have set' +
-            'this value to true if the handler was bound to the proper context (the handler\'s @Routable class)');
-        })
-        .then(done)
-        .catch(done.fail);
-    });
-
-    it('run in the correct order', (done) => {
-      request(sapi.app)
-        .post(testUrl('/userbeforeallhandlers'))
-        .type('application/json')
-        .send({
-          firstName: 'Ben',
-          lastName: 'Franklin',
-          order: '0'
-        })
-        .expect(OK)
-        .then((res) => {
-          return UserBeforeAllHandlers
-            .getCollection()
-            .find({_id: new ObjectID(res.body.id)})
-            .next();
-        })
-        .then((res: any) => {
-          expect(res.order).toBe('012', 'The beforeAll handlers have run out of order');
-        })
-        .then(done)
-        .catch(done.fail);
-    });
-
-    function testHandler(req: Request, res: Response, next: NextFunction) {
-      req.body.lastName = 'Lincoln';
-      req.body.order += '2';
-      next();
-    }
-  });
-
-  describe('afterAll handlers', () => {
-    let test = 0;
-
-    @Model({
-      dbConfig: {
-        collection: 'users',
-        db: 'userDb'
-      }
-    })
-    class UserAfterAllHandlers extends SapiModelMixin() {
-      @Db() @Json()
-      firstName = 'George';
-      @Db() @Json()
-      lastName = 'Washington';
-      @Db() @Json()
-      handlerWasRightInstanceOf = false;
-      @Db() @Json()
-      order = '1';
-    }
-
-    @Routable({
-      afterAll: [UserAfterAllHandlersApi.afterHandler, testAfterHandler],
-      model: UserAfterAllHandlers
-    })
-    class UserAfterAllHandlersApi {
-      static afterHandler(req: Request, res: Response, next: NextFunction): any {
-        const resLocal = res.locals as IRoutableLocals;
-        UserAfterAllHandlers
-          .getById(resLocal.data.id)
-          .then((result) => {
-            resLocal.data.order = '1';
-            resLocal.data.user = UserAfterAllHandlers.fromDb(result).toJson();
-            next();
-          })
-          .catch(next);
-      }
-    }
-
-    const sapi = testSapi({
-      models: [UserAfterAllHandlers],
-      routables: [UserAfterAllHandlersApi]
-    });
-
-    function testAfterHandler(req: Request, res: Response, next: NextFunction) {
-      const resLocal = res.locals as IRoutableLocals;
-      resLocal.data.order += '2';
-      next();
-    }
-
-    beforeEach((done) => {
-      sapi
-        .listen({bootMessage: ''})
-        .then(() => UserAfterAllHandlers.removeAll({}))
-        .then(done)
-        .catch(done.fail);
-    });
-
-    afterEach((done) => {
-      sapi
-        .close()
-        .then(done)
-        .catch(done.fail);
-    });
-
-    it('run after each @Route method', (done) => {
-      request(sapi.app)
-        .post(testUrl(`/UserAfterAllHandlers?test=${++test}`))
-        .type('application/json')
-        .send({
-          firstName: 'Ben',
-          lastName: 'Franklin'
-        })
-        .expect(OK)
-        .then((response) => {
-          const body = response.body;
-          expect(body.count).toBe(1);
-          expect(body.user).toBeDefined();
-          expect(body.user.firstName).toBe('Ben');
-          expect(body.user.lastName).toBe('Franklin');
-          expect(body.user.id).toBe(body.id);
-          expect(body.count).toBe(1);
-        })
-        .then(done)
-        .catch(done.fail);
-    });
-  });
-
-  describe('beforeAll and afterAll handlers play nice together', () => {
-    @Model({
-      dbConfig: {
-        collection: 'users',
-        db: 'userDb'
-      }
-    })
-    class UserAfterAllHandlersBeforeAllHandlers extends SapiModelMixin() {
-      @Db() @Json()
-      firstName = 'George';
-      @Db() @Json()
-      lastName = 'Washington';
-      @Db() @Json()
-      handlerWasRightInstanceOf = false;
-      @Db() @Json()
-      order = '1';
-    }
-
-    @Routable({
-      afterAll: [UserAfterAllHandlersBeforeAllHandlersApi.afterHandler, testAfterHandler],
-      beforeAll: [UserAfterAllHandlersBeforeAllHandlersApi.beforeHandler, testBeforeHandler],
-      model: UserAfterAllHandlersBeforeAllHandlers
-    })
-    class UserAfterAllHandlersBeforeAllHandlersApi {
-      static beforeHandler(req: Request, res: Response, next: NextFunction): any {
-        const resLocal = res.locals as IRoutableLocals;
-        resLocal.data.order = '1b';
-        next();
-      }
-
-      static afterHandler(req: Request, res: Response, next: NextFunction): any {
-        const resLocal = res.locals as IRoutableLocals;
-        resLocal.data.order += '1a';
-        next();
-      }
-    }
-
-    function testBeforeHandler(req: Request, res: Response, next: NextFunction) {
-      const resLocal = res.locals as IRoutableLocals;
-      resLocal.data.order += '2b';
-      next();
-    }
-
-    function testAfterHandler(req: Request, res: Response, next: NextFunction) {
-      const resLocal = res.locals as IRoutableLocals;
-      resLocal.data.order += '2a';
-      next();
-    }
-
-    const sapi = testSapi({
-      models: [UserAfterAllHandlersBeforeAllHandlers],
-      routables: [UserAfterAllHandlersBeforeAllHandlersApi]
-    });
-
-    beforeEach((done) => {
-      sapi
-        .listen({bootMessage: ''})
-        .then(() => UserAfterAllHandlersBeforeAllHandlers.removeAll({}))
-        .then(done)
-        .catch(done.fail);
-    });
-
-    afterEach((done) => {
-      sapi
-        .close()
-        .then(done)
-        .catch(done.fail);
-    });
-
-    it('run after each @Route method', (done) => {
-
-      request(sapi.app)
-        .post(testUrl('/UserAfterAllHandlersBeforeAllHandlers'))
-        .type('application/json')
-        .send({
-          firstName: 'Ben',
-          lastName: 'Franklin'
-        })
-        .expect(OK)
-        .then((response) => {
-          expect(response.body.order).toBe('1b2b1a2a');
-          expect(response.body.count).toBe(1);
-        })
-        .then(done)
-        .catch(done.fail);
-    });
-  });
-
-  describe('before and after handlers can utilize injected route handlers', () => {
-
-    describe('getAllHandler', () => {
-      @Model({
-        dbConfig: {
-          collection: 'BeforeAfterInjectRouteTestModel',
-          db: 'userDb'
-        }
-      })
-      class BeforeAfterInjectRouteTestModel extends SapiModelMixin() {
-        @Db() @Json()
-        firstName = 'George';
-
-        @Db() @Json()
-        lastName = 'Washington';
-      }
-
-      @Routable({
-        baseUrl: 'GetAllRouteHandlerBeforeAfterTest',
-        model: BeforeAfterInjectRouteTestModel
-      })
-      class GetAllRouteHandlerBeforeAfterTest extends SapiRoutableMixin() {
-        static getAfterTest(req: Request, res: Response, next: NextFunction) {
-
-          const resLocal = res.locals as IRoutableLocals;
-          if (Array.isArray(resLocal.data) && resLocal.data.length > 0) {
-            expect(resLocal.data[0].firstName).toBe('Georgie');
-            resLocal.data[0].firstName = 'Georgellio';
-          }
-
-          next();
-        }
-
-        @Route({
-          after: GetAllRouteHandlerBeforeAfterTest.getAfterTest,
-          before: [getAllRouteHandler],
-          method: 'get',
-          path: 'beforeTest/get'
-        })
-        getBeforeTest(req: Request, res: Response, next: NextFunction) {
-
-          const resLocal = res.locals as IRoutableLocals;
-          if (Array.isArray(resLocal.data) && resLocal.data.length > 0) {
-            expect(resLocal.data[0].firstName).toBe('George');
-            resLocal.data[0].firstName = 'Georgie';
-          }
-
-          next();
-        }
-      }
-
-      const sapi = testSapi({
-        models: [BeforeAfterInjectRouteTestModel],
-        routables: [GetAllRouteHandlerBeforeAfterTest]
-      });
-
-      afterEach((done) => {
-        sapi
-          .close()
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('with result', (done) => {
-
-        sapi
-          .listen({bootMessage: ''})
-          .then(() => new BeforeAfterInjectRouteTestModel().create())
-          .then(() => {
-            return request(sapi.app)
-              .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
-              .expect(OK)
-              .then((res) => {
-                const body = res.body;
-                expect(body.length).toBe(1);
-                expect(body[0].firstName).toBe('Georgellio');
-                expect(body[0].lastName).toBe('Washington');
-                expect(body[0].id).toBeDefined();
-              });
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('without results', (done) => {
-        sapi
-          .listen({bootMessage: ''})
-          .then(() => BeforeAfterInjectRouteTestModel.removeAll({}))
-          .then(() => {
-            return request(sapi.app)
-              .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
-              .expect(OK)
-              .then((res) => {
-                const body = res.body;
-                expect(Array.isArray(body)).toBeTruthy();
-                expect(body.length).toBe(0);
-              });
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-    });
-
-    describe('get handler', () => {
-      @Model({
-        dbConfig: {
-          collection: 'BeforeAfterInjectRouteTestModel',
-          db: 'userDb'
-        }
-      })
-      class BeforeAfterInjectRouteTestModel extends SapiModelMixin() {
-        @Db() @Json()
-        firstName = 'George';
-
-        @Db() @Json()
-        lastName = 'Washington';
-      }
-
-      @Routable({
-        baseUrl: 'GetRouteHandlerBeforeAfterTest',
-        model: BeforeAfterInjectRouteTestModel
-      })
-      class GetRouteHandlerBeforeAfterTest extends SapiRoutableMixin() {
-        static getAfterTest(req: Request, res: Response, next: NextFunction) {
-          const resLocal = res.locals as IRoutableLocals;
-
-          if (resLocal.data !== null) {
-            expect(resLocal.data.firstName).toBe('Georgie');
-            resLocal.data.firstName = 'Georgellio';
-          } else {
-            resLocal.data = 'ok';
-          }
-
-          next();
-        }
-
-        @Route({
-          after: GetRouteHandlerBeforeAfterTest.getAfterTest,
-          before: [getRouteHandler],
-          method: 'get',
-          path: 'beforeTest/get/:id'
-        })
-        getBeforeTest(req: Request, res: Response, next: NextFunction) {
-          const resLocal = res.locals as IRoutableLocals;
-          expect(resLocal.data.firstName).toBe('George');
-          resLocal.data.firstName = 'Georgie';
-          next();
-        }
-
-        @Route({
-          after: GetRouteHandlerBeforeAfterTest.getAfterTest,
-          before: [getRouteHandler],
-          method: 'get',
-          path: 'beforeTest/get2/:id'
-        })
-        get2BeforeTest(req: Request, res: Response, next: NextFunction) {
-          const resLocal = res.locals as IRoutableLocals;
-          expect(resLocal.data).toBe(null);
-          next();
-        }
-
-      }
-
-      const sapi = testSapi({
-        models: [BeforeAfterInjectRouteTestModel],
-        routables: [GetRouteHandlerBeforeAfterTest]
-      });
-
-      afterEach((done) => {
-        sapi
-          .close()
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('with valid id', (done) => {
-        sapi
-          .listen({bootMessage: ''})
-          .then(() => new BeforeAfterInjectRouteTestModel().create())
-          .then((db) => {
-            return request(sapi.app)
-              .get(testUrl(`/GetRouteHandlerBeforeAfterTest/beforeTest/get/${db.insertedId}`))
-              .expect(OK)
-              .then((res) => {
-                const body = res.body;
-                expect(body.firstName).toBe('Georgellio');
-                expect(body.lastName).toBe('Washington');
-                expect(body.id).toBeDefined();
-              });
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-
-      it('with invalid id', (done) => {
-        sapi
-          .listen({bootMessage: ''})
-          .then(() => {
-            return request(sapi.app)
-              .get(testUrl(`/GetRouteHandlerBeforeAfterTest/beforeTest/get2/123`))
-              .expect(OK)
-              .then((res) => {
-                const body = res.body;
-                expect(body).toBe('ok');
-              });
-          })
-          .then(done)
-          .catch(done.fail);
-      });
-    });
-  });
-
-  describe('sapi injected', () => {
-
-    @Routable()
-    class TestRoutableSapiInjection extends SapiModelMixin() {
-    }
-
-    let sapi;
-    beforeEach(() => {
-      sapi = testSapi({
-        models: [],
-        routables: [TestRoutableSapiInjection]
-      });
-    });
-
-    it('@Routable has reference to sapi injected as symbol when SakuraApi is constructed', () => {
-      const sapiRef = TestRoutableSapiInjection[routableSymbols.sapi];
-
-      expect(sapiRef).toBeDefined();
-      expect(sapiRef instanceof SakuraApi).toBe(true, 'Should have been an instance of SakuraApi'
-        + ` but was an instance of ${sapiRef.name || (sapiRef.constructor || {} as any).name} instead`);
-    });
-
-    it('@Routable has reference to sapi injected as symbol when SakuraApi is constructed', () => {
-      const sapiRef = TestRoutableSapiInjection.sapi;
-
-      expect(sapiRef).toBeDefined();
-      expect(sapiRef instanceof SakuraApi).toBe(true, 'Should have been an instance of SakuraApi'
-        + ` but was an instance of ${(sapiRef as any).name || (sapiRef.constructor || {} as any).name} instead`);
-    });
-
-    it('@Routable injects sapiConfig to make it easier to get access to sapiConfig', () => {
-      expect(TestRoutableSapiInjection.sapiConfig).toBeDefined();
-      expect(TestRoutableSapiInjection.sapiConfig.SAKURA_API_CONFIG_TEST).toBe('found');
     });
   });
 
@@ -1893,9 +1887,9 @@ describe('core/@Routable', () => {
         routables: [SetsUpRoutableLevelRoutes]
       });
 
-      const R = sapi.getRoutableByName('SetsUpRoutableLevelRoutes');
+      const R = sapi.getRoutable(SetsUpRoutableLevelRoutes);
       const r = new R();
-      const routes = r[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = r[routableSymbols.routes];
 
       expect(routes.length).toBe(1);
       expect(routes[0].authenticators.length).toBe(2);
@@ -1915,9 +1909,9 @@ describe('core/@Routable', () => {
         routables: [SetsUpRoutableLevelRoutes]
       });
 
-      const R = sapi.getRoutableByName('SetsUpRoutableLevelRoutes');
+      const R = sapi.getRoutable(SetsUpRoutableLevelRoutes);
       const r = new R();
-      const routes = r[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = r[routableSymbols.routes];
 
       expect(routes.length).toBe(1);
       expect(routes[0].authenticators.length).toBe(2);
@@ -1937,9 +1931,9 @@ describe('core/@Routable', () => {
         routables: [SetsUpRoutableLevelRoutes]
       });
 
-      const R = sapi.getRoutableByName('SetsUpRoutableLevelRoutes');
+      const R = sapi.getRoutable(SetsUpRoutableLevelRoutes);
       const r = new R();
-      const routes = r[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = r[routableSymbols.routes];
 
       expect(routes.length).toBe(1);
       expect(routes[0].authenticators.length).toBe(4);
@@ -1972,9 +1966,9 @@ describe('core/@Routable', () => {
         routables: [SetsUpRoutableLevelRoutes]
       });
 
-      const R = sapi.getRoutableByName('SetsUpRoutableLevelRoutes');
+      const R = sapi.getRoutable(SetsUpRoutableLevelRoutes);
       const r = new R();
-      const routes = r[routableSymbols.routes];
+      const routes: ISakuraApiClassRoute[] = r[routableSymbols.routes];
 
       expect(routes.length).toBe(2);
       expect(routes[0].method).toBe('test');
@@ -1991,5 +1985,141 @@ describe('core/@Routable', () => {
       expect(routes[1].authenticators[3]).toBe(TestAuthenticator1);
     });
   });
+
+  describe('dependency injection', () => {
+
+    @Routable()
+    class TestDi {
+    }
+
+    @Routable()
+    class TestDiOverride {
+    }
+
+    it('decorates @Routable class with DI id', () => {
+      const test = new TestDi();
+
+      expect(TestDi[routableSymbols.id].split('-').length).toBe(5);
+
+      expect(test[routableSymbols.isSakuraApiRoutable]).toBe(true);
+      expect(TestDi[routableSymbols.isSakuraApiRoutable]).toBeTruthy();
+
+      expect(() => TestDi[routableSymbols.id] = null).toThrowError(`Cannot assign to read only property ` +
+        `'Symbol(routableId)' of function '[object Function]'`);
+      expect(() => test[routableSymbols.isSakuraApiRoutable] = false)
+        .toThrowError(`Cannot assign to read only property 'Symbol(isSakuraApiRoutable)' of object '#<TestDi>'`);
+    });
+
+    it('can retrieve Routable by name', () => {
+      const sapi = testSapi({
+        routables: [TestDi]
+      });
+
+      // tslint:disable-next-line:variable-name
+      const R = sapi.getRoutableByName('TestDi');
+
+      expect(R).toBeDefined('Routable should have been defined');
+      expect(new R() instanceof TestDi).toBeTruthy('Should have been an instance of TestDIRoutable ' +
+        `but instead was an instsance of ${(R.constructor || {} as any).name || R.name}`);
+
+      sapi.deregisterDependencies();
+    });
+
+    it('allows overriding of @Routable decorated class', () => {
+      const sapi = testSapi({
+        routables: [{use: TestDiOverride, for: TestDi}]
+      });
+
+      // tslint:disable-next-line:variable-name
+      const TestRoutable = sapi.getRoutable(TestDi);
+      const testRoutable = new TestRoutable();
+
+      expect(TestRoutable).toBeDefined('Routable should have been defined');
+      expect(testRoutable instanceof TestDiOverride).toBeTruthy('Should have been an instance of ' +
+        `TestDiOverride but instead was an instsance of ` +
+        `${(testRoutable.constructor || {} as any).name || testRoutable.name}`);
+
+      sapi.deregisterDependencies();
+    });
+
+    describe('sapi injected', () => {
+
+      @Routable()
+      class TestRoutableSapiInjection extends SapiModelMixin() {
+      }
+
+      let sapi: SakuraApi;
+      beforeEach(() => {
+        sapi = testSapi({
+          routables: [TestRoutableSapiInjection]
+        });
+      });
+
+      afterEach(() => {
+        sapi.deregisterDependencies();
+      });
+
+      it('@Routable has reference to sapi injected as symbol when SakuraApi is constructed', () => {
+        const sapiRef = TestRoutableSapiInjection[routableSymbols.sapi];
+
+        expect(sapiRef).toBeDefined();
+        expect(sapiRef instanceof SakuraApi).toBe(true, 'Should have been an instance of SakuraApi'
+          + ` but was an instance of ${sapiRef.name || (sapiRef.constructor || {} as any).name} instead`);
+      });
+
+      it('@Routable has reference to sapi injected as symbol when SakuraApi is constructed', () => {
+        const sapiRef = TestRoutableSapiInjection.sapi;
+
+        expect(sapiRef).toBeDefined();
+        expect(sapiRef instanceof SakuraApi).toBe(true, 'Should have been an instance of SakuraApi'
+          + ` but was an instance of ${(sapiRef as any).name || (sapiRef.constructor || {} as any).name} instead`);
+      });
+
+      it('@Routable injects sapiConfig to make it easier to get access to sapiConfig', () => {
+        expect(TestRoutableSapiInjection.sapiConfig).toBeDefined();
+        expect(TestRoutableSapiInjection.sapiConfig.SAKURA_API_CONFIG_TEST).toBe('found');
+      });
+    });
+
+    describe('SakuraApi.getRoutable', () => {
+      it('does not allow non @Routable parameter in sapi.getModel', () => {
+        class TestClass {
+        }
+
+        const sapi = testSapi({});
+
+        expect(() => sapi.getRoutable({})).toThrowError(RoutablesMustBeDecoratedWithRoutableError);
+        expect(() => sapi.getRoutable(TestClass)).toThrowError(RoutablesMustBeDecoratedWithRoutableError);
+        expect(() => sapi.getRoutable('')).toThrowError(RoutablesMustBeDecoratedWithRoutableError);
+        expect(() => sapi.getRoutable(1)).toThrowError(RoutablesMustBeDecoratedWithRoutableError);
+        expect(() => sapi.getRoutable(null)).toThrowError(RoutablesMustBeDecoratedWithRoutableError);
+        expect(() => sapi.getRoutable(undefined)).toThrowError(RoutablesMustBeDecoratedWithRoutableError);
+      });
+
+      it('throws RoutableNotRegistered when attempting to get unregistered routable', () => {
+        @Routable()
+        class Invalid {
+        }
+
+        const sapi = testSapi({});
+
+        expect(() => sapi.getRoutable(Invalid)).toThrowError(RoutableNotRegistered);
+      });
+
+      it('gets a routable', () => {
+        @Routable()
+        class TestRoutable {
+        }
+
+        const sapi2 = testSapi({
+          routables: [TestRoutable]
+        });
+
+        const result = sapi2.getRoutable(TestRoutable);
+        expect(result.constructor).toEqual(TestRoutable.constructor);
+
+        sapi2.deregisterDependencies();
+      });
+    });
+  });
 });
-// tslint:enable:no-shadowed-variable

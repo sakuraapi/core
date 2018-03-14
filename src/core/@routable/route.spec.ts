@@ -2,129 +2,109 @@ import {
   NextFunction,
   Request,
   Response
-}                          from 'express';
-import * as request        from 'supertest';
+}                             from 'express';
+import * as request           from 'supertest';
 import {
   testSapi,
   testUrl
-}                          from '../../../spec/helpers/sakuraapi';
+}                             from '../../../spec/helpers/sakuraapi';
 import {
   Db,
   Json,
-  Model
-}                          from '../@model';
-import {SapiModelMixin}    from '../@model/sapi-model-mixin';
-import {OK} from '../helpers/http-status';
+  Model,
+  SapiModelMixin
+}                             from '../@model';
+import {OK}                   from '../helpers';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
   IAuthenticator,
   IAuthenticatorConstructor
-}                          from '../plugins';
+}                             from '../plugins';
+import {SakuraApi}            from '../sakura-api';
 import {
   IRoutableLocals,
   Routable,
   routableSymbols,
   Route
-}                          from './';
-import {SapiRoutableMixin} from './sapi-routable-mixin';
+}                             from './';
+import {ISakuraApiClassRoute} from './routable';
+import {validHttpMethods}     from './route';
+import {SapiRoutableMixin}    from './sapi-routable-mixin';
 
 describe('core/Route', () => {
-  @Routable({
-    baseUrl: 'testCoreRoute',
-    blackList: ['someBlacklistedMethod']
-  })
-  class TestCoreRoute extends SapiRoutableMixin() {
-    @Route({
-      method: 'get',
-      path: '/'
+
+  describe('general functionality', () => {
+    @Routable({
+      baseUrl: 'testCoreRoute',
+      blackList: ['someBlacklistedMethod']
     })
-    someMethod(req: Request, res: Response) {
-      res
-        .status(OK)
-        .send({someMethodCalled: true});
-    }
-
-    @Route({
-      method: 'post',
-      path: 'someOtherMethod/'
-    })
-    someOtherMethod(req: Request, res: Response) {
-      res
-        .status(OK)
-        .send({someOtherMethodCalled: true});
-    }
-
-    @Route({
-      method: 'post',
-      path: 'someBlacklistedMethod/'
-    })
-    someBlacklistedMethod(req: Request, res: Response) {
-      res
-        .status(OK)
-        .send({someOtherMethodCalled: true});
-    }
-
-    @Route({
-      method: 'post',
-      path: 'methodStillWorks/'
-    })
-    methodStillWorks() {
-      return 'it works';
-    }
-
-    @Route()
-    emptyRouteDecorator() {
-      // lint empty
-    }
-  }
-
-  beforeEach(() => {
-    this.t = new TestCoreRoute();
-    this.routes = this.t[routableSymbols.routes];
-  });
-
-  it('gracefully handles an empty @Route(...), defaults path to baseUri/', () => {
-    // if these expectations pass, the blackList was properly defaulted to false since
-    // the route wouldn't be in sakuraApiClassRoutes if blackList had been true.
-    expect(this.routes.length).toBe(4);
-    expect(this.routes[3].path).toBe('/testCoreRoute');
-    expect(this.routes[3].httpMethod).toBe('get');
-    expect(this.routes[3].method).toBe('emptyRouteDecorator');
-  });
-
-  it('maintains the original functionality of the method', () => {
-    const returnValue = this.routes[2].f();
-    expect(returnValue).toBe('it works');
-  });
-
-  it('throws an exception when an invalid HTTP method is specificed', () => {
-    let err;
-    try {
-      @Routable()
-      class X {
-        @Route({method: 'imnotarealhttpmethod'})
-        badHttpMethod() {
-          // lint empty
-        }
+    class TestCoreRoute extends SapiRoutableMixin() {
+      @Route({
+        method: 'get',
+        path: '/'
+      })
+      someMethod(req: Request, res: Response) {
+        res
+          .status(OK)
+          .send({someMethodCalled: true});
       }
-    } catch (e) {
-      err = e;
-    }
-    expect(err).toBeDefined();
-  });
 
-  it('excludes a method level blacklisted @Route', () => {
-    @Routable()
-    class Test3 {
-      @Route({blackList: true})
-      blackListedMethod() {
+      @Route({
+        method: 'post',
+        path: 'someOtherMethod/'
+      })
+      someOtherMethod(req: Request, res: Response) {
+        res
+          .status(OK)
+          .send({someOtherMethodCalled: true});
+      }
+
+      @Route({
+        method: 'post',
+        path: 'someBlacklistedMethod/'
+      })
+      someBlacklistedMethod(req: Request, res: Response) {
+        res
+          .status(OK)
+          .send({someOtherMethodCalled: true});
+      }
+
+      @Route({
+        method: 'post',
+        path: 'methodStillWorks/'
+      })
+      methodStillWorks() {
+        return 'it works';
+      }
+
+      @Route()
+      emptyRouteDecorator() {
         // lint empty
       }
     }
 
-    const t3 = new Test3();
-    expect(t3[routableSymbols.routes].length).toBe(0);
+    let routes: ISakuraApiClassRoute[];
+
+    beforeEach(() => {
+      const testRoute = new TestCoreRoute();
+      routes = testRoute[routableSymbols.routes];
+    });
+
+    it('gracefully handles an empty @Route(...), defaults path to baseUri/', () => {
+      // if these expectations pass, the blackList was properly defaulted to false since
+      // the route wouldn't be in sakuraApiClassRoutes if blackList had been true.
+      expect(routes.length).toBe(4);
+      expect(routes[3].path).toBe('/testCoreRoute');
+      expect(routes[3].httpMethods).toEqual(['get']);
+      expect(routes[3].method).toBe('emptyRouteDecorator');
+    });
+
+    it('maintains the original functionality of the method', () => {
+      const returnValue = routes[2].f(null, null, null);
+      expect(returnValue).toBe('it works');
+    });
+
   });
 
   describe('handles route parameters', () => {
@@ -184,7 +164,7 @@ describe('core/Route', () => {
         .catch(done.fail);
     });
 
-    it('at the end of the path', (done) => {
+    it('mid path', (done) => {
       request(sapi.app)
         .get(testUrl('/handlesRouteParamtersTest/route2/888/test'))
         .expect('Content-Type', /json/)
@@ -398,7 +378,7 @@ describe('core/Route', () => {
         }
       }
 
-      const sapi = testSapi({
+      testSapi({
         routables: [TestRoutable]
       });
 
@@ -423,7 +403,7 @@ describe('core/Route', () => {
         }
       }
 
-      const sapi = testSapi({
+      testSapi({
         routables: [TestRoutable]
       });
 
@@ -445,7 +425,7 @@ describe('core/Route', () => {
         }
       }
 
-      const sapi = testSapi({
+      testSapi({
         routables: [TestRoutable]
       });
 
@@ -455,6 +435,225 @@ describe('core/Route', () => {
       expect(Array.isArray(authenticators)).toBeTruthy();
       expect(authenticators.length).toBe(0);
 
+    });
+  });
+
+  describe('route method property', () => {
+
+    let sapi: SakuraApi;
+
+    afterEach(async (done) => {
+      if (sapi) {
+        await sapi.close();
+      }
+
+      done();
+    });
+
+    it('throws an exception when an invalid HTTP method is specified', () => {
+      let err;
+      try {
+        @Routable()
+        class X {
+          @Route({method: 'imnotarealhttpmethod' as any})
+          badHttpMethod() {
+            // lint empty
+          }
+        }
+      } catch (e) {
+        err = e;
+      }
+      expect(err).toBeDefined();
+    });
+
+    it('excludes a method level blacklisted @Route', () => {
+      @Routable()
+      class Test3 {
+        @Route({blackList: true})
+        blackListedMethod() {
+          // lint empty
+        }
+      }
+
+      const t3 = new Test3();
+      expect(t3[routableSymbols.routes].length).toBe(0);
+    });
+
+    it(`handles method ''`, () => {
+      expect(() => {
+        @Routable()
+        class TestRouteMethodArray {
+          @Route({method: '' as any})
+          handlesPostAndGet(req: Request, res: Response) {
+          }
+        }
+      }).toThrowError(`Route method option is an empty string. Provide a valid HTTP method`);
+    });
+
+    it('defaults HTTP method to get if no method is provided', async (done) => {
+      let getCalled = false;
+
+      try {
+        @Routable({baseUrl: 'test'})
+        class TestRouteMethodArray {
+
+          @Route({
+            path: '/'
+          })
+          handlesPostAndGet(req: Request, res: Response) {
+            switch (req.method.toLowerCase()) {
+              case 'get':
+                getCalled = true;
+                break;
+              default:
+                done.fail(new Error(`Unexpected method ${req.method}`));
+            }
+
+            res.status(200).send();
+          }
+        }
+
+        sapi = testSapi({
+          routables: [TestRouteMethodArray]
+        });
+
+        await sapi.listen({bootMessage: ''});
+
+        await request(sapi.app)
+          .get(testUrl('/test'))
+          .expect(200);
+
+        expect(getCalled).toBeTruthy();
+
+        done();
+      } catch (err) {
+        done.fail(err);
+      }
+    });
+
+    describe('can take method array', () => {
+
+      it(`['get', 'post']`, async (done) => {
+        let getCalled = false;
+        let postCalled = false;
+
+        @Routable({baseUrl: 'test'})
+        class TestRouteMethodArray {
+
+          @Route({
+            method: ['get', 'post'],
+            path: '/'
+          })
+          handlesPostAndGet(req: Request, res: Response) {
+            switch (req.method.toLowerCase()) {
+              case 'get':
+                getCalled = true;
+                break;
+              case 'post':
+                postCalled = true;
+                break;
+              default:
+                done.fail(new Error(`Unexpected method ${req.method}`));
+            }
+
+            res.status(200).send();
+          }
+        }
+
+        try {
+          sapi = testSapi({
+            routables: [TestRouteMethodArray]
+          });
+
+          await sapi.listen({bootMessage: ''});
+
+          await request(sapi.app)
+            .get(testUrl('/test'))
+            .expect(200);
+
+          await request(sapi.app)
+            .post(testUrl('/test'))
+            .expect(200);
+
+          expect(getCalled).toBeTruthy();
+          expect(postCalled).toBeTruthy();
+
+          done();
+        } catch (err) {
+          done.fail(err);
+        }
+
+      });
+
+      it(`method ['*'] binds all HTTP methods to a path for a route handler`, async (done) => {
+        const called = {} as any;
+        let count = 0;
+
+        @Routable({baseUrl: 'test'})
+        class TestRouteMethodArray {
+          @Route({method: ['*'], path: '/'})
+          handlesPostAndGet(req: Request, res: Response) {
+            called[req.method.toLowerCase()] = true;
+            count++;
+            res.status(200).send();
+          }
+        }
+
+        try {
+          sapi = testSapi({
+            routables: [TestRouteMethodArray]
+          });
+
+          await sapi.listen({bootMessage: ''});
+
+          for (const method of validHttpMethods) {
+            if (method === 'connect') {
+              continue;
+            }
+
+            await request(sapi.app)[method](testUrl('/test')).expect(200);
+          }
+
+          for (const method of validHttpMethods) {
+            if (method === 'connect') {
+              continue;
+            }
+            expect(called[method]).toBeTruthy(`${method} failed`);
+          }
+
+          expect(count).toBe(validHttpMethods.length - 1);
+
+          done();
+        } catch (err) {
+          done.fail(err);
+        }
+      });
+
+      it(`handles []`, () => {
+
+        expect(() => {
+          @Routable()
+          class TestRouteMethodArray {
+            @Route({method: []})
+            handlesPostAndGet(req: Request, res: Response) {
+            }
+          }
+        }).toThrowError(`Route method option is an empty array. Provide at least one HTTP method`);
+
+      });
+
+      it(`method ['invalid']`, () => {
+        expect(() => {
+          @Routable()
+          class TestRouteMethodArray {
+            @Route({method: ['invalid' as any]})
+            handlesPostAndGet(req: Request, res: Response) {
+            }
+          }
+        }).toThrowError(`@route(...)TestRouteMethodArray.handlesPostAndGet has its 'method' property set to ` +
+          `'invalid' typeof 'string', which is invalid. Valid options are: connect, delete, get, head, post, put, ` +
+          `patch, trace`);
+      });
     });
   });
 });

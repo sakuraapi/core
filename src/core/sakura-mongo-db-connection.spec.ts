@@ -1,5 +1,8 @@
-import {MongoClient} from 'mongodb';
-import {testMongoDbUrl, testSapi} from '../../spec/helpers/sakuraapi';
+import {MongoClient}             from 'mongodb';
+import {
+  testMongoDbUrl,
+  testSapi
+}                                from '../../spec/helpers/sakuraapi';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 
 describe('core/sakura-mongo-db', () => {
@@ -9,15 +12,15 @@ describe('core/sakura-mongo-db', () => {
     routables: []
   });
 
-  beforeEach(() => {
+  const dbUrl = `${testMongoDbUrl(sapi)}/test`;
+  let sapiDb: SakuraMongoDbConnection;
 
-    this.dbUrl = `${testMongoDbUrl(sapi)}/test`;
-    this.sapiDb = new SakuraMongoDbConnection();
+  beforeEach(() => {
+    sapiDb = new SakuraMongoDbConnection();
   });
 
   afterEach((done) => {
-    this
-      .sapiDb
+    sapiDb
       .closeAll()
       .then(done)
       .catch(done.fail);
@@ -25,18 +28,23 @@ describe('core/sakura-mongo-db', () => {
 
   describe('addConnection', () => {
     it('records a connection, but doesn\'t open the connection', () => {
-      this.sapiDb.addConnection('test', this.dbUrl);
-      expect(this.sapiDb.getDb('test')).toBeUndefined();
-      expect(this.sapiDb.getConnection('test')).toBeDefined();
+      sapiDb.addConnection('test', dbUrl);
+      expect(sapiDb.getDb('test')).toBeUndefined();
+      expect(sapiDb.getConnection('test')).toBeDefined();
+    });
+
+    it('throws with non-string dbName values', () => {
+      expect(() => {
+        sapiDb.addConnection({} as any, dbUrl);
+      }).toThrowError('dbName must be type string but instead was object');
+
     });
   });
 
   describe('connect', () => {
     it('registers a db and connects to it', (done) => {
-
-      this
-        .sapiDb
-        .connect('test', this.dbUrl)
+      sapiDb
+        .connect('test', dbUrl)
         .then((db) => {
           expect(db)
             .toBeDefined();
@@ -46,11 +54,10 @@ describe('core/sakura-mongo-db', () => {
     });
 
     it('stores its parameters in its private connections map', (done) => {
-      this
-        .sapiDb
-        .connect('test', this.dbUrl)
+      sapiDb
+        .connect('test', dbUrl)
         .then(() => {
-          expect(this.sapiDb.getConnection('test'))
+          expect(sapiDb.getConnection('test'))
             .toBeDefined();
           done();
         })
@@ -63,13 +70,11 @@ describe('core/sakura-mongo-db', () => {
           .and
           .callThrough();
 
-        this
-          .sapiDb
-          .connect('test', this.dbUrl)
+        sapiDb
+          .connect('test', dbUrl)
           .then(() => {
-            this
-              .sapiDb
-              .connect('test', this.dbUrl)
+            sapiDb
+              .connect('test', dbUrl)
               .then(() => {
                 expect(MongoClient.connect)
                   .toHaveBeenCalledTimes(1);
@@ -85,8 +90,8 @@ describe('core/sakura-mongo-db', () => {
           .and
           .callThrough();
         const wait = [];
-        wait.push(this.sapiDb.connect('test', this.dbUrl));
-        wait.push(this.sapiDb.connect('test', this.dbUrl));
+        wait.push(sapiDb.connect('test', dbUrl));
+        wait.push(sapiDb.connect('test', dbUrl));
 
         Promise
           .all(wait)
@@ -102,17 +107,15 @@ describe('core/sakura-mongo-db', () => {
 
   describe('close', () => {
     it('closes a single db connection', (done) => {
-      this
-        .sapiDb
-        .connect('test', this.dbUrl)
+      sapiDb
+        .connect('test', dbUrl)
         .then((db) => {
           db
             .on('close', () => {
               done();
             });
 
-          this
-            .sapiDb
+          sapiDb
             .close('test')
             .catch(done.fail);
         })
@@ -120,8 +123,7 @@ describe('core/sakura-mongo-db', () => {
     });
 
     it('properly gracefully handles closing a non-existing connection', (done) => {
-      this
-        .sapiDb
+      sapiDb
         .close('xyxyxyx')
         .then(done)
         .catch(done.fail);
@@ -131,8 +133,8 @@ describe('core/sakura-mongo-db', () => {
   describe('closeAll', () => {
     it('closes all connections', (done) => {
       const wait = [];
-      wait.push(this.sapiDb.connect('x1', this.dbUrl));
-      wait.push(this.sapiDb.connect('x2', this.dbUrl));
+      wait.push(sapiDb.connect('x1', dbUrl));
+      wait.push(sapiDb.connect('x2', dbUrl));
 
       Promise
         .all(wait)
@@ -144,8 +146,7 @@ describe('core/sakura-mongo-db', () => {
           db1.on('close', () => closeCount++);
           db2.on('close', () => closeCount++);
 
-          this
-            .sapiDb
+          sapiDb
             .closeAll()
             .then(() => {
               expect(closeCount)
@@ -160,11 +161,10 @@ describe('core/sakura-mongo-db', () => {
 
   describe('getDb', () => {
     it('retrieves a connected DB instance by name', (done) => {
-      this
-        .sapiDb
-        .connect('test', this.dbUrl)
+      sapiDb
+        .connect('test', dbUrl)
         .then((db) => {
-          expect(this.sapiDb.getDb('test'))
+          expect(sapiDb.getDb('test'))
             .toEqual(db);
           done();
         })
@@ -174,11 +174,10 @@ describe('core/sakura-mongo-db', () => {
 
   describe('getConnection', () => {
     it('retrieves a connection by name', () => {
-      this
-        .sapiDb
-        .addConnection('test', this.dbUrl);
+      sapiDb
+        .addConnection('test', dbUrl);
 
-      expect(this.sapiDb.getConnection('test'))
+      expect(sapiDb.getConnection('test'))
         .toBeDefined();
     });
   });

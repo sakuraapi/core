@@ -17,10 +17,16 @@ import {
   ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
 }                                from './';
-import {modelSymbols}            from './@model';
+import {
+  ModelNotRegistered,
+  ModelsMustBeDecoratedWithModelError,
+  modelSymbols
+}                                from './@model';
 import {
   IRoutableLocals,
   ISakuraApiClassRoute,
+  RoutableNotRegistered,
+  RoutablesMustBeDecoratedWithRoutableError,
   routableSymbols
 }                                from './@routable';
 import {
@@ -49,6 +55,14 @@ const debug = {
   routables: debugInit('sapi:routables'),
   route: debugInit('sapi:route')
 };
+
+export class DependencyAlreadyInjectedError extends Error {
+  constructor(type: string, name: string) {
+    super(`${type} ${name} already registered - if you are getting this during testing, make sure` +
+      ` you call SakuraApi.deregisterDependencies() after you are done using each instantiation of SakuraApi. If` +
+      ` you are getting this error launching a SakuraApi application, you have double registerd ${name}.`);
+  }
+}
 
 /**
  * Used for [[SakuraApi]] constructor
@@ -348,7 +362,7 @@ export class SakuraApi {
    * will be added: [C, Z, A, B].
    */
   addMiddleware(fn: Handler, order: number = 0): void {
-    debug.normal(`.addMiddleware called: '${(fn || {} as any).name}', orderr: ${order}`);
+    debug.normal(`.addMiddleware called: '${(fn || {} as any).name}', order: ${order}`);
 
     if (!fn) {
       debug.normal(`handler rejected because it's null or undefined`);
@@ -390,6 +404,166 @@ export class SakuraApi {
           resolve();
         });
     });
+  }
+
+  /**
+   * Removes SakuraApi initialization from injected [[Model]]s, [[Routable]]s, and [[Injectable]]s. To reuse these
+   * dependencies, a new instance of SakuraApi needs to be instantiated.
+   */
+  deregisterDependencies() {
+    const modelKeys = (this.models) ? this.models.keys() : [];
+    for (const key of modelKeys) {
+      const model = this.models.get(key);
+      model[modelSymbols.sapi] = null;
+      this.models.delete(key);
+    }
+
+    const providerKeys = (this.providers) ? this.providers.keys() : [];
+    for (const key of providerKeys) {
+      const provider = this.providers.get(key);
+      if (provider.target) {
+        provider.target[injectableSymbols.sapi] = null;
+      }
+      if (provider.instance) {
+        provider.instance[injectableSymbols.sapi] = null;
+      }
+      this.providers.delete(key);
+    }
+
+    const routableKeys = (this.routables) ? this.routables.keys() : [];
+    for (const key of routableKeys) {
+      const routable = this.routables.get(key);
+      routable[routableSymbols.sapi] = null;
+      this.routables.delete(key);
+    }
+  }
+
+  /**
+   * Used internally by [[Routable]] during bootstrapping.
+   */
+  enqueueRoutes(target: any): void {
+
+    debug.route(`SakuraApi.route called for %O`, target);
+
+    if (!target[routableSymbols.routes]) {
+      debug.route(`.route '%O' is not a routable class`, target);
+      return;
+    }
+
+    for (const route of target[routableSymbols.routes] as ISakuraApiClassRoute[]) {
+      debug.route(`\tadded '%O'`, route);
+
+      const methodSignature = route.httpMethods.join('');
+      const routeSignature = `${methodSignature}:${route.path}`;
+      if (this.routeQueue.get(routeSignature)) {
+        throw new Error(`Duplicate route (${routeSignature}) registered by ${target.name || target.constructor.name}.`);
+      }
+
+      // used by this.listen
+      this.routeQueue.set(routeSignature, route);
+    }
+  }
+
+  /**
+   * Gets a `@`[[AuthenticatorPlugin]] that was registered during construction of [[SakuraApi]].
+   * @param {IAuthenticator} target
+   */
+  getAuthenticator(target: IAuthenticatorConstructor) {
+    debug.authenticators(`.getAuthenticator ${(target || {} as any).name}`);
+
+    if (!target || !target[authenticatorPluginSymbols.isAuthenticator]) {
+      throw new AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError(target);
+    }
+
+    const id = target[authenticatorPluginSymbols.id];
+    const authenticator = this.authenticators.get(id);
+
+    if (!authenticator) {
+      throw new AuthenticatorNotRegistered(target);
+    }
+
+    return authenticator;
+  }
+
+  /**
+   * Gets a `@`[[Model]] that was registered during construction of [[SakuraApi]] by name.
+   * @param name the name of the Model (the name of the class that was decorated with `@`[[Model]]
+   * @returns {undefined|any}
+   * @deprecated use [[SakuraApi.getModel]] instead.
+   */
+  getModelByName(name: string): any {
+    return this.models.get(name);
+  }
+
+  /**
+   * Gets a `@`[[Model] that was registered during construction of [[SakuraApi]]
+   * @param target pass in the [[Model]] class
+   * @returns {any} the constructor for the [[Model]] class
+   */
+  getModel(target: any): any {
+    if (!target || !target[modelSymbols.isSakuraApiModel]) {
+      throw new ModelsMustBeDecoratedWithModelError(target);
+    }
+
+    const model = this.models.get(target[modelSymbols.id]);
+    if (!model) {
+      throw new ModelNotRegistered(target);
+    }
+
+    return model;
+  }
+
+  /**
+   * Gets a `@`[[Injectable]] that was registered during construction of [[SakuraApi]].
+   * @param target Pass in the [[Injectable]] class
+   * @returns {any} the singleton instance of the [[Injectable]] class
+   */
+  getProvider(target: any): any {
+    debug.providers(`.getProvider ${(target || {} as any).name}`);
+
+    if (!target || !target[injectableSymbols.isSakuraApiInjectable]) {
+      throw new ProvidersMustBeDecoratedWithInjectableError(target);
+    }
+
+    const provider = this.providers.get(target[injectableSymbols.id]);
+    if (!provider) {
+      throw new ProviderNotRegistered(target);
+    }
+
+    if (!provider.instance) {
+      debug.providers(`\t lazy instantiating singleton instance of ${(target || {} as any).name}`);
+      provider.instance = new provider.target();
+    }
+
+    return provider.instance;
+  }
+
+  /**
+   * Gets a `@`[[Routable]] that was registered during construction of [[SakuraApi]] by name.
+   * @param name the name of the Routable (the name of the class that was decorated with `@`[[Model]]
+   * @returns {undefined|any}
+   * @deprecated use [[SakuraApi.getRoutable]] instead.
+   */
+  getRoutableByName(name: string): any {
+    return this.routables.get(name);
+  }
+
+  /**
+   * Gets a `@`[[Routable] that was registered during construction of [[SakuraApi]]
+   * @param target pass in the [[Routable]] class
+   * @returns {any} the constructor for the [[Routable]] class
+   */
+  getRoutable(target: any): any {
+    if (!target || !target[routableSymbols.isSakuraApiRoutable]) {
+      throw new RoutablesMustBeDecoratedWithRoutableError(target);
+    }
+
+    const routable = this.routables.get(target[routableSymbols.id]);
+    if (!routable) {
+      throw new RoutableNotRegistered(target);
+    }
+
+    return routable;
   }
 
   /**
@@ -463,9 +637,10 @@ export class SakuraApi {
 
     debug.route('\t.listen processing route queue');
     // add routes
-    for (const route of this.routeQueue.values()) {
+    const routes = this.routeQueue.values();
+    for (const route of routes) {
 
-      debug.route('\t\t.listen route %o', route);
+      debug.route('\t\t.listen route %O', route);
 
       let routeHandlers: Handler[] = [
         // injects an initial handler that injects the reference to the instantiated @Routable decorated object
@@ -506,7 +681,13 @@ export class SakuraApi {
 
       routeHandlers.push(resLocalsHandler);
 
-      router[route.httpMethod](route.path, routeHandlers);
+      const routeMethods = route.httpMethods;
+      for (let method of routeMethods) {
+        if (method === '*') {
+          method = 'all';
+        }
+        router[method](route.path, routeHandlers);
+      }
     }
 
     // Setup DB Connetions -------------------------------------------------------------------------------------------
@@ -659,97 +840,6 @@ export class SakuraApi {
 
   }
 
-  /**
-   * Gets a `@`[[AuthenticatorPlugin]] that was registered during construction of [[SakuraApi]].
-   * @param {IAuthenticator} target
-   */
-  getAuthenticator(target: IAuthenticatorConstructor) {
-    debug.authenticators(`.getAuthenticator ${(target || {} as any).name}`);
-
-    if (!target || !target[authenticatorPluginSymbols.isAuthenticator]) {
-      throw new AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError(target);
-    }
-
-    const id = target[authenticatorPluginSymbols.id];
-    const authenticator = this.authenticators.get(id);
-
-    if (!authenticator) {
-      throw new AuthenticatorNotRegistered(target);
-    }
-
-    return authenticator;
-  }
-
-  /**
-   * Gets a `@`[[Model]] that was registered during construction of [[SakuraApi]] by name.
-   * @param name the name of the Model (the name of the class that was decorated with `@`[[Model]]
-   * @returns {undefined|any}
-   */
-  getModelByName(name: string): any {
-    return this.models.get(name);
-  }
-
-  /**
-   * Gets a `@`[[Injectable]] that was registered during construction of [[SakuraApi]].
-   * @param target Pass in the [[Injectable]] class
-   * @returns {any}
-   */
-  getProvider(target: any) {
-    debug.providers(`.getProvider ${(target || {} as any).name}`);
-
-    if (!target || !target[injectableSymbols.isSakuraApiInjectable]) {
-      throw new ProvidersMustBeDecoratedWithInjectableError(target);
-    }
-
-    const provider = this.providers.get(target[injectableSymbols.id]);
-    if (!provider) {
-      throw new ProviderNotRegistered(target);
-    }
-
-    if (!provider.instance) {
-      debug.providers(`\t lazy instantiating singleton instance of ${(target || {} as any).name}`);
-      provider.instance = new provider.target();
-    }
-
-    return provider.instance;
-  }
-
-  /**
-   * Gets a `@`[[Routable]] that was registered during construction of [[SakuraApi]] by name.
-   * @param name the name of the Routable (the name of the class that was decorated with `@`[[Model]]
-   * @returns {undefined|any}
-   */
-  getRoutableByName(name: string): any {
-    return this.routables.get(name);
-  }
-
-  /**
-   * Primarily used internally by [[Routable]] during bootstrapping. However, if an `@Routable` class has
-   * [[RoutableClassOptions.autoRoute]] set to false, the integrator will have to pass that `@Routable` class in to
-   * this method manually if he wants to routes to be bound.
-   */
-  enqueueRoutes(target: any): void {
-
-    debug.route(`SakuraApi.route called for %o`, target);
-
-    if (!target[routableSymbols.routes]) {
-      debug.route(`.route '%o' is not a routable class`, target);
-      return;
-    }
-
-    for (const route of target[routableSymbols.routes]) {
-      debug.route(`\tadded '%o'`, route);
-
-      const routeSignature = `${route.httpMethod}:${route.path}`;
-      if (this.routeQueue.get(routeSignature)) {
-        throw new Error(`Duplicate route (${routeSignature}) registered by ${target.name || target.constructor.name}.`);
-      }
-
-      // used by this.listen
-      this.routeQueue.set(routeSignature, route);
-    }
-  }
-
   private registerAuthenticators(options: SakuraApiPluginResult, sapiOptions: SakuraApiOptions) {
     debug.normal('\tRegistering Authenticators');
 
@@ -804,7 +894,8 @@ export class SakuraApi {
     for (const model of models) {
       const isModel = model[modelSymbols.isSakuraApiModel];
 
-      let modelName: string;
+      let modelId: string;
+      let modelName: string; // this will be removed
       let modelRef: any;
 
       // must be decorated with @Model or { use: SomeModel, for: SomeOriginalModel }
@@ -818,18 +909,26 @@ export class SakuraApi {
             + ' SomeRealModel are decorated with @Model.');
         }
 
+        modelId = model.for[modelSymbols.id];
         modelName = model.for.name;
         modelRef = model.use;
+
+        debug.models(`registering model ${modelRef.name} for ${modelName}`);
       } else {
+        modelId = model[modelSymbols.id];
         modelName = model.name;
         modelRef = model;
+
+        debug.models(`registering model ${modelName}`);
       }
 
-      // set the model's instance of SakuraApi to this
+      if (modelRef[modelSymbols.sapi]) {
+        throw new DependencyAlreadyInjectedError('Model', modelName);
+      }
       modelRef[modelSymbols.sapi] = this;
 
-      debug.models(`registering models ${(modelRef || {} as any).name}`);
       this.models.set(modelName, modelRef);
+      this.models.set(modelId, modelRef);
     }
   }
 
@@ -868,8 +967,9 @@ export class SakuraApi {
     for (const injectable of injectables) {
       const isInjectable = injectable[injectableSymbols.isSakuraApiInjectable];
 
-      let injectableSource: any;
+      let injectableName: string;
       let injectableRef: any;
+      let injectableSource: any;
 
       // Allow overriding for mocking
       if (!isInjectable) {
@@ -882,17 +982,25 @@ export class SakuraApi {
             + ' where SomeMockInjectable and SomeRealInjectable are decorated with @Injectable.');
         }
 
-        injectableSource = injectable.for;
+        injectableName = injectable.for.name;
         injectableRef = injectable.use;
+        injectableSource = injectable.for;
+
+        debug.providers(`registering provider ${injectableRef.name} for ${injectableName}`);
       } else {
-        injectableSource = injectable;
+        injectableName = injectable.name;
         injectableRef = injectable;
+        injectableSource = injectable;
+
+        debug.providers(`registering provider ${injectableName}`);
+      }
+
+      if (injectableRef[injectableSymbols.sapi]) {
+        throw new DependencyAlreadyInjectedError('Injectable', injectableName);
       }
 
       // set the injectable's instance of SakuraApi to this
       injectableRef[injectableSymbols.sapi] = this;
-
-      debug.providers(`registering provider ${(injectableRef || {} as any).name}`);
       this.providers.set(injectableSource[injectableSymbols.id], {
         instance: null,
         target: injectableRef
@@ -909,8 +1017,9 @@ export class SakuraApi {
 
       const isRoutable = routable[routableSymbols.isSakuraApiRoutable];
 
+      let routableId: string;
       let routableName: string;
-      let routableRef: string;
+      let routableRef: any;
 
       // must be decorated with @Routable or { use: Routable, for: Routable }
       if (!isRoutable) {
@@ -920,23 +1029,31 @@ export class SakuraApi {
           || !routable.for[routableSymbols.isSakuraApiRoutable]) {
           throw new Error('SakuraApi setup error. SakuraApiOptions.routables array must have classes decorated with '
             + ' @Routable or an object literal of the form { use: SomeMockRoutable, for: SomeRealRoutable }, where'
-            + ' SomeMockRoutable and SomeRealRoutable are decorated with @Model.');
+            + ' SomeMockRoutable and SomeRealRoutable are decorated with @Routable.');
         }
 
+        routableId = routable.for[routableSymbols.id];
         routableName = routable.for.name;
         routableRef = routable.use;
+
+        debug.providers(`registering routable ${routableRef.name} for ${routableName}`);
       } else {
+        routableId = routable[routableSymbols.id];
         routableName = routable.name;
         routableRef = routable;
+
+        debug.providers(`registering routable ${routableName}`);
       }
 
-      // set the routable's instance of SakuraApi to this
+      if (routableRef[routableSymbols.sapi]) {
+        throw new DependencyAlreadyInjectedError('Routable', routableName);
+      }
       routableRef[routableSymbols.sapi] = this;
 
       // get the routes queued up for .listen
       this.enqueueRoutes(new (routableRef as any)());
-      debug.providers(`registering routable ${(routableRef || {} as any).name}`);
       this.routables.set(routableName, routableRef);
+      this.routables.set(routableId, routableRef);
     }
   }
 }

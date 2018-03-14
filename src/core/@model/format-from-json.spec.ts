@@ -95,18 +95,18 @@ describe('@FormatFromJson', () => {
     @Model()
     class SomeModel extends SapiModelMixin() {
 
-      firstName: string;
-      lastName: string;
+      prop1: string;
+      prop2: string;
 
       @FormatFromJson()
       format1(json: any, model: any, context: string) {
-        model.firstName = '1';
+        model.prop1 = '1';
         return model;
       }
 
       @FormatFromJson('source2')
       format2(json: any, model: any, context: string) {
-        model.firstName = '2';
+        model.prop2 = '2';
         return model;
       }
     }
@@ -114,8 +114,38 @@ describe('@FormatFromJson', () => {
     const result1 = SomeModel.fromJson({});
     const result2 = SomeModel.fromJson({}, 'source2');
 
-    expect(result1.firstName).toBe('1');
-    expect(result2.firstName).toBe('2');
+    expect(result1.prop1).toBe('1');
+    expect(result1.prop2).toBeUndefined('FormatFromJson source2 should not have been called');
 
+    expect(result2.prop1).toBeUndefined('FormatFromJson default should not have been called');
+    expect(result2.prop2).toBe('2');
+
+  });
+
+  it('supports * context', () => {
+
+    @Model()
+    class SomeModel extends SapiModelMixin() {
+
+      prop1: string;
+      prop2: string;
+
+      @FormatFromJson()
+      format1(json: any, model: any, context: string) {
+        model.prop1 = '1';
+        return model;
+      }
+
+      @FormatFromJson('*')
+      format2(json: any, model: any, context: string) {
+        model.prop2 = '2';
+        return model;
+      }
+    }
+
+    const result1 = SomeModel.fromJson({});
+
+    expect(result1.prop1).toBe('1');
+    expect(result1.prop2).toBe('2');
   });
 });

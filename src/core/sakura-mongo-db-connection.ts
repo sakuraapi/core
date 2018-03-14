@@ -1,4 +1,8 @@
-import {Db, MongoClient, MongoClientOptions} from 'mongodb';
+import {
+  Db,
+  MongoClient,
+  MongoClientOptions
+} from 'mongodb';
 
 const debug = {
   normal: require('debug')('sapi:SakuraMongoDbConnection'),
@@ -19,7 +23,12 @@ export class SakuraMongoDbConnection {
    * [[SakuraMongoDbConnection.connectAll]].
    */
   addConnection(dbName: string, uri: string, options?: MongoClientOptions): void {
-    debug.normal(`.addConnection dbName: '${dbName}', uri: '${uri}', options:`, options);
+    debug.normal(`.addConnection dbName: '${dbName}', uri: '${uri}', options: %O`, options);
+
+    if (typeof dbName !== 'string') {
+      throw new Error(`dbName must be type string but instead was ${typeof dbName}`);
+    }
+
     this.connections.set(dbName, {uri, options});
     debug.verbose(`.addConnection connections: '%O'`, this.connections);
   }

@@ -113,6 +113,7 @@ export function Injectable(): (object) => any {
       }
     });
 
+    // DI unique identifier
     Reflect.defineProperty(newConstructor, injectableSymbols.id, {
       value: v4(),
       writable: false
