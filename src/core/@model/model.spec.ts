@@ -137,7 +137,9 @@ describe('core/@Model', () => {
 
       afterEach(async (done) => {
         try {
+          await DefaultCrud.removeAll({});
           await sapi.close();
+          
           sapi.deregisterDependencies();
           sapi = null;
           done();
@@ -223,25 +225,60 @@ describe('core/@Model', () => {
           });
         });
 
-        it('get', async (done) => {
-          try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
+        describe('get', () => {
 
-            const createdResult = await testDefaultMethods.create();
-            expect(createdResult.insertedCount).toBe(1);
+          it('filter', async (done) => {
+            try {
+              const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
 
-            const results = await DefaultCrud
-              .get({filter: {_id: testDefaultMethods.id}});
+              const createdResult = await testDefaultMethods.create();
+              expect(createdResult.insertedCount).toBe(1);
 
-            expect(results.length).toBe(1);
-            expect(results[0]._id.toString()).toBe(testDefaultMethods.id.toString());
-            expect(results[0].firstName).toBe(testDefaultMethods.firstName);
-            expect(results[0].lastName).toBe(testDefaultMethods.lastName);
+              const results = await DefaultCrud
+                .get({filter: {_id: testDefaultMethods.id}});
 
-            done();
-          } catch (err) {
-            done.fail(err);
-          }
+              expect(results.length).toBe(1);
+              expect(results[0]._id.toString()).toBe(testDefaultMethods.id.toString());
+              expect(results[0].firstName).toBe(testDefaultMethods.firstName);
+              expect(results[0].lastName).toBe(testDefaultMethods.lastName);
+
+              done();
+            } catch (err) {
+              done.fail(err);
+            }
+          });
+
+          it('sort', async (done) => {
+
+            try {
+
+              const models = [
+                DefaultCrud.fromJson({lastName: 'Zidi', firstName: 'George'}),
+                DefaultCrud.fromJson({lastName: 'Midi', firstName: 'George'}),
+                DefaultCrud.fromJson({lastName: 'Aidi', firstName: 'George'})
+              ];
+
+              for (const model of models) {
+                await model.create();
+              }
+
+              const resultsUnsorted = await DefaultCrud.get();
+              expect(resultsUnsorted[0].lastName).toBe(models[0].lastName);
+              expect(resultsUnsorted[1].lastName).toBe(models[1].lastName);
+              expect(resultsUnsorted[2].lastName).toBe(models[2].lastName);
+
+              const resultsSorted = await DefaultCrud.get({sort: {lastName: -1}});
+              expect(resultsSorted[2].lastName).toBe(models[2].lastName);
+              expect(resultsSorted[1].lastName).toBe(models[1].lastName);
+              expect(resultsSorted[0].lastName).toBe(models[0].lastName);
+
+              done();
+
+            } catch (err) {
+              done.fail(err);
+            }
+
+          });
         });
 
         it('getOne', async (done) => {

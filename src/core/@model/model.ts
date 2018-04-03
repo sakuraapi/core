@@ -40,12 +40,20 @@ const debug = {
 
 /**
  * Interface defining the properties used for retrieving records from the DB
+ * - comment: https://docs.mongodb.com/manual/reference/method/cursor.comment/
+ * - filter: a normal mongodb filter that gets applied to a cursor
+ * - limit: https://docs.mongodb.com/manual/reference/method/cursor.limit/
+ * - project: a normal mongodb projection that gets applied to a cursor
+ * - skip: https://docs.mongodb.com/manual/reference/method/cursor.skip/
+ * - sort: https://docs.mongodb.com/manual/reference/method/cursor.sort/
  */
 export interface IDbGetParams {
-  filter: any;
+  comment?: string;
+  filter?: any;
   limit?: number;
   project?: any;
   skip?: number;
+  sort?: any;
 }
 
 /**
@@ -801,28 +809,33 @@ function fromJsonToDb(json: any, context = 'default'): any {
 /**
  * @static Gets documents from the database and builds their corresponding [[Model]]s the resolves an array of those
  * objects.
- * @param filter A MongoDb query
- * @param project The fields to project (all if not supplied)
- * @returns {Promise<T>} Returns a Promise that resolves with an array of instantiated [[Model]] objects based on the
- * documents returned from the database using MongoDB's find method. Returns an empty array if no matches are found
- * in the database.
  *
  * @param {IDbGetParams} params
- * @returns {Promise<object[]>}
+ * @returns {Promise<object[]>} Returns a Promise that resolves with an array of instantiated [[Model]] objects based on the
+ * documents returned from the database using MongoDB's find method. Returns an empty array if no matches are found
+ * in the database.
  */
 async function get(params?: IDbGetParams): Promise<object[]> {
   debug.normal(`.get called, dbName '${this[modelSymbols.dbName]}'`);
 
+  params = params || {};
+
   const cursor = this.getCursor(params.filter, params.project);
 
-  if (params) {
-    if (params.skip) {
-      cursor.skip(params.skip);
-    }
+  if (params.sort) {
+    cursor.sort(params.sort);
+  }
 
-    if (params.limit) {
-      cursor.limit(params.limit);
-    }
+  if (params.skip) {
+    cursor.skip(params.skip);
+  }
+
+  if (params.limit) {
+    cursor.limit(params.limit);
+  }
+
+  if (params.comment) {
+    cursor.limit(params.comment);
   }
 
   const results = await cursor.toArray();
