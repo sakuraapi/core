@@ -70,7 +70,7 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     static fromDbArray: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
     static fromJsonArray: <T>(this: { new(): T }, jsons: object[]) => T[];
 
-    static get: <T>(this: { new (): T }, params: IDbGetParams) => Promise<T[]>;
+    static get: <T>(this: { new (): T }, params?: IDbGetParams) => Promise<T[]>;
     static getById: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
     static getCollection: () => Collection;
     static getCursor: (filter: any, project?: any) => Cursor<any>;

@@ -2,8 +2,8 @@
 # Status
 |Branch     |Status     |
 |-----------|-----------|
-| Develop   |[![Build Status](https://travis-ci.org/sakuraapi/api.svg?branch=develop)](https://travis-ci.org/sakuraapi/core)| 
-| Master    |[![Build Status](https://travis-ci.org/sakuraapi/api.svg?branch=master)](https://travis-ci.org/sakuraapi/core)|
+| Develop   |[![Build Status](https://travis-ci.org/sakuraapi/core.svg?branch=develop)](https://travis-ci.org/sakuraapi/core)| 
+| Master    |[![Build Status](https://travis-ci.org/sakuraapi/core.svg?branch=master)](https://travis-ci.org/sakuraapi/core)|
 
 `@sakuraApi/core` was previously [`@sakuraapi/api`](https://www.npmjs.com/package/@sakuraapi/api).  
 
@@ -17,7 +17,7 @@ npm install @sakuraapi/core
 
 ## Docs
 
-* API Documentation: https://sakuraapi.github.io/api/
+* API Documentation: https://sakuraapi.github.io/core/
 * Manual: https://github.com/sakuraapi/manual
 * Updates: http://blog.sakuraapi.com
 

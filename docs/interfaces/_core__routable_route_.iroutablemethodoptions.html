@@ -108,7 +108,7 @@
 					<div class="tsd-signature tsd-kind-icon">after<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">Handler</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Handler</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/04c982e/src/core/@routable/route.ts#L102">core/@routable/route.ts:102</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/core/blob/ae15093/src/core/@routable/route.ts#L113">core/@routable/route.ts:113</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -125,7 +125,7 @@
 					<div class="tsd-signature tsd-kind-icon">authenticator<span class="tsd-signature-symbol">:</span> <a href="_core_plugins_.iauthenticatorconstructor.html" class="tsd-signature-type">IAuthenticatorConstructor</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><a href="_core_plugins_.iauthenticatorconstructor.html" class="tsd-signature-type">IAuthenticatorConstructor</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/04c982e/src/core/@routable/route.ts#L15">core/@routable/route.ts:15</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/core/blob/ae15093/src/core/@routable/route.ts#L25">core/@routable/route.ts:25</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -142,7 +142,7 @@
 					<div class="tsd-signature tsd-kind-icon">before<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">Handler</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Handler</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/04c982e/src/core/@routable/route.ts#L94">core/@routable/route.ts:94</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/core/blob/ae15093/src/core/@routable/route.ts#L105">core/@routable/route.ts:105</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -193,7 +193,7 @@ class UserApi {
 					<div class="tsd-signature tsd-kind-icon">black<wbr>List<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/04c982e/src/core/@routable/route.ts#L52">core/@routable/route.ts:52</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/core/blob/ae15093/src/core/@routable/route.ts#L63">core/@routable/route.ts:63</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -206,18 +206,18 @@ class UserApi {
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="method" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> method</h3>
-					<div class="tsd-signature tsd-kind-icon">method<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<div class="tsd-signature tsd-kind-icon">method<span class="tsd-signature-symbol">:</span> <a href="../modules/_core__routable_route_.html#httpmethods" class="tsd-signature-type">HttpMethods</a><span class="tsd-signature-symbol"> | </span><a href="../modules/_core__routable_route_.html#httpmethods" class="tsd-signature-type">HttpMethods</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><a href="../enums/_core__routable_route_.httpmethod.html" class="tsd-signature-type">HttpMethod</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">[</span><a href="../enums/_core__routable_route_.httpmethod.html" class="tsd-signature-type">HttpMethod</a><span class="tsd-signature-symbol">]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/04c982e/src/core/@routable/route.ts#L47">core/@routable/route.ts:47</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/core/blob/ae15093/src/core/@routable/route.ts#L57">core/@routable/route.ts:57</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
-							<p>String defining the HTTP method for which this route handler will respond. See the example for
+							<p>Optionally defines the HTTP method to attach to this <code>@</code><a href="../modules/_core__routable_route_.html#route">Route</a>&#39;s handler. See the example for
 							[[RoutableMethodOptions.path]].</p>
 						</div>
-						<p>Valid methods are: <code>[&#39;get&#39;, &#39;post&#39;, &#39;put&#39;, &#39;delete&#39;, &#39;head&#39;]</code>.</p>
+						<p>Defaults to HTTP method &#39;GET&#39; if not method is provided.</p>
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
@@ -226,7 +226,7 @@ class UserApi {
 					<div class="tsd-signature tsd-kind-icon">path<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/sakuraapi/api/blob/04c982e/src/core/@routable/route.ts#L40">core/@routable/route.ts:40</a></li>
+							<li>Defined in <a href="https://github.com/sakuraapi/core/blob/ae15093/src/core/@routable/route.ts#L50">core/@routable/route.ts:50</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -334,6 +334,9 @@ class User {
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-enum tsd-parent-kind-external-module">
+						<a href="../enums/_core__routable_route_.httpmethod.html" class="tsd-kind-icon">Http<wbr>Method</a>
+					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
@@ -361,6 +364,12 @@ class User {
 					</li>
 				</ul>
 				<ul class="after-current">
+					<li class=" tsd-kind-type-alias tsd-parent-kind-external-module">
+						<a href="../modules/_core__routable_route_.html#httpmethods" class="tsd-kind-icon">Http<wbr>Methods</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-external-module">
+						<a href="../modules/_core__routable_route_.html#validhttpmethods" class="tsd-kind-icon">valid<wbr>Http<wbr>Methods</a>
+					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-external-module">
 						<a href="../modules/_core__routable_route_.html#route" class="tsd-kind-icon">Route</a>
 					</li>
