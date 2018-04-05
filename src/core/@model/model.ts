@@ -1,7 +1,7 @@
 import {
   Collection,
   CollectionInsertOneOptions,
-  CollectionOptions,
+  CommonOptions,
   Cursor,
   Db,
   DeleteWriteOpResultObject,
@@ -985,10 +985,10 @@ async function getOne(filter: any, project?: any): Promise<any> {
 
 /**
  * @instance Removes the current Model's document from the database.
- * @param options MongoDB CollectionOptions
+ * @param options MongoDB CommonOptions
  * @returns {Promise<DeleteWriteOpResultObject>}
  */
-function remove(options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
+function remove(options?: CommonOptions): Promise<DeleteWriteOpResultObject> {
   const constructor = this.constructor;
   debug.normal(`.remove called for ${(this || {} as any).id}`);
   return constructor.removeById(this.id, options);
@@ -997,10 +997,10 @@ function remove(options?: CollectionOptions): Promise<DeleteWriteOpResultObject>
 /**
  * @static Removes all documents from the database that match the filter criteria.
  * @param filter A MongoDB query.
- * @param options MongoDB CollectionOptions
+ * @param options MongoDB CommonOptions
  * @returns {Promise<DeleteWriteOpResultObject>}
  */
-function removeAll(filter: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
+function removeAll(filter: any, options?: CommonOptions): Promise<DeleteWriteOpResultObject> {
   const col = this.getCollection();
 
   debug.normal(`.removeAll called, dbName: '${this[modelSymbols.dbName]}', found?: ${!!col}, id: %O`,
@@ -1016,10 +1016,10 @@ function removeAll(filter: any, options?: CollectionOptions): Promise<DeleteWrit
 /**
  * @static Removes a specific document from the database by its id.
  * @param id
- * @param options CollectionOptions
+ * @param options CommonOptions
  * @returns {DeleteWriteOpResultObject}
  */
-function removeById(id: any, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
+function removeById(id: any, options?: CommonOptions): Promise<DeleteWriteOpResultObject> {
   const col = this.getCollection();
 
   if (!(id instanceof ObjectID)) {
