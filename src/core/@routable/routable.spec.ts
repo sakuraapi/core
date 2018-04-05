@@ -1506,7 +1506,7 @@ describe('core/@Routable', () => {
             .then((id) => {
               return User
                 .getCollection()
-                .find({_id: new ObjectID(id)})
+                .find<any>({_id: new ObjectID(id)})
                 .limit(1)
                 .next()
                 .then((result) => {

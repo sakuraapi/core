@@ -15,6 +15,7 @@ const debug = {
 export class SakuraMongoDbConnection {
 
   private connections = new Map<string, { uri: string, options?: MongoClientOptions }>();
+  private clients = new Map<string, MongoClient>();
   private dbs = new Map<string, Db>();
 
   /**
@@ -58,7 +59,11 @@ export class SakuraMongoDbConnection {
     this.connections.set(dbName, {uri, options});
 
     try {
-      db = await MongoClient.connect(uri, options);
+      const client = await MongoClient.connect(uri, options);
+      this.clients.set(dbName, client);
+
+      db = client.db();
+
       debug.normal(`.connect dbName: '${dbName}' connected`);
 
       this.dbs.set(dbName, db); // replace placeholder with the db
@@ -100,13 +105,15 @@ export class SakuraMongoDbConnection {
    */
   async close(dbName: string, forceClose?: boolean): Promise<void> {
     const db = this.dbs.get(dbName);
+    const client = this.clients.get(dbName);
 
     debug.normal(`.close dbName:'${dbName}', forceClose: ${forceClose}, connection found: ${!!db}`);
 
-    if (db) {
+    if (db && client) {
       this.connections.delete(dbName);
+      this.clients.delete(dbName);
       this.dbs.delete(dbName);
-      return db.close(forceClose);
+      return client.close(forceClose);
     }
 
     return;
@@ -121,7 +128,7 @@ export class SakuraMongoDbConnection {
     const wait = [];
 
     for (const db of this.dbs) {
-      wait.push(db[1].close());
+      wait.push(this.close(db[0]));
     }
 
     try {
