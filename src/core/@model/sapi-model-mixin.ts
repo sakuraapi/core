@@ -2,7 +2,7 @@
 import {
   Collection,
   CollectionInsertOneOptions,
-  CollectionOptions,
+  CommonOptions,
   Cursor,
   Db,
   DeleteWriteOpResultObject,
@@ -49,7 +49,7 @@ import {
  * ...
  * }
  *
- * (SuperChicken as any).prototype.remove(filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject> {
+ * (SuperChicken as any).prototype.remove(filter: any | null, options?: CommonOptions) => Promise<DeleteWriteOpResultObject> {
  * ...
  * }
  * </pre>
@@ -78,8 +78,8 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     static getDb: () => Db;
     static getOne: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
 
-    static removeAll: (filter: any, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
-    static removeById: (id: ObjectID, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+    static removeAll: (filter: any, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
+    static removeById: (id: ObjectID, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
 
     static sapi: SakuraApi;
     static sapiConfig?: any;
@@ -92,7 +92,7 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     getCollection: () => Collection;
     getDb: () => Db;
 
-    remove: (filter: any | null, options?: CollectionOptions) => Promise<DeleteWriteOpResultObject>;
+    remove: (filter: any | null, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
     save: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
 
     toDb: (changeSet?: object) => any;

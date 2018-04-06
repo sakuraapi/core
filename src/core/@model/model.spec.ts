@@ -139,7 +139,7 @@ describe('core/@Model', () => {
         try {
           await DefaultCrud.removeAll({});
           await sapi.close();
-          
+
           sapi.deregisterDependencies();
           sapi = null;
           done();
@@ -492,7 +492,7 @@ describe('core/@Model', () => {
               await user.create();
               const result = await user
                 .getCollection()
-                .find({_id: user.id})
+                .find<any>({_id: user.id})
                 .limit(1)
                 .next();
 
@@ -857,7 +857,7 @@ describe('core/@Model', () => {
 
                 const updated = await pud
                   .getCollection()
-                  .find({_id: pud.id})
+                  .find<any>({_id: pud.id})
                   .limit(1)
                   .next();
 
