@@ -774,8 +774,9 @@ function fromJsonToDb(json: any, context = 'default'): any {
       result._id = jsonSrc.id;
     }
 
-    for (const contextKey of jsonByPropertyName.keys()) {
+    const jsonToDbMap = {};
 
+    for (const contextKey of jsonByPropertyName.keys()) {
       const jsonMeta = (jsonByPropertyName) ? jsonByPropertyName.get(contextKey) : null;
       const key = jsonMeta[jsonSymbols.propertyName];
 
@@ -785,21 +786,18 @@ function fromJsonToDb(json: any, context = 'default'): any {
         continue;
       }
 
-      if (shouldRecurse(model[key])) {
+      jsonToDbMap[jsonMeta.field || key] = { db: dbMeta.field || key, model: key };
+    }
 
-        const value = mapJsonToDb(model[key], jsonSrc[jsonMeta.field || key], result[dbMeta.field || key]);
+    for (const jsonKey of Object.keys(jsonSrc)) {
+      const value = jsonSrc[jsonKey];
+      const mapVal = jsonToDbMap[jsonKey];
 
-        if (value && Object.keys(value).length > 0) {
-          result[dbMeta.field || key] = value;
-        }
-      } else {
-
-        const value = jsonSrc[jsonMeta.field || key];
-
-        if (value !== undefined && value !== null) {
-          result[dbMeta.field || key] = value;
-        }
+      if (!mapVal || !mapVal.db || !mapVal.model) {
+        continue;
       }
+
+      result[mapVal.db] = (shouldRecurse(value)) ? mapJsonToDb(model[mapVal.model], value) : value;
     }
 
     return result;
