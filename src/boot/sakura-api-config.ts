@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as _ from 'lodash';
-import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
+import { SakuraMongoDbConnection } from '../core/sakura-mongo-db-connection';
 
 const debug = {
   normal: require('debug')('sapi:SakuraApiConfig'),
@@ -35,7 +35,7 @@ export class SakuraApiConfig {
 
     debug.normal(`Adding ${config.dbConnections.length} dbConnections.`);
     for (const conn of config.dbConnections) {
-      dbConns.addConnection(conn.name, conn.url, conn.mongoClientOptions);
+      dbConns.addConnection(conn.name, encodeURI(conn.url), conn.mongoClientOptions);
     }
 
     return dbConns;

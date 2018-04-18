@@ -1,5 +1,5 @@
-
 # Status
+
 |Branch     |Status     |
 |-----------|-----------|
 | Develop   |[![Build Status](https://travis-ci.org/sakuraapi/core.svg?branch=develop)](https://travis-ci.org/sakuraapi/core)| 
@@ -8,10 +8,12 @@
 `@sakuraApi/core` was previously [`@sakuraapi/api`](https://www.npmjs.com/package/@sakuraapi/api).  
 
 # SakuraApi
+
 SakuraAPI is a NodeJS API framework that utilizes modern and emerging webs standards like TypeScript and ES6 in a way that feels familiar to programmers that are responsible for full-stack MEAN development.
 
 ## Install
-```
+
+```sh
 npm install @sakuraapi/core
 ```
 
@@ -24,10 +26,12 @@ npm install @sakuraapi/core
 Rapid development is taking place; as a result, docs may be out of date.
 
 ## Examples
+
 The example projects and some of the documentation has fallen behind, so the following is a quick sample of what a project utilizing SakuraApi looks like. Updated documentation and a getting started guide is coming.
 
 ### Setup a route
-```
+
+```ts
 @Routable({
   baseUrl: 'users'
 })
@@ -57,10 +61,12 @@ export class UserApi extends SakuraApiRoutable {
   }
 }
 ```
+
 This example setups a route `/api/users/` that responds to a GET request and uses the `UserService` provider to get the resulting array of user things.
 
 ### Setup a model
-```
+
+```ts
 @Model({
   dbConfig: dbs.presidents
 })
@@ -73,78 +79,81 @@ export class President extends SakuraApiModel {
 }
 
 ```
+
 This defines a model that can be marshalled to and from the database or from json. It allows you to alias the fields differently for your DB and JSON. It also supports a number of utility functions that facilitate manipulating the model (persisting it, getting it, mutating before sending it, etc.).
 
 ### Provide a service
+
+```ts
+@Injectable()
+class A {
+  constructor() {
+  }
+
+  doSomething() {
+    return 'real';
+  }
+}
+
+@Injectable()
+class B {
+  constructor(public a: A) {
+  }
+
+  doSomething() {
+    return 'real';
+  }
+
+}
+
+@Injectable()
+class C {
+  constructor(public b: B) {
+  }
+
+  doSometing() {
+    return 'real';
+  }
+}
+
+@Injectable()
+class AMock {
+  doSomething() {
+    return 'mock';
+  }
+}
+
+@Injectable()
+class CMock {
+  constructor(public b: B) {
+  }
+
+  doSomething() {
+    return 'mock';
+  }
+}
+
+const sapi = new SakuraApi({
+  providers: [
+    {use: AMock, for: A},
+    B,
+    {use: CMock, for: C}
+  ]
+});
+
+const a = sapi.getProvider(A);
+expect(a.doSomething()).toBe('mock');
+
+const b = sapi.getProvider(B);
+expect(b.doSomething()).toBe('real');
+expect(b.a.doSomething()).toBe('mock');
+
+const c = sapi.getProvider(C);
+expect(c.doSomething()).toBe('mock');
+expect(c.b.doSomething()).toBe('real');
+expect(c.b.a.doSomething()).toBe('mock');
 ```
-      @Injectable()
-      class A {
-        constructor() {
-        }
 
-        doSomething() {
-          return 'real';
-        }
-      }
-
-      @Injectable()
-      class B {
-        constructor(public a: A) {
-        }
-
-        doSomething() {
-          return 'real';
-        }
-
-      }
-
-      @Injectable()
-      class C {
-        constructor(public b: B) {
-        }
-
-        doSometing() {
-          return 'real';
-        }
-      }
-
-      @Injectable()
-      class AMock {
-        doSomething() {
-          return 'mock';
-        }
-      }
-
-      @Injectable()
-      class CMock {
-        constructor(public b: B) {
-        }
-
-        doSomething() {
-          return 'mock';
-        }
-      }
-
-      const sapi = new SakuraApi({
-        providers: [
-          {use: AMock, for: A},
-          B,
-          {use: CMock, for: C}
-        ]
-      });
-
-      const a = sapi.getProvider(A);
-      expect(a.doSomething()).toBe('mock');
-
-      const b = sapi.getProvider(B);
-      expect(b.doSomething()).toBe('real');
-      expect(b.a.doSomething()).toBe('mock');
-
-      const c = sapi.getProvider(C);
-      expect(c.doSomething()).toBe('mock');
-      expect(c.b.doSomething()).toBe('real');
-      expect(c.b.a.doSomething()).toBe('mock');
-```
 Injectables are lazy loaded singletons that can be injected into other Injectables, Models and Routables. They're mockable, allowing you to easily isolate your code for testing.  
 
 ## Goals
@@ -183,11 +192,13 @@ This is a new tiny community, so if you don't get a response right away, it migh
 (among other things)
  
 ## Contributions
+
 [![CLA assistant](https://cla-assistant.io/readme/badge/sakuraapi/core)](https://cla-assistant.io/sakuraapi/core)
 
 See: [CONTRIBUTING](CONTRIBUTING) for details.
 
 ## Bug Reporting
+
 * An ideal bug report will include a PR with a unit-testing demonstrating the bug. TDBR (test driven bug reporting). :)
 * Feel free to open an issue before you start working on a PR to prove / demonstrate your bug report, but please close that ticket if you find that your bug was an error on your side
 
@@ -197,7 +208,7 @@ Everyone should be treated with respect. Though candor is encouraged, being mean
 
 # Working with the SakuraApi codebase
 
-```
+```sh
 npm install
 npm test
 ```
@@ -207,12 +218,14 @@ You can look at the [starter](https://github.com/sakuraapi/example) project to g
 SakuraApi uses Docker for testing, so you need to have a Docker installed if you plan to contribute.
 
 If you need to override where the tests look for MongoDB, you can override the port like this:
-```
+
+```sh
 TEST_MONGO_DB_PORT=27001 npm run test
 ```
 
-You override the address with TEST_MONGO_DB_ADDRESS like this:
-```
+You override the address with `TEST_MONGO_DB_ADDRESS` like this:
+
+```sh
 TEST_MONGO_DB_ADDRESS=0.0.0.0 npm run test
 ```
 
@@ -249,7 +262,7 @@ Where `{env}` is replaced by what's set in the environmental variable `NODE_ENV`
 
 There are some properties in the environmental config that are used by the system if they're present. For example, consider this possible `environment.json`:
 
-```
+```js
 {
   "server": {
     "address": "127.0.0.1"
@@ -266,11 +279,13 @@ There are some properties in the environmental config that are used by the syste
   ]
 }
 ```
+
 Naturally, anything you define is available to you. You get access to the configuration through `SakuraApi.instsance.config`.
 
 # Some tips for contributing to SakuraApi
 
 ## Dependencies
+
 To build this project you must have:
 
 * npm 5+

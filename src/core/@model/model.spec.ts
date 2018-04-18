@@ -3,28 +3,28 @@ import {
   ObjectID,
   ReplaceOneOptions,
   UpdateWriteOpResult
-}                       from 'mongodb';
-import {testSapi}       from '../../../spec/helpers/sakuraapi';
+} from 'mongodb';
+import { testSapi } from '../../../spec/helpers/sakuraapi';
 import {
   Injectable,
   NonInjectableConstructorParameterError
-}                       from '../@injectable';
-import {SakuraApi}      from '../sakura-api';
+} from '../@injectable';
+import { SakuraApi } from '../sakura-api';
 import {
   Db,
   Json,
   Model,
   modelSymbols
-}                       from './';
+} from './';
 import {
   SapiDbForModelNotFound,
   SapiMissingIdErr
-}                       from './errors';
+} from './errors';
 import {
   ModelNotRegistered,
   ModelsMustBeDecoratedWithModelError
-}                       from './model';
-import {SapiModelMixin} from './sapi-model-mixin';
+} from './model';
+import { SapiModelMixin } from './sapi-model-mixin';
 
 describe('core/@Model', () => {
   describe('construction', () => {
@@ -79,6 +79,24 @@ describe('core/@Model', () => {
         }
 
         expect(() => new TestDbConfig1()).toThrow();
+      });
+
+      it('decorates model with collation when provided', () => {
+        @Model({
+          dbConfig: {
+            collation: {locale: 'en'},
+            collection: 'db-collection',
+            db: 'db-name'
+          }
+        })
+        class TestModel extends SapiModelMixin() {
+        }
+
+        const testModel = new TestModel();
+
+        expect(TestModel[modelSymbols.dbCollation].locale).toBe('en');
+        expect(TestModel.dbLocale).toBe('en');
+        expect(testModel.dbLocale).toBe('en');
       });
     });
 
@@ -321,54 +339,151 @@ describe('core/@Model', () => {
           }
         });
 
-        it('getCursor', async (done) => {
-          try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
+        describe('getCursor', () => {
+          let cursorSapi: SakuraApi;
+          const cursorDbConfig = {
+            collection: 'cursorTest',
+            db: 'userDb'
+          };
 
-            const createdResult = await testDefaultMethods.create();
-
-            expect(createdResult.insertedCount).toBe(1);
-
-            const results = await DefaultCrud
-              .getCursor({_id: testDefaultMethods.id})
-              .toArray();
-
-            expect(results.length).toBe(1);
-            expect(results[0]._id.toString()).toBe(testDefaultMethods.id.toString());
-
-            expect(results[0].fn).toBeDefined();
-            expect(results[0].lastName).toBeDefined();
-
-            expect(results[0].fn).toBe(testDefaultMethods.firstName);
-            expect(results[0].lastName).toBe(testDefaultMethods.lastName);
-
-            done();
-          } catch (err) {
-            done.fail(err);
+          @Model({dbConfig: cursorDbConfig})
+          class TestWithOutCollation extends SapiModelMixin() {
+            @Db() @Json()
+            name: string;
           }
 
-        });
-
-        it('getCursor supports projection', async (done) => {
-          try {
-            const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
-
-            const createResults: InsertOneWriteOpResult = await testDefaultMethods.create();
-
-            expect(createResults.insertedCount).toBe(1);
-
-            const result = await DefaultCrud
-              .getCursor(testDefaultMethods.id, {_id: 1})
-              .next();
-
-            expect(result.firstName).toBeUndefined();
-            expect(result.lastName).toBeUndefined();
-            expect(result._id.toString()).toBe(testDefaultMethods.id.toString());
-
-            done();
-          } catch (err) {
-            done.fail(err);
+          @Model({
+            dbConfig: {
+              collation: {locale: 'en'},
+              ...cursorDbConfig
+            }
+          })
+          class TestCollation extends SapiModelMixin() {
+            @Db() @Json()
+            name: string;
           }
+
+          beforeEach(async (done) => {
+            try {
+              cursorSapi = testSapi({models: [TestWithOutCollation, TestCollation]});
+              await cursorSapi.dbConnections.connectAll();
+
+              done();
+            } catch (err) {
+              done.fail(err);
+            }
+          });
+
+          afterEach(async (done) => {
+            await TestCollation.removeAll({});
+            await cursorSapi.deregisterDependencies();
+            await cursorSapi.close();
+            done();
+          });
+
+          it('returns a cursor', async (done) => {
+            try {
+              const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
+
+              const createdResult = await testDefaultMethods.create();
+
+              expect(createdResult.insertedCount).toBe(1);
+
+              const results = await DefaultCrud
+                .getCursor({_id: testDefaultMethods.id})
+                .toArray();
+
+              expect(results.length).toBe(1);
+              expect(results[0]._id.toString()).toBe(testDefaultMethods.id.toString());
+
+              expect(results[0].fn).toBeDefined();
+              expect(results[0].lastName).toBeDefined();
+
+              expect(results[0].fn).toBe(testDefaultMethods.firstName);
+              expect(results[0].lastName).toBe(testDefaultMethods.lastName);
+
+              done();
+            } catch (err) {
+              done.fail(err);
+            }
+
+          });
+
+          it('returns a cursor with collation, parameter locale', async (done) => {
+            try {
+              const names = ['ñamumu', 'Bibo', 'Jose', 'Zazu', 'nibizio'];
+              for (const name of names) {
+                const obj = TestWithOutCollation.fromJson({name});
+                await obj.create();
+              }
+
+              // verify sort order is wrong without specifying collation
+              const noCollationSearchResults = await TestWithOutCollation.getCursor({}).sort({name: 1}).toArray();
+              const noColationSort = ['Bibo', 'Jose', 'Zazu', 'nibizio', 'ñamumu'];
+              for (let i = 0; i < noColationSort.length; i++) {
+                expect(noCollationSearchResults[i].name).toBe(noColationSort[i]);
+              }
+
+              const collationSearchResults = await TestWithOutCollation.getCursor({}, null, {locale: 'en'}).sort({name: 1}).toArray();
+              const collationSort = ['Bibo', 'Jose', 'ñamumu', 'nibizio', 'Zazu'];
+              for (let i = 0; i < noColationSort.length; i++) {
+                expect(collationSearchResults[i].name).toBe(collationSort[i]);
+              }
+
+              done();
+            } catch (err) {
+              done.fail(err);
+            }
+          });
+
+          it('returns a cursor with collation, class locale', async (done) => {
+            try {
+              const names = ['ñamumu', 'Bibo', 'Jose', 'Zazu', 'nibizio'];
+              for (const name of names) {
+                const obj = TestWithOutCollation.fromJson({name});
+                await obj.create();
+              }
+
+              // verify sort order is wrong without specifying collation
+              const noCollationSearchResults = await TestWithOutCollation.getCursor({}).sort({name: 1}).toArray();
+              const noColationSort = ['Bibo', 'Jose', 'Zazu', 'nibizio', 'ñamumu'];
+              for (let i = 0; i < noColationSort.length; i++) {
+                expect(noCollationSearchResults[i].name).toBe(noColationSort[i]);
+              }
+
+              const collationSearchResults = await TestCollation.getCursor({}).sort({name: 1}).toArray();
+              const collationSort = ['Bibo', 'Jose', 'ñamumu', 'nibizio', 'Zazu'];
+              for (let i = 0; i < noColationSort.length; i++) {
+                expect(collationSearchResults[i].name).toBe(collationSort[i]);
+              }
+
+              done();
+            } catch (err) {
+              done.fail(err);
+            }
+          });
+
+          it('supports projection', async (done) => {
+            try {
+              const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
+
+              const createResults: InsertOneWriteOpResult = await testDefaultMethods.create();
+
+              expect(createResults.insertedCount).toBe(1);
+
+              const result = await DefaultCrud
+                .getCursor(testDefaultMethods.id, {_id: 1})
+                .next();
+
+              expect(result.firstName).toBeUndefined();
+              expect(result.lastName).toBeUndefined();
+              expect(result._id.toString()).toBe(testDefaultMethods.id.toString());
+
+              done();
+            } catch (err) {
+              done.fail(err);
+            }
+          });
         });
 
         it('getCursorById', async (done) => {
