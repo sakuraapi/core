@@ -9,34 +9,45 @@ import {
   ObjectID,
   ReplaceOneOptions,
   UpdateWriteOpResult
-}                                from 'mongodb';
-import {v4}                      from 'uuid';
-import {getDependencyInjections} from '../@injectable';
+} from 'mongodb';
+import { v4 } from 'uuid';
+import { getDependencyInjections } from '../@injectable';
 import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods,
   shouldRecurse
-}                                from '../helpers';
+} from '../helpers';
 import {
   dbSymbols,
   IDbOptions
-}                                from './db';
+} from './db';
 import {
   SapiDbForModelNotFound,
   SapiInvalidModelObject,
   SapiMissingIdErr
-}                                from './errors';
-import {formatFromJsonSymbols}   from './format-from-json';
-import {formatToJsonSymbols}     from './format-to-json';
+} from './errors';
+import { formatFromJsonSymbols } from './format-from-json';
+import { formatToJsonSymbols } from './format-to-json';
 import {
   IJsonOptions,
   jsonSymbols
-}                                from './json';
-import {privateSymbols}          from './private';
+} from './json';
+import { privateSymbols } from './private';
 
 const debug = {
   normal: require('debug')('sapi:model')
 };
+
+export interface IMongoDBCollation {
+  locale: string;
+  caseLevel?: boolean;
+  caseFirst?: string;
+  strength?: number;
+  numericOrdering?: boolean;
+  alternate?: string;
+  maxVariable?: string;
+  backwards?: boolean;
+}
 
 /**
  * Interface defining the properties used for retrieving records from the DB
@@ -48,6 +59,7 @@ const debug = {
  * - sort: https://docs.mongodb.com/manual/reference/method/cursor.sort/
  */
 export interface IDbGetParams {
+  collation?: IMongoDBCollation;
   comment?: string;
   filter?: any;
   limit?: number;
@@ -76,16 +88,22 @@ export interface IModelOptions {
    */
   dbConfig?: {
     /**
+     * Optionally set the default MongoDB collation for this model.
+     * For valid settings see:
+     * https://docs.mongodb.com/manual/reference/collation-locales-defaults/#collation-languages-locales
+     */
+    collation?: IMongoDBCollation;
+    /**
+     * The name of the collection in the database referenced in `db` that represents this model.
+     */
+    collection: string;
+
+    /**
      * The name of the database for this model which is used to retrieve the `MongoDB` `Db` object from
      * [[SakuraMongoDbConnection]]. I.e, whatever name you used in your congifuration of [[SakuraMongoDbConnection]]
      * for the database connection for this model, use that name here.
      */
     db: string;
-
-    /**
-     * The name of the collection in the database referenced in `db` that represents this model.
-     */
-    collection: string;
 
     /**
      * If true, fields without an Explicit @Db will still be written to the Db and used to rehydrate objects `fromDb`.
@@ -104,6 +122,7 @@ export interface IModelOptions {
  */
 export const modelSymbols = {
   constructor: Symbol('constructor'),
+  dbCollation: Symbol('dbCollation'),
   dbCollection: Symbol('dbCollection'),
   dbName: Symbol('dbName'),
   fromDb: Symbol('fromDb'),
@@ -267,6 +286,7 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
 
     newConstructor[modelSymbols.dbName] = (modelOptions.dbConfig || {} as any).db || null;
     newConstructor[modelSymbols.dbCollection] = (modelOptions.dbConfig || {} as any).collection || null;
+    newConstructor[modelSymbols.dbCollation] = (modelOptions.dbConfig || {} as any).collation || null;
 
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
@@ -311,6 +331,9 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
 
     newConstructor.fromJsonToDb = fromJsonToDb;
     newConstructor[modelSymbols.fromJsonToDb] = fromJsonToDb;
+
+    newConstructor.dbLocale = (newConstructor[modelSymbols.dbCollation] || {} as any).locale;
+    newConstructor.prototype.dbLocale = (newConstructor[modelSymbols.dbCollation] || {} as any).locale;
 
     newConstructor[modelSymbols.sapi] = null; // injected by [[SakuraApi.registerModels]]
 
@@ -820,7 +843,7 @@ async function get(params?: IDbGetParams): Promise<object[]> {
 
   params = params || {};
 
-  const cursor = this.getCursor(params.filter, params.project);
+  const cursor = this.getCursor(params.filter, params.project, params.collation);
 
   if (params.sort) {
     cursor.sort(params.sort);
@@ -856,12 +879,13 @@ async function get(params?: IDbGetParams): Promise<object[]> {
  * @static Gets a document by its id from the database and builds its corresponding [[Model]] then resolves that object.
  * @param id The id of the document in the database.
  * @param project The fields to project (all if not supplied).
+ * @param collation MongoDB Collation Document.
  * @returns {Promise<T>} Returns a Promise that resolves with an instantiated [[Model]] object. Returns null
  * if the record is not found in the Db.
  */
-async function getById(id: string | ObjectID, project?: any): Promise<any> {
+async function getById(id: string | ObjectID, project?: any, collation?: IMongoDBCollation): Promise<any> {
   debug.normal(`.getById called, dbName '${this[modelSymbols.dbName]}'`);
-  const cursor = this.getCursorById(id, project);
+  const cursor = this.getCursorById(id, project, collation);
 
   const options = (project) ? {strict: true} : null;
   const result = await cursor.next();
@@ -899,12 +923,15 @@ function getCollection(): Collection {
  * [[Model]] objects.
  * @param filter A MongoDb query.
  * @param project The fields to project (all if not supplied).
+ * @param collation MongoDB Collation Document.
  * @returns {Cursor<any>}
  */
-function getCursor(filter: any, project?: any): Cursor<any> {
+function getCursor(filter: any, project?: any, collation?: IMongoDBCollation): Cursor<any> {
   filter = filter || {};
 
-  const col = this.getCollection();
+  collation = collation || this[modelSymbols.dbCollation] || null;
+
+  let col = this.getCollection();
   debug.normal(`.getCursor called, dbName '${this[modelSymbols.dbName]}', found?: ${!!col}`);
 
   if (!col) {
@@ -916,24 +943,31 @@ function getCursor(filter: any, project?: any): Cursor<any> {
     filter._id = new ObjectID(filter._id.toString());
   }
 
-  return (project)
+  col = (project)
     ? col.find(filter).project(project)
     : col.find(filter);
+
+  if (collation) {
+    col.collation(collation);
+  }
+
+  return col;
 }
 
 /**
  * @static Gets a `Cursor` from MonogDb based on the supplied `id` and applies a `limit(1)` before returning the cursor.
  * @param id the document's id in the database.
  * @param project The fields to project (all if not supplied).
+ * @param collation MongoDB Collation Document.
  * @returns {Cursor<T>}
  */
-function getCursorById(id, project?: any): Cursor<any> {
+function getCursorById(id: ObjectID | string, project?: any, collation?: IMongoDBCollation): Cursor<any> {
   debug.normal(`.getCursorById called, dbName '${this[modelSymbols.dbName]}'`);
 
   return this
     .getCursor({
       _id: (id instanceof ObjectID) ? id : id.toString() || `${id}`
-    }, project)
+    }, project, collation)
     .limit(1);
 }
 
@@ -968,11 +1002,12 @@ function getDb(): Db {
  * @static Like the [[get]] method, but retrieves only the first result.
  * @param filter A MongoDb query.
  * @param project The fields to project (all if nto supplied).
+ * @param collation MongoDB Collation Document.
  * @returns {Promise<any>} Returns a Promise that resolves with an instantiated [[Model]] object. Returns null if the
  * record is not found in the Db.
  */
-async function getOne(filter: any, project?: any): Promise<any> {
-  const cursor = this.getCursor(filter, project);
+async function getOne(filter: any, project?: any, collation?: IMongoDBCollation): Promise<any> {
+  const cursor = this.getCursor(filter, project, collation);
   debug.normal(`.getOne called, dbName '${this[modelSymbols.dbName]}'`);
 
   const result = await cursor
