@@ -10,13 +10,14 @@ import {
   ObjectID,
   ReplaceOneOptions,
   UpdateWriteOpResult
-}                    from 'mongodb';
-import {Constructor} from '../helpers';
-import {SakuraApi}   from '../sakura-api';
+} from 'mongodb';
+import { Constructor } from '../helpers';
+import { SakuraApi } from '../sakura-api';
 import {
   IDbGetParams,
   IFromDbOptions
-}                    from './';
+} from './';
+import { IMongoDBCollation } from './model';
 
 /**
  * Integrators should extend their Models with this Mixin to get type checking.
@@ -63,46 +64,41 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
 
   return class extends base {
 
-    static fromDb: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
-    static fromJson: <T>(this: { new(...params): T }, json: object, context?: string) => T;
-    static fromJsonToDb: (json: any, context?: string) => any;
-
-    static fromDbArray: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
-    static fromJsonArray: <T>(this: { new(): T }, jsons: object[]) => T[];
-
-    static get: <T>(this: { new (): T }, params?: IDbGetParams) => Promise<T[]>;
-    static getById: <T>(this: { new (): T }, id: string | ObjectID, project?: any) => Promise<T>;
-    static getCollection: () => Collection;
-    static getCursor: (filter: any, project?: any) => Cursor<any>;
-    static getCursorById: (id, project?: any) => Cursor<any>;
-    static getDb: () => Db;
-    static getOne: <T>(this: { new (): T }, filter: any, project?: any) => Promise<T>;
-
-    static removeAll: (filter: any, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
-    static removeById: (id: ObjectID, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
-
+    static dbLocale: string;
     static sapi: SakuraApi;
     static sapiConfig?: any;
 
+    static fromDb: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
+    static fromDbArray: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
+    static fromJson: <T>(this: { new(...params): T }, json: object, context?: string) => T;
+    static fromJsonArray: <T>(this: { new(): T }, jsons: object[]) => T[];
+    static fromJsonToDb: (json: any, context?: string) => any;
+    static get: <T>(this: { new (): T }, params?: IDbGetParams) => Promise<T[]>;
+    static getById: <T>(this: { new (): T }, id: string | ObjectID, project?: any, collation?: IMongoDBCollation) => Promise<T>;
+    static getCollection: () => Collection;
+    static getCursor: (filter: any, project?: any, collation?: IMongoDBCollation) => Cursor<any>;
+    static getCursorById: (id: ObjectID | string, project?: any, collation?: IMongoDBCollation) => Cursor<any>;
+    static getDb: () => Db;
+    static getOne: <T>(this: { new (): T }, filter: any, project?: any, collation?: IMongoDBCollation) => Promise<T>;
+    static removeAll: (filter: any, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
+    static removeById: (id: ObjectID, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
+
     _id: ObjectID;
     id: ObjectID;
+    dbLocale: string;
 
     create: (options?: CollectionInsertOneOptions) => Promise<InsertOneWriteOpResult>;
-
     getCollection: () => Collection;
     getDb: () => Db;
-
-    remove: (filter: any | null, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
-    save: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
-
-    toDb: (changeSet?: object) => any;
-    toJson: (projection?: any, context?: string) => any;
+    toJson: (context?: string) => any;
     toJsonString: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
+    toDb: (changeSet?: object) => any;
+    remove: (options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
+    save: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
 
     constructor(...args: any[]) {
       super(...args);
     }
-
   };
 }
 
