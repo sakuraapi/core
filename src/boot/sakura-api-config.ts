@@ -1,6 +1,6 @@
-import * as fs                   from 'fs';
-import * as _                    from 'lodash';
-import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
+import * as fs from 'fs';
+import * as _ from 'lodash';
+import { SakuraMongoDbConnection } from '../core/sakura-mongo-db-connection';
 
 const debug = {
   normal: require('debug')('sapi:SakuraApiConfig'),
@@ -12,19 +12,6 @@ const debug = {
  * merged. See [[SakuraApiConfig.load]] for details.
  */
 export class SakuraApiConfig {
-
-  /**
-   * The configuration that was loaded from the various json and ts files and the environmental
-   * variables that were set at the time the configuration was last loaded.
-   */
-  config: any;
-
-  /**
-   * Instantiate SakuraApiConfig.
-   */
-  constructor() {
-    debug.normal('.constructor');
-  }
 
   /**
    * Same as the instance method, but static, and it won't try to use the last loaded config since that
@@ -52,6 +39,19 @@ export class SakuraApiConfig {
     }
 
     return dbConns;
+  }
+
+  /**
+   * The configuration that was loaded from the various json and ts files and the environmental
+   * variables that were set at the time the configuration was last loaded.
+   */
+  config: any;
+
+  /**
+   * Instantiate SakuraApiConfig.
+   */
+  constructor() {
+    debug.normal('.constructor');
   }
 
   /**
