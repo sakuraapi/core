@@ -1695,6 +1695,29 @@ describe('@Json', () => {
       expect(dbObj.cn.p).toBe('000', 'phone should have mapped');
     });
 
+    it('preserves the original key order of the json fields', () => {
+      /* tslint:disable:object-literal-sort-keys */
+      const json = {
+        ln: 'Washington',
+        ctac: {
+          phone: '000'
+        },
+        fn: 'George'
+      };
+
+      const db = {
+        cn: {
+          p: '000'
+        },
+        lastName: 'Washington',
+        first: 'George'
+      };
+      /* tslint:enable:object-literal-sort-keys */
+
+      const dbObj = ChangeSetTest.fromJsonToDb(json);
+      expect(Object.keys(dbObj)).toEqual(Object.keys(db));
+    });
+
     it('converts id to _id', () => {
       const json = {
         ctac: {
