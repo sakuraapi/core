@@ -18,8 +18,6 @@
     "install": "chmod +x scripts/*.* || true",
     "lint": "./scripts/lint.sh",
     "prepublish": "npm test && npx nsp check",
-    "say:fail": "say 'fail' || echo 'fail'",
-    "say:pass": "say 'pass' || echo 'pass'",
     "start": "nodemon --exec \"npm run build; echo build done\"",
     "test": "./scripts/test.sh",
     "test:db": "./scripts/test.sh saveDb",
