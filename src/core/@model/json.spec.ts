@@ -1,14 +1,14 @@
-import {ObjectID}       from 'mongodb';
-import {testSapi}       from '../../../spec/helpers/sakuraapi';
-import {SakuraApi}      from '../sakura-api';
-import {Db}             from './db';
-import {Json}           from './json';
+import { ObjectID } from 'mongodb';
+import { testSapi } from '../../../spec/helpers/sakuraapi';
+import { SakuraApi } from '../sakura-api';
+import { Db } from './db';
+import { Json } from './json';
 import {
   Model,
   modelSymbols
-}                       from './model';
-import {Private}        from './private';
-import {SapiModelMixin} from './sapi-model-mixin';
+} from './model';
+import { Private } from './private';
+import { SapiModelMixin } from './sapi-model-mixin';
 
 describe('@Json', () => {
 
@@ -885,6 +885,7 @@ describe('@Json', () => {
     });
 
     describe('allows multiple @json decorators', () => {
+
       it('with only one of the @json properties used', () => {
         let obj = Test.fromJson({
           anp: 2
@@ -896,6 +897,7 @@ describe('@Json', () => {
         });
         expect(obj.anotherProperty).toBe(2);
       });
+
       it('with the last property defined in the json object winning if there are multiple' +
         ' matching fields for a property', () => {
         const obj = Test.fromJson({
@@ -941,16 +943,12 @@ describe('@Json', () => {
       expect(obj.anotherProperty).toBe('2');
     });
 
-    it('returns a real @Model object, not just an object with the right properties', () => {
-      expect(Test.fromJson({}) instanceof Test).toBeTruthy();
-    });
-
     it('returns null when no json object is provided', () => {
       expect(Test.fromJson(null)).toBe(null);
       expect(Test.fromJson(undefined)).toBe(null);
     });
 
-    it('handles falsy properties', () => {
+    it('falsy json properties are not excluded in resulting model', () => {
       const json = {
         contact: {
           phone: 0
@@ -964,117 +962,120 @@ describe('@Json', () => {
       expect(result.contact.phone).toBe(0);
     });
 
-    it('model decorated properties can be null or undefined - issue #95', () => {
+    describe('IJsonOptions.model', () => {
+      // see also db.spec.ts IDbOptions.model tests
+      it('properties can be null or undefined - issue #95', () => {
 
-      @Model()
-      class ChildChild {
-        @Json()
-        test = 'default';
-      }
-
-      @Model()
-      class Child {
-        @Json()
-        test = 'default';
-
-        @Json({model: ChildChild})
-        instantiatedChildChild = new ChildChild();
-
-        @Json({model: ChildChild})
-        nullChildChild: ChildChild = null;
-
-        @Json({model: ChildChild})
-        undefinedChildChild: ChildChild = undefined;
-
-        @Json({model: ChildChild})
-        childChild: ChildChild;
-      }
-
-      @Model()
-      class Parent extends SapiModelMixin() {
-
-        @Json({model: Child})
-        instantiatedChild = new Child();
-
-        @Json({model: Child})
-        nullChild = null;
-
-        @Json({model: Child})
-        undefinedChild = undefined;
-
-        @Json({model: Child})
-        child: Child;
-      }
-
-      testSapi({
-        models: [
-          Child,
-          Parent
-        ]
-      });
-
-      let result = Parent.fromJson({
-        child: {test: 'pass'},
-        instantiatedChild: {test: 'pass'},
-        nullChild: {test: 'pass'},
-        undefinedChild: {test: 'pass'}
-      });
-
-      expect(result.instantiatedChild.test).toBe('pass');
-      expect(result.nullChild.test).toBe('pass');
-      expect(result.undefinedChild.test).toBe('pass');
-      expect(result.child.test).toBe('pass');
-
-      result = Parent.fromJson({
-        child: {
-          childChild: {test: 'pass'},
-          instantiatedChildChild: {test: 'pass'},
-          nullChildChild: {test: 'pass'},
-          test: 'pass',
-          undefinedChildChild: {test: 'pass'}
-        },
-        instantiatedChild: {
-          childChild: {test: 'pass'},
-          instantiatedChildChild: {test: 'pass'},
-          nullChildChild: {test: 'pass'},
-          test: 'pass',
-          undefinedChildChild: {test: 'pass'}
-        },
-        nullChild: {
-          childChild: {test: 'pass'},
-          instantiatedChildChild: {test: 'pass'},
-          nullChildChild: {test: 'pass'},
-          test: 'pass',
-          undefinedChildChild: {test: 'pass'}
-        },
-        undefinedChild: {
-          childChild: {test: 'pass'},
-          instantiatedChildChild: {test: 'pass'},
-          nullChildChild: {test: 'pass'},
-          test: 'pass',
-          undefinedChildChild: {test: 'pass'}
+        @Model()
+        class ChildChild {
+          @Json()
+          test = 'default';
         }
+
+        @Model()
+        class Child {
+          @Json()
+          test = 'default';
+
+          @Json({model: ChildChild})
+          instantiatedChildChild = new ChildChild();
+
+          @Json({model: ChildChild})
+          nullChildChild: ChildChild = null;
+
+          @Json({model: ChildChild})
+          undefinedChildChild: ChildChild = undefined;
+
+          @Json({model: ChildChild})
+          childChild: ChildChild;
+        }
+
+        @Model()
+        class Parent extends SapiModelMixin() {
+
+          @Json({model: Child})
+          instantiatedChild = new Child();
+
+          @Json({model: Child})
+          nullChild = null;
+
+          @Json({model: Child})
+          undefinedChild = undefined;
+
+          @Json({model: Child})
+          child: Child;
+        }
+
+        testSapi({
+          models: [
+            Child,
+            Parent
+          ]
+        });
+
+        let result = Parent.fromJson({
+          child: {test: 'pass'},
+          instantiatedChild: {test: 'pass'},
+          nullChild: {test: 'pass'},
+          undefinedChild: {test: 'pass'}
+        });
+
+        expect(result.instantiatedChild.test).toBe('pass');
+        expect(result.nullChild.test).toBe('pass');
+        expect(result.undefinedChild.test).toBe('pass');
+        expect(result.child.test).toBe('pass');
+
+        result = Parent.fromJson({
+          child: {
+            childChild: {test: 'pass'},
+            instantiatedChildChild: {test: 'pass'},
+            nullChildChild: {test: 'pass'},
+            test: 'pass',
+            undefinedChildChild: {test: 'pass'}
+          },
+          instantiatedChild: {
+            childChild: {test: 'pass'},
+            instantiatedChildChild: {test: 'pass'},
+            nullChildChild: {test: 'pass'},
+            test: 'pass',
+            undefinedChildChild: {test: 'pass'}
+          },
+          nullChild: {
+            childChild: {test: 'pass'},
+            instantiatedChildChild: {test: 'pass'},
+            nullChildChild: {test: 'pass'},
+            test: 'pass',
+            undefinedChildChild: {test: 'pass'}
+          },
+          undefinedChild: {
+            childChild: {test: 'pass'},
+            instantiatedChildChild: {test: 'pass'},
+            nullChildChild: {test: 'pass'},
+            test: 'pass',
+            undefinedChildChild: {test: 'pass'}
+          }
+        });
+
+        expect(result.instantiatedChild.instantiatedChildChild.test).toBe('pass');
+        expect(result.instantiatedChild.nullChildChild.test).toBe('pass');
+        expect(result.instantiatedChild.undefinedChildChild.test).toBe('pass');
+        expect(result.instantiatedChild.childChild.test).toBe('pass');
+
+        expect(result.nullChild.instantiatedChildChild.test).toBe('pass');
+        expect(result.nullChild.nullChildChild.test).toBe('pass');
+        expect(result.nullChild.undefinedChildChild.test).toBe('pass');
+        expect(result.nullChild.childChild.test).toBe('pass');
+
+        expect(result.undefinedChild.instantiatedChildChild.test).toBe('pass');
+        expect(result.undefinedChild.nullChildChild.test).toBe('pass');
+        expect(result.undefinedChild.undefinedChildChild.test).toBe('pass');
+        expect(result.undefinedChild.childChild.test).toBe('pass');
+
+        expect(result.child.childChild.test).toBe('pass');
+        expect(result.child.nullChildChild.test).toBe('pass');
+        expect(result.child.undefinedChildChild.test).toBe('pass');
+        expect(result.child.childChild.test).toBe('pass');
       });
-
-      expect(result.instantiatedChild.instantiatedChildChild.test).toBe('pass');
-      expect(result.instantiatedChild.nullChildChild.test).toBe('pass');
-      expect(result.instantiatedChild.undefinedChildChild.test).toBe('pass');
-      expect(result.instantiatedChild.childChild.test).toBe('pass');
-
-      expect(result.nullChild.instantiatedChildChild.test).toBe('pass');
-      expect(result.nullChild.nullChildChild.test).toBe('pass');
-      expect(result.nullChild.undefinedChildChild.test).toBe('pass');
-      expect(result.nullChild.childChild.test).toBe('pass');
-
-      expect(result.undefinedChild.instantiatedChildChild.test).toBe('pass');
-      expect(result.undefinedChild.nullChildChild.test).toBe('pass');
-      expect(result.undefinedChild.undefinedChildChild.test).toBe('pass');
-      expect(result.undefinedChild.childChild.test).toBe('pass');
-
-      expect(result.child.childChild.test).toBe('pass');
-      expect(result.child.nullChildChild.test).toBe('pass');
-      expect(result.child.undefinedChildChild.test).toBe('pass');
-      expect(result.child.childChild.test).toBe('pass');
     });
 
     describe('bugs', () => {

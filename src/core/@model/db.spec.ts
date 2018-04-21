@@ -1,14 +1,15 @@
 // tslint:disable:no-shadowed-variable
-import {ObjectID}       from 'mongodb';
-import {testSapi}       from '../../../spec/helpers/sakuraapi';
-import {SakuraApi}      from '../sakura-api';
+import { ObjectID } from 'mongodb';
+import { testSapi } from '../../../spec/helpers/sakuraapi';
+import { SakuraApi } from '../sakura-api';
 import {
   Db,
   dbSymbols,
   Json
-}                       from './';
-import {Model}          from './model';
-import {SapiModelMixin} from './sapi-model-mixin';
+} from './';
+import { IDbOptions } from './db';
+import { Model } from './model';
+import { SapiModelMixin } from './sapi-model-mixin';
 
 describe('@Db', () => {
 
@@ -95,7 +96,7 @@ describe('@Db', () => {
       });
     });
 
-    describe('maps db fields to deeply nested model properties', () => {
+    describe('IDbOptions.model maps db fields to deeply nested model properties', () => {
       @Model()
       class Address {
         @Db('st') @Json()
