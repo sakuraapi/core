@@ -204,9 +204,9 @@ describe('@Model.fromDb', () => {
       expect(result.lastName).toBeUndefined();
     });
 
-    describe('.model', () => {
+    fdescribe('.model', () => {
 
-      const data = {
+      const dbData = {
         fn: 'George',
         lastName: 'Washington',
         middleName: 'Nonely',
@@ -243,6 +243,7 @@ describe('@Model.fromDb', () => {
         gateCode = 'a123';
       }
 
+      // without @Model decoration, but still using @Db decorator
       class Order {
         @Db()
         orderId: string = 'a123';
@@ -256,6 +257,14 @@ describe('@Model.fromDb', () => {
         itemName = 'Cherry Tree Axe';
       }
 
+      class Lead {
+        @Db('n')
+        name: string;
+
+        @Db({field: 'addr', model: Address})
+        address = new Address();
+      }
+
       @Model()
       class Test extends SapiModelMixin() {
 
@@ -266,9 +275,13 @@ describe('@Model.fromDb', () => {
 
         @Db({field: 'o', model: Order})
         order = new Order();
+
+        @Db({field: 'leads', model: Lead})
+        leads: Lead[] = [];
+
       }
 
-      it('if set, keeps default value if db source is missing that property', () => {
+      it('if default value set, keeps default value if db source is missing that property', () => {
         class Contact {
           firstName: string = 'George';
           lastName: string = 'Washington';
@@ -295,9 +308,9 @@ describe('@Model.fromDb', () => {
 
       it('excludes fields without @Db decorated properties if not in promiscuous mode', () => {
 
-        const result = Test.fromDb(data);
+        const result = Test.fromDb(dbData);
 
-        expect(result.firstName).toBe(data.fn);
+        expect(result.firstName).toBe(dbData.fn);
 
         expect(result.middleName).toBeUndefined('' +
           'A property in a model should not be assigned a matching db field if the Model property is not decorated with @Db'
@@ -331,7 +344,7 @@ describe('@Model.fromDb', () => {
       });
 
       it('maps objects with an IDbOptions.model option to an instance of that object constructor', () => {
-        const result = Test.fromDb(data);
+        const result = Test.fromDb(dbData);
 
         expect(result.order instanceof Order).toBeTruthy(
           `result.order should be instance of Order but it was instance of '${result.order.constructor.name}' instead`
@@ -344,10 +357,10 @@ describe('@Model.fromDb', () => {
 
       it('deeply maps values with matching @Db', () => {
 
-        const result = Test.fromDb(data);
+        const result = Test.fromDb(dbData);
 
         expect(result instanceof Test).toBeTruthy();
-        expect(result.firstName).toBe(data.fn);
+        expect(result.firstName).toBe(dbData.fn);
         expect(result.middleName).toBeUndefined('should not have mapped without promiscuous mode');
         expect((result as any).lastName).toBeUndefined('should not have mapped without promiscuous mode');
         expect(result.order).toBeDefined('result.order shold be defined');
@@ -454,6 +467,51 @@ describe('@Model.fromDb', () => {
         expect(result.deep.deepValue).toBeDefined();
         expect(result.deep.deepValue).toBeFalsy();
 
+      });
+
+      fdescribe('array of sub documents - #167', () => {
+        it('if default value set, keeps default value if db source is missing that property', () => {
+          const result = Test.fromDb({});
+          expect(Array.isArray(result.leads)).toBeTruthy('Should have defaulted to an empty array');
+          expect(result.leads.length).toBe(0);
+        });
+
+        it('maps an array of sub documents from the DB to the resulting model', () => {
+
+          const leadSubDocs = [
+            {
+              n: '1',
+              addr: {
+                c: 'Redondo Beach',
+                gc: '00000',
+                s: 'CA',
+                st: '123',
+                z: '90277'
+              }
+            },
+            {
+              n: '2',
+              addr: {
+                c: 'Manhattan Beach',
+                gc: '00000',
+                s: 'CA',
+                st: '123',
+                z: '90277'
+              }
+            }
+          ];
+          const subDocDbData = Object.assign({leads: leadSubDocs}, dbData);
+
+          const result = Test.fromDb(subDocDbData);
+          console.log(`------------------------`.red);
+          console.log(result);
+
+          expect(result.leads.length).toBe(2);
+          expect(result.leads[0].name).toBe(leadSubDocs[0].n);
+          expect((result.leads[0].address || {} as any).city).toBe(leadSubDocs[0].addr.c);
+          expect(result.leads[1].name).toBe(leadSubDocs[1].n);
+          expect((result.leads[1].address || {} as any).city).toBe(leadSubDocs[1].addr.c);
+        });
       });
 
       describe('with dbOptions.promiscuous mode', () => {
