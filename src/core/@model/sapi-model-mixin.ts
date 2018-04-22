@@ -73,13 +73,13 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     static fromJson: <T>(this: { new(...params): T }, json: object, context?: string) => T;
     static fromJsonArray: <T>(this: { new(): T }, jsons: object[]) => T[];
     static fromJsonToDb: (json: any, context?: string) => any;
-    static get: <T>(this: { new (): T }, params?: IDbGetParams) => Promise<T[]>;
-    static getById: <T>(this: { new (): T }, id: string | ObjectID, project?: any, collation?: IMongoDBCollation) => Promise<T>;
+    static get: <T>(this: { new(): T }, params?: IDbGetParams) => Promise<T[]>;
+    static getById: <T>(this: { new(): T }, id: string | ObjectID, project?: any, collation?: IMongoDBCollation) => Promise<T>;
     static getCollection: () => Collection;
     static getCursor: (filter: any, project?: any, collation?: IMongoDBCollation) => Cursor<any>;
     static getCursorById: (id: ObjectID | string, project?: any, collation?: IMongoDBCollation) => Cursor<any>;
     static getDb: () => Db;
-    static getOne: <T>(this: { new (): T }, filter: any, project?: any, collation?: IMongoDBCollation) => Promise<T>;
+    static getOne: <T>(this: { new(): T }, filter: any, project?: any, collation?: IMongoDBCollation) => Promise<T>;
     static removeAll: (filter: any, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
     static removeById: (id: ObjectID, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
 
@@ -94,7 +94,7 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     toJsonString: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
     toDb: (changeSet?: object) => any;
     remove: (options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
-    save: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions) => Promise<UpdateWriteOpResult>;
+    save: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions, context?: string) => Promise<UpdateWriteOpResult>;
 
     constructor(...args: any[]) {
       super(...args);

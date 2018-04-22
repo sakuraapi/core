@@ -4,6 +4,10 @@ import {
 } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
+import {
+  BeforeSave,
+  OnBeforeSave
+} from '../before-save';
 import { SapiMissingIdErr } from '../errors';
 import {
   Db,
@@ -19,6 +23,9 @@ describe('Model.save', () => {
     db: 'userDb',
     promiscuous: true
   };
+  let beforeSave1Hook: OnBeforeSave;
+  let beforeSave2Hook: OnBeforeSave;
+  let beforeSave3Hook: OnBeforeSave;
 
   @Model()
   class ChildChild {
@@ -48,7 +55,7 @@ describe('Model.save', () => {
   @Model({
     dbConfig
   })
-  class DefaultCrud extends SapiModelMixin() {
+  class TestSave extends SapiModelMixin() {
     @Db({
       field: 'fn'
     })
@@ -59,6 +66,21 @@ describe('Model.save', () => {
       private: true
     })
     password = '';
+
+    @BeforeSave()
+    beforeSave1(model: TestSave, context: string): Promise<void> {
+      return (beforeSave1Hook) ? beforeSave1Hook(model, context) : Promise.resolve();
+    }
+
+    @BeforeSave('*')
+    beforeSave2(model: TestSave, context: string): Promise<void> {
+      return (beforeSave2Hook) ? beforeSave2Hook(model, context) : Promise.resolve();
+    }
+
+    @BeforeSave('test')
+    beforeSave3(model: TestSave, context: string): Promise<void> {
+      return (beforeSave3Hook) ? beforeSave3Hook(model, context) : Promise.resolve();
+    }
   }
 
   @Model({
@@ -75,7 +97,7 @@ describe('Model.save', () => {
     try {
       sapi = testSapi({
         models: [
-          DefaultCrud,
+          TestSave,
           TestBadDb
         ]
       });
@@ -92,11 +114,15 @@ describe('Model.save', () => {
 
   afterEach(async (done) => {
     try {
-      await DefaultCrud.removeAll({});
+      await TestSave.removeAll({});
       await sapi.close();
 
       sapi.deregisterDependencies();
       sapi = null;
+      beforeSave1Hook = null;
+      beforeSave2Hook = null;
+      beforeSave3Hook = null;
+
       done();
     } catch (err) {
       done.fail(err);
@@ -104,7 +130,7 @@ describe('Model.save', () => {
   });
 
   it('rejects if missing id (_id)', async (done) => {
-    const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
+    const testDefaultMethods = new (sapi.getModel(TestSave))();
 
     try {
       await testDefaultMethods.save();
@@ -119,7 +145,7 @@ describe('Model.save', () => {
 
   describe('without projection', () => {
     it('updates entire model if no set parameter is passed', async (done) => {
-      const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
+      const testDefaultMethods = new (sapi.getModel(TestSave))();
 
       expect(testDefaultMethods.id).toBeNull();
       try {
@@ -502,8 +528,93 @@ describe('Model.save', () => {
   });
 
   describe('@BeforeSave', () => {
-    it('', () => {
-      pending('not implemented');
+
+    it('gets called when a model is saved', async (done) => {
+      let model1;
+      let model2;
+      let context1;
+      let context2;
+
+      try {
+        beforeSave1Hook = (model: TestSave, context: string): Promise<void> => {
+          model1 = model;
+          context1 = context;
+          return Promise.resolve();
+        };
+
+        beforeSave2Hook = (model: TestSave, context: string): Promise<void> => {
+          model2 = model;
+          context2 = context;
+          return Promise.resolve();
+        };
+
+        const test = TestSave.fromJson({});
+        await test.create();
+        await test.save();
+
+        expect(model1 instanceof TestSave).toBeTruthy();
+        expect(context1).toBe('default');
+        expect(model2 instanceof TestSave).toBeTruthy();
+        expect(context2).toBe('*');
+
+        done();
+      } catch (err) {
+        done.fail(err);
+      }
     });
+
+    it('modified model properties are persisted', async (done) => {
+
+      try {
+        beforeSave1Hook = (model: TestSave, context: string): Promise<void> => {
+          model.password = 'set-by-@BeforeSave';
+          return Promise.resolve();
+        };
+
+        const test = TestSave.fromJson({});
+        await test.create();
+        await test.save();
+
+        expect(test.password).toBe('set-by-@BeforeSave');
+        expect((await TestSave.getById(test.id)).password).toBe('set-by-@BeforeSave');
+
+        done();
+      } catch (err) {
+        done.fail(err);
+      }
+    });
+
+    it('obeys context', async (done) => {
+      let contextDefault;
+      let contextStar;
+      let contextTest;
+
+      try {
+        beforeSave1Hook = async (model: TestSave, context: string): Promise<void> => {
+          contextDefault = true;
+        };
+
+        beforeSave2Hook = async (model: TestSave, context: string): Promise<void> => {
+          contextStar = true;
+        };
+
+        beforeSave3Hook = async (model: TestSave, context: string): Promise<void> => {
+          contextTest = true;
+        };
+
+        const test = TestSave.fromJson({});
+        await test.create();
+        await test.save(null, null, 'test');
+
+        expect(contextDefault).toBeFalsy('default context should not have been called');
+        expect(contextStar).toBeTruthy('start context should always be called');
+        expect(contextTest).toBeTruthy('test context should have been called');
+
+        done();
+      } catch (err) {
+        done.fail(err);
+      }
+    });
+
   });
 });
