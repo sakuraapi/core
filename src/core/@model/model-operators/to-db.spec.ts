@@ -21,7 +21,7 @@ describe('Model.toDb', () => {
     orderNumber = 'a123';
     @Db('t')
     total = 100;
-    @Db('adr')
+    @Db({field: 'adr', model: Address})
     address: Address = new Address();
   }
 
@@ -114,6 +114,55 @@ describe('Model.toDb', () => {
       expect(result.order.adr.dogsName).toBe(this.promiscuousModel.order.address.dogsName);
       expect(result.phone).toBe(this.promiscuousModel.phone);
       expect(result.id).toBeUndefined();
+    });
+  });
+
+  describe('IDbOptions', () => {
+    describe('.model', () => {
+
+      @Model()
+      class ModelMapTest extends SapiModelMixin() {
+        @Db({model: Order})
+        order: Order[] = [];
+      }
+
+      it('array of sub documents - #167 ', () => {
+
+        const dbData = {
+          order: [
+            {
+              adr: {
+                c: 'Rancho Palos Verdes',
+                code: '1',
+                st: '1',
+                state: 'CA1'
+              },
+              on: 123,
+              t: 1
+            },
+            {
+              adr: {
+                c: 'Palos Verdes Estates',
+                code: '2',
+                st: '2',
+                state: 'CA2'
+              },
+              on: 321,
+              t: 2
+            }
+          ]
+        };
+
+        const test = ModelMapTest.fromDb(dbData).toDb();
+
+        expect(test.order.length).toBe(2);
+        expect(test.order[0].on).toBe(dbData.order[0].on);
+        expect(test.order[0].t).toBe(dbData.order[0].t);
+
+        expect(test.order[1].on).toBe(dbData.order[1].on);
+        expect(test.order[1].t).toBe(dbData.order[1].t);
+
+      });
     });
   });
 });

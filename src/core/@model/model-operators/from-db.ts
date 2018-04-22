@@ -126,7 +126,7 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
     return target;
   }
 
-  function keyMapper(key: string, value: any, meta: Map<string, IDbOptions>) {
+  function keyMapper(key: string, value: any, meta: Map<string, IDbOptions>): { model: any, newKey: string } {
     const dbFieldOptions = (meta) ? meta.get(key) : null;
 
     return {

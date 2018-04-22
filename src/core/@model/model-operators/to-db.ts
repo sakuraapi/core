@@ -54,29 +54,35 @@ export function toDb(changeSet?: any): object {
     // iterate over each property
     for (const key of Object.getOwnPropertyNames(source)) {
 
-      if (shouldRecurse(source[key])) {
+      const map = keyMapper(key, source[key], dbOptionsByPropertyName) || {} as any;
+      const model = map.model;
 
-        const aNewKey = keyMapper(key, source[key], dbOptionsByPropertyName);
-        if (aNewKey !== undefined) {
-          const value = mapModelToDb(source[key], ++depth);
-          result[aNewKey] = value;
+      let value;
+      if (model || shouldRecurse(source[key])) {
+
+        if (Array.isArray(source[key])) {
+
+          ++depth;
+          const values = [];
+          for (const src of source[key]) {
+            values.push(mapModelToDb(src, depth));
+          }
+          value = values;
+
+        } else if (map.newKey !== undefined) {
+
+          value = mapModelToDb(source[key], ++depth);
+
         }
 
-        continue;
+      } else if (map.newKey !== undefined) {
+
+        value = source[key];
+
       }
 
-      const newKey = keyMapper(key, source[key], dbOptionsByPropertyName);
-      if (newKey !== undefined) {
-        result[newKey] = source[key];
-      }
-    }
+      result[map.newKey] = value;
 
-    if (depth > 0 && !result.id) { // resolves #106
-      delete result.id;
-    }
-
-    if (depth > 0 && !result._id) { // resolves #106
-      delete result._id;
     }
 
     if (depth > 0 && (result._id && result.id)) { // resolves #106
@@ -86,13 +92,13 @@ export function toDb(changeSet?: any): object {
     return result;
   }
 
-  function keyMapper(key, value, dbMeta) {
+  function keyMapper(key, value, dbMeta): { model: any, newKey: string } {
 
     if (!dbMeta) {
       dbMeta = constructor[dbSymbols.dbByPropertyName];
     }
 
-    let fieldName;
+    let fieldName: string;
     // if there's @Db meta data on the property
     if (dbMeta && dbMeta.get) {
       const dbOptions = (dbMeta.get(key)) as IDbOptions;
@@ -112,7 +118,10 @@ export function toDb(changeSet?: any): object {
       fieldName = key;
     }
 
-    return fieldName;
+    return {
+      model: (dbMeta) ? (dbMeta.get(key) || {}).model || null : null,
+      newKey: fieldName
+    };
   }
 
 }
