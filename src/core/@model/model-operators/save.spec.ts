@@ -26,6 +26,7 @@ describe('Model.save', () => {
   let beforeSave1Hook: OnBeforeSave;
   let beforeSave2Hook: OnBeforeSave;
   let beforeSave3Hook: OnBeforeSave;
+  let sapi: SakuraApi;
 
   @Model()
   class ChildChild {
@@ -83,23 +84,10 @@ describe('Model.save', () => {
     }
   }
 
-  @Model({
-    dbConfig: {
-      collection: 'bad',
-      db: 'bad'
-    }
-  })
-  class TestBadDb extends SapiModelMixin() {
-  }
-
-  let sapi: SakuraApi;
   beforeEach(async (done) => {
     try {
       sapi = testSapi({
-        models: [
-          TestSave,
-          TestBadDb
-        ]
+        models: [TestSave]
       });
 
       await sapi

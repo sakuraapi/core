@@ -1,7 +1,3 @@
-import {
-  ToJsonFormatter
-} from './format-to-json';
-
 export const beforeSaveSymbols = {
   functionMap: Symbol('functionMap')
 };

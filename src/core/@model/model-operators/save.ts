@@ -22,7 +22,7 @@ import { debug } from './index';
  * would cause only the `firstName` field to be updated. If the `changeSet` parameter is not provided,
  * `save` will assume the entire [[Model]] is the changeset (obeying the various decorators like [[Db]]).
  * @param options The MongoDB ReplaceOneOptions. If you want to set this, but not the `set`, then pass null into `set`.
- * @param context The optional context to use for things like @Save
+ * @param context The optional context to use for things like @BeforeSave or @BeforeCreate
  * @returns {any}
  */
 export async function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOptions, context = 'default'): Promise<UpdateWriteOpResult> {
@@ -45,7 +45,6 @@ export async function save(changeSet?: { [key: string]: any } | null, options?: 
   const beforSaveMap: Map<string, OnBeforeSave[]> = Reflect.getMetadata(beforeSaveSymbols.functionMap, this);
   const beforeSaveContextMap = (beforSaveMap) ? beforSaveMap.get(context) || [] : [];
   const beforeSaveStarMap = (beforSaveMap) ? beforSaveMap.get('*') || [] : [];
-
   for (const f of beforeSaveContextMap) {
     await f(this, context);
   }
