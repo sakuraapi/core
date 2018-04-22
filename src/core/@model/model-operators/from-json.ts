@@ -64,35 +64,48 @@ export function fromJson(json: object, context = 'default'): object {
     // iterate over each property of the source json object
     const propertyNames = Object.getOwnPropertyNames(jsonSource);
     for (const key of propertyNames) {
+
       // convert the field name to the Model property name
       const meta = getMeta(key, jsonSource[key], propertyNamesByJsonFieldName, target);
+      const dbModel = propertyNamesByDbPropertyName.get(meta.newKey) || {};
+      const model = meta.model || (dbModel || {}).model || null; // use @Json({model:...}) || @Db({model:...})
+
+      // if recursing into a model, set that up, otherwise just pass the target in
+      let nextTarget;
+      try {
+        nextTarget = (model)
+          ? Object.assign(new model(), target[meta.newKey])
+          : target[meta.newKey];
+      } catch (err) {
+        throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
+          + ` cannot be constructed`);
+      }
 
       if (meta.promiscuous) {
         target[meta.newKey] = jsonSource[key];
-      } else if (shouldRecurse(jsonSource[key])) {
-
-        const dbModel = propertyNamesByDbPropertyName.get(meta.newKey) || {};
+      } else if (model || shouldRecurse(jsonSource[key])) {
 
         // if the key should be included, recurse into it
         if (meta.newKey !== undefined) {
-          // use @Json({model:...}) || @Db({model:...})
-          const model = meta.model || (dbModel || {}).model || null;
 
-          // if recursing into a model, set that up, otherwise just pass the target in
-          let nextTarget;
-          try {
-            nextTarget = (model)
-              ? Object.assign(new model(), target[meta.newKey])
-              : target[meta.newKey];
-          } catch (err) {
-            throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
-              + ` cannot be constructed`);
-          }
+          let value;
+          if (Array.isArray(jsonSource[key])) {
 
-          let value = mapJsonToModel(jsonSource[key], nextTarget);
+            const values = [];
 
-          if (model) {
-            value = Object.assign(new model(), value);
+            for (const src of jsonSource[key]) {
+              values.push(Object.assign(new model(), mapJsonToModel(src, nextTarget)));
+            }
+            value = values;
+
+          } else {
+
+            value = mapJsonToModel(jsonSource[key], nextTarget);
+
+            if (model) {
+              value = Object.assign(new model(), value);
+            }
+
           }
 
           // @json({formatFromJson})

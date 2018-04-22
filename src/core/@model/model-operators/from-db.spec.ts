@@ -288,15 +288,15 @@ describe('@Model.fromDb', () => {
         }
 
         @Model()
-        class Test extends SapiModelMixin() {
+        class Test1 extends SapiModelMixin() {
           @Db({model: Contact})
           contact: Contact = new Contact();
         }
 
-        const result = Test.fromDb({});
+        const result = Test1.fromDb({});
 
-        expect(result instanceof Test)
-          .toBeTruthy(`the result should be an instance of the model '${Test.name}', instead it was a instance of `
+        expect(result instanceof Test1)
+          .toBeTruthy(`the result should be an instance of the model '${Test1.name}', instead it was a instance of `
             + `'${result.constructor.name}'`);
 
         expect(result).toBeDefined('an object should always result .fromDb({})');
@@ -480,24 +480,24 @@ describe('@Model.fromDb', () => {
 
           const leadSubDocs = [
             {
-              n: '1',
               addr: {
                 c: 'Redondo Beach',
                 gc: '00001',
                 s: 'CA1',
                 st: '123',
                 z: '90277'
-              }
+              },
+              n: '1'
             },
             {
-              n: '2',
               addr: {
                 c: 'Manhattan Beach',
                 gc: '00002',
                 s: 'CA2',
                 st: '321',
                 z: '90278'
-              }
+              },
+              n: '2'
             }
           ];
           const subDocDbData = Object.assign({leads: leadSubDocs}, dbData);
@@ -505,6 +505,8 @@ describe('@Model.fromDb', () => {
           const result = Test.fromDb(subDocDbData);
 
           expect(result.leads.length).toBe(2);
+          expect(result.leads[0] instanceof Lead).toBeTruthy('Should have been an instance of Lead');
+          expect(result.leads[1] instanceof Lead).toBeTruthy('Should have been an instance of Lead');
 
           expect(result.leads[0].name).toBe(leadSubDocs[0].n);
           expect((result.leads[0].address || {} as any).city).toBe(leadSubDocs[0].addr.c);
@@ -532,7 +534,7 @@ describe('@Model.fromDb', () => {
             promiscuous: true
           }
         })
-        class Test extends SapiModelMixin() {
+        class Test1 extends SapiModelMixin() {
           @Db({field: 'ph'})
           phone: string;
 
@@ -549,7 +551,7 @@ describe('@Model.fromDb', () => {
             },
             ph: '123'
           };
-          const result = Test.fromDb(input);
+          const result = Test1.fromDb(input);
 
           expect((result as any).firstName).toBe(input.firstName);
           expect((result as any).lastName).toBe(input.lastName);
@@ -566,7 +568,7 @@ describe('@Model.fromDb', () => {
             ph: '123'
           };
 
-          const result = Test.fromDb(dbResult);
+          const result = Test1.fromDb(dbResult);
 
           expect((result as any).firstName).toBe(dbResult.firstName);
           expect((result as any).lastName).toBe(dbResult.lastName);

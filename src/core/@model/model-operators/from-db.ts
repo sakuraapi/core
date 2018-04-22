@@ -82,13 +82,14 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
       }
 
       if (model || shouldRecurse(source[key])) {
+
         // if the key should be included
         if (mapper.newKey !== undefined) {
 
           let value;
           if (Array.isArray(source[key])) {
             // shouldRecurse excludes Arrays so this is a model based sub document array
-            
+
             const values = [];
 
             for (const src of source[key]) {
