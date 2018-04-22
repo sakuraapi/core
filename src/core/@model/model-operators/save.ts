@@ -25,7 +25,10 @@ import { debug } from './index';
  * @param context The optional context to use for things like @BeforeSave or @BeforeCreate
  * @returns {any}
  */
-export async function save(changeSet?: { [key: string]: any } | null, options?: ReplaceOneOptions, context = 'default'): Promise<UpdateWriteOpResult> {
+export async function save(changeSet?: { [key: string]: any } | null,
+                           options?: ReplaceOneOptions,
+                           context = 'default'): Promise<UpdateWriteOpResult> {
+
   const constructor = this.constructor;
 
   const col = constructor.getCollection();

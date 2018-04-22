@@ -1,9 +1,9 @@
-import {MongoClient}             from 'mongodb';
+import { MongoClient } from 'mongodb';
 import {
   testMongoDbUrl,
   testSapi
-}                                from '../../spec/helpers/sakuraapi';
-import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
+} from '../../spec/helpers/sakuraapi';
+import { SakuraMongoDbConnection } from './sakura-mongo-db-connection';
 
 describe('core/sakura-mongo-db', () => {
 

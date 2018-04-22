@@ -1,13 +1,10 @@
 import { ObjectID } from 'mongodb';
-import { testSapi } from '../../../spec/helpers/sakuraapi';
-import { SakuraApi } from '../sakura-api';
 import { Db } from './db';
 import { Json } from './json';
 import {
   Model,
   modelSymbols
 } from './model';
-import { Private } from './private';
 import { SapiModelMixin } from './sapi-model-mixin';
 
 describe('@Json', () => {
@@ -62,7 +59,7 @@ describe('@Json', () => {
     expect(result.anp).toBeUndefined();
     expect(result.aThirdProperty).toBe(777);
   });
-  
+
   describe('toJsonString', () => {
     it('function is injected into the prototype of the model by default', () => {
       expect(test.toJsonString())

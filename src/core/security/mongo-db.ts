@@ -1,4 +1,5 @@
-import {ObjectID} from 'mongodb';
+import { ObjectID } from 'mongodb';
+
 /**
  * SanitizeMongoDB is a set of utility functions to help sanitize user input to make it safe to
  * pass to MongoDB. Remember, security is always the integrators' ultimate responsibility - SakuraApi is here to

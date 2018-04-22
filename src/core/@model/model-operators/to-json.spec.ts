@@ -1,4 +1,4 @@
-import { ObjectID } from 'bson';
+import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
 import { Db } from '../db';
@@ -750,24 +750,23 @@ describe('Model.toJson', () => {
       }
 
       it('array of sub documents - #167', () => {
-        const test = ModelMapTest.fromJson(jsonData).toJson();
+        const test1 = ModelMapTest.fromJson(jsonData).toJson();
 
-        expect(test.order.length).toBe(2);
-        expect(test.order[0].on).toBe(jsonData.order[0].on);
-        expect(test.order[0].t).toBe(jsonData.order[0].t);
-        expect(test.order[0].adr.c).toBe(jsonData.order[0].adr.c);
-        expect(test.order[0].adr.code).toBe(jsonData.order[0].adr.code);
-        expect(test.order[0].adr.st).toBe(jsonData.order[0].adr.st);
-        expect(test.order[0].adr.state).toBe(jsonData.order[0].adr.state);
+        expect(test1.order.length).toBe(2);
+        expect(test1.order[0].on).toBe(jsonData.order[0].on);
+        expect(test1.order[0].t).toBe(jsonData.order[0].t);
+        expect(test1.order[0].adr.c).toBe(jsonData.order[0].adr.c);
+        expect(test1.order[0].adr.code).toBe(jsonData.order[0].adr.code);
+        expect(test1.order[0].adr.st).toBe(jsonData.order[0].adr.st);
+        expect(test1.order[0].adr.state).toBe(jsonData.order[0].adr.state);
 
-        expect(test.order[1].on).toBe(jsonData.order[1].on);
-        expect(test.order[1].t).toBe(jsonData.order[1].t);
-        expect(test.order[1].adr.c).toBe(jsonData.order[1].adr.c);
-        expect(test.order[1].adr.code).toBe(jsonData.order[1].adr.code);
-        expect(test.order[1].adr.st).toBe(jsonData.order[1].adr.st);
-        expect(test.order[1].adr.state).toBe(jsonData.order[1].adr.state);
+        expect(test1.order[1].on).toBe(jsonData.order[1].on);
+        expect(test1.order[1].t).toBe(jsonData.order[1].t);
+        expect(test1.order[1].adr.c).toBe(jsonData.order[1].adr.c);
+        expect(test1.order[1].adr.code).toBe(jsonData.order[1].adr.code);
+        expect(test1.order[1].adr.st).toBe(jsonData.order[1].adr.st);
+        expect(test1.order[1].adr.state).toBe(jsonData.order[1].adr.state);
       });
-
     });
   });
 });

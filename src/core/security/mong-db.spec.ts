@@ -1,4 +1,4 @@
-import {SanitizeMongoDB} from './';
+import { SanitizeMongoDB } from './';
 
 describe('core/security/mongo-db', () => {
 

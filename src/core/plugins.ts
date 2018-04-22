@@ -2,11 +2,11 @@ import {
   Handler,
   Request,
   Response
-}                     from 'express';
-import {v4}           from 'uuid';
-import {modelSymbols} from './@model/model';
-import {OK} from './helpers/http-status';
-import {SakuraApi}    from './sakura-api';
+} from 'express';
+import { v4 } from 'uuid';
+import { modelSymbols } from './@model/model';
+import { OK } from './helpers/http-status';
+import { SakuraApi } from './sakura-api';
 
 /**
  * For internal use. Do not rely on this - it can change at any time.

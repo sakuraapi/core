@@ -1,6 +1,6 @@
 // tslint:disable:no-duplicate-imports
-import * as debugInit            from 'debug';
-import * as express              from 'express';
+import * as debugInit from 'debug';
+import * as express from 'express';
 import {
   ErrorRequestHandler,
   Express,
@@ -9,30 +9,30 @@ import {
   Request,
   Response,
   Router
-}                                from 'express';
-import * as http                 from 'http';
-import {SakuraApiConfig}         from '../boot';
+} from 'express';
+import * as http from 'http';
+import { SakuraApiConfig } from '../boot';
 import {
   injectableSymbols,
   ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
-}                                from './';
+} from './';
 import {
   ModelNotRegistered,
   ModelsMustBeDecoratedWithModelError,
   modelSymbols
-}                                from './@model';
+} from './@model';
 import {
   IRoutableLocals,
   ISakuraApiClassRoute,
   RoutableNotRegistered,
   RoutablesMustBeDecoratedWithRoutableError,
   routableSymbols
-}                                from './@routable';
+} from './@routable';
 import {
   BAD_REQUEST,
   OK
-}                                from './helpers';
+} from './helpers';
 import {
   Anonymous,
   AuthenticatorNotRegistered,
@@ -43,8 +43,8 @@ import {
   IAuthenticatorConstructor,
   SakuraApiPlugin,
   SakuraApiPluginResult
-}                                from './plugins';
-import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
+} from './plugins';
+import { SakuraMongoDbConnection } from './sakura-mongo-db-connection';
 // tslint:enable:no-duplicate-imports
 
 const debug = {

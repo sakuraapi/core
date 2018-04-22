@@ -1,6 +1,6 @@
 import * as debugInit from 'debug';
-import {v4}           from 'uuid';
-import {SakuraApi}    from '../sakura-api';
+import { v4 } from 'uuid';
+import { SakuraApi } from '../sakura-api';
 
 const debug = debugInit('sapi:Injectable');
 

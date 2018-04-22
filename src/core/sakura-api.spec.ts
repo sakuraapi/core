@@ -3,24 +3,24 @@
 import {
   Request,
   Response
-}                        from 'express';
-import {MongoClient}     from 'mongodb';
-import * as request      from 'supertest';
+} from 'express';
+import { MongoClient } from 'mongodb';
+import * as request from 'supertest';
 import {
   testMongoDbUrl,
   testSapi,
   testUrl
-}                        from '../../spec/helpers/sakuraapi';
-import {SakuraApiConfig} from '../../src/boot';
+} from '../../spec/helpers/sakuraapi';
+import { SakuraApiConfig } from '../../src/boot';
 import {
   Routable,
   Route,
   SapiRoutableMixin
-}                        from './@routable/';
+} from './@routable/';
 import {
   OK,
   UNAUTHORIZED
-}                        from './helpers';
+} from './helpers';
 import {
   Anonymous,
   AuthenticatorPlugin,
@@ -28,8 +28,8 @@ import {
   IAuthenticator,
   IAuthenticatorConstructor,
   SakuraApiPluginResult
-}                        from './plugins';
-import {SakuraApi}       from './sakura-api';
+} from './plugins';
+import { SakuraApi } from './sakura-api';
 
 describe('core/SakuraApi', () => {
 
