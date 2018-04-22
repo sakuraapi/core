@@ -81,14 +81,14 @@ export function fromJson(json: object, context = 'default'): object {
           + ` cannot be constructed`);
       }
 
+      let value;
       if (meta.promiscuous) {
-        target[meta.newKey] = jsonSource[key];
+        value = jsonSource[key];
       } else if (model || shouldRecurse(jsonSource[key])) {
 
         // if the key should be included, recurse into it
         if (meta.newKey !== undefined) {
 
-          let value;
           if (Array.isArray(jsonSource[key])) {
 
             const values = [];
@@ -101,43 +101,31 @@ export function fromJson(json: object, context = 'default'): object {
           } else {
 
             value = mapJsonToModel(jsonSource[key], nextTarget);
-
             if (model) {
               value = Object.assign(new model(), value);
             }
-
           }
-
-          // @json({formatFromJson})
-          if (meta.formatFromJson) {
-            value = meta.formatFromJson(value, key);
-          }
-          if (meta.formatFromJsonStar) {
-            value = meta.formatFromJsonStar(value, key);
-          }
-
-          target[meta.newKey] = value;
         }
 
       } else {
         // otherwise, map a property that has a primitive value or an ObjectID value
         if (meta.newKey !== undefined) {
-          let value = jsonSource[key];
+          value = jsonSource[key];
           if ((meta.newKey === 'id' || meta.newKey === '_id') && ObjectID.isValid(value)) {
             value = new ObjectID(value);
           }
-
-          // @json({formatFromJson})
-          if (meta.formatFromJson) {
-            value = meta.formatFromJson(value, key);
-          }
-          if (meta.formatFromJsonStar) {
-            value = meta.formatFromJsonStar(value, key);
-          }
-
-          target[meta.newKey] = value;
         }
       }
+
+      // @json({formatFromJson})
+      if (meta.formatFromJson) {
+        value = meta.formatFromJson(value, key);
+      }
+      if (meta.formatFromJsonStar) {
+        value = meta.formatFromJsonStar(value, key);
+      }
+
+      target[meta.newKey] = value;
     }
 
     return target;
