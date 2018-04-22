@@ -18,10 +18,10 @@ import { debug } from './index';
  *
  * @param json The json object to be unmarshaled into an `@`[[Model]] object.
  * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
- * @returns {{}} Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
+ * @returns any Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
  * undefined, or not an object.
  */
-export function fromJson(json: object, context = 'default'): object {
+export function fromJson<T = any>(json: T, context = 'default'): any {
   const modelName = (this || {} as any).name;
   debug.normal(`.fromJson called, target '${modelName}'`);
 
