@@ -204,7 +204,7 @@ describe('@Model.fromDb', () => {
       expect(result.lastName).toBeUndefined();
     });
 
-    fdescribe('.model', () => {
+    describe('.model', () => {
 
       const dbData = {
         fn: 'George',
@@ -469,22 +469,22 @@ describe('@Model.fromDb', () => {
 
       });
 
-      fdescribe('array of sub documents - #167', () => {
+      describe('array of sub documents - #167', () => {
         it('if default value set, keeps default value if db source is missing that property', () => {
           const result = Test.fromDb({});
           expect(Array.isArray(result.leads)).toBeTruthy('Should have defaulted to an empty array');
           expect(result.leads.length).toBe(0);
         });
 
-        it('maps an array of sub documents from the DB to the resulting model', () => {
+        it('maps an array of sub documents from the DB to a resulting array of type model', () => {
 
           const leadSubDocs = [
             {
               n: '1',
               addr: {
                 c: 'Redondo Beach',
-                gc: '00000',
-                s: 'CA',
+                gc: '00001',
+                s: 'CA1',
                 st: '123',
                 z: '90277'
               }
@@ -493,24 +493,33 @@ describe('@Model.fromDb', () => {
               n: '2',
               addr: {
                 c: 'Manhattan Beach',
-                gc: '00000',
-                s: 'CA',
-                st: '123',
-                z: '90277'
+                gc: '00002',
+                s: 'CA2',
+                st: '321',
+                z: '90278'
               }
             }
           ];
           const subDocDbData = Object.assign({leads: leadSubDocs}, dbData);
 
           const result = Test.fromDb(subDocDbData);
-          console.log(`------------------------`.red);
-          console.log(result);
 
           expect(result.leads.length).toBe(2);
+
           expect(result.leads[0].name).toBe(leadSubDocs[0].n);
           expect((result.leads[0].address || {} as any).city).toBe(leadSubDocs[0].addr.c);
+          expect((result.leads[0].address || {} as any).gateCode).toBe(leadSubDocs[0].addr.gc);
+          expect((result.leads[0].address || {} as any).state).toBe(leadSubDocs[0].addr.s);
+          expect((result.leads[0].address || {} as any).street).toBe(leadSubDocs[0].addr.st);
+          expect((result.leads[0].address || {} as any).zip).toBe(leadSubDocs[0].addr.z);
+
           expect(result.leads[1].name).toBe(leadSubDocs[1].n);
           expect((result.leads[1].address || {} as any).city).toBe(leadSubDocs[1].addr.c);
+          expect((result.leads[1].address || {} as any).gateCode).toBe(leadSubDocs[1].addr.gc);
+          expect((result.leads[1].address || {} as any).state).toBe(leadSubDocs[1].addr.s);
+          expect((result.leads[1].address || {} as any).street).toBe(leadSubDocs[1].addr.st);
+          expect((result.leads[1].address || {} as any).zip).toBe(leadSubDocs[1].addr.z);
+
         });
       });
 

@@ -81,17 +81,31 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
           + ` cannot be constructed`);
       }
 
-      if (shouldRecurse(source[key])) {
-        // if the key should be included, recurse into it
+      if (model || shouldRecurse(source[key])) {
+        // if the key should be included
         if (mapper.newKey !== undefined) {
 
-          let value = mapDbToModel(source[key], nextTarget, map, ++depth);
+          let value;
+          if (Array.isArray(source[key])) {
+            // shouldRecurse excludes Arrays so this is a model based sub document array
+            
+            const values = [];
 
-          if (model) {
-            value = Object.assign(new model(), value);
+            for (const src of source[key]) {
+              values.push(Object.assign(new model(), mapDbToModel(src, nextTarget, map)));
+            }
+            value = values;
 
-            if (depth > 0 && (!value.id || !value._id)) { // resolves #106
-              value._id = undefined;
+          } else {
+
+            value = mapDbToModel(source[key], nextTarget, map, ++depth);
+
+            if (model) {
+              value = Object.assign(new model(), value);
+
+              if (depth > 0 && (!value.id || !value._id)) { // resolves #106
+                value._id = undefined;
+              }
             }
           }
 
