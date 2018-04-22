@@ -58,10 +58,12 @@ export function toJson(context = 'default'): any {
       || new Map<string, boolean>();
 
     // iterate over each property
-    for (const key of Object.getOwnPropertyNames(source)) {
+    const keys = Object.getOwnPropertyNames(source);
+    for (const key of keys) {
 
       const options = jsonFieldNamesByProperty.get(`${key}:${context}`) || {};
       const optionsStar = jsonFieldNamesByProperty.get(`${key}:*`) || {};
+      const dbOptions = (dbOptionsByPropertyName) ? dbOptionsByPropertyName.get(key) || {} : {};
 
       if (typeof source[key] === 'function') {
         continue;
@@ -72,12 +74,8 @@ export function toJson(context = 'default'): any {
         continue;
       }
 
-      if (dbOptionsByPropertyName) {
-        const dbOptions = dbOptionsByPropertyName.get(key);
-
-        if ((dbOptions || {}).private) {
-          continue;
-        }
+      if (dbOptions.private) {
+        continue;
       }
 
       // skip if the field is private in this context
@@ -86,30 +84,41 @@ export function toJson(context = 'default'): any {
         continue;
       }
 
-      if (shouldRecurse(source[key])) {
-        const aNewKey = keyMapper(key, source[key], options, optionsStar);
-
-        if (aNewKey !== undefined) {
-          result[aNewKey] = mapModelToJson(source[key]);
-        }
-
-        continue;
-      }
-
+      const model = dbOptions.model || options.model || optionsStar.model || null;
       const newKey = keyMapper(key, source[key], options, optionsStar);
-      if (newKey !== undefined) {
-        let value = source[key];
 
-        // check for @json({formatToJson})
-        if (options.formatToJson) {
-          value = options.formatToJson(value, key);
-        }
-        if (optionsStar.formatToJson) {
-          value = optionsStar.formatToJson(value, key);
+      let value;
+      if (model || shouldRecurse(source[key])) {
+
+        if (Array.isArray(source[key])) {
+
+          const values = [];
+          for (const src of source[key]) {
+            values.push(mapModelToJson(src));
+          }
+          value = values;
+
+        } else if (newKey !== undefined) {
+
+          value = mapModelToJson(source[key]);
+
         }
 
-        result[newKey] = value;
+      } else if (newKey !== undefined) {
+
+        value = source[key];
+
       }
+
+      // check for @json({formatToJson})
+      if (options.formatToJson) {
+        value = options.formatToJson(value, key);
+      }
+      if (optionsStar.formatToJson) {
+        value = optionsStar.formatToJson(value, key);
+      }
+
+      result[newKey] = value;
     }
 
     return result;

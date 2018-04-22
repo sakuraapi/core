@@ -692,4 +692,82 @@ describe('Model.toJson', () => {
       expect(json.someDeepModel.sp2).toBe('override2');
     });
   });
+
+  describe('IJsonOptions', () => {
+
+    describe('.model', () => {
+
+      const jsonData = {
+        order: [
+          {
+            adr: {
+              c: 'Rancho Palos Verdes',
+              code: '1',
+              st: '1',
+              state: 'CA1'
+            },
+            on: 123,
+            t: 1
+          },
+          {
+            adr: {
+              c: 'Palos Verdes Estates',
+              code: '2',
+              st: '2',
+              state: 'CA2'
+            },
+            on: 321,
+            t: 2
+          }
+        ]
+      };
+
+      class Address {
+        @Json('st')
+        street = '1600 Pennsylvania Ave NW';
+        @Json('c')
+        city = 'Washington';
+        @Json()
+        state = 'DC';
+        @Json('code')
+        gateCode = '123';
+        dogsName = 'Charlie';
+      }
+
+      class Order {
+        @Json('on')
+        orderNumber = 'a123';
+        @Json('t')
+        total = 100;
+        @Json({field: 'adr', model: Address})
+        address: Address = new Address();
+      }
+
+      @Model()
+      class ModelMapTest extends SapiModelMixin() {
+        @Json({model: Order})
+        order: Order[] = [];
+      }
+
+      it('array of sub documents - #167', () => {
+        const test = ModelMapTest.fromJson(jsonData).toJson();
+
+        expect(test.order.length).toBe(2);
+        expect(test.order[0].on).toBe(jsonData.order[0].on);
+        expect(test.order[0].t).toBe(jsonData.order[0].t);
+        expect(test.order[0].adr.c).toBe(jsonData.order[0].adr.c);
+        expect(test.order[0].adr.code).toBe(jsonData.order[0].adr.code);
+        expect(test.order[0].adr.st).toBe(jsonData.order[0].adr.st);
+        expect(test.order[0].adr.state).toBe(jsonData.order[0].adr.state);
+
+        expect(test.order[1].on).toBe(jsonData.order[1].on);
+        expect(test.order[1].t).toBe(jsonData.order[1].t);
+        expect(test.order[1].adr.c).toBe(jsonData.order[1].adr.c);
+        expect(test.order[1].adr.code).toBe(jsonData.order[1].adr.code);
+        expect(test.order[1].adr.st).toBe(jsonData.order[1].adr.st);
+        expect(test.order[1].adr.state).toBe(jsonData.order[1].adr.state);
+      });
+
+    });
+  });
 });

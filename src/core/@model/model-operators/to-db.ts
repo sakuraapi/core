@@ -52,7 +52,8 @@ export function toDb(changeSet?: any): object {
     const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
 
     // iterate over each property
-    for (const key of Object.getOwnPropertyNames(source)) {
+    const keys = Object.getOwnPropertyNames(source);
+    for (const key of keys) {
 
       const map = keyMapper(key, source[key], dbOptionsByPropertyName) || {} as any;
       const model = map.model;
