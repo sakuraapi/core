@@ -2,48 +2,48 @@ import {
   NextFunction,
   Request,
   Response
-}                          from 'express';
-import {ObjectID}          from 'mongodb';
-import * as request        from 'supertest';
+} from 'express';
+import { ObjectID } from 'mongodb';
+import * as request from 'supertest';
 import {
   testSapi,
   testUrl
-}                          from '../../../spec/helpers/sakuraapi';
+} from '../../../spec/helpers/sakuraapi';
 import {
   getAllRouteHandler,
   getRouteHandler
-}                          from '../../handlers';
+} from '../../handlers';
 import {
   Db,
   Json,
   Model,
   SapiModelMixin
-}                          from '../@model';
+} from '../@model';
 import {
   BAD_REQUEST,
   DUPLICATE_RESOURCE,
   NOT_FOUND,
   OK
-}                          from '../helpers';
+} from '../helpers';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
   IAuthenticator,
   IAuthenticatorConstructor
-}                          from '../plugins';
-import {SakuraApi}         from '../sakura-api';
+} from '../plugins';
+import { SakuraApi } from '../sakura-api';
 import {
   Routable,
   routableSymbols,
   Route
-}                          from './';
+} from './';
 import {
   IRoutableLocals,
   ISakuraApiClassRoute,
   RoutableNotRegistered,
   RoutablesMustBeDecoratedWithRoutableError
-}                          from './routable';
-import {SapiRoutableMixin} from './sapi-routable-mixin';
+} from './routable';
+import { SapiRoutableMixin } from './sapi-routable-mixin';
 
 describe('core/@Routable', () => {
   describe('general functionality', () => {
@@ -657,55 +657,74 @@ describe('core/@Routable', () => {
           }
         }
 
-        const sapi = testSapi({
-          models: [BeforeAfterInjectRouteTestModel],
-          routables: [GetAllRouteHandlerBeforeAfterTest]
+        let sapi: SakuraApi;
+
+        beforeEach(async (done) => {
+          try {
+            sapi = testSapi({
+              models: [BeforeAfterInjectRouteTestModel],
+              routables: [GetAllRouteHandlerBeforeAfterTest]
+            });
+
+            await sapi.listen({bootMessage: ''});
+            await BeforeAfterInjectRouteTestModel.removeAll({});
+
+            done();
+          } catch (err) {
+            done.fail(err);
+          }
         });
 
-        afterEach((done) => {
-          sapi
-            .close()
-            .then(done)
-            .catch(done.fail);
+        afterEach(async (done) => {
+          await BeforeAfterInjectRouteTestModel.removeAll({});
+          try {
+            sapi.deregisterDependencies();
+            await sapi.close();
+            done();
+          } catch (err) {
+            done.fail(err);
+          }
+
         });
 
-        it('with result', (done) => {
+        it('with result', async (done) => {
 
-          sapi
-            .listen({bootMessage: ''})
-            .then(() => new BeforeAfterInjectRouteTestModel().create())
-            .then(() => {
-              return request(sapi.app)
-                .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
-                .expect(OK)
-                .then((res) => {
-                  const body = res.body;
-                  expect(body.length).toBe(1);
-                  expect(body[0].firstName).toBe('Georgellio');
-                  expect(body[0].lastName).toBe('Washington');
-                  expect(body[0].id).toBeDefined();
-                });
-            })
-            .then(done)
-            .catch(done.fail);
+          try {
+            await new BeforeAfterInjectRouteTestModel().create();
+
+            const res = await request(sapi.app)
+              .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
+              .expect(OK);
+
+            const body = res.body;
+            expect(body.length).toBe(1);
+            expect(body[0].firstName).toBe('Georgellio');
+            expect(body[0].lastName).toBe('Washington');
+            expect(body[0].id).toBeDefined();
+
+            done();
+          } catch (err) {
+            done.fail(err);
+          }
+
         });
 
-        it('without results', (done) => {
-          sapi
-            .listen({bootMessage: ''})
-            .then(() => BeforeAfterInjectRouteTestModel.removeAll({}))
-            .then(() => {
-              return request(sapi.app)
-                .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
-                .expect(OK)
-                .then((res) => {
-                  const body = res.body;
-                  expect(Array.isArray(body)).toBeTruthy();
-                  expect(body.length).toBe(0);
-                });
-            })
-            .then(done)
-            .catch(done.fail);
+        it('without results', async (done) => {
+
+          try {
+            BeforeAfterInjectRouteTestModel.removeAll({});
+            const res = await request(sapi.app)
+              .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
+              .expect(OK);
+
+            const body = res.body;
+            expect(Array.isArray(body)).toBeTruthy();
+            expect(body.length).toBe(0);
+            done();
+          } catch (err) {
+            done.fail(err);
+          }
+
         });
       });
 

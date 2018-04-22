@@ -32,7 +32,6 @@ import {
   IJsonOptions,
   jsonSymbols
 } from './json';
-import { privateSymbols } from './private';
 import {
   create,
   debug,
@@ -56,6 +55,7 @@ import {
   toJson,
   toJsonString
 } from './model-operators';
+import { privateSymbols } from './private';
 
 export interface IMongoDBCollation {
   locale: string;

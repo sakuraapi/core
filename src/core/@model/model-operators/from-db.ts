@@ -81,17 +81,32 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
           + ` cannot be constructed`);
       }
 
-      if (shouldRecurse(source[key])) {
-        // if the key should be included, recurse into it
+      if (model || shouldRecurse(source[key])) {
+
+        // if the key should be included
         if (mapper.newKey !== undefined) {
 
-          let value = mapDbToModel(source[key], nextTarget, map, ++depth);
+          let value;
+          if (Array.isArray(source[key])) {
+            // shouldRecurse excludes Arrays so this is a model based sub document array
 
-          if (model) {
-            value = Object.assign(new model(), value);
+            const values = [];
 
-            if (depth > 0 && (!value.id || !value._id)) { // resolves #106
-              value._id = undefined;
+            for (const src of source[key]) {
+              values.push(Object.assign(new model(), mapDbToModel(src, nextTarget, map)));
+            }
+            value = values;
+
+          } else {
+
+            value = mapDbToModel(source[key], nextTarget, map, ++depth);
+
+            if (model) {
+              value = Object.assign(new model(), value);
+
+              if (depth > 0 && (!value.id || !value._id)) { // resolves #106
+                value._id = undefined;
+              }
             }
           }
 
@@ -111,7 +126,7 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
     return target;
   }
 
-  function keyMapper(key: string, value: any, meta: Map<string, IDbOptions>) {
+  function keyMapper(key: string, value: any, meta: Map<string, IDbOptions>): { model: any, newKey: string } {
     const dbFieldOptions = (meta) ? meta.get(key) : null;
 
     return {

@@ -1,9 +1,9 @@
-import {ObjectID} from 'mongodb';
+import { ObjectID } from 'mongodb';
 
 /**
  * @Internal used internally by SakuraApi. Don't use it.
  */
-export function shouldRecurse(source): boolean {
+export function shouldRecurse(source: any): boolean {
   return !!source
     && typeof source === 'object'
     && !(source instanceof ObjectID)
