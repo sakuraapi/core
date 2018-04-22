@@ -1,1 +1,119 @@
-// prep for https://github.com/sakuraapi/core/issues/168
+import { ObjectID } from 'mongodb';
+import { Db } from '../db';
+import { Model } from '../model';
+import { SapiModelMixin } from '../sapi-model-mixin';
+
+describe('Model.toDb', () => {
+  class Address {
+    @Db('st')
+    street = '1600 Pennsylvania Ave NW';
+    @Db('c')
+    city = 'Washington';
+    @Db()
+    state = 'DC';
+    @Db({field: 'code', private: true})
+    gateCode = '123';
+    dogsName = 'Charlie';
+  }
+
+  class Order {
+    @Db('on')
+    orderNumber = 'a123';
+    @Db('t')
+    total = 100;
+    @Db('adr')
+    address: Address = new Address();
+  }
+
+  @Model({
+    dbConfig: {
+      collection: 'users',
+      db: 'userDb',
+      promiscuous: false // default
+    }
+  })
+  class ChasteModelTest extends SapiModelMixin() {
+
+    @Db('fn')
+    firstName = 'George';
+    @Db()
+    lastName = 'Washington';
+    phone = '555-123-1234';
+    @Db()
+    order = new Order();
+  }
+
+  @Model({
+    dbConfig: {
+      collection: 'users',
+      db: 'userDb',
+      promiscuous: true
+    }
+  })
+  class PromiscuousModelTest {
+    @Db('fn')
+    firstName = 'George';
+    @Db()
+    lastName = 'Washington';
+    phone = '555-123-1234';
+    order = new Order();
+  }
+
+  beforeEach(() => {
+    this.promiscuousModel = new PromiscuousModelTest();
+    this.promiscuousModel.id = new ObjectID();
+
+    this.chasteModel = new ChasteModelTest();
+    this.chasteModel.id = new ObjectID();
+  });
+
+  it('handles falsy properties', () => {
+    const model = new ChasteModelTest();
+    (model as any).firstName = 0;
+    (model as any).lastName = false;
+
+    const result = model.toDb();
+    expect(result.fn).toBe(0);
+    expect(result.lastName).toBeDefined();
+    expect(result.lastName).toBeFalsy();
+  });
+
+  describe('Chaste Mode', () => {
+    it('returns a db object with only explicit @Db fields, and does not include non-enumerable properties', () => {
+      const result = this.chasteModel.toDb();
+
+      expect(result._id).toBe(this.chasteModel.id);
+      expect(result.fn).toBe(this.chasteModel.firstName);
+      expect(result.lastName).toBe(this.chasteModel.lastName);
+      expect(result.order).toBeDefined();
+      expect(result.order.on).toBe(this.chasteModel.order.orderNumber);
+      expect(result.order.t).toBe(this.chasteModel.order.total);
+      expect(result.order.adr).toBeDefined();
+      expect(result.order.adr.st).toBe(this.chasteModel.order.address.street);
+      expect(result.order.adr.code).toBe(this.chasteModel.order.address.gateCode);
+      expect(result.order.adr.dogsName).toBeUndefined();
+      expect(result.phone).toBeUndefined();
+      expect(result.id).toBeUndefined();
+
+    });
+  });
+
+  describe('Promiscuous Mode (hey baby)', () => {
+    it('returns a db object with all fields, but still respects @Db and does not include non-enumerable properties', () => {
+      const result = this.promiscuousModel.toDb();
+
+      expect(result._id).toBe(this.promiscuousModel.id);
+      expect(result.fn).toBe(this.promiscuousModel.firstName);
+      expect(result.lastName).toBe(this.promiscuousModel.lastName);
+      expect(result.order).toBeDefined();
+      expect(result.order.on).toBe(this.promiscuousModel.order.orderNumber);
+      expect(result.order.t).toBe(this.promiscuousModel.order.total);
+      expect(result.order.adr).toBeDefined();
+      expect(result.order.adr.st).toBe(this.promiscuousModel.order.address.street);
+      expect(result.order.adr.code).toBe(this.promiscuousModel.order.address.gateCode);
+      expect(result.order.adr.dogsName).toBe(this.promiscuousModel.order.address.dogsName);
+      expect(result.phone).toBe(this.promiscuousModel.phone);
+      expect(result.id).toBeUndefined();
+    });
+  });
+});
