@@ -2,35 +2,35 @@ import {
   NextFunction,
   Request,
   Response
-}                             from 'express';
-import * as request           from 'supertest';
+} from 'express';
+import * as request from 'supertest';
 import {
   testSapi,
   testUrl
-}                             from '../../../spec/helpers/sakuraapi';
+} from '../../../spec/helpers/sakuraapi';
 import {
   Db,
   Json,
   Model,
   SapiModelMixin
-}                             from '../@model';
-import {OK}                   from '../helpers';
+} from '../@model';
+import { OK } from '../helpers';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
   IAuthenticator,
   IAuthenticatorConstructor
-}                             from '../plugins';
-import {SakuraApi}            from '../sakura-api';
+} from '../plugins';
+import { SakuraApi } from '../sakura-api';
 import {
   IRoutableLocals,
   Routable,
   routableSymbols,
   Route
-}                             from './';
-import {ISakuraApiClassRoute} from './routable';
-import {validHttpMethods}     from './route';
-import {SapiRoutableMixin}    from './sapi-routable-mixin';
+} from './';
+import { ISakuraApiClassRoute } from './routable';
+import { validHttpMethods } from './route';
+import { SapiRoutableMixin } from './sapi-routable-mixin';
 
 describe('core/Route', () => {
 

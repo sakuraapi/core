@@ -2,32 +2,32 @@ import {
   NextFunction,
   Request,
   Response
-}                   from 'express';
+} from 'express';
 import * as request from 'supertest';
 import {
   testSapi,
   testUrl
-}                   from '../../../spec/helpers/sakuraapi';
+} from '../../../spec/helpers/sakuraapi';
 import {
   Json,
   Model,
   SapiModelMixin
-}                   from '../@model';
+} from '../@model';
 import {
   IRoutableLocals,
   Routable,
   Route,
   SapiRoutableMixin
-}                   from '../@routable';
-import {OK}         from '../helpers';
-import {SakuraApi}  from '../sakura-api';
+} from '../@routable';
+import { OK } from '../helpers';
+import { SakuraApi } from '../sakura-api';
 import {
   Injectable,
   injectableSymbols,
   NonInjectableConstructorParameterError,
   ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
-}                   from './injectable';
+} from './injectable';
 
 /* tslint:disable:no-shadowed-variable */
 

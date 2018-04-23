@@ -1,6 +1,6 @@
-import * as debug                  from 'debug';
-import {Handler}                   from 'express';
-import {IAuthenticatorConstructor} from '../plugins';
+import * as debug from 'debug';
+import { Handler } from 'express';
+import { IAuthenticatorConstructor } from '../plugins';
 
 export enum HttpMethod {'connect', 'delete', 'get', 'head', 'post', 'put', 'patch', 'trace'}
 

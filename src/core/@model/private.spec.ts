@@ -1,7 +1,7 @@
-import {Model}          from './';
-import {Json}           from './json';
-import {Private}        from './private';
-import {SapiModelMixin} from './sapi-model-mixin';
+import { Model } from './';
+import { Json } from './json';
+import { Private } from './private';
+import { SapiModelMixin } from './sapi-model-mixin';
 
 describe('@Private', () => {
 

@@ -45,4 +45,5 @@ export class SapiInvalidModelObject extends Error {
     super(`${msg}; target ${(target) ? target.name || target.constructor.name : `${target}`}`);
   }
 }
+
 // tslint:enable max-classes-per-file

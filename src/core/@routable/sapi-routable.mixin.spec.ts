@@ -2,16 +2,16 @@ import {
   NextFunction,
   Request,
   Response
-}                          from 'express';
-import * as request        from 'supertest';
+} from 'express';
+import * as request from 'supertest';
 import {
   testSapi,
   testUrl
-}                          from '../../../spec/helpers/sakuraapi';
-import {SakuraApi}         from '../sakura-api';
-import {Routable}          from './routable';
-import {Route}             from './route';
-import {SapiRoutableMixin} from './sapi-routable-mixin';
+} from '../../../spec/helpers/sakuraapi';
+import { SakuraApi } from '../sakura-api';
+import { Routable } from './routable';
+import { Route } from './route';
+import { SapiRoutableMixin } from './sapi-routable-mixin';
 
 describe('SapiRoutableMixin', () => {
   it('allows inheritance', async (done) => {

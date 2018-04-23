@@ -1,8 +1,8 @@
-import {FormatToJson}   from './format-to-json';
-import {Json}           from './json';
-import {Model}          from './model';
-import {Private}        from './private';
-import {SapiModelMixin} from './sapi-model-mixin';
+import { FormatToJson } from './format-to-json';
+import { Json } from './json';
+import { Model } from './model';
+import { Private } from './private';
+import { SapiModelMixin } from './sapi-model-mixin';
 
 describe('@FormatToJson', () => {
 

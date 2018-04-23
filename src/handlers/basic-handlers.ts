@@ -2,20 +2,20 @@ import {
   NextFunction,
   Request,
   Response
-}                                    from 'express';
-import {IDbGetParams}                from '../core/@model';
+} from 'express';
+import { IDbGetParams } from '../core/@model';
 import {
   IRoutableLocals,
   routableSymbols
-}                                    from '../core/@routable';
+} from '../core/@routable';
 import {
   BAD_REQUEST,
   DUPLICATE_RESOURCE,
   NOT_FOUND,
   OK,
   SERVER_ERROR
-}                                    from '../core/helpers';
-import {SanitizeMongoDB as Sanitize} from '../core/security';
+} from '../core/helpers';
+import { SanitizeMongoDB as Sanitize } from '../core/security';
 
 const debug = {
   normal: require('debug')('sapi:handlers:basic')

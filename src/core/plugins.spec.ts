@@ -2,22 +2,22 @@ import {
   NextFunction,
   Request,
   Response
-}                   from 'express';
+} from 'express';
 import * as request from 'supertest';
 import {
   testSapi,
   testUrl
-}                   from '../../spec/helpers/sakuraapi';
+} from '../../spec/helpers/sakuraapi';
 import {
   Json,
   Model,
   SapiModelMixin
-}                   from './@model';
+} from './@model';
 import {
   Routable,
   Route
-}                   from './@routable';
-import {OK} from './helpers/http-status';
+} from './@routable';
+import { OK } from './helpers/http-status';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,
@@ -25,8 +25,8 @@ import {
   IAuthenticator,
   IAuthenticatorConstructor,
   SakuraApiPluginResult
-}                   from './plugins';
-import {SakuraApi}  from './sakura-api';
+} from './plugins';
+import { SakuraApi } from './sakura-api';
 
 // tslint:disable:no-shadowed-variable
 

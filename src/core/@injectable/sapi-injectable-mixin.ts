@@ -1,5 +1,5 @@
-import {Constructor} from '../helpers/constructor-type';
-import {SakuraApi}   from '../sakura-api';
+import { Constructor } from '../helpers/constructor-type';
+import { SakuraApi } from '../sakura-api';
 
 /***
  * Integrators should extend their Injectables with this Mixin to get type checking

@@ -1,6 +1,6 @@
-import {testSapi}            from '../../../spec/helpers/sakuraapi';
-import {Injectable}          from './injectable';
-import {SapiInjectableMixin} from './sapi-injectable-mixin';
+import { testSapi } from '../../../spec/helpers/sakuraapi';
+import { Injectable } from './injectable';
+import { SapiInjectableMixin } from './sapi-injectable-mixin';
 
 describe('SapiInjectableMixin', () => {
 

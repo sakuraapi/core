@@ -2,25 +2,25 @@ import * as request from 'supertest';
 import {
   testSapi,
   testUrl
-}                   from '../../spec/helpers/sakuraapi';
-import {SakuraApi}  from '../core';
+} from '../../spec/helpers/sakuraapi';
+import { SakuraApi } from '../core';
 import {
   Db,
   Json,
   Model,
   SapiModelMixin
-}                   from '../core/@model';
+} from '../core/@model';
 import {
   Routable,
   SapiRoutableMixin
-}                   from '../core/@routable';
+} from '../core/@routable';
 import {
   deleteRouteHandler,
   getAllRouteHandler,
   getRouteHandler,
   postRouteHandler,
   putRouteHandler
-}                   from './basic-handlers';
+} from './basic-handlers';
 
 describe('basic-handlers', () => {
 

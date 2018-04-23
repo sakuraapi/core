@@ -1,17 +1,17 @@
-import {Handler}                   from 'express';
-import * as path                   from 'path';
+import { Handler } from 'express';
+import * as path from 'path';
 import 'reflect-metadata';
-import {v4}                        from 'uuid';
+import { v4 } from 'uuid';
 import {
   deleteRouteHandler,
   getAllRouteHandler,
   getRouteHandler,
   postRouteHandler,
   putRouteHandler
-}                                  from '../../handlers';
-import {getDependencyInjections}   from '../@injectable';
-import {modelSymbols}              from '../@model';
-import {IAuthenticatorConstructor} from '../plugins';
+} from '../../handlers';
+import { getDependencyInjections } from '../@injectable';
+import { modelSymbols } from '../@model';
+import { IAuthenticatorConstructor } from '../plugins';
 
 const debug = {
   normal: require('debug')('sapi:routable')

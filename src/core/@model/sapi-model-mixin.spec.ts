@@ -1,12 +1,12 @@
-import {testSapi}       from '../../../spec/helpers/sakuraapi';
+import { testSapi } from '../../../spec/helpers/sakuraapi';
 import {
   Injectable,
   SapiInjectableMixin
-}                       from '../@injectable';
-import {SakuraApi}      from '../sakura-api';
-import {Db}             from './db';
-import {Model}          from './model';
-import {SapiModelMixin} from './sapi-model-mixin';
+} from '../@injectable';
+import { SakuraApi } from '../sakura-api';
+import { Db } from './db';
+import { Model } from './model';
+import { SapiModelMixin } from './sapi-model-mixin';
 
 describe('SapiModelMixin', () => {
   it('allows inheritance', async (done) => {

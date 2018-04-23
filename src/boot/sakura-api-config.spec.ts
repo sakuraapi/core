@@ -1,7 +1,10 @@
 import * as path from 'path';
-import {testMongoDbUrl, testSapi} from '../../spec/helpers/sakuraapi';
-import {SakuraMongoDbConnection} from '../core/sakura-mongo-db-connection';
-import {SakuraApiConfig} from './sakura-api-config';
+import {
+  testMongoDbUrl,
+  testSapi
+} from '../../spec/helpers/sakuraapi';
+import { SakuraMongoDbConnection } from '../core';
+import { SakuraApiConfig } from './sakura-api-config';
 
 describe('sakura-api-config', () => {
 

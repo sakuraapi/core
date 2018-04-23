@@ -2,9 +2,9 @@ import {
   NextFunction,
   Request,
   Response
-}                    from 'express';
-import {Constructor} from '../helpers';
-import {SakuraApi}   from '../sakura-api';
+} from 'express';
+import { Constructor } from '../helpers';
+import { SakuraApi } from '../sakura-api';
 
 /**
  * Integrators should extend their Models with this Mixin to get type checking.
