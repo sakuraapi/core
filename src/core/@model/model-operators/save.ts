@@ -49,10 +49,10 @@ export async function save(changeSet?: { [key: string]: any } | null,
   const beforeSaveContextMap = (beforSaveMap) ? beforSaveMap.get(context) || [] : [];
   const beforeSaveStarMap = (beforSaveMap) ? beforSaveMap.get('*') || [] : [];
   for (const f of beforeSaveContextMap) {
-    await f(this, context);
+    await f.bind(this)(this, context);
   }
   for (const f of beforeSaveStarMap) {
-    await f(this, '*');
+    await f.bind(this)(this, '*');
   }
 
   const dbObj = changeSet || this.toDb(this);
