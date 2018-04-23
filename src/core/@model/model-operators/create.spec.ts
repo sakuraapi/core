@@ -21,6 +21,10 @@ describe('Model.create', () => {
   let beforeCreate1Hook: OnBeforeCreate;
   let beforeCreate2Hook: OnBeforeCreate;
   let beforeCreate3Hook: OnBeforeCreate;
+
+  let beforeCreate1This = null;
+  let beforeCreate2This = null;
+
   let sapi: SakuraApi;
 
   @Model()
@@ -65,11 +69,13 @@ describe('Model.create', () => {
 
     @BeforeCreate()
     beforeCreate1(model: TestCreate, context: string): Promise<void> {
+      beforeCreate1This = this;
       return (beforeCreate1Hook) ? beforeCreate1Hook(model, context) : Promise.resolve();
     }
 
     @BeforeCreate('*')
     beforeCreate2(model: TestCreate, context: string): Promise<void> {
+      beforeCreate2This = this;
       return (beforeCreate2Hook) ? beforeCreate2Hook(model, context) : Promise.resolve();
     }
 
@@ -105,6 +111,9 @@ describe('Model.create', () => {
       beforeCreate1Hook = null;
       beforeCreate2Hook = null;
       beforeCreate3Hook = null;
+
+      beforeCreate1This = null;
+      beforeCreate2This = null;
 
       done();
     } catch (err) {
@@ -299,6 +308,20 @@ describe('Model.create', () => {
         expect(contextDefault).toBeFalsy('default context should not have been called');
         expect(contextStar).toBeTruthy('start context should always be called');
         expect(contextTest).toBeTruthy('test context should have been called');
+
+        done();
+      } catch (err) {
+        done.fail(err);
+      }
+    });
+
+    it('sets instance of this to model', async (done) => {
+      try {
+        const test = await TestCreate.fromJson({});
+        await test.create();
+
+        expect(beforeCreate1This instanceof TestCreate).toBeTruthy();
+        expect(beforeCreate2This instanceof TestCreate).toBeTruthy();
 
         done();
       } catch (err) {

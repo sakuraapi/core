@@ -26,6 +26,9 @@ describe('Model.save', () => {
   let beforeSave1Hook: OnBeforeSave;
   let beforeSave2Hook: OnBeforeSave;
   let beforeSave3Hook: OnBeforeSave;
+  let beforeSave1This: any;
+  let beforeSave2This: any;
+
   let sapi: SakuraApi;
 
   @Model()
@@ -70,11 +73,13 @@ describe('Model.save', () => {
 
     @BeforeSave()
     beforeSave1(model: TestSave, context: string): Promise<void> {
+      beforeSave1This = this;
       return (beforeSave1Hook) ? beforeSave1Hook(model, context) : Promise.resolve();
     }
 
     @BeforeSave('*')
     beforeSave2(model: TestSave, context: string): Promise<void> {
+      beforeSave2This = this;
       return (beforeSave2Hook) ? beforeSave2Hook(model, context) : Promise.resolve();
     }
 
@@ -110,6 +115,9 @@ describe('Model.save', () => {
       beforeSave1Hook = null;
       beforeSave2Hook = null;
       beforeSave3Hook = null;
+
+      beforeSave1This = null;
+      beforeSave2This = null;
 
       done();
     } catch (err) {
@@ -597,6 +605,21 @@ describe('Model.save', () => {
         expect(contextDefault).toBeFalsy('default context should not have been called');
         expect(contextStar).toBeTruthy('start context should always be called');
         expect(contextTest).toBeTruthy('test context should have been called');
+
+        done();
+      } catch (err) {
+        done.fail(err);
+      }
+    });
+
+    it('sets instance of this to model', async (done) => {
+      try {
+        const test = await TestSave.fromJson({});
+        await test.create();
+        await test.save();
+
+        expect(beforeSave1This instanceof TestSave).toBeTruthy();
+        expect(beforeSave2This instanceof TestSave).toBeTruthy();
 
         done();
       } catch (err) {

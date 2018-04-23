@@ -38,10 +38,10 @@ export async function create(options?: CollectionInsertOneOptions, context = 'de
   const beforeCreateContextMap = (beforCreateMap) ? beforCreateMap.get(context) || [] : [];
   const beforeCreateStarMap = (beforCreateMap) ? beforCreateMap.get('*') || [] : [];
   for (const f of beforeCreateContextMap) {
-    await f(this, context);
+    await f.bind(this)(this, context);
   }
   for (const f of beforeCreateStarMap) {
-    await f(this, '*');
+    await f.bind(this)(this, '*');
   }
 
   const dbObj = this.toDb();
