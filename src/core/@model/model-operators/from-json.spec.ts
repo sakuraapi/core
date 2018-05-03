@@ -230,10 +230,10 @@ describe('@Model.fromJson', () => {
       ln: 0
     };
 
-    const result = User.fromJson(json);
+    const result: User = User.fromJson(json);
 
-    expect(result.lastName).toBe(0);
-    expect(result.contact.phone).toBe(0);
+    expect(result.lastName as any).toBe(0);
+    expect(result.contact.phone as any).toBe(0);
   });
 
   describe('supports multiple @json decorators', () => {
@@ -242,12 +242,12 @@ describe('@Model.fromJson', () => {
       let obj = Test.fromJson({
         anp: 2
       });
-      expect(obj.anotherProperty).toBe(2);
+      expect(obj.anotherProperty as any).toBe(2);
 
       obj = Test.fromJson({
         anotherProperty: 2
       });
-      expect(obj.anotherProperty).toBe(2);
+      expect(obj.anotherProperty as any).toBe(2);
     });
 
     it('with the last property defined in the json object winning if there are multiple' +
@@ -256,7 +256,7 @@ describe('@Model.fromJson', () => {
         anotherProperty: 3,
         anp: 2
       });
-      expect(obj.anotherProperty).toBe(2);
+      expect(obj.anotherProperty as any).toBe(2);
     });
 
   });
@@ -463,10 +463,11 @@ describe('@Model.fromJson', () => {
 
       });
     });
+
     describe('#121', () => {
-      pending('see #121 -- this needs to be evaluated and fixed');
 
       it('should not take class property when `field` option is set', () => {
+        pending('see #121 -- this needs to be evaluated and fixed');
 
         @Model({})
         class TestBug extends SapiModelMixin() {
@@ -486,6 +487,8 @@ describe('@Model.fromJson', () => {
       });
 
       it('#121', () => {
+        pending('see #121 -- this needs to be evaluated and fixed');
+
         @Model({})
         class TestBug extends SapiModelMixin() {
           @Json({

@@ -54,7 +54,7 @@ export interface IRoutableMethodOptions {
    *
    * Defaults to HTTP method 'GET' if not method is provided.
    */
-  method?: HttpMethods | HttpMethods[] | HttpMethod | [HttpMethod];
+  method?: HttpMethods | HttpMethods[] | HttpMethod | HttpMethod[];
 
   /**
    * Boolean value that sets this route to blacklisted when set to true. This is a quick way to turn off a route when
