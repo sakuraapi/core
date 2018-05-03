@@ -1,4 +1,4 @@
-import { FormatFromJson } from './format-from-json';
+import { FromJson } from './from-json';
 import { Json } from './json';
 import { Model } from './model';
 import { SapiModelMixin } from './sapi-model-mixin';
@@ -13,7 +13,7 @@ describe('@FormatFromJson', () => {
       firstName = 'John';
       lastName = 'Adams';
 
-      @FormatFromJson()
+      @FromJson()
       formatter(json: any, model: any, context: string) {
         return model;
       }
@@ -43,7 +43,7 @@ describe('@FormatFromJson', () => {
 
       address: string;
 
-      @FormatFromJson()
+      @FromJson()
       flattenAddress(json: any, model: any, context: string) {
         model.address = json.source.address1 + ' ' + json.source.address2;
         return model;
@@ -71,13 +71,13 @@ describe('@FormatFromJson', () => {
       firstName: string;
       lastName: string;
 
-      @FormatFromJson()
+      @FromJson()
       format1(json: any, model: any, context: string) {
         model.firstName = '1';
         return model;
       }
 
-      @FormatFromJson()
+      @FromJson()
       format2(json: any, model: any, context: string) {
         model.lastName = '2';
         return model;
@@ -98,13 +98,13 @@ describe('@FormatFromJson', () => {
       prop1: string;
       prop2: string;
 
-      @FormatFromJson()
+      @FromJson()
       format1(json: any, model: any, context: string) {
         model.prop1 = '1';
         return model;
       }
 
-      @FormatFromJson('source2')
+      @FromJson('source2')
       format2(json: any, model: any, context: string) {
         model.prop2 = '2';
         return model;
@@ -130,13 +130,13 @@ describe('@FormatFromJson', () => {
       prop1: string;
       prop2: string;
 
-      @FormatFromJson()
+      @FromJson()
       format1(json: any, model: any, context: string) {
         model.prop1 = '1';
         return model;
       }
 
-      @FormatFromJson('*')
+      @FromJson('*')
       format2(json: any, model: any, context: string) {
         model.prop2 = '2';
         return model;

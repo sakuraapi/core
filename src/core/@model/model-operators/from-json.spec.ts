@@ -1,14 +1,8 @@
 import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
-import {
-  Db,
-  Json
-} from '../index';
+import { Db, Json } from '../index';
 import { IJsonOptions } from '../json';
-import {
-  Model,
-  modelSymbols
-} from '../model';
+import { Model, modelSymbols } from '../model';
 import { Private } from '../private';
 import { SapiModelMixin } from '../sapi-model-mixin';
 
@@ -575,7 +569,7 @@ describe('@Model.fromJson', () => {
       @Model()
       class TestFormat extends SapiModelMixin() {
         @Json({
-          formatFromJson: (val, key) => {
+          fromJson: (val, key) => {
             valCheck = val;
             keyCheck = key;
             return 'formatFromJson set1';
@@ -585,13 +579,13 @@ describe('@Model.fromJson', () => {
 
         @Json({
           field: 'sop',
-          formatFromJson: (val, key) => 'formatFromJson set2'
+          fromJson: (val, key) => 'formatFromJson set2'
         })
         someOtherProperty: string = 'default';
 
         @Json({
           field: 'stp',
-          formatFromJson: (val, key) => 'formatFromJson set3'
+          fromJson: (val, key) => 'formatFromJson set3'
         })
         someThirdProperty: string = 'default';
       }
@@ -621,7 +615,7 @@ describe('@Model.fromJson', () => {
         property1: string = 'default';
 
         @Json({
-          formatFromJson: (val, key) => {
+          fromJson: (val, key) => {
             valSet = val;
             keySet = key;
 
@@ -778,26 +772,26 @@ describe('@Model.fromJson', () => {
           @Json({
             context: 'context1',
             field: 'p1',
-            formatFromJson: () => prop1FormatterCalled = true
+            fromJson: () => prop1FormatterCalled = true
           })
           prop1;
 
           @Json({
             context: '*',
             field: 'p2',
-            formatFromJson: () => prop2FormatterCalled = true
+            fromJson: () => prop2FormatterCalled = true
           })
           prop2;
 
           @Json({
             context: 'context1',
             field: 'p3',
-            formatFromJson: () => order += '1'
+            fromJson: () => order += '1'
           })
           @Json({
             context: '*',
             field: 'p3',
-            formatFromJson: () => order += '2'
+            fromJson: () => order += '2'
           })
           prop3;
         }

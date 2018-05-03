@@ -1,11 +1,13 @@
 import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
+import { IContext } from '../../helpers';
 import { SakuraApi } from '../../sakura-api';
 import { Db } from '../db';
 import { Json } from '../json';
 import { Model } from '../model';
 import { Private } from '../private';
 import { SapiModelMixin } from '../sapi-model-mixin';
+import { ToJson } from '../to-json';
 
 describe('Model.toJson', () => {
 
@@ -543,26 +545,26 @@ describe('Model.toJson', () => {
           @Json({
             context: 'context1',
             field: 'p1',
-            formatToJson: () => prop1FormatterCalled = true
+            toJson: () => prop1FormatterCalled = true
           })
           prop1 = 'val1';
 
           @Json({
             context: '*',
             field: 'p2',
-            formatToJson: () => prop2FormatterCalled = true
+            toJson: () => prop2FormatterCalled = true
           })
           prop2 = 'val2';
 
           @Json({
             context: 'context1',
             field: 'p3',
-            formatToJson: () => order += '1'
+            toJson: () => order += '1'
           })
           @Json({
             context: '*',
             field: 'p3',
-            formatToJson: () => order += '2'
+            toJson: () => order += '2'
           })
           prop3 = 'val3';
         }
@@ -597,7 +599,7 @@ describe('Model.toJson', () => {
     });
   });
 
-  describe('formatToJson', () => {
+  describe('toJson', () => {
     it('flat objects', () => {
 
       let valSet;
@@ -607,13 +609,13 @@ describe('Model.toJson', () => {
       class SomeModel extends SapiModelMixin() {
 
         @Json({
-          formatToJson: (val, key) => 'override'
+          toJson: (val, key) => 'override'
         })
         someProperty = 'default';
 
         @Json({
           field: 'sp2',
-          formatToJson: (val, key) => {
+          toJson: (val, key) => {
             valSet = val;
             keySet = key;
             return 'override2';
@@ -643,13 +645,13 @@ describe('Model.toJson', () => {
       @Model()
       class SomeDeepModel extends SapiModelMixin() {
         @Json({
-          formatToJson: (val, key) => 'override'
+          toJson: (val, key) => 'override'
         })
         someProperty = 'default';
 
         @Json({
           field: 'sp2',
-          formatToJson: (val, key) => 'override2'
+          toJson: (val, key) => 'override2'
         })
         someProperty2 = 'default';
 
@@ -661,13 +663,13 @@ describe('Model.toJson', () => {
       class SomeModel extends SapiModelMixin() {
 
         @Json({
-          formatToJson: (val, key) => 'override'
+          toJson: (val, key) => 'override'
         })
         someProperty = 'default';
 
         @Json({
           field: 'sp2',
-          formatToJson: (val, key) => 'override2'
+          toJson: (val, key) => 'override2'
         })
         someProperty2 = 'default';
 
@@ -691,6 +693,51 @@ describe('Model.toJson', () => {
       expect(json.someDeepModel.someProperty).toBe('override');
       expect(json.someDeepModel.sp2).toBe('override2');
     });
+
+    describe('sends IContext', () => {
+      @Model()
+      class TestComplexContext extends SapiModelMixin() {
+        @Json({
+          toJson: (val, key, context) => context
+        })
+        aField = '';
+
+        @Json({
+          context: 'B',
+          toJson: (val, key, context) => context.data
+        })
+        bField = '';
+
+        @ToJson('C')
+        formatJson(json: any, model: TestComplexContext, context: IContext): any {
+          return context.data;
+        }
+      }
+
+      it('to IJsonOptions.ToJson', () => {
+
+        const tcc1 = TestComplexContext.fromJson({aField: 'original'});
+        expect(tcc1.aField).toBe('original');
+
+        const result1 = tcc1.toJson({test: true});
+        expect(result1.aField.test).toBeTruthy();
+        expect(result1.bField).toBe('');
+
+        const tcc2 = TestComplexContext.fromJson({});
+
+        const result2 = tcc2.toJson({context: 'B', data: 'isB'});
+        expect(result2.aField).toBe('');
+        expect(result2.bField).toBe('isB');
+
+      });
+
+      it('to @ToJson', () => {
+        const tcc3 = TestComplexContext.fromJson(({}));
+        const result3 = tcc3.toJson({context: 'C', data: 'isC'});
+        expect(result3).toBe('isC');
+      });
+    });
+
   });
 
   describe('IJsonOptions', () => {
