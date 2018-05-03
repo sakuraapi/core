@@ -38,7 +38,7 @@ describe('core/@Model', () => {
       expect(testModel instanceof TestModel).toBe(true);
     });
 
-    it('maps _id to id without contaminating the object properties with the id accessor', () => {
+    it('maps _id to id but defines id as not enumerable', () => {
 
       @Model()
       class TestModel extends SapiModelMixin() {
@@ -48,10 +48,11 @@ describe('core/@Model', () => {
       testModel.id = new ObjectID();
 
       expect(testModel._id).toEqual(testModel.id);
-      expect(testModel.id).toEqual(testModel.id);
+      expect(testModel.id).toEqual(testModel._id);
 
       const json = JSON.parse(JSON.stringify(testModel));
       expect(json.id).toBeUndefined();
+
     });
 
     describe('ModelOptions.dbConfig', () => {
@@ -202,7 +203,7 @@ describe('core/@Model', () => {
             const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
             const testDefaultMethods2 = new (sapi.getModel(DefaultCrud))();
 
-            expect(testDefaultMethods.id).toBeNull();
+            expect(testDefaultMethods.id).toBeUndefined();
 
             const createResult = await testDefaultMethods.create();
             expect(createResult.insertedCount).toBe(1);
@@ -551,7 +552,7 @@ describe('core/@Model', () => {
             const testDefaultMethods = new (sapi.getModel(DefaultCrud))();
             const testDefaultMethods2 = new (sapi.getModel(DefaultCrud))();
 
-            expect(testDefaultMethods.id).toBeNull();
+            expect(testDefaultMethods.id).toBeUndefined();
 
             const createResult = await testDefaultMethods.create();
             expect(createResult.insertedCount).toBe(1);
@@ -951,7 +952,7 @@ describe('core/@Model', () => {
       expect(TestDi[modelSymbols.isSakuraApiModel]).toBeTruthy();
 
       expect(() => TestDi[modelSymbols.id] = null).toThrowError(`Cannot assign to read only property ` +
-        `'Symbol(modelId)' of function '[object Function]'`);
+        `'Symbol(GUID id for model DI)' of function '[object Function]'`);
       expect(() => test[modelSymbols.isSakuraApiModel] = false)
         .toThrowError(`Cannot assign to read only property 'Symbol(isSakuraApiModel)' of object '#<TestDi>'`);
     });
