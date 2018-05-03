@@ -4,7 +4,7 @@ import {
   dbSymbols,
   IDbOptions
 } from '../db';
-import { formatFromJsonSymbols } from '../format-from-json';
+import { formatFromJsonSymbols, FromJsonHandler } from '../from-json';
 import {
   IJsonOptions,
   jsonSymbols
@@ -33,10 +33,10 @@ export function fromJson<T = any>(json: T, context = 'default'): any {
 
   let resultModel = mapJsonToModel(json, obj);
 
-  // @FormatFromJson
+  // @FromJson
   const formatFromJsonMeta = Reflect.getMetadata(formatFromJsonSymbols.functionMap, resultModel);
   if (formatFromJsonMeta) {
-    const formatters = [
+    const formatters: FromJsonHandler[] = [
       ...formatFromJsonMeta.get(context) || [],
       ...formatFromJsonMeta.get('*') || []
     ];
@@ -145,8 +145,8 @@ export function fromJson<T = any>(json: T, context = 'default'): any {
     const promiscuous = jsonFieldOptions.promiscuous || jsonFieldOptionsStar.promiscuous || false;
 
     return {
-      formatFromJson: jsonFieldOptions.formatFromJson,
-      formatFromJsonStar: jsonFieldOptionsStar.formatFromJson,
+      formatFromJson: jsonFieldOptions.fromJson,
+      formatFromJsonStar: jsonFieldOptionsStar.fromJson,
       model,
       newKey: (hasOptions)
         ? propertyName
