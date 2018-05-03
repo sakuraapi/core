@@ -143,7 +143,7 @@ describe('Model.save', () => {
     it('updates entire model if no set parameter is passed', async (done) => {
       const testDefaultMethods = new (sapi.getModel(TestSave))();
 
-      expect(testDefaultMethods.id).toBeNull();
+      expect(testDefaultMethods.id).toBeUndefined();
       try {
         const createResult = await testDefaultMethods.create();
 

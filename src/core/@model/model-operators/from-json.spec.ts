@@ -520,7 +520,6 @@ describe('@Model.fromJson', () => {
 
       const user = User1.fromJson(data);
 
-      expect(new User1().id).toBeDefined('nope');
       expect(user instanceof User1).toBeTruthy('Should have gotten back an instance of User');
       expect(user.id instanceof ObjectID).toBeTruthy();
       expect(user._id instanceof ObjectID).toBeTruthy();
