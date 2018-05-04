@@ -11,7 +11,7 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
-import { Constructor } from '../helpers';
+import { Constructor, IContext } from '../helpers';
 import { SakuraApi } from '../sakura-api';
 import {
   IDbGetParams,
@@ -57,7 +57,6 @@ import { IMongoDBCollation } from './model';
  *
  * Just remember to stick to the interface in case SakuraAPI is calling the method being overriden internally.
  */
-
 export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
   base = base || class {
   } as C;
@@ -90,7 +89,7 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     create: (options?: CollectionInsertOneOptions, context?: string) => Promise<InsertOneWriteOpResult>;
     getCollection: () => Collection;
     getDb: () => Db;
-    toJson: (context?: string) => any;
+    toJson: (context?: string | IContext) => any;
     toJsonString: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
     toDb: (changeSet?: object) => any;
     remove: (options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;

@@ -1,10 +1,12 @@
+import { IContext } from '../helpers';
+
 export const formatToJsonSymbols = {
   functionMap: Symbol('functionMap')
 };
 
-export type ToJsonFormatter = (json: any, model: any, context: string) => any;
+export type ToJsonHandler = (json: any, model: any, context: IContext) => any;
 
-export function FormatToJson(context = 'default') {
+export function ToJson(context = 'default') {
   return (target: any, key: string, value: TypedPropertyDescriptor<any>) => {
     const f = function(...args: any[]) {
       return value.value.apply(this, args);
@@ -12,7 +14,7 @@ export function FormatToJson(context = 'default') {
 
     const meta = getMetaDataMap(target, formatToJsonSymbols.functionMap);
 
-    let formatters: ToJsonFormatter[] = meta.get(context);
+    let formatters: ToJsonHandler[] = meta.get(context);
     if (!formatters) {
       formatters = [];
       meta.set(context, formatters);
@@ -26,11 +28,11 @@ export function FormatToJson(context = 'default') {
   };
 
   /////
-  function getMetaDataMap(source, symbol): Map<string, ToJsonFormatter[]> {
-    let map: Map<string, ToJsonFormatter[]> = Reflect.getMetadata(symbol, source);
+  function getMetaDataMap(source, symbol): Map<string, ToJsonHandler[]> {
+    let map: Map<string, ToJsonHandler[]> = Reflect.getMetadata(symbol, source);
 
     if (!map) {
-      map = new Map<string, ToJsonFormatter[]>();
+      map = new Map<string, ToJsonHandler[]>();
       Reflect.defineMetadata(symbol, map, source);
     }
 

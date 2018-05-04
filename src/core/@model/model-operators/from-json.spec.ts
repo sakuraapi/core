@@ -1,14 +1,8 @@
 import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
-import {
-  Db,
-  Json
-} from '../index';
+import { Db, Json } from '../index';
 import { IJsonOptions } from '../json';
-import {
-  Model,
-  modelSymbols
-} from '../model';
+import { Model, modelSymbols } from '../model';
 import { Private } from '../private';
 import { SapiModelMixin } from '../sapi-model-mixin';
 
@@ -236,10 +230,10 @@ describe('@Model.fromJson', () => {
       ln: 0
     };
 
-    const result = User.fromJson(json);
+    const result: User = User.fromJson(json);
 
-    expect(result.lastName).toBe(0);
-    expect(result.contact.phone).toBe(0);
+    expect(result.lastName as any).toBe(0);
+    expect(result.contact.phone as any).toBe(0);
   });
 
   describe('supports multiple @json decorators', () => {
@@ -248,12 +242,12 @@ describe('@Model.fromJson', () => {
       let obj = Test.fromJson({
         anp: 2
       });
-      expect(obj.anotherProperty).toBe(2);
+      expect(obj.anotherProperty as any).toBe(2);
 
       obj = Test.fromJson({
         anotherProperty: 2
       });
-      expect(obj.anotherProperty).toBe(2);
+      expect(obj.anotherProperty as any).toBe(2);
     });
 
     it('with the last property defined in the json object winning if there are multiple' +
@@ -262,7 +256,7 @@ describe('@Model.fromJson', () => {
         anotherProperty: 3,
         anp: 2
       });
-      expect(obj.anotherProperty).toBe(2);
+      expect(obj.anotherProperty as any).toBe(2);
     });
 
   });
@@ -469,10 +463,11 @@ describe('@Model.fromJson', () => {
 
       });
     });
+
     describe('#121', () => {
-      pending('see #121 -- this needs to be evaluated and fixed');
 
       it('should not take class property when `field` option is set', () => {
+        pending('see #121 -- this needs to be evaluated and fixed');
 
         @Model({})
         class TestBug extends SapiModelMixin() {
@@ -492,6 +487,8 @@ describe('@Model.fromJson', () => {
       });
 
       it('#121', () => {
+        pending('see #121 -- this needs to be evaluated and fixed');
+
         @Model({})
         class TestBug extends SapiModelMixin() {
           @Json({
@@ -526,7 +523,6 @@ describe('@Model.fromJson', () => {
 
       const user = User1.fromJson(data);
 
-      expect(new User1().id).toBeDefined('nope');
       expect(user instanceof User1).toBeTruthy('Should have gotten back an instance of User');
       expect(user.id instanceof ObjectID).toBeTruthy();
       expect(user._id instanceof ObjectID).toBeTruthy();
@@ -575,7 +571,7 @@ describe('@Model.fromJson', () => {
       @Model()
       class TestFormat extends SapiModelMixin() {
         @Json({
-          formatFromJson: (val, key) => {
+          fromJson: (val, key) => {
             valCheck = val;
             keyCheck = key;
             return 'formatFromJson set1';
@@ -585,13 +581,13 @@ describe('@Model.fromJson', () => {
 
         @Json({
           field: 'sop',
-          formatFromJson: (val, key) => 'formatFromJson set2'
+          fromJson: (val, key) => 'formatFromJson set2'
         })
         someOtherProperty: string = 'default';
 
         @Json({
           field: 'stp',
-          formatFromJson: (val, key) => 'formatFromJson set3'
+          fromJson: (val, key) => 'formatFromJson set3'
         })
         someThirdProperty: string = 'default';
       }
@@ -621,7 +617,7 @@ describe('@Model.fromJson', () => {
         property1: string = 'default';
 
         @Json({
-          formatFromJson: (val, key) => {
+          fromJson: (val, key) => {
             valSet = val;
             keySet = key;
 
@@ -778,26 +774,26 @@ describe('@Model.fromJson', () => {
           @Json({
             context: 'context1',
             field: 'p1',
-            formatFromJson: () => prop1FormatterCalled = true
+            fromJson: () => prop1FormatterCalled = true
           })
           prop1;
 
           @Json({
             context: '*',
             field: 'p2',
-            formatFromJson: () => prop2FormatterCalled = true
+            fromJson: () => prop2FormatterCalled = true
           })
           prop2;
 
           @Json({
             context: 'context1',
             field: 'p3',
-            formatFromJson: () => order += '1'
+            fromJson: () => order += '1'
           })
           @Json({
             context: '*',
             field: 'p3',
-            formatFromJson: () => order += '2'
+            fromJson: () => order += '2'
           })
           prop3;
         }

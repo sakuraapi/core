@@ -1,8 +1,8 @@
-import { FormatToJson } from './format-to-json';
 import { Json } from './json';
 import { Model } from './model';
 import { Private } from './private';
 import { SapiModelMixin } from './sapi-model-mixin';
+import { ToJson } from './to-json';
 
 describe('@FormatToJson', () => {
 
@@ -18,7 +18,7 @@ describe('@FormatToJson', () => {
       @Json('l')
       lastName = 'Adams';
 
-      @FormatToJson()
+      @ToJson()
       formatter(json: any, model: any, context: string) {
         wasCalled = true;
         return json;
@@ -46,7 +46,7 @@ describe('@FormatToJson', () => {
       @Private()
       address = '123 Main St, Suite 101';
 
-      @FormatToJson()
+      @ToJson()
       inflateAddress(json: any, model: SomeModel, context: string) {
 
         const parts = (model.address || '').split(',');
@@ -74,13 +74,13 @@ describe('@FormatToJson', () => {
       firstName: string;
       lastName: string;
 
-      @FormatToJson()
+      @ToJson()
       format1(json: any, model: any, context: string) {
         json.firstName = '1';
         return json;
       }
 
-      @FormatToJson()
+      @ToJson()
       format2(json: any, model: any, context: string) {
         json.lastName = '2';
         return json;
@@ -104,13 +104,13 @@ describe('@FormatToJson', () => {
       @Json('p2')
       prop2: string;
 
-      @FormatToJson()
+      @ToJson()
       format1(json: any, model: any, context: string) {
         json.p1 = '1';
         return json;
       }
 
-      @FormatToJson('source2')
+      @ToJson('source2')
       format2(json: any, model: any, context: string) {
         json.p2 = '2';
         return json;
@@ -138,13 +138,13 @@ describe('@FormatToJson', () => {
       @Json('p2')
       prop2: string;
 
-      @FormatToJson()
+      @ToJson()
       format1(json: any, model: any, context: string) {
         json.p1 = '1';
         return json;
       }
 
-      @FormatToJson('*')
+      @ToJson('*')
       format2(json: any, model: any, context: string) {
         json.p2 = '2';
         return json;

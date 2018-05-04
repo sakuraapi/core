@@ -2,6 +2,8 @@
  * The symbols used by Reflect to store `@Json()` metadata for use by `@Module`. These symbols are not considered
  * part of the API contract and may change or be removed without notice on patch releases.
  */
+import { IContext } from '../helpers';
+
 export const jsonSymbols = {
   jsonByFieldName: Symbol('jsonByFieldName'),
   jsonByPropertyName: Symbol('jsonByPropertyName'),
@@ -76,7 +78,7 @@ export interface IJsonOptions {
    * @param {string} key The name of the property beinng marshalled to Json
    * @returns any Returns the formatted value
    */
-  formatToJson?: (val: any, key: string) => any;
+  toJson?: (val: any, key?: string, context?: IContext) => any;
 
   /**
    * Allows formatting a property when it's marshalled from Json to an `@`[[Model]].
@@ -94,7 +96,7 @@ export interface IJsonOptions {
    * @param {string} key The name of the property beinng marshalled to Json
    * @returns any Returns the formatted value
    */
-  formatFromJson?: (val: any, key: string) => any;
+  fromJson?: (val: any, key?: string, context?: IContext) => any;
 
   /**
    * An optional `@`[[Model]] decorated class. If provided, the property will be instantiated as a sub document
@@ -143,13 +145,15 @@ export interface IJsonOptions {
  * @param context Sets the context under which this @Json applies (see [[IJsonOptions.context]])
  * @returns Returns a function that is used internally by the framework.
  */
-export function Json(jsonOptions?: IJsonOptions | string, context?: string): (target: any, key: string) => void {
+export function Json(jsonOptions?: IJsonOptions | string, context = 'default'): (target: any, key: string) => void {
+
   const options = (typeof jsonOptions === 'string')
     ? {field: jsonOptions}
     : jsonOptions || {};
 
   return (target: any, key: string) => {
-    context = context || options.context || 'default';
+
+    context = options.context || context;
 
     options[jsonSymbols.propertyName] = key;
 

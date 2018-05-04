@@ -1,40 +1,11 @@
-import {
-  Collection,
-  CollectionInsertOneOptions,
-  CommonOptions,
-  Cursor,
-  Db,
-  DeleteWriteOpResultObject,
-  InsertOneWriteOpResult,
-  ObjectID,
-  ReplaceOneOptions,
-  UpdateWriteOpResult
-} from 'mongodb';
 import { v4 } from 'uuid';
 import { getDependencyInjections } from '../@injectable';
 import {
   addDefaultInstanceMethods,
-  addDefaultStaticMethods,
-  shouldRecurse
+  addDefaultStaticMethods
 } from '../helpers';
 import {
-  dbSymbols,
-  IDbOptions
-} from './db';
-import {
-  SapiDbForModelNotFound,
-  SapiInvalidModelObject,
-  SapiMissingIdErr
-} from './errors';
-import { formatFromJsonSymbols } from './format-from-json';
-import { formatToJsonSymbols } from './format-to-json';
-import {
-  IJsonOptions,
-  jsonSymbols
-} from './json';
-import {
   create,
-  debug,
   fromDb,
   fromDbArray,
   fromJson,
@@ -55,7 +26,6 @@ import {
   toJson,
   toJsonString
 } from './model-operators';
-import { privateSymbols } from './private';
 
 export interface IMongoDBCollation {
   locale: string;
@@ -149,7 +119,7 @@ export const modelSymbols = {
   fromJson: Symbol('fromJson'),
   fromJsonArray: Symbol('fromJsonArray'),
   fromJsonToDb: Symbol('fromJsonToDb'),
-  id: Symbol('modelId'),
+  id: Symbol('GUID id for model DI'),
   isSakuraApiModel: Symbol('isSakuraApiModel'),
   modelOptions: Symbol('modelOptions'),
   sapi: Symbol('sapi'),
@@ -230,7 +200,7 @@ export class ModelNotRegistered extends Error {
  * SakuraApi uses, then the new function should be assigned to the appropriate symbol ([[modelSymbols]]).
  */
 export function Model(modelOptions?: IModelOptions): (object) => any {
-  modelOptions = modelOptions || {} as IModelOptions; // tslint:disable-line:no-object-literal-type-assertion
+  modelOptions = modelOptions || {} as IModelOptions;
 
   // -------------------------------------------------------------------------------------------------------------------
   // Developer notes:
@@ -256,7 +226,9 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
         const c = Reflect.construct(t, diArgs, nt);
 
         // map _id to id
-        newConstructor.prototype._id = null;
+
+        newConstructor.prototype._id = undefined;
+
         Reflect.defineProperty(c, 'id', {
           configurable: true,
           enumerable: false,
@@ -310,16 +282,12 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     // -----------------------------------------------------------------------------------------------------------------
     // Developer notes:
     //
-    // Static method injection... TypeScript does not see these, so you have to define a class level definition; for
+    // Instance method injection... TypeScript won't know these are part of the type of the object being constructed
+    // since they're dynamically injected. Extend Models with SapiModelMixin to overcome this.
     //
     //  example:
     //    @Model()
-    //    class Example {
-    //        get: (filter: any, project?: any) => Promise<any>;
-    //    }
-    //
-    // This is fairly lame since it requires that the integrator have the signature of the injected static methods
-    // in order to get typescript to work properly... this needs further thought to come up with something less... lame.
+    //    class Example extends SapiModelMixin() {}
     // =================================================================================================================
 
     // Inject static methods
@@ -388,7 +356,7 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
     // Developer notes:
     //
     // Instance method injection... TypeScript won't know these are part of the type of the object being constructed
-    // since they're dynamically injected. You can use the SapiModelMixin to overcome this.
+    // since they're dynamically injected. Extend Models with SapiModelMixin to overcome this.
     //
     //  example:
     //    @Model()

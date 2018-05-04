@@ -1,14 +1,8 @@
-import { shouldRecurse } from '../../helpers';
-import {
-  dbSymbols,
-  IDbOptions
-} from '../db';
-import { formatToJsonSymbols } from '../format-to-json';
-import {
-  IJsonOptions,
-  jsonSymbols
-} from '../json';
+import { IContext, shouldRecurse } from '../../helpers';
+import { dbSymbols, IDbOptions } from '../db';
+import { IJsonOptions, jsonSymbols } from '../json';
 import { privateSymbols } from '../private';
+import { formatToJsonSymbols, ToJsonHandler } from '../to-json';
 import { debug } from './index';
 
 /**
@@ -16,24 +10,30 @@ import { debug } from './index';
  * you provide both a specific context and a '*' context, the specific options win and fall back to '*' options
  * (if any). In the case of a formatter, the more specific context formatter is run before the '*' formatter, but both
  * run.
- * @param context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
+ * @param {string | IContext} context The optional context to use for marshalling a model from JSON. See [[IJsonOptions.context]].
  * @returns {{}}
  */
-export function toJson(context = 'default'): any {
+export function toJson(context: string | IContext = 'default'): any {
+
+  const ctx = (typeof context === 'string')
+    ? {context}
+    : context;
+  ctx.context = ctx.context || 'default';
+
   const modelName = (this.constructor || {} as any).name;
   debug.normal(`.toJson called, target '${modelName}'`);
 
   let json = mapModelToJson(this);
 
-  // @FormatToJson
+  // @ToJson
   const formatToJson = Reflect.getMetadata(formatToJsonSymbols.functionMap, this);
   if (formatToJson) {
-    const formatters = [
-      ...formatToJson.get(context) || [],
+    const formatters: ToJsonHandler[] = [
+      ...formatToJson.get(ctx.context) || [],
       ...formatToJson.get('*') || []
     ];
     for (const formatter of formatters) {
-      json = formatter(json, this, context);
+      json = formatter(json, this, ctx);
     }
   }
 
@@ -61,7 +61,7 @@ export function toJson(context = 'default'): any {
     const keys = Object.getOwnPropertyNames(source);
     for (const key of keys) {
 
-      const options = jsonFieldNamesByProperty.get(`${key}:${context}`) || {};
+      const options = jsonFieldNamesByProperty.get(`${key}:${ctx.context}`) || {};
       const optionsStar = jsonFieldNamesByProperty.get(`${key}:*`) || {};
       const dbOptions = (dbOptionsByPropertyName) ? dbOptionsByPropertyName.get(key) || {} : {};
 
@@ -79,7 +79,7 @@ export function toJson(context = 'default'): any {
       }
 
       // skip if the field is private in this context
-      const isPrivate = privateFields.get(`${key}:${context}`) || privateFields.get(`${key}:*`);
+      const isPrivate = privateFields.get(`${key}:${ctx.context}`) || privateFields.get(`${key}:*`);
       if (isPrivate) {
         continue;
       }
@@ -110,12 +110,12 @@ export function toJson(context = 'default'): any {
 
       }
 
-      // check for @json({formatToJson})
-      if (options.formatToJson) {
-        value = options.formatToJson(value, key);
+      // check for @json({toJson})
+      if (options.toJson) {
+        value = options.toJson(value, key, ctx);
       }
-      if (optionsStar.formatToJson) {
-        value = optionsStar.formatToJson(value, key);
+      if (optionsStar.toJson) {
+        value = optionsStar.toJson(value, key, ctx);
       }
 
       result[newKey] = value;
