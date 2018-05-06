@@ -48,6 +48,7 @@ export interface IRoutableMethodOptions {
    * endpoint (assuming the `:userId` was passed in as `123`).
    */
   path?: string;
+
   /**
    * Optionally defines the HTTP method to attach to this `@`[[Route]]'s handler. See the example for
    * [[RoutableMethodOptions.path]].

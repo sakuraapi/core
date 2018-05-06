@@ -14,7 +14,7 @@ import {
   NOT_FOUND,
   OK,
   SERVER_ERROR
-} from '../core/helpers';
+} from '../core/lib';
 import { SanitizeMongoDB as Sanitize } from '../core/security';
 
 const debug = {

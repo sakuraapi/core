@@ -32,7 +32,7 @@ import {
 import {
   BAD_REQUEST,
   OK
-} from './helpers';
+} from './lib';
 import {
   Anonymous,
   AuthenticatorNotRegistered,

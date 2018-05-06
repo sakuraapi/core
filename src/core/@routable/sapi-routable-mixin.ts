@@ -3,7 +3,7 @@ import {
   Request,
   Response
 } from 'express';
-import { Constructor } from '../helpers';
+import { Constructor } from '../lib';
 import { SakuraApi } from '../sakura-api';
 
 /**

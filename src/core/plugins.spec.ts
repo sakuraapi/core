@@ -17,7 +17,7 @@ import {
   Routable,
   Route
 } from './@routable';
-import { OK } from './helpers/http-status';
+import { OK } from './lib';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,

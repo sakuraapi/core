@@ -6,12 +6,12 @@ import {
 } from 'express';
 import { MongoClient } from 'mongodb';
 import * as request from 'supertest';
+import { SakuraApiConfig } from '../..';
 import {
   testMongoDbUrl,
   testSapi,
   testUrl
 } from '../../spec/helpers/sakuraapi';
-import { SakuraApiConfig } from '../../src/boot';
 import {
   Routable,
   Route,
@@ -20,7 +20,7 @@ import {
 import {
   OK,
   UNAUTHORIZED
-} from './helpers';
+} from './lib';
 import {
   Anonymous,
   AuthenticatorPlugin,

@@ -1,4 +1,4 @@
-import { IContext } from '../helpers';
+import { IContext } from '../lib';
 
 export const formatToJsonSymbols = {
   functionMap: Symbol('functionMap')
