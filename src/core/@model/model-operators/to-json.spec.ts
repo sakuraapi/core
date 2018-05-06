@@ -738,6 +738,326 @@ describe('Model.toJson', () => {
       });
     });
 
+    describe('projection', () => {
+
+      describe('flat', () => {
+        let testProjection: TestProjection;
+
+        @Model()
+        class TestProjection extends SapiModelMixin() {
+
+          fieldA = 'a';
+          fieldB = 'b';
+          field1 = 1;
+
+        }
+
+        beforeEach(() => {
+          testProjection = new TestProjection();
+          testProjection.id = new ObjectID();
+        });
+
+        describe('exclusive projection', () => {
+          it('exclude a single field removes only that field', () => {
+            const context = {projection: {id: 0}};
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeUndefined();
+            expect(json.fieldA).toBe('a');
+            expect(json.fieldB).toBe('b');
+            expect(json.field1).toBe(1);
+          });
+
+          it('disable combination of fields without impacting other fields', () => {
+            const context = {
+              projection: {
+                fieldB: 0,
+                id: 0
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeUndefined();
+            expect(json.fieldA).toBe('a');
+            expect(json.fieldB).toBeUndefined();
+            expect(json.field1).toBe(1);
+          });
+        });
+
+        describe('inclusive projection', () => {
+          it('only includes fields explicitly projected', () => {
+
+            const context = {
+              projection: {
+                fieldB: 1,
+                id: 1
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeDefined();
+            expect(json.fieldA).toBeUndefined();
+            expect(json.fieldB).toBe('b');
+            expect(json.field1).toBeUndefined();
+          });
+        });
+      });
+
+      describe('sub document', () => {
+        let testProjection: TestProjection;
+
+        @Model()
+        class TestSubDoc {
+
+          subA = 'a';
+          subB = 'b';
+          field2 = 2;
+
+        }
+
+        @Model()
+        class TestProjection extends SapiModelMixin() {
+
+          fieldA = 'a';
+          fieldB = 'b';
+          field1 = 1;
+
+          @Db({model: TestSubDoc})
+          subDoc: TestSubDoc = new TestSubDoc();
+
+        }
+
+        beforeEach(() => {
+          testProjection = new TestProjection();
+          testProjection.id = new ObjectID();
+        });
+
+        describe('exclusive projection', () => {
+          it('exclude a single field removes only that field', () => {
+            const context = {
+              projection: {
+                id: 0,
+                subDoc: {
+                  subA: 0
+                }
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeUndefined();
+            expect(json.fieldA).toBe('a');
+            expect(json.fieldB).toBe('b');
+            expect(json.field1).toBe(1);
+
+            expect(json.subDoc.subA).toBeUndefined();
+            expect(json.subDoc.subB).toBe('b');
+            expect(json.subDoc.field2).toBe(2);
+          });
+
+          it('disable combination of fields without impacting other fields', () => {
+            const context = {
+              projection: {
+                fieldB: 0,
+                id: 0,
+                subDoc: {
+                  subA: 0
+                }
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeUndefined();
+            expect(json.fieldA).toBe('a');
+            expect(json.fieldB).toBeUndefined();
+            expect(json.field1).toBe(1);
+
+            expect(json.subDoc.subA).toBeUndefined();
+            expect(json.subDoc.subB).toBe('b');
+            expect(json.subDoc.field2).toBe(2);
+          });
+        });
+
+        describe('inclusive projection', () => {
+          it('only includes fields explicitly projected', () => {
+
+            const context = {
+              projection: {
+                fieldB: 1,
+                id: 1
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeDefined();
+            expect(json.fieldA).toBeUndefined();
+            expect(json.fieldB).toBe('b');
+            expect(json.field1).toBeUndefined();
+
+            expect(json.subDoc).toBeUndefined();
+
+          });
+
+          it('only includes fields explicitly projected, including sub docs', () => {
+
+            const context = {
+              projection: {
+                fieldB: 1,
+                id: 1,
+                subDoc: {
+                  subA: 1
+                }
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeDefined();
+            expect(json.fieldA).toBeUndefined();
+            expect(json.fieldB).toBe('b');
+            expect(json.field1).toBeUndefined();
+
+            expect(json.subDoc).toBeDefined();
+            expect(json.subDoc.subA).toBe('a');
+            expect(json.subDoc.subB).toBeUndefined();
+            expect(json.subDoc.field2).toBeUndefined();
+          });
+        });
+      });
+
+      describe('array of sub documents', () => {
+        let testProjection: TestProjection;
+
+        @Model()
+        class TestSubDoc {
+
+          subA = 'a';
+          subB = 'b';
+          field2 = 2;
+
+          test = ['1', '2'];
+
+        }
+
+        @Model()
+        class TestProjection extends SapiModelMixin() {
+
+          fieldA = 'a';
+          fieldB = 'b';
+          field1 = 1;
+
+          @Db({model: TestSubDoc})
+          subDoc: TestSubDoc[] = [new TestSubDoc(), new TestSubDoc()];
+
+        }
+
+        beforeEach(() => {
+          testProjection = new TestProjection();
+          testProjection.id = new ObjectID();
+        });
+
+        describe('exclusive projection', () => {
+          it('exclude a single field removes only that field', () => {
+            const context = {
+              projection: {
+                id: 0,
+                subDoc: {
+                  subA: 0
+                }
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeUndefined();
+            expect(json.fieldA).toBe('a');
+            expect(json.fieldB).toBe('b');
+            expect(json.field1).toBe(1);
+
+            expect(json.subDoc[0].subA).toBeUndefined();
+            expect(json.subDoc[0].subB).toBe('b');
+            expect(json.subDoc[0].field2).toBe(2);
+
+            expect(json.subDoc[1].subA).toBeUndefined();
+            expect(json.subDoc[1].subB).toBe('b');
+            expect(json.subDoc[1].field2).toBe(2);
+          });
+
+          it('disable combination of fields without impacting other fields', () => {
+            const context = {
+              projection: {
+                fieldB: 0,
+                id: 0,
+                subDoc: {
+                  subA: 0
+                }
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeUndefined();
+            expect(json.fieldA).toBe('a');
+            expect(json.fieldB).toBeUndefined();
+            expect(json.field1).toBe(1);
+
+            expect(json.subDoc[0].subA).toBeUndefined();
+            expect(json.subDoc[0].subB).toBe('b');
+            expect(json.subDoc[0].field2).toBe(2);
+
+            expect(json.subDoc[1].subA).toBeUndefined();
+            expect(json.subDoc[1].subB).toBe('b');
+            expect(json.subDoc[1].field2).toBe(2);
+          });
+        });
+
+        describe('inclusive projection', () => {
+          it('only includes fields explicitly projected', () => {
+
+            const context = {
+              projection: {
+                fieldB: 1,
+                id: 1
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeDefined();
+            expect(json.fieldA).toBeUndefined();
+            expect(json.fieldB).toBe('b');
+            expect(json.field1).toBeUndefined();
+
+            expect(json.subDoc).toBeUndefined();
+
+          });
+
+          it('only includes fields explicitly projected, including sub docs', () => {
+
+            const context = {
+              projection: {
+                fieldB: 1,
+                id: 1,
+                subDoc: {
+                  subA: 1
+                }
+              }
+            };
+            const json = testProjection.toJson(context);
+
+            expect(json.id).toBeDefined();
+            expect(json.fieldA).toBeUndefined();
+            expect(json.fieldB).toBe('b');
+            expect(json.field1).toBeUndefined();
+
+            expect(json.subDoc).toBeDefined();
+            expect(json.subDoc[0].subA).toBe('a');
+            expect(json.subDoc[0].subB).toBeUndefined();
+            expect(json.subDoc[0].field2).toBeUndefined();
+
+            expect(json.subDoc[1].subA).toBe('a');
+            expect(json.subDoc[1].subB).toBeUndefined();
+            expect(json.subDoc[1].field2).toBeUndefined();
+          });
+        });
+      });
+    });
+
   });
 
   describe('IJsonOptions', () => {
