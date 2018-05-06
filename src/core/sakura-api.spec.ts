@@ -6,12 +6,12 @@ import {
 } from 'express';
 import { MongoClient } from 'mongodb';
 import * as request from 'supertest';
+import { SakuraApiConfig } from '../..';
 import {
   testMongoDbUrl,
   testSapi,
   testUrl
 } from '../../spec/helpers/sakuraapi';
-import { SakuraApiConfig } from '../..';
 import {
   Routable,
   Route,
