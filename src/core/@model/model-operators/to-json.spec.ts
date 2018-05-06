@@ -1,6 +1,6 @@
 import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
-import { IContext } from '../../helpers';
+import { IContext } from '../../lib';
 import { SakuraApi } from '../../sakura-api';
 import { Db } from '../db';
 import { Json } from '../json';

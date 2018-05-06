@@ -3,7 +3,7 @@ import { getDependencyInjections } from '../@injectable';
 import {
   addDefaultInstanceMethods,
   addDefaultStaticMethods
-} from '../helpers';
+} from '../lib';
 import {
   create,
   fromDb,

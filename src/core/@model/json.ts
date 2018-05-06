@@ -2,7 +2,7 @@
  * The symbols used by Reflect to store `@Json()` metadata for use by `@Module`. These symbols are not considered
  * part of the API contract and may change or be removed without notice on patch releases.
  */
-import { IContext } from '../helpers';
+import { IContext } from '../lib';
 
 export const jsonSymbols = {
   jsonByFieldName: Symbol('jsonByFieldName'),

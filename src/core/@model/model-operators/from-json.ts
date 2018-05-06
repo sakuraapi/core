@@ -1,5 +1,5 @@
 import { ObjectID } from 'mongodb';
-import { shouldRecurse } from '../../helpers';
+import { shouldRecurse } from '../../lib';
 import {
   dbSymbols,
   IDbOptions
