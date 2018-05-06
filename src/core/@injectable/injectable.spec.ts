@@ -19,7 +19,7 @@ import {
   Route,
   SapiRoutableMixin
 } from '../@routable';
-import { OK } from '../helpers';
+import { OK } from '../lib';
 import { SakuraApi } from '../sakura-api';
 import {
   Injectable,

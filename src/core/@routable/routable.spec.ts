@@ -24,7 +24,7 @@ import {
   DUPLICATE_RESOURCE,
   NOT_FOUND,
   OK
-} from '../helpers';
+} from '../lib';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,

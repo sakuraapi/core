@@ -1,4 +1,4 @@
-import { IContext, shouldRecurse } from '../../helpers';
+import { IContext, shouldRecurse } from '../../lib';
 import { dbSymbols, IDbOptions } from '../db';
 import { IJsonOptions, jsonSymbols } from '../json';
 import { privateSymbols } from '../private';

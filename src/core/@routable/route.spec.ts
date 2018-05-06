@@ -14,7 +14,7 @@ import {
   Model,
   SapiModelMixin
 } from '../@model';
-import { OK } from '../helpers';
+import { OK } from '../lib';
 import {
   AuthenticatorPlugin,
   AuthenticatorPluginResult,

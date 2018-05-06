@@ -11,7 +11,7 @@ import {
   testSapi,
   testUrl
 } from '../../spec/helpers/sakuraapi';
-import { SakuraApiConfig } from '../../src/boot';
+import { SakuraApiConfig } from '../..';
 import {
   Routable,
   Route,
@@ -20,7 +20,7 @@ import {
 import {
   OK,
   UNAUTHORIZED
-} from './helpers';
+} from './lib';
 import {
   Anonymous,
   AuthenticatorPlugin,

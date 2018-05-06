@@ -11,7 +11,7 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
-import { Constructor, IContext } from '../helpers';
+import { Constructor, IContext } from '../lib';
 import { SakuraApi } from '../sakura-api';
 import {
   IDbGetParams,

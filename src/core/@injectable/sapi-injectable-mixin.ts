@@ -1,4 +1,4 @@
-import { Constructor } from '../helpers/constructor-type';
+import { Constructor } from '../lib';
 import { SakuraApi } from '../sakura-api';
 
 /***
