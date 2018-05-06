@@ -1,5 +1,4 @@
-import { IContext, shouldRecurse } from '../../lib';
-import { IProjection } from '../../lib/i-projection';
+import { IContext, IProjection, shouldRecurse } from '../../lib';
 import { dbSymbols, IDbOptions } from '../db';
 import { IJsonOptions, jsonSymbols } from '../json';
 import { privateSymbols } from '../private';

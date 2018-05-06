@@ -1,4 +1,4 @@
-import { IProjection } from './i-projection';
+import { IProjection } from './';
 
 /**
  * Passed to things like [[toJson]]. If you pass an object as context `toJson` (for example), the full content
