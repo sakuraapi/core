@@ -1,4 +1,4 @@
-import { projectionFromQuery } from './i-projection';
+import { IProjection, projectionFromQuery } from './i-projection';
 
 describe('projectionFromQuery', () => {
 
@@ -58,6 +58,12 @@ describe('projectionFromQuery', () => {
       expect(result.test).toBe(0);
     });
 
+    it('ignores undefined queries', () => {
+      const result = projectionFromQuery(undefined);
+
+      expect(result).toBeNull();
+    });
+
   });
 
   describe('query as JSON IProjection', () => {
@@ -70,7 +76,7 @@ describe('projectionFromQuery', () => {
         }
       };
       const queryString = JSON.stringify(query);
-      const result = projectionFromQuery(queryString);
+      const result: any = projectionFromQuery(queryString);
 
       expect(result.id).toBe(0);
       expect(result.user.firstName).toBe(1);
@@ -84,7 +90,7 @@ describe('projectionFromQuery', () => {
       const query = ['firstName', 'lastName'];
       const queryString = JSON.stringify(query);
 
-      const result = projectionFromQuery(queryString);
+      const result: any = projectionFromQuery(queryString);
 
       expect(result.firstName).toBe(1);
       expect(result.lastName).toBe(1);
@@ -94,7 +100,7 @@ describe('projectionFromQuery', () => {
       const query = ['-firstName', '-lastName'];
       const queryString = JSON.stringify(query);
 
-      const result = projectionFromQuery(queryString);
+      const result: any = projectionFromQuery(queryString);
 
       expect(result.firstName).toBe(0);
       expect(result.lastName).toBe(0);
@@ -104,7 +110,7 @@ describe('projectionFromQuery', () => {
       const query = ['-firstName', 'lastName'];
       const queryString = JSON.stringify(query);
 
-      const result = projectionFromQuery(queryString);
+      const result: any = projectionFromQuery(queryString);
 
       expect(result.firstName).toBe(0);
       expect(result.lastName).toBe(1);
@@ -117,7 +123,7 @@ describe('projectionFromQuery', () => {
       const query = ['id', 'user.firstName', 'user.lastName'];
       const queryString = JSON.stringify(query);
 
-      const result = projectionFromQuery(queryString);
+      const result: any = projectionFromQuery(queryString);
 
       expect(result.id).toBe(1);
       expect(result.user.firstName).toBe(1);
@@ -128,7 +134,7 @@ describe('projectionFromQuery', () => {
       const query = ['id', 'user.name.firstName', 'user.name.lastName'];
       const queryString = JSON.stringify(query);
 
-      const result = projectionFromQuery(queryString);
+      const result: any = projectionFromQuery(queryString);
 
       expect(result.id).toBe(1);
       expect(result.user.name.firstName).toBe(1);
@@ -139,7 +145,7 @@ describe('projectionFromQuery', () => {
       const query = ['id', '-age', 'user.firstName', '-user.lastName'];
       const queryString = JSON.stringify(query);
 
-      const result = projectionFromQuery(queryString);
+      const result: any = projectionFromQuery(queryString);
 
       expect(result.id).toBe(1);
       expect(result.age).toBe(0);
