@@ -29,7 +29,11 @@ export class InvalidQueryError extends Error {
  *    - explicitly include multiple fields: `['id', 'name']`
  *    - explicitly include from a sub document: `['subDocument.firstName']` or `['subDocument.name.firstName']`
  */
-export function projectionFromQuery(query: string) {
+export function projectionFromQuery(query: string): IProjection {
+
+  if (!query) {
+    return null;
+  }
 
   let json;
   try {
