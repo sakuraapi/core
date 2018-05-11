@@ -1058,6 +1058,53 @@ describe('Model.toJson', () => {
       });
     });
 
+    describe('hierarchical toJson calls', () => {
+
+      let parentCalled = false;
+      let childCalled = false;
+      let grandChildCalled = false;
+
+      @Model()
+      class GrandChildModel extends SapiModelMixin() {
+        @Json({
+          toJson: () => grandChildCalled = true
+        })
+        grandChildField = 'grandChildField';
+      }
+
+      @Model()
+      class ChildModel extends SapiModelMixin() {
+        @Json({
+          toJson: () => childCalled = true
+        })
+        childField = 'childFiled';
+
+        @Json({model: GrandChildModel})
+        grandChild = new GrandChildModel();
+      }
+
+      @Model()
+      class ParentModel extends SapiModelMixin() {
+
+        @Json({
+          toJson: () => parentCalled = true
+        })
+        parentField = 'parentField';
+
+        @Json({model: ChildModel})
+        childField = new ChildModel();
+      }
+
+      it('called on parent and all child models', () => {
+        ParentModel.fromJson({}).toJson();
+
+        expect(parentCalled).toBeTruthy();
+        expect(childCalled).toBeTruthy();
+        expect(grandChildCalled).toBeTruthy();
+
+      });
+
+    });
   });
 
   describe('IJsonOptions', () => {
