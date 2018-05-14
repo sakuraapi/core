@@ -4,7 +4,7 @@ import { Private } from './private';
 import { SapiModelMixin } from './sapi-model-mixin';
 import { ToJson } from './to-json';
 
-describe('@FormatToJson', () => {
+describe('@ToJson', () => {
 
   it('passes through json', () => {
 
@@ -156,5 +156,24 @@ describe('@FormatToJson', () => {
     expect(result1.p1).toBe('1');
     expect(result1.p2).toBe('2');
 
+  });
+
+  it('binds this context to the model', () => {
+    let thisVal;
+
+    @Model({})
+    class SomeModel extends SapiModelMixin() {
+
+      @Json()
+      someProperty = 'default';
+
+      @ToJson()
+      test() {
+        thisVal = this;
+      }
+    }
+
+    SomeModel.fromJson({}).toJson();
+    expect(thisVal instanceof SomeModel).toBeTruthy();
   });
 });
