@@ -1,14 +1,8 @@
 import { ObjectID } from 'mongodb';
 import { shouldRecurse } from '../../lib';
-import {
-  dbSymbols,
-  IDbOptions
-} from '../db';
+import { dbSymbols, IDbOptions } from '../db';
 import { formatFromJsonSymbols, FromJsonHandler } from '../from-json';
-import {
-  IJsonOptions,
-  jsonSymbols
-} from '../json';
+import { IJsonOptions, jsonSymbols } from '../json';
 import { debug } from './index';
 
 /**
@@ -117,7 +111,7 @@ export function fromJson<T = any>(json: T, context = 'default'): any {
         }
       }
 
-      // @json({formatFromJson})
+      // @json({fromJson})
       if (meta.formatFromJson) {
         value = meta.formatFromJson(value, key);
       }
