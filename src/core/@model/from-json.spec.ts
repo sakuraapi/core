@@ -3,7 +3,7 @@ import { Json } from './json';
 import { Model } from './model';
 import { SapiModelMixin } from './sapi-model-mixin';
 
-describe('@FormatFromJson', () => {
+describe('@FromJson', () => {
 
   it('passes through model', () => {
 
@@ -147,5 +147,45 @@ describe('@FormatFromJson', () => {
 
     expect(result1.prop1).toBe('1');
     expect(result1.prop2).toBe('2');
+  });
+
+  it('is called on the document and sub documents', () => {
+    pending('see issue #194');
+
+    let parentToJsonCalled = false;
+    let childToJsonCalled = false;
+
+    @Model()
+    class TestChild extends SapiModelMixin() {
+      @Json()
+      child = 'child';
+
+      @FromJson()
+      childToJson() {
+        childToJsonCalled = true;
+      }
+    }
+
+    @Model()
+    class TestParent extends SapiModelMixin() {
+
+      @Json()
+      parent = 'parent';
+
+      @Json({model: TestChild})
+      child = new TestChild();
+
+      @FromJson()
+      parentToJson() {
+        parentToJsonCalled = true;
+      }
+
+    }
+
+    TestParent.fromJson({});
+
+    expect(parentToJsonCalled).toBeTruthy('parent @ToJson not called');
+    expect(childToJsonCalled).toBeTruthy('child @ToJson not called');
+
   });
 });

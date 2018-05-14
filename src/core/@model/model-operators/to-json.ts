@@ -40,26 +40,12 @@ export function toJson(context: string | IContext = 'default'): { [key: string]:
   const modelName = (this.constructor || {} as any).name;
   debug.normal(`.toJson called, target '${modelName}'`);
 
-  let jsonObj = mapModelToJson(ctx, this, ctx.projection);
-
-  // @ToJson
-  const formatToJson = Reflect.getMetadata(formatToJsonSymbols.functionMap, this);
-  if (formatToJson) {
-    const formatters: ToJsonHandler[] = [
-      ...formatToJson.get(ctx.context) || [],
-      ...formatToJson.get('*') || []
-    ];
-    for (const formatter of formatters) {
-      jsonObj = formatter(jsonObj, this, ctx);
-    }
-  }
-
-  return jsonObj;
+  return mapModelToJson(ctx, this, ctx.projection);
 }
 
 function mapModelToJson(ctx: IContext, source, projection: IProjection) {
 
-  const jsonObj = {};
+  let jsonObj = {};
 
   if (!source) {
     return source;
@@ -138,14 +124,26 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
 
     // check for @json({toJson})
     if (options.toJson) {
-      value = options.toJson(value, key, ctx);
+      value = options.toJson.call(source, value, key, ctx);
     }
     if (optionsStar.toJson) {
-      value = optionsStar.toJson(value, key, ctx);
+      value = optionsStar.toJson.call(source, value, key, ctx);
     }
 
     jsonObj[newKey] = value;
 
+  }
+
+  // @ToJson
+  const formatToJson = Reflect.getMetadata(formatToJsonSymbols.functionMap, source);
+  if (formatToJson) {
+    const formatters: ToJsonHandler[] = [
+      ...formatToJson.get(ctx.context) || [],
+      ...formatToJson.get('*') || []
+    ];
+    for (const formatter of formatters) {
+      jsonObj = formatter.call(source, jsonObj, source, ctx);
+    }
   }
 
   return jsonObj;
