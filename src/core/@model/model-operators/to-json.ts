@@ -50,7 +50,7 @@ export function toJson(context: string | IContext = 'default'): { [key: string]:
       ...formatToJson.get('*') || []
     ];
     for (const formatter of formatters) {
-      jsonObj = formatter(jsonObj, this, ctx);
+      jsonObj = formatter.call(this, jsonObj, this, ctx);
     }
   }
 
