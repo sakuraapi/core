@@ -138,10 +138,10 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
 
     // check for @json({toJson})
     if (options.toJson) {
-      value = options.toJson(value, key, ctx);
+      value = options.toJson.call(source, value, key, ctx);
     }
     if (optionsStar.toJson) {
-      value = optionsStar.toJson(value, key, ctx);
+      value = optionsStar.toJson.call(source, value, key, ctx);
     }
 
     jsonObj[newKey] = value;
