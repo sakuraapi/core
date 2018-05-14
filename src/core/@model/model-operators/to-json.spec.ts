@@ -600,6 +600,27 @@ describe('Model.toJson', () => {
   });
 
   describe('toJson', () => {
+
+    it('this is bound to the context of the model', () => {
+
+      let thisVal;
+
+      @Model({})
+      class SomeModel extends SapiModelMixin() {
+
+        @Json({
+          toJson: function() {
+            thisVal = this;
+          }
+        })
+        someProperty = 'default';
+      }
+
+      SomeModel.fromJson({}).toJson();
+      expect(thisVal instanceof SomeModel).toBeTruthy();
+
+    });
+
     it('flat objects', () => {
 
       let valSet;
