@@ -176,4 +176,43 @@ describe('@ToJson', () => {
     SomeModel.fromJson({}).toJson();
     expect(thisVal instanceof SomeModel).toBeTruthy();
   });
+
+  it('is called on the document and sub documents', () => {
+
+    let parentToJsonCalled = false;
+    let childToJsonCalled = false;
+
+    @Model()
+    class TestChild extends SapiModelMixin() {
+      @Json()
+      child = 'child';
+
+      @ToJson()
+      childToJson() {
+        childToJsonCalled = true;
+      }
+    }
+
+    @Model()
+    class TestParent extends SapiModelMixin() {
+
+      @Json()
+      parent = 'parent';
+
+      @Json({model: TestChild})
+      child = new TestChild();
+
+      @ToJson()
+      parentToJson() {
+        parentToJsonCalled = true;
+      }
+
+    }
+
+    (new TestParent()).toJson();
+
+    expect(parentToJsonCalled).toBeTruthy('parent @ToJson not called');
+    expect(childToJsonCalled).toBeTruthy('child @ToJson not called');
+
+  });
 });
