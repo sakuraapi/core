@@ -1,47 +1,19 @@
 // tslint:disable:no-duplicate-imports
 import * as debugInit from 'debug';
 import * as express from 'express';
-import {
-  ErrorRequestHandler,
-  Express,
-  Handler,
-  NextFunction,
-  Request,
-  Response,
-  Router
-} from 'express';
+import { ErrorRequestHandler, Express, Handler, NextFunction, Request, Response, Router } from 'express';
 import * as http from 'http';
 import { SakuraApiConfig } from '../boot';
+import { injectableSymbols, ProviderNotRegistered, ProvidersMustBeDecoratedWithInjectableError } from './';
+import { ModelNotRegistered, ModelsMustBeDecoratedWithModelError, modelSymbols } from './@model';
 import {
-  injectableSymbols,
-  ProviderNotRegistered,
-  ProvidersMustBeDecoratedWithInjectableError
-} from './';
-import {
-  ModelNotRegistered,
-  ModelsMustBeDecoratedWithModelError,
-  modelSymbols
-} from './@model';
-import {
-  IRoutableLocals,
-  ISakuraApiClassRoute,
-  RoutableNotRegistered,
-  RoutablesMustBeDecoratedWithRoutableError,
+  IRoutableLocals, ISakuraApiClassRoute, RoutableNotRegistered, RoutablesMustBeDecoratedWithRoutableError,
   routableSymbols
 } from './@routable';
+import { BAD_REQUEST, OK } from './lib';
 import {
-  BAD_REQUEST,
-  OK
-} from './lib';
-import {
-  Anonymous,
-  AuthenticatorNotRegistered,
-  AuthenticatorPluginResult,
-  authenticatorPluginSymbols,
-  AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError,
-  IAuthenticator,
-  IAuthenticatorConstructor,
-  SakuraApiPlugin,
+  Anonymous, AuthenticatorNotRegistered, AuthenticatorPluginResult, authenticatorPluginSymbols,
+  AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError, IAuthenticator, IAuthenticatorConstructor, SakuraApiPlugin,
   SakuraApiPluginResult
 } from './plugins';
 import { SakuraMongoDbConnection } from './sakura-mongo-db-connection';
@@ -143,6 +115,13 @@ export interface SakuraApiOptions {
    * case, passing [[Anonymous]] into [[Routable]] or [[Route]] has no effect.
    */
   suppressAnonymousAuthenticatorInjection?: boolean;
+
+  /**
+   * Disabled by default. If enabled, attempting to register a model, routable or provider for DI that's already been
+   * registered with any instance of SakuraApi will throw the DependencyAlreadyInjectedError. This option is provided
+   * for diagnostic purposes.
+   */
+  throwDependencyAlreadyInjectedError?: boolean;
 }
 
 /**
@@ -260,6 +239,7 @@ export class SakuraApi {
   private providers = new Map<string, IProviderContainer>();
   private routables = new Map<string, any>();
   private routeQueue = new Map<string, ISakuraApiClassRoute>();
+  private throwDependencyAlreadyInjectedError = false;
 
   /**
    * Returns the address of the server as a string.
@@ -339,6 +319,8 @@ export class SakuraApi {
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
 
+    this.throwDependencyAlreadyInjectedError = options.throwDependencyAlreadyInjectedError || false;
+
     this.registerProviders(options);
     this.registerPlugins(options);
     this.registerModels(options);
@@ -391,6 +373,10 @@ export class SakuraApi {
    */
   close(): Promise<null> {
     debug.normal('.close called');
+
+    this.deregisterDependencies();
+
+    // await this.dbConnections.closeAll();
 
     return new Promise((resolve, reject) => {
       this
@@ -922,7 +908,7 @@ export class SakuraApi {
         debug.models(`registering model ${modelName}`);
       }
 
-      if (modelRef[modelSymbols.sapi]) {
+      if (this.throwDependencyAlreadyInjectedError && modelRef[modelSymbols.sapi]) {
         throw new DependencyAlreadyInjectedError('Model', modelName);
       }
       modelRef[modelSymbols.sapi] = this;
@@ -995,7 +981,7 @@ export class SakuraApi {
         debug.providers(`registering provider ${injectableName}`);
       }
 
-      if (injectableRef[injectableSymbols.sapi]) {
+      if (this.throwDependencyAlreadyInjectedError && injectableRef[injectableSymbols.sapi]) {
         throw new DependencyAlreadyInjectedError('Injectable', injectableName);
       }
 
@@ -1045,7 +1031,7 @@ export class SakuraApi {
         debug.providers(`registering routable ${routableName}`);
       }
 
-      if (routableRef[routableSymbols.sapi]) {
+      if (this.throwDependencyAlreadyInjectedError && routableRef[routableSymbols.sapi]) {
         throw new DependencyAlreadyInjectedError('Routable', routableName);
       }
       routableRef[routableSymbols.sapi] = this;

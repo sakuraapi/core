@@ -1,31 +1,12 @@
-import {
-  NextFunction,
-  Request,
-  Response
-} from 'express';
+import { NextFunction, Request, Response } from 'express';
 import * as request from 'supertest';
-import {
-  testSapi,
-  testUrl
-} from '../../../spec/helpers/sakuraapi';
-import {
-  Json,
-  Model,
-  SapiModelMixin
-} from '../@model';
-import {
-  IRoutableLocals,
-  Routable,
-  Route,
-  SapiRoutableMixin
-} from '../@routable';
+import { testSapi, testUrl } from '../../../spec/helpers/sakuraapi';
+import { Json, Model, SapiModelMixin } from '../@model';
+import { IRoutableLocals, Routable, Route, SapiRoutableMixin } from '../@routable';
 import { OK } from '../lib';
 import { SakuraApi } from '../sakura-api';
 import {
-  Injectable,
-  injectableSymbols,
-  NonInjectableConstructorParameterError,
-  ProviderNotRegistered,
+  Injectable, injectableSymbols, NonInjectableConstructorParameterError, ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
 } from './injectable';
 
@@ -50,7 +31,7 @@ describe('@Injectable', () => {
     });
 
     afterEach(() => {
-      sapi.deregisterDependencies();
+      sapi.close();
     });
 
     it('decorates @Injectable class', () => {
@@ -329,8 +310,8 @@ describe('@Injectable', () => {
     }
 
     let sapi: SakuraApi;
-    afterEach(() => {
-      sapi.deregisterDependencies();
+    afterEach(async () => {
+      await sapi.close();
     });
 
     it('supports injection', () => {
@@ -388,35 +369,23 @@ describe('@Injectable', () => {
     }
 
     let sapi: SakuraApi;
-    afterEach(async (done) => {
-      try {
-        await sapi.close();
-        sapi.deregisterDependencies();
-        done();
-      } catch (err) {
-        done.fail(err);
-      }
+    afterEach(async () => {
+      await sapi.close();
     });
 
-    it('supports injection', async (done) => {
-      try {
-        sapi = testSapi({
-          providers: [TestService],
-          routables: [AnApi]
-        });
+    it('supports injection', async () => {
+      sapi = testSapi({
+        providers: [TestService],
+        routables: [AnApi]
+      });
 
-        await sapi.listen({bootMessage: ''});
+      await sapi.listen({bootMessage: ''});
 
-        const result = await request(sapi.app)
-          .get(testUrl('/injectRoutableTest'))
-          .expect(OK);
+      const result = await request(sapi.app)
+        .get(testUrl('/injectRoutableTest'))
+        .expect(OK);
 
-        expect(result.body.result).toBe('found');
-
-        done();
-      } catch (err) {
-        done.fail(err);
-      }
+      expect(result.body.result).toBe('found');
     });
 
     it('supports mocking', async (done) => {
