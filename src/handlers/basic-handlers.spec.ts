@@ -1,25 +1,10 @@
 import * as request from 'supertest';
-import {
-  testSapi,
-  testUrl
-} from '../../spec/helpers/sakuraapi';
+import { testSapi, testUrl } from '../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../core';
+import { Db, Json, Model, SapiModelMixin } from '../core/@model';
+import { Routable, SapiRoutableMixin } from '../core/@routable';
 import {
-  Db,
-  Json,
-  Model,
-  SapiModelMixin
-} from '../core/@model';
-import {
-  Routable,
-  SapiRoutableMixin
-} from '../core/@routable';
-import {
-  deleteRouteHandler,
-  getAllRouteHandler,
-  getRouteHandler,
-  postRouteHandler,
-  putRouteHandler
+  deleteRouteHandler, getAllRouteHandler, getRouteHandler, postRouteHandler, putRouteHandler
 } from './basic-handlers';
 
 describe('basic-handlers', () => {
@@ -63,15 +48,9 @@ describe('basic-handlers', () => {
       }
     });
 
-    afterEach(async (done) => {
-      try {
-        await TestModel.removeAll({});
-        await sapi.close();
-        sapi.deregisterDependencies();
-        done();
-      } catch (err) {
-        done.fail(err);
-      }
+    afterEach(async () => {
+      await TestModel.removeAll({});
+      await sapi.close();
     });
 
     it('gets an empty array of when no models exist exist', async (done) => {

@@ -1,8 +1,5 @@
 import { ObjectID } from 'mongodb';
-import {
-  Db,
-  Json
-} from '../';
+import { Db, Json } from '../';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
 import { Model } from '../model';
@@ -89,7 +86,7 @@ describe('@Model.fromDb', () => {
     }
 
     let sapi: SakuraApi;
-    beforeEach((done) => {
+    beforeEach(async () => {
       sapi = testSapi({
         models: [
           User
@@ -97,53 +94,38 @@ describe('@Model.fromDb', () => {
         routables: []
       });
 
-      sapi
-        .dbConnections
-        .connectAll()
-        .then(() => User.removeAll({}))
-        .then(() => {
-          this.user = new User();
-          return this.user.create();
-        })
-        .then(() => sapi.listen({bootMessage: ''}))
-        .then(() => {
-          sapi
-            .close()
-            .then(done)
-            .catch(done.fail);
-        })
-        .catch(done.fail);
+      await sapi.dbConnections.connectAll();
+
+      await User.removeAll({});
+
+      this.user = new User();
+      await this.user.create();
     });
 
-    afterEach(async (done) => {
+    afterEach(async () => {
       try {
         await sapi.close();
-        sapi.deregisterDependencies();
-        done();
       } catch (err) {
-        done.fail(err);
+        fail(err);
       }
     });
 
-    it('via projection', (done) => {
+    it('via projection', async () => {
       const projection = {
         ln: 0
       };
 
-      User
-        .get({filter: {}, project: projection})
-        .then((results) => {
-          expect(results.length).toBe(1);
-          expect(results[0].firstName).toBeDefined();
-          expect(results[0].lastName).toBeUndefined('lastName should not have been included because projection ' +
-            'excluded that field from the db results and the request was in strict mode');
-          expect(results[0]._id).toBeDefined('There should have been an _id property');
-          expect(results[0]._id.toString()).toBe(results[0].id.toString(), 'id property should be included if _id ' +
-            'has a value');
-          expect(results[0].contact.phone).toBe('123-123-1234');
-        })
-        .then(done)
-        .catch(done.fail);
+      const results = await User.get({filter: {}, project: projection});
+
+      expect(results.length).toBe(1);
+      expect(results[0].firstName).toBeDefined();
+      expect(results[0].lastName).toBeUndefined('lastName should not have been included because projection ' +
+        'excluded that field from the db results and the request was in strict mode');
+      expect(results[0]._id).toBeDefined('There should have been an _id property');
+      expect(results[0]._id.toString()).toBe(results[0].id.toString(), 'id property should be included if _id ' +
+        'has a value');
+      expect(results[0].contact.phone).toBe('123-123-1234');
+
     });
 
     it('doesn\'t include id property if there\'s no _id', (done) => {

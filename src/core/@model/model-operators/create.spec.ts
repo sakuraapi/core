@@ -1,14 +1,7 @@
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
-import {
-  BeforeCreate,
-  OnBeforeCreate
-} from '../before-create';
-import {
-  Db,
-  Json,
-  Model
-} from '../index';
+import { BeforeCreate, OnBeforeCreate } from '../before-create';
+import { Db, Json, Model } from '../index';
 import { SapiModelMixin } from '../sapi-model-mixin';
 
 describe('Model.create', () => {
@@ -101,24 +94,17 @@ describe('Model.create', () => {
     }
   });
 
-  afterEach(async (done) => {
-    try {
-      await TestCreate.removeAll({});
-      await sapi.close();
+  afterEach(async () => {
+    await TestCreate.removeAll({});
+    await sapi.close();
 
-      sapi.deregisterDependencies();
-      sapi = null;
-      beforeCreate1Hook = null;
-      beforeCreate2Hook = null;
-      beforeCreate3Hook = null;
+    sapi = null;
+    beforeCreate1Hook = null;
+    beforeCreate2Hook = null;
+    beforeCreate3Hook = null;
 
-      beforeCreate1This = null;
-      beforeCreate2This = null;
-
-      done();
-    } catch (err) {
-      done.fail(err);
-    }
+    beforeCreate1This = null;
+    beforeCreate2This = null;
   });
 
   it('inserts model into db', async (done) => {
@@ -176,7 +162,7 @@ describe('Model.create', () => {
     }
   });
 
-  it('persists deeply nested objects', async (done) => {
+  it('persists deeply nested objects', async () => {
 
     class Contact {
       @Db()
@@ -199,34 +185,28 @@ describe('Model.create', () => {
       contact = new Contact();
     }
 
-    try {
-      const sapi2 = testSapi({
-        models: [UserCreateTest],
-        routables: []
-      });
+    const sapi2 = testSapi({
+      models: [UserCreateTest],
+      routables: []
+    });
 
-      await sapi2.listen({bootMessage: ''});
-      const user = new UserCreateTest();
+    await sapi2.listen({bootMessage: ''});
+    const user = new UserCreateTest();
 
-      await user.create();
-      const result = await user
-        .getCollection()
-        .find<any>({_id: user.id})
-        .limit(1)
-        .next();
+    await user.create();
+    const result = await user
+      .getCollection()
+      .find<any>({_id: user.id})
+      .limit(1)
+      .next();
 
-      expect(result._id.toString()).toBe(user.id.toString());
-      expect(result.firstName).toBe(user.firstName || 'firstName should have been defined');
-      expect(result.lastName).toBe(user.lastName || 'lastName should have been defined');
-      expect(result.contact).toBeDefined();
-      expect(result.contact.phone).toBe('000-000-0000');
+    expect(result._id.toString()).toBe(user.id.toString());
+    expect(result.firstName).toBe(user.firstName || 'firstName should have been defined');
+    expect(result.lastName).toBe(user.lastName || 'lastName should have been defined');
+    expect(result.contact).toBeDefined();
+    expect(result.contact.phone).toBe('000-000-0000');
 
-      await sapi2.close();
-      sapi2.deregisterDependencies();
-      done();
-    } catch (err) {
-      done.fail(err);
-    }
+    await sapi2.close();
   });
 
   describe('@BeforeCreate', () => {

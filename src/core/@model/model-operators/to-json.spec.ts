@@ -218,7 +218,7 @@ describe('Model.toJson', () => {
     }
 
     let sapi: SakuraApi;
-    beforeEach((done) => {
+    beforeEach(async () => {
       sapi = testSapi({
         models: [
           User
@@ -226,23 +226,13 @@ describe('Model.toJson', () => {
         routables: []
       });
 
-      sapi
-        .dbConnections
-        .connectAll()
-        .then(() => User.removeAll({}))
-        .then(() => new User().create())
-        .then(done)
-        .catch(done.fail);
+      await sapi.dbConnections.connectAll();
+      await User.removeAll({});
+      await new User().create();
     });
 
-    afterEach(async (done) => {
-      try {
-        await sapi.close();
-        sapi.deregisterDependencies();
-        done();
-      } catch (err) {
-        done.fail(err);
-      }
+    afterEach(async () => {
+      await sapi.close();
     });
 
     it('returns only projected fields', (done) => {
@@ -609,7 +599,7 @@ describe('Model.toJson', () => {
       class SomeModel extends SapiModelMixin() {
 
         @Json({
-          toJson: function() {
+          toJson: function() { // tslint:disable-line
             thisVal = this;
           }
         })
