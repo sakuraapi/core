@@ -1,4 +1,5 @@
 // tslint:disable:no-duplicate-imports
+import * as colors from 'colors';
 import * as debugInit from 'debug';
 import * as express from 'express';
 import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response, Router} from 'express';
@@ -26,7 +27,6 @@ import {
   SakuraApiPluginResult
 } from './plugins';
 import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
-import * as colors from 'colors';
 // tslint:enable:no-duplicate-imports
 
 const debug = {
