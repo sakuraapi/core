@@ -1,27 +1,12 @@
 // tslint:disable:no-duplicate-imports
+import * as colors from 'colors';
 import * as debugInit from 'debug';
 import * as express from 'express';
-import {
-  ErrorRequestHandler,
-  Express,
-  Handler,
-  NextFunction,
-  Request,
-  Response,
-  Router
-} from 'express';
+import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response, Router} from 'express';
 import * as http from 'http';
-import { SakuraApiConfig } from '../boot';
-import {
-  injectableSymbols,
-  ProviderNotRegistered,
-  ProvidersMustBeDecoratedWithInjectableError
-} from './';
-import {
-  ModelNotRegistered,
-  ModelsMustBeDecoratedWithModelError,
-  modelSymbols
-} from './@model';
+import {SakuraApiConfig} from '../boot';
+import {injectableSymbols, ProviderNotRegistered, ProvidersMustBeDecoratedWithInjectableError} from './';
+import {ModelNotRegistered, ModelsMustBeDecoratedWithModelError, modelSymbols} from './@model';
 import {
   IRoutableLocals,
   ISakuraApiClassRoute,
@@ -29,10 +14,7 @@ import {
   RoutablesMustBeDecoratedWithRoutableError,
   routableSymbols
 } from './@routable';
-import {
-  BAD_REQUEST,
-  OK
-} from './lib';
+import {BAD_REQUEST, OK} from './lib';
 import {
   Anonymous,
   AuthenticatorNotRegistered,
@@ -44,7 +26,7 @@ import {
   SakuraApiPlugin,
   SakuraApiPluginResult
 } from './plugins';
-import { SakuraMongoDbConnection } from './sakura-mongo-db-connection';
+import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
 // tslint:enable:no-duplicate-imports
 
 const debug = {
@@ -143,6 +125,13 @@ export interface SakuraApiOptions {
    * case, passing [[Anonymous]] into [[Routable]] or [[Route]] has no effect.
    */
   suppressAnonymousAuthenticatorInjection?: boolean;
+
+  /**
+   * Disabled by default. If enabled, attempting to register a model, routable or provider for DI that's already been
+   * registered with any instance of SakuraApi will throw the DependencyAlreadyInjectedError. This option is provided
+   * for diagnostic purposes.
+   */
+  throwDependencyAlreadyInjectedError?: boolean;
 }
 
 /**
@@ -260,6 +249,7 @@ export class SakuraApi {
   private providers = new Map<string, IProviderContainer>();
   private routables = new Map<string, any>();
   private routeQueue = new Map<string, ISakuraApiClassRoute>();
+  private throwDependencyAlreadyInjectedError = false;
 
   /**
    * Returns the address of the server as a string.
@@ -339,6 +329,8 @@ export class SakuraApi {
     this._address = (this.config.server || {}).address || this._address;
     this._port = (this.config.server || {}).port || this._port;
 
+    this.throwDependencyAlreadyInjectedError = options.throwDependencyAlreadyInjectedError || false;
+
     this.registerProviders(options);
     this.registerPlugins(options);
     this.registerModels(options);
@@ -386,23 +378,34 @@ export class SakuraApi {
   }
 
   /**
-   * Gracefully shuts down the server. It will not reject if the server is not running. It will, however, reject
+   * Gracefully shuts down the server. This includes calling [[SakuraApi.deregisterDependencies]]
+   * and [[SakuraApi.dbConnections.closeAll]].
+   *
+   * It will not reject if the server is not running. It will, however, reject
    * with any error other than `Not running` that's returned from the `http.Server` instance.
    */
-  close(): Promise<null> {
+  async close(): Promise<void> {
     debug.normal('.close called');
 
-    return new Promise((resolve, reject) => {
-      this
-        .server
-        .close((err) => {
-          if (err && err.message !== 'Not running') {
-            debug.normal('.close error', err);
-            return reject(err);
-          }
-          debug.normal('.close done');
-          resolve();
-        });
+    try {
+      this.deregisterDependencies();
+      await this.dbConnections.closeAll();
+    } catch (err) {
+      debug.normal(`.close error`, err);
+      return Promise.reject(err);
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      this.server.close((err) => {
+        if (err && err.message !== 'Not running') {
+          debug.normal(`.close error`, err);
+          reject(err);
+          return;
+        }
+
+        debug.normal('.close done');
+        resolve();
+      });
     });
   }
 
@@ -784,14 +787,14 @@ export class SakuraApi {
 
             if (listenProperties.bootMessage === undefined) {
               // tslint:disable-next-line:no-console
-              console.log(`SakuraAPI started on: ${this.address}:${this.port}`.green);
+              console.log(colors.green(`SakuraAPI started on: ${this.address}:${this.port}`));
             } else {
               const msg = (listenProperties.bootMessage === '')
                 ? false
                 : listenProperties.bootMessage;
 
               if (msg) {
-                process.stdout.write(`${msg}`.green);
+                process.stdout.write(colors.green(`${msg}`));
               }
             }
 
@@ -922,7 +925,7 @@ export class SakuraApi {
         debug.models(`registering model ${modelName}`);
       }
 
-      if (modelRef[modelSymbols.sapi]) {
+      if (this.throwDependencyAlreadyInjectedError && modelRef[modelSymbols.sapi]) {
         throw new DependencyAlreadyInjectedError('Model', modelName);
       }
       modelRef[modelSymbols.sapi] = this;
@@ -995,7 +998,7 @@ export class SakuraApi {
         debug.providers(`registering provider ${injectableName}`);
       }
 
-      if (injectableRef[injectableSymbols.sapi]) {
+      if (this.throwDependencyAlreadyInjectedError && injectableRef[injectableSymbols.sapi]) {
         throw new DependencyAlreadyInjectedError('Injectable', injectableName);
       }
 
@@ -1045,7 +1048,7 @@ export class SakuraApi {
         debug.providers(`registering routable ${routableName}`);
       }
 
-      if (routableRef[routableSymbols.sapi]) {
+      if (this.throwDependencyAlreadyInjectedError && routableRef[routableSymbols.sapi]) {
         throw new DependencyAlreadyInjectedError('Routable', routableName);
       }
       routableRef[routableSymbols.sapi] = this;

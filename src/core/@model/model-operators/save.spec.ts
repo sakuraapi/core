@@ -1,19 +1,9 @@
-import {
-  ObjectID,
-  UpdateWriteOpResult
-} from 'mongodb';
+import { ObjectID, UpdateWriteOpResult } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
-import {
-  BeforeSave,
-  OnBeforeSave
-} from '../before-save';
+import { BeforeSave, OnBeforeSave } from '../before-save';
 import { SapiMissingIdErr } from '../errors';
-import {
-  Db,
-  Json,
-  Model
-} from '../index';
+import { Db, Json, Model } from '../index';
 import { SapiModelMixin } from '../sapi-model-mixin';
 
 describe('Model.save', () => {
@@ -105,24 +95,18 @@ describe('Model.save', () => {
     }
   });
 
-  afterEach(async (done) => {
-    try {
-      await TestSave.removeAll({});
-      await sapi.close();
+  afterEach(async () => {
 
-      sapi.deregisterDependencies();
-      sapi = null;
-      beforeSave1Hook = null;
-      beforeSave2Hook = null;
-      beforeSave3Hook = null;
+    await TestSave.removeAll({});
+    await sapi.close();
 
-      beforeSave1This = null;
-      beforeSave2This = null;
+    sapi = null;
+    beforeSave1Hook = null;
+    beforeSave2Hook = null;
+    beforeSave3Hook = null;
 
-      done();
-    } catch (err) {
-      done.fail(err);
-    }
+    beforeSave1This = null;
+    beforeSave2This = null;
   });
 
   it('rejects if missing id (_id)', async (done) => {
@@ -180,7 +164,7 @@ describe('Model.save', () => {
       }
     });
 
-    it('saves sub documents, issue #98', async (done) => {
+    it('saves sub documents, issue #98', async () => {
 
       const sapi2 = testSapi({
         models: [
@@ -190,47 +174,39 @@ describe('Model.save', () => {
         ]
       });
 
-      try {
+      await sapi2.listen({bootMessage: ''});
+      await TestParent.removeAll({});
 
-        await sapi2.listen({bootMessage: ''});
-        await TestParent.removeAll({});
+      const createResult = await TestParent.fromJson({}).create();
+      let testParent = await TestParent.getById(createResult.insertedId);
 
-        const createResult = await TestParent.fromJson({}).create();
-        let testParent = await TestParent.getById(createResult.insertedId);
+      expect(testParent).toBeDefined();
+      expect(testParent.pVal).toBe('parent');
+      expect(testParent.child).toBeDefined();
+      expect(testParent.child.cVal).toBe('child');
+      expect(testParent.child.childChild).toBeDefined();
+      expect(testParent.child.childChild.cVal).toBe('childChild');
 
-        expect(testParent).toBeDefined();
-        expect(testParent.pVal).toBe('parent');
-        expect(testParent.child).toBeDefined();
-        expect(testParent.child.cVal).toBe('child');
-        expect(testParent.child.childChild).toBeDefined();
-        expect(testParent.child.childChild.cVal).toBe('childChild');
+      testParent.pVal = 'parentUpdate';
+      testParent.child.cVal = 'childUpdate';
+      testParent.child.childChild.cVal = 'childChildUpdate';
 
-        testParent.pVal = 'parentUpdate';
-        testParent.child.cVal = 'childUpdate';
-        testParent.child.childChild.cVal = 'childChildUpdate';
+      await testParent.save();
+      testParent = await TestParent.getById(createResult.insertedId);
 
-        await testParent.save();
-        testParent = await TestParent.getById(createResult.insertedId);
+      expect(testParent).toBeDefined();
+      expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+      expect(testParent.pVal).toBe('parentUpdate');
+      expect(testParent.child).toBeDefined();
+      expect(testParent.child.cVal).toBe('childUpdate');
+      expect(testParent.child.childChild).toBeDefined();
+      expect(testParent.child.childChild.cVal).toBe('childChildUpdate');
 
-        expect(testParent).toBeDefined();
-        expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
-        expect(testParent.pVal).toBe('parentUpdate');
-        expect(testParent.child).toBeDefined();
-        expect(testParent.child.cVal).toBe('childUpdate');
-        expect(testParent.child.childChild).toBeDefined();
-        expect(testParent.child.childChild.cVal).toBe('childChildUpdate');
+      await sapi2.close();
 
-        done();
-      } catch (err) {
-        done.fail(err);
-      } finally {
-        await sapi2.close();
-        sapi2.deregisterDependencies();
-        await sapi2.close();
-      }
     });
 
-    it('does not add id/_id to sub documents, issue #106', async (done) => {
+    it('does not add id/_id to sub documents, issue #106', async () => {
 
       const sapi2 = testSapi({
         models: [
@@ -240,53 +216,46 @@ describe('Model.save', () => {
         ]
       });
 
-      try {
-        await sapi2.listen({bootMessage: ''});
-        await TestParent.removeAll({});
+      await sapi2.listen({bootMessage: ''});
+      await TestParent.removeAll({});
 
-        const createResult = await TestParent.fromJson({}).create();
-        let testParent = await TestParent.getById(createResult.insertedId);
+      const createResult = await TestParent.fromJson({}).create();
+      let testParent = await TestParent.getById(createResult.insertedId);
 
-        expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
-        expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+      expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
+      expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
 
-        expect((testParent.child as any)._id).toBeUndefined();
-        expect((testParent.child as any).id).toBeUndefined();
-        expect((testParent.child.childChild as any)._id).toBeUndefined();
-        expect((testParent.child.childChild as any).id).toBeUndefined();
+      expect((testParent.child as any)._id).toBeUndefined();
+      expect((testParent.child as any).id).toBeUndefined();
+      expect((testParent.child.childChild as any)._id).toBeUndefined();
+      expect((testParent.child.childChild as any).id).toBeUndefined();
 
-        expect((testParent.child2 as any)._id).toBeUndefined();
-        expect((testParent.child2 as any).id).toBeUndefined();
-        expect((testParent.child2.childChild as any)._id).toBeUndefined();
-        expect((testParent.child2.childChild as any).id).toBeUndefined();
+      expect((testParent.child2 as any)._id).toBeUndefined();
+      expect((testParent.child2 as any).id).toBeUndefined();
+      expect((testParent.child2.childChild as any)._id).toBeUndefined();
+      expect((testParent.child2.childChild as any).id).toBeUndefined();
 
-        await testParent.save();
-        testParent = await TestParent.getById(createResult.insertedId);
+      await testParent.save();
+      testParent = await TestParent.getById(createResult.insertedId);
 
-        expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
-        expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+      expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
+      expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
 
-        expect((testParent.child as any)._id).toBeUndefined();
-        expect((testParent.child as any).id).toBeUndefined();
-        expect((testParent.child.childChild as any)._id).toBeUndefined();
-        expect((testParent.child.childChild as any).id).toBeUndefined();
+      expect((testParent.child as any)._id).toBeUndefined();
+      expect((testParent.child as any).id).toBeUndefined();
+      expect((testParent.child.childChild as any)._id).toBeUndefined();
+      expect((testParent.child.childChild as any).id).toBeUndefined();
 
-        expect((testParent.child2 as any)._id).toBeUndefined();
-        expect((testParent.child2 as any).id).toBeUndefined();
-        expect((testParent.child2.childChild as any)._id).toBeUndefined();
-        expect((testParent.child2.childChild as any).id).toBeUndefined();
+      expect((testParent.child2 as any)._id).toBeUndefined();
+      expect((testParent.child2 as any).id).toBeUndefined();
+      expect((testParent.child2.childChild as any)._id).toBeUndefined();
+      expect((testParent.child2.childChild as any).id).toBeUndefined();
 
-        done();
-      } catch (err) {
-        done.fail(err);
-      } finally {
-        await sapi2.close();
-        sapi2.deregisterDependencies();
-        await sapi2.close();
-      }
+      await sapi2.close();
+
     });
 
-    it('does allow explicit id/_id in sub documents, issue #106', async (done) => {
+    it('does allow explicit id/_id in sub documents, issue #106', async () => {
 
       const sapi2 = testSapi({
         models: [
@@ -296,56 +265,48 @@ describe('Model.save', () => {
         ]
       });
 
-      try {
-        await sapi2.listen({bootMessage: ''});
-        await TestParent.removeAll({});
+      await sapi2.listen({bootMessage: ''});
+      await TestParent.removeAll({});
 
-        let testParent = await TestParent.fromJson({});
-        (testParent.child as any).id = 'here';
-        const createResult = await testParent.create();
-        testParent = await TestParent.getById(createResult.insertedId);
+      let testParent = await TestParent.fromJson({});
+      (testParent.child as any).id = 'here';
+      const createResult = await testParent.create();
+      testParent = await TestParent.getById(createResult.insertedId);
 
-        expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
-        expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+      expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
+      expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
 
-        expect((testParent.child as any)._id).toBe('here');
-        expect((testParent.child as any).id).toBe('here');
+      expect((testParent.child as any)._id).toBe('here');
+      expect((testParent.child as any).id).toBe('here');
 
-        // make sure that id & _id aren't both saved, just _id
-        let raw = await TestParent
-          .getDb()
-          .collection('users')
-          .findOne({});
+      // make sure that id & _id aren't both saved, just _id
+      let raw = await TestParent
+        .getDb()
+        .collection('users')
+        .findOne({});
 
-        expect(raw.child.id).toBeUndefined();
-        expect(raw.child._id).toBeDefined();
+      expect(raw.child.id).toBeUndefined();
+      expect(raw.child._id).toBeDefined();
 
-        await testParent.save();
-        testParent = await TestParent.getById(createResult.insertedId);
+      await testParent.save();
+      testParent = await TestParent.getById(createResult.insertedId);
 
-        expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
-        expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
+      expect(testParent._id.toHexString()).toBe(createResult.insertedId.toHexString());
+      expect(testParent.id.toHexString()).toBe(createResult.insertedId.toHexString());
 
-        expect((testParent.child as any)._id).toBe('here');
-        expect((testParent.child as any).id).toBe('here');
+      expect((testParent.child as any)._id).toBe('here');
+      expect((testParent.child as any).id).toBe('here');
 
-        // make sure that id & _id aren't both saved, just _id
-        raw = await TestParent
-          .getDb()
-          .collection('users')
-          .findOne({});
+      // make sure that id & _id aren't both saved, just _id
+      raw = await TestParent
+        .getDb()
+        .collection('users')
+        .findOne({});
 
-        expect(raw.child.id).toBeUndefined();
-        expect(raw.child._id).toBeDefined();
+      expect(raw.child.id).toBeUndefined();
+      expect(raw.child._id).toBeDefined();
 
-        done();
-      } catch (err) {
-        done.fail(err);
-      } finally {
-        await sapi2.close();
-        sapi2.deregisterDependencies();
-        await sapi2.close();
-      }
+      await sapi2.close();
     });
   });
 
@@ -385,14 +346,8 @@ describe('Model.save', () => {
         .catch(done.fail);
     });
 
-    afterEach(async (done) => {
-      try {
-        await sapi2.close();
-        sapi2.deregisterDependencies();
-        done();
-      } catch (err) {
-        done.fail(err);
-      }
+    afterEach(async () => {
+      await sapi2.close();
     });
 
     it('sets the proper database level fields', async (done) => {

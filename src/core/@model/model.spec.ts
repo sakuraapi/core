@@ -1,29 +1,10 @@
-import {
-  InsertOneWriteOpResult,
-  ObjectID,
-  ReplaceOneOptions,
-  UpdateWriteOpResult
-} from 'mongodb';
+import { InsertOneWriteOpResult, ObjectID, ReplaceOneOptions, UpdateWriteOpResult } from 'mongodb';
 import { testSapi } from '../../../spec/helpers/sakuraapi';
-import {
-  Injectable,
-  NonInjectableConstructorParameterError
-} from '../@injectable';
+import { Injectable, NonInjectableConstructorParameterError } from '../@injectable';
 import { SakuraApi } from '../sakura-api';
-import {
-  Db,
-  Json,
-  Model,
-  modelSymbols
-} from './';
-import {
-  SapiDbForModelNotFound,
-  SapiMissingIdErr
-} from './errors';
-import {
-  ModelNotRegistered,
-  ModelsMustBeDecoratedWithModelError
-} from './model';
+import { Db, Json, Model, modelSymbols } from './';
+import { SapiDbForModelNotFound } from './errors';
+import { ModelNotRegistered, ModelsMustBeDecoratedWithModelError } from './model';
 import { SapiModelMixin } from './sapi-model-mixin';
 
 describe('core/@Model', () => {
@@ -154,17 +135,11 @@ describe('core/@Model', () => {
         }
       });
 
-      afterEach(async (done) => {
-        try {
-          await DefaultCrud.removeAll({});
-          await sapi.close();
+      afterEach(async () => {
+        await DefaultCrud.removeAll({});
+        await sapi.close();
 
-          sapi.deregisterDependencies();
-          sapi = null;
-          done();
-        } catch (err) {
-          done.fail(err);
-        }
+        sapi = null;
       });
 
       /**
@@ -375,11 +350,9 @@ describe('core/@Model', () => {
             }
           });
 
-          afterEach(async (done) => {
+          afterEach(async () => {
             await TestCollation.removeAll({});
-            await cursorSapi.deregisterDependencies();
             await cursorSapi.close();
-            done();
           });
 
           it('returns a cursor', async (done) => {
@@ -697,14 +670,8 @@ describe('core/@Model', () => {
         }
       });
 
-      afterEach(async (done) => {
-        try {
-          await sapi.close();
-          sapi.deregisterDependencies();
-          done();
-        } catch (err) {
-          done.fail(err);
-        }
+      afterEach(async () => {
+        await sapi.close();
       });
 
       it('require promiscuous mode', async (done) => {
@@ -770,14 +737,8 @@ describe('core/@Model', () => {
           }
         });
 
-        afterEach(async (done) => {
-          try {
-            await sapi.close();
-            sapi.deregisterDependencies();
-            done();
-          } catch (err) {
-            done.fail(err);
-          }
+        afterEach(async () => {
+          await sapi.close();
         });
 
         describe('when going to and from the database', () => {
@@ -866,14 +827,8 @@ describe('core/@Model', () => {
           }
         });
 
-        afterEach(async (done) => {
-          try {
-            await sapi.close();
-            sapi.deregisterDependencies();
-            done();
-          } catch (err) {
-            done.fail(err);
-          }
+        afterEach(async () => {
+          await sapi.close();
         });
 
         describe('when going to and from the database', () => {
@@ -957,7 +912,7 @@ describe('core/@Model', () => {
         .toThrowError(`Cannot assign to read only property 'Symbol(isSakuraApiModel)' of object '#<TestDi>'`);
     });
 
-    it('can retrieve Model by name', () => {
+    it('can retrieve Model by name', async () => {
       const sapi = testSapi({
         models: [TestDi]
       });
@@ -969,10 +924,10 @@ describe('core/@Model', () => {
       expect(TestModel.fromJson({}) instanceof TestDi).toBeTruthy('Should have been an instance of TestDI ' +
         `but instead was an instsance of ${(TestModel.constructor || {} as any).name || TestModel.name}`);
 
-      sapi.deregisterDependencies();
+      await sapi.close();
     });
 
-    it('allows overriding of @Model decorated class', () => {
+    it('allows overriding of @Model decorated class', async () => {
       const sapi = testSapi({
         models: [{use: TestDiOverride, for: TestDi}]
       });
@@ -986,10 +941,10 @@ describe('core/@Model', () => {
         `TestDIModelOverride but instead was an instsance of ` +
         `${(testModel.constructor || {} as any).name || testModel.name}`);
 
-      sapi.deregisterDependencies();
+      await sapi.close();
     });
 
-    it('does not allow non @Injectable constructor args', () => {
+    it('does not allow non @Injectable constructor args', async () => {
       class NotInjectable {
       }
 
@@ -1000,6 +955,7 @@ describe('core/@Model', () => {
       }
 
       let sapi: SakuraApi;
+
       expect(() => {
         @Model()
         class TestModel {
@@ -1017,7 +973,7 @@ describe('core/@Model', () => {
 
       }).toThrowError(NonInjectableConstructorParameterError);
 
-      sapi.deregisterDependencies();
+      await sapi.close();
     });
 
     describe('sapi injected', () => {
@@ -1033,8 +989,8 @@ describe('core/@Model', () => {
         });
       });
 
-      afterEach(() => {
-        sapi.deregisterDependencies();
+      afterEach(async () => {
+        await sapi.close();
       });
 
       it('model has reference to sapi injected as symbol when SakuraApi is constructed', () => {
@@ -1084,7 +1040,7 @@ describe('core/@Model', () => {
         expect(() => sapi.getModel(Invalid)).toThrowError(ModelNotRegistered);
       });
 
-      it('gets a model', () => {
+      it('gets a model', async () => {
         @Model()
         class TestModel {
         }
@@ -1097,7 +1053,7 @@ describe('core/@Model', () => {
 
         expect(result.constructor).toEqual(TestModel.constructor);
 
-        sapi2.deregisterDependencies();
+        await sapi2.close();
       });
     });
   });

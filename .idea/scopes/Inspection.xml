@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Inspection" pattern="!file[api]:.idea//*&amp;&amp;!file[api]:docs//*" />
+</component>
