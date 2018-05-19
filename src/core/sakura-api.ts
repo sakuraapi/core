@@ -1,22 +1,32 @@
 // tslint:disable:no-duplicate-imports
 import * as debugInit from 'debug';
 import * as express from 'express';
-import { ErrorRequestHandler, Express, Handler, NextFunction, Request, Response, Router } from 'express';
+import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response, Router} from 'express';
 import * as http from 'http';
-import { SakuraApiConfig } from '../boot';
-import { injectableSymbols, ProviderNotRegistered, ProvidersMustBeDecoratedWithInjectableError } from './';
-import { ModelNotRegistered, ModelsMustBeDecoratedWithModelError, modelSymbols } from './@model';
+import {SakuraApiConfig} from '../boot';
+import {injectableSymbols, ProviderNotRegistered, ProvidersMustBeDecoratedWithInjectableError} from './';
+import {ModelNotRegistered, ModelsMustBeDecoratedWithModelError, modelSymbols} from './@model';
 import {
-  IRoutableLocals, ISakuraApiClassRoute, RoutableNotRegistered, RoutablesMustBeDecoratedWithRoutableError,
+  IRoutableLocals,
+  ISakuraApiClassRoute,
+  RoutableNotRegistered,
+  RoutablesMustBeDecoratedWithRoutableError,
   routableSymbols
 } from './@routable';
-import { BAD_REQUEST, OK } from './lib';
+import {BAD_REQUEST, OK} from './lib';
 import {
-  Anonymous, AuthenticatorNotRegistered, AuthenticatorPluginResult, authenticatorPluginSymbols,
-  AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError, IAuthenticator, IAuthenticatorConstructor, SakuraApiPlugin,
+  Anonymous,
+  AuthenticatorNotRegistered,
+  AuthenticatorPluginResult,
+  authenticatorPluginSymbols,
+  AuthenticatorsMustBeDecoratedWithAuthenticatorPluginError,
+  IAuthenticator,
+  IAuthenticatorConstructor,
+  SakuraApiPlugin,
   SakuraApiPluginResult
 } from './plugins';
-import { SakuraMongoDbConnection } from './sakura-mongo-db-connection';
+import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
+import * as colors from 'colors';
 // tslint:enable:no-duplicate-imports
 
 const debug = {
@@ -777,14 +787,14 @@ export class SakuraApi {
 
             if (listenProperties.bootMessage === undefined) {
               // tslint:disable-next-line:no-console
-              console.log(`SakuraAPI started on: ${this.address}:${this.port}`.green);
+              console.log(colors.green(`SakuraAPI started on: ${this.address}:${this.port}`));
             } else {
               const msg = (listenProperties.bootMessage === '')
                 ? false
                 : listenProperties.bootMessage;
 
               if (msg) {
-                process.stdout.write(`${msg}`.green);
+                process.stdout.write(colors.green(`${msg}`));
               }
             }
 

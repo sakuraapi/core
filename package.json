@@ -12,8 +12,9 @@
   "scripts": {
     "build": "./scripts/build.sh",
     "coverage": "./scripts/coverage.sh",
-    "doc:generate": "./scripts/doc:generate.sh",
-    "doc:serve": "./scripts/doc:serve.sh",
+    "docs:generate": "./scripts/docs:generate.sh",
+    "docs:publish": "./scripts/docs:publish.sh",
+    "docs:serve": "./scripts/docs:serve.sh",
     "docker:compose-test": "./scripts/docker:compose-test.sh",
     "install": "chmod +x scripts/*.* || true",
     "lint": "./scripts/lint.sh",
