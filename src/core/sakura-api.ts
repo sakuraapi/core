@@ -368,27 +368,34 @@ export class SakuraApi {
   }
 
   /**
-   * Gracefully shuts down the server. It will not reject if the server is not running. It will, however, reject
+   * Gracefully shuts down the server. This includes calling [[SakuraApi.deregisterDependencies]]
+   * and [[SakuraApi.dbConnections.closeAll]].
+   *
+   * It will not reject if the server is not running. It will, however, reject
    * with any error other than `Not running` that's returned from the `http.Server` instance.
    */
-  close(): Promise<null> {
+  async close(): Promise<void> {
     debug.normal('.close called');
 
-    this.deregisterDependencies();
+    try {
+      this.deregisterDependencies();
+      await this.dbConnections.closeAll();
+    } catch (err) {
+      debug.normal(`.close error`, err);
+      return Promise.reject(err);
+    }
 
-    // await this.dbConnections.closeAll();
+    return new Promise<void>((resolve, reject) => {
+      this.server.close((err) => {
+        if (err && err.message !== 'Not running') {
+          debug.normal(`.close error`, err);
+          reject(err);
+          return;
+        }
 
-    return new Promise((resolve, reject) => {
-      this
-        .server
-        .close((err) => {
-          if (err && err.message !== 'Not running') {
-            debug.normal('.close error', err);
-            return reject(err);
-          }
-          debug.normal('.close done');
-          resolve();
-        });
+        debug.normal('.close done');
+        resolve();
+      });
     });
   }
 
