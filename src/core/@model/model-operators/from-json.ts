@@ -1,9 +1,11 @@
 import { ObjectID } from 'mongodb';
-import { shouldRecurse } from '../../lib';
+import { IContext, shouldRecurse } from '../../lib';
 import { dbSymbols, IDbOptions } from '../db';
 import { formatFromJsonSymbols, FromJsonHandler } from '../from-json';
 import { IJsonOptions, jsonSymbols } from '../json';
 import { debug } from './index';
+import { decode as urlBase64Decode } from 'urlsafe-base64';
+import { createDecipheriv } from 'crypto';
 
 /**
  * @static Constructs an `@`Model object from a json object (see [[Json]]). Supports '*' context. If you provide both
@@ -15,13 +17,18 @@ import { debug } from './index';
  * @returns any Returns an instantiated [[Model]] from the provided json. Returns null if the `json` parameter is null,
  * undefined, or not an object.
  */
-export function fromJson<T = any>(json: T, context = 'default'): any {
+export function fromJson<T = any>(json: T, context: string | IContext = 'default'): any {
   const modelName = (this || {} as any).name;
   debug.normal(`.fromJson called, target '${modelName}'`);
 
   if (!json || typeof json !== 'object') {
     return null;
   }
+
+  const ctx = (typeof context === 'string')
+    ? {context}
+    : context;
+  ctx.context = ctx.context || 'default';
 
   const obj = new this();
 
@@ -31,11 +38,11 @@ export function fromJson<T = any>(json: T, context = 'default'): any {
   const formatFromJsonMeta = Reflect.getMetadata(formatFromJsonSymbols.functionMap, resultModel);
   if (formatFromJsonMeta) {
     const formatters: FromJsonHandler[] = [
-      ...formatFromJsonMeta.get(context) || [],
+      ...formatFromJsonMeta.get(ctx.context) || [],
       ...formatFromJsonMeta.get('*') || []
     ];
     for (const formatter of formatters) {
-      resultModel = formatter(json, resultModel, context);
+      resultModel = formatter(json, resultModel, ctx.context);
     }
   }
 
@@ -56,32 +63,53 @@ export function fromJson<T = any>(json: T, context = 'default'): any {
       = Reflect.getMetadata(dbSymbols.dbByPropertyName, target) || new Map<string, IDbOptions>();
 
     // iterate over each property of the source json object
-    const propertyNames = Object.getOwnPropertyNames(jsonSource);
-    for (const key of propertyNames) {
+    const jsonFieldNames = Object.getOwnPropertyNames(jsonSource);
+    for (const key of jsonFieldNames) {
+
+      let jsonFieldOptions = propertyNamesByJsonFieldName.get(`${key}:${ctx.context}`);
+      let jsonFieldOptionsStar = propertyNamesByJsonFieldName.get(`${key}:*`);
+
+      const hasOptions = !!jsonFieldOptions || !!jsonFieldOptionsStar;
+      jsonFieldOptions = jsonFieldOptions || {};
+      jsonFieldOptionsStar = jsonFieldOptionsStar || {};
+
+      const propertyName = jsonFieldOptions[jsonSymbols.propertyName] || jsonFieldOptionsStar[jsonSymbols.propertyName];
+
+      const newKey = (hasOptions)
+        ? propertyName
+        : (target[key])
+          ? key
+          : (key === 'id' || key === '_id')
+            ? key
+            : undefined;
 
       // convert the field name to the Model property name
-      const meta = getMeta(key, jsonSource[key], propertyNamesByJsonFieldName, target);
-      const dbModel = propertyNamesByDbPropertyName.get(meta.newKey) || {};
-      const model = meta.model || (dbModel || {}).model || null; // use @Json({model:...}) || @Db({model:...})
+      const dbModel = propertyNamesByDbPropertyName.get(newKey) || {};
+      // use @Json({model:...}) || @Db({model:...})
+      const model = jsonFieldOptions.model || jsonFieldOptionsStar.model || (dbModel || {}).model || null;
 
       // if recursing into a model, set that up, otherwise just pass the target in
       let nextTarget;
       try {
         nextTarget = (model)
-          ? Object.assign(new model(), target[meta.newKey])
-          : target[meta.newKey];
+          ? Object.assign(new model(), target[newKey])
+          : target[newKey];
       } catch (err) {
         throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
           + ` cannot be constructed`);
       }
 
       let value;
-      if (meta.promiscuous) {
+      if (jsonFieldOptions.promiscuous || jsonFieldOptionsStar.promiscuous || false) {
+
         value = jsonSource[key];
+
       } else if (model || shouldRecurse(jsonSource[key])) {
 
+        value = processEncryption(jsonSource[key]);
+
         // if the key should be included, recurse into it
-        if (meta.newKey !== undefined) {
+        if (newKey !== undefined) {
 
           if (Array.isArray(jsonSource[key])) {
 
@@ -102,8 +130,10 @@ export function fromJson<T = any>(json: T, context = 'default'): any {
         }
 
       } else {
+
         // otherwise, map a property that has a primitive value or an ObjectID value
         if (newKey !== undefined) {
+          value = processEncryption(jsonSource[key]);
           const type = jsonFieldOptions.type || jsonFieldOptionsStar.type || null;
           if (type === 'id' || ((newKey === 'id' || newKey === '_id') && ObjectID.isValid(value))) {
             value = new ObjectID(value);
@@ -112,44 +142,63 @@ export function fromJson<T = any>(json: T, context = 'default'): any {
       }
 
       // @json({fromJson})
-      if (meta.formatFromJson) {
-        value = meta.formatFromJson(value, key);
+      if (jsonFieldOptions.fromJson) {
+        value = jsonFieldOptions.fromJson.call(target, value, key);
       }
-      if (meta.formatFromJsonStar) {
-        value = meta.formatFromJsonStar(value, key);
+      if (jsonFieldOptionsStar.fromJson) {
+        value = jsonFieldOptionsStar.fromJson.call(target, value, key);
       }
 
-      target[meta.newKey] = value;
+      target[newKey] = value;
+
+      /////
+      function processEncryption(val) {
+        // check for @json({encrypt})
+        if (jsonFieldOptions.encrypt) {
+          val = (jsonFieldOptions.decryptor)
+            ? jsonFieldOptions.decryptor.call(target, val, key, ctx)
+            : decrypt(val, jsonFieldOptions.key);
+        }
+
+        if (jsonFieldOptionsStar.encrypt) {
+          val = (jsonFieldOptionsStar.decryptor)
+            ? jsonFieldOptionsStar.decryptor.call(target, val, key, ctx)
+            : decrypt(val, jsonFieldOptionsStar.key);
+        }
+        return val;
+      }
     }
 
     return target;
   }
+}
 
-  function getMeta(key: string, value: any, meta: Map<string, IJsonOptions>, target) {
-    let jsonFieldOptions = (meta) ? meta.get(`${key}:${context}`) : null;
-    let jsonFieldOptionsStar = (meta) ? meta.get(`${key}:*`) : null;
 
-    const hasOptions = !!jsonFieldOptions || !!jsonFieldOptionsStar;
+function decrypt(value: string, cipherKey: string): any {
+  cipherKey = cipherKey || '';
 
-    jsonFieldOptions = jsonFieldOptions || {};
-    jsonFieldOptionsStar = jsonFieldOptionsStar || {};
+  const parts = (value && value.split) ? value.split('.') : [];
 
-    const model = jsonFieldOptions.model || jsonFieldOptionsStar.model;
-    const propertyName = jsonFieldOptions[jsonSymbols.propertyName] || jsonFieldOptionsStar[jsonSymbols.propertyName];
-    const promiscuous = jsonFieldOptions.promiscuous || jsonFieldOptionsStar.promiscuous || false;
+  if (parts.length !== 3) {
+    throw new Error(`@Json invalid value for decryption ${value}`);
+  }
 
-    return {
-      formatFromJson: jsonFieldOptions.fromJson,
-      formatFromJsonStar: jsonFieldOptionsStar.fromJson,
-      model,
-      newKey: (hasOptions)
-        ? propertyName
-        : (target[key])
-          ? key
-          : (key === 'id' || key === '_id')
-            ? key
-            : undefined,
-      promiscuous
-    };
+  const v = urlBase64Decode(parts[0]);
+  const hmac = urlBase64Decode(parts[1]);
+  const iv = urlBase64Decode(parts[2]);
+
+  let buff: Buffer;
+  try {
+    const decipher = createDecipheriv('aes-256-gcm', cipherKey, iv);
+    decipher.setAuthTag(hmac);
+
+    buff = Buffer.concat([
+      decipher.update(v),
+      decipher.final()
+    ]);
+
+    return JSON.parse(buff.toString('utf8'));
+  } catch (err) {
+    return buff.toString('utf8');
   }
 }
