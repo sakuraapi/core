@@ -109,6 +109,12 @@ export interface IJsonOptions {
    * If true, sub-documents that aren't part of a model will be mapped to the resulting object.
    */
   promiscuous?: boolean;
+
+  /**
+   * Allows casting fromJson. This might be used in the future for other types like Date,
+   * or enums.
+   */
+  type?: 'id';
 }
 
 /**

@@ -103,9 +103,9 @@ export function fromJson<T = any>(json: T, context = 'default'): any {
 
       } else {
         // otherwise, map a property that has a primitive value or an ObjectID value
-        if (meta.newKey !== undefined) {
-          value = jsonSource[key];
-          if ((meta.newKey === 'id' || meta.newKey === '_id') && ObjectID.isValid(value)) {
+        if (newKey !== undefined) {
+          const type = jsonFieldOptions.type || jsonFieldOptionsStar.type || null;
+          if (type === 'id' || ((newKey === 'id' || newKey === '_id') && ObjectID.isValid(value))) {
             value = new ObjectID(value);
           }
         }
