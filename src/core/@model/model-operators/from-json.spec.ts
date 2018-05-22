@@ -1148,4 +1148,60 @@ describe('@Model.fromJson', () => {
       });
     });
   });
+
+  describe('decrypt', () => {
+
+    const key = 'DFXkx2Vdi3FhZ;h24RE?,>O@Bm;~L7}(';
+
+    @Model()
+    class SubTestModel extends SapiModelMixin() {
+      @Json()
+      field1 = '1';
+      field2 = 2;
+    }
+
+    @Model()
+    class TestModel extends SapiModelMixin() {
+
+      @Json({encrypt: true, key, type: 'id'})
+      someId = new ObjectID();
+
+      @Json({encrypt: true, key})
+      secret = 'shhh';
+    }
+
+    @Model()
+    class TestModelWithChild extends SapiModelMixin() {
+      @Json({encrypt: true, key, model: SubTestModel})
+      subModel = new SubTestModel();
+    }
+
+    it('decrypts simple values', () => {
+      const model = new TestModel();
+      const cipherText = model.toJson();
+      const result = TestModel.fromJson(cipherText);
+
+      expect(cipherText.secret).not.toBe(model.secret);
+      expect(result.secret).toBe(model.secret);
+    });
+
+    it('decrypts complex values', () => {
+      const model = new TestModelWithChild();
+      const cipherText = model.toJson();
+      const result = TestModelWithChild.fromJson(cipherText);
+
+      expect(cipherText.subModel).not.toBe(model.subModel);
+      expect(result.subModel.field1).toBe(model.subModel.field1);
+      expect(result.subModel.field2).toBe(model.subModel.field2);
+    });
+
+    it('decrypts ObjectIDs', () => {
+      const model = new TestModel();
+      const cipherText = model.toJson();
+      const result = TestModel.fromJson(cipherText);
+
+      expect(cipherText.someId).not.toBe(model.someId);
+      expect(result.someId.toHexString()).toEqual(model.someId.toHexString());
+    });
+  });
 });
