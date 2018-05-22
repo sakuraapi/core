@@ -13,10 +13,7 @@ import {
 } from 'mongodb';
 import { Constructor, IContext } from '../lib';
 import { SakuraApi } from '../sakura-api';
-import {
-  IDbGetParams,
-  IFromDbOptions
-} from './';
+import { IDbGetParams, IFromDbOptions } from './';
 import { IMongoDBCollation } from './model';
 
 /**
@@ -93,6 +90,8 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     toJsonString: (replacer?: () => any | Array<string | number>, space?: string | number) => string;
     toDb: (changeSet?: object) => any;
     remove: (options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
+    sapi: SakuraApi;
+    sapiConfig?: any;
     save: (set?: { [key: string]: any } | null, options?: ReplaceOneOptions, context?: string) => Promise<UpdateWriteOpResult>;
 
     constructor(...args: any[]) {

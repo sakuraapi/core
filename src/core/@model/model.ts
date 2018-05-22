@@ -1,9 +1,6 @@
 import { v4 } from 'uuid';
 import { getDependencyInjections } from '../@injectable';
-import {
-  addDefaultInstanceMethods,
-  addDefaultStaticMethods
-} from '../lib';
+import { addDefaultInstanceMethods, addDefaultStaticMethods } from '../lib';
 import {
   create,
   fromDb,
@@ -101,6 +98,13 @@ export interface IModelOptions {
   };
 
   /**
+   * Returns the cipher key to be used by @Json decorated properties with [[IJsonOption.encrypt]] === true. Provide
+   * a function that returns the key as a string. The function will be given the context of `this` of the model
+   * from which it is being called.
+   */
+  cipherKey?: () => string;
+
+  /**
    * Prevents the injection of CRUD functions (see [[Model]] function).
    */
   suppressInjection?: string[];
@@ -110,6 +114,7 @@ export interface IModelOptions {
  * A collection of symbols used internally by [[Model]].
  */
 export const modelSymbols = {
+  cipherKey: Symbol('cipherKey'),
   constructor: Symbol('constructor'),
   dbCollation: Symbol('dbCollation'),
   dbCollection: Symbol('dbCollection'),
@@ -248,6 +253,11 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
             throw new Error(`If you define a dbConfig for a model, you must define a collection. target: ${target}`);
           }
         }
+
+        if (modelOptions.cipherKey) {
+          c[modelSymbols.cipherKey] = modelOptions.cipherKey.call(c);
+        }
+
         return c;
       }
     });

@@ -44,23 +44,25 @@ export interface IJsonOptions {
    * Override the default decryptor logic. If provided, this will be called to perform decryption instead of
    * the default logic. By default, `aes-256-gcm` is used.
    *
-   * @param val
-   * @param {string} key
+   * @param val the value being decrypted
+   * @param {string} key the field name being decrypted
+   * @param {string} cipherKey
    * @param {IContext} context
    * @returns {any}
    */
-  decryptor?: (val: any, key?: string, context?: IContext) => any;
+  decryptor?: (val: any, key?: string, cipherKey?: string, context?: IContext) => any;
 
   /**
    * Override the default encryptor logic. If provided, this will be called to perform encryption instead of
    * the default logic. By default, `aes-256-gcm` is used.
    *
-   * @param val
-   * @param {string} key
+   * @param val the value being encrypted
+   * @param {string} property name being encrypted
+   * @param {string} cipherKey
    * @param {IContext} context
    * @returns {string}
    */
-  encryptor?: (val: any, key?: string, context?: IContext) => string;
+  encryptor?: (val: any, key?: string, cipherKey?: string, context?: IContext) => string;
 
   /**
    * If true, this field will be encrypted `toJson` and decrypted `fromJson`.

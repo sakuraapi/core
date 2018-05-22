@@ -6,6 +6,7 @@ import { formatToJsonSymbols, ToJsonHandler } from '../to-json';
 import { debug } from './index';
 import { createCipheriv, randomBytes } from 'crypto';
 import { encode as urlBase64Encode } from 'urlsafe-base64';
+import { modelSymbols } from '../model';
 
 const IV_LENGTH = 16;
 
@@ -137,15 +138,14 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
     // check for @json({encrypt})
     if (jsonOptions.encrypt) {
       value = (jsonOptions.encryptor)
-        ? jsonOptions.encryptor.call(source, value, key, ctx)
-        : encrypt(value, jsonOptions.key);
+        ? jsonOptions.encryptor.call(source, value, key, jsonOptions.key, ctx)
+        : encrypt(value, jsonOptions.key || source[modelSymbols.cipherKey]);
     }
     if (jsonOptionsStar.encrypt) {
       value = (jsonOptionsStar.encryptor)
-        ? jsonOptionsStar.encryptor.call(source, value, key, ctx)
-        : encrypt(value, jsonOptionsStar.key);
+        ? jsonOptionsStar.encryptor.call(source, value, key, jsonOptions.key, ctx)
+        : encrypt(value, jsonOptionsStar.key || source[modelSymbols.cipherKey]);
     }
-
 
     jsonObj[newKey] = value;
 

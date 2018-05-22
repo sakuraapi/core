@@ -6,6 +6,7 @@ import { IJsonOptions, jsonSymbols } from '../json';
 import { debug } from './index';
 import { decode as urlBase64Decode } from 'urlsafe-base64';
 import { createDecipheriv } from 'crypto';
+import { modelSymbols } from '../model';
 
 /**
  * @static Constructs an `@`Model object from a json object (see [[Json]]). Supports '*' context. If you provide both
@@ -106,7 +107,7 @@ export function fromJson<T = any>(json: T, context: string | IContext = 'default
 
       } else if (model || shouldRecurse(jsonSource[key])) {
 
-        value = processEncryption(jsonSource[key]);
+        value = processEncryption(jsonSource[key], nextTarget);
 
         // if the key should be included, recurse into it
         if (newKey !== undefined) {
@@ -133,7 +134,7 @@ export function fromJson<T = any>(json: T, context: string | IContext = 'default
 
         // otherwise, map a property that has a primitive value or an ObjectID value
         if (newKey !== undefined) {
-          value = processEncryption(jsonSource[key]);
+          value = processEncryption(jsonSource[key], target);
           const type = jsonFieldOptions.type || jsonFieldOptionsStar.type || null;
           if (type === 'id' || ((newKey === 'id' || newKey === '_id') && ObjectID.isValid(value))) {
             value = new ObjectID(value);
@@ -152,18 +153,18 @@ export function fromJson<T = any>(json: T, context: string | IContext = 'default
       target[newKey] = value;
 
       /////
-      function processEncryption(val) {
+      function processEncryption(val, modelCipher: string) {
         // check for @json({encrypt})
         if (jsonFieldOptions.encrypt) {
           val = (jsonFieldOptions.decryptor)
-            ? jsonFieldOptions.decryptor.call(target, val, key, ctx)
-            : decrypt(val, jsonFieldOptions.key);
+            ? jsonFieldOptions.decryptor.call(target, val, key, jsonFieldOptions.key, ctx)
+            : decrypt(val, jsonFieldOptions.key || modelCipher[modelSymbols.cipherKey]);
         }
 
         if (jsonFieldOptionsStar.encrypt) {
           val = (jsonFieldOptionsStar.decryptor)
-            ? jsonFieldOptionsStar.decryptor.call(target, val, key, ctx)
-            : decrypt(val, jsonFieldOptionsStar.key);
+            ? jsonFieldOptionsStar.decryptor.call(target, val, key, jsonFieldOptions.key, ctx)
+            : decrypt(val, jsonFieldOptionsStar.key || modelCipher[modelSymbols.cipherKey]);
         }
         return val;
       }
