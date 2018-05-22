@@ -6,7 +6,6 @@
 export const dbSymbols = {
   dbByFieldName: Symbol('sakuraApiDbByFieldName'),
   dbByPropertyName: Symbol('sakuraApiDbByPropertyName'),
-  hasNewChildOption: Symbol('sakuraApiHasNewChildOption'),
   propertyName: Symbol('sakuraApiDbOptionsPropertyName')
 };
 
@@ -79,20 +78,17 @@ export function Db(dbOptions?: IDbOptions | string): (target: any, key: string) 
     mapByPropertyName.set(key, options);
     mapByFieldName.set(options.field || key, options);
   };
+}
 
-  //////////
+function getMetaDataMap(target, symbol): Map<string, IDbOptions> {
 
-  // Lazy adds the metadata map to the object if it's missing then returns it, otherwise, it returns the existing map
-  function getMetaDataMap(target, symbol): Map<string, IDbOptions> {
+  let map: Map<string, IDbOptions> = Reflect.getMetadata(symbol, target);
 
-    let map: Map<string, IDbOptions> = Reflect.getMetadata(symbol, target);
-
-    if (!map) {
-      map = new Map<string, IDbOptions>();
-      Reflect.defineMetadata(symbol, map, target);
-      target.constructor[symbol] = map;
-    }
-
-    return map;
+  if (!map) {
+    map = new Map<string, IDbOptions>();
+    Reflect.defineMetadata(symbol, map, target);
+    target.constructor[symbol] = map;
   }
+
+  return map;
 }

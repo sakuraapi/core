@@ -81,6 +81,7 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
 
     _id: ObjectID;
     id: ObjectID;
+
     dbLocale: string;
 
     create: (options?: CollectionInsertOneOptions, context?: string) => Promise<InsertOneWriteOpResult>;
