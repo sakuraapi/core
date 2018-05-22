@@ -1057,4 +1057,77 @@ describe('core/@Model', () => {
       });
     });
   });
+
+  describe('to/from json @Model cipherKey', () => {
+
+    let context;
+    let hasSapi: SakuraApi;
+    let sapi: SakuraApi;
+    let value: string;
+
+    @Model({
+      cipherKey: function () {
+        context = this;
+        hasSapi = this.sapi;
+        value = this.secret;
+        return 'DFXkx2Vdi3FhZ;h24RE?,>O@Bm;~L7}(';
+      }
+    })
+    class TestModel extends SapiModelMixin() {
+      @Json({encrypt: true})
+      secret = 'shhh';
+    }
+
+    beforeEach(() => sapi = testSapi({models: [TestModel]}));
+
+    afterEach(async () => {
+      context = undefined;
+      hasSapi = undefined;
+      value = undefined;
+
+      await sapi.close();
+    });
+
+
+    describe('toJson', () => {
+
+
+      it('allows cipher key to be set for toJson at the model level', () => {
+        const model = new TestModel();
+        const result = model.toJson();
+
+
+        expect(context instanceof TestModel).toBeTruthy();
+        expect(result.secret).not.toBe(model.secret);
+        expect(result.secret.split('.').length).toBe(3);
+      });
+
+      it('bind the instance of the model as `this`', () => {
+        const model = new TestModel();
+
+        expect(value).toBe(model.secret);
+        expect(hasSapi instanceof SakuraApi).toBeTruthy();
+      });
+    });
+
+    describe('fromJson', () => {
+
+      it('allows cipher key to be set for toJson at the model level', () => {
+        const result = TestModel.fromJson({
+          secret: '2jOXzQ.ksnbd0QPST0wnpnESZW8qg.yDIs939PvvKtHz050Una4A'
+        });
+
+
+        expect(context instanceof TestModel).toBeTruthy();
+        expect(result.secret).not.toBe('shh');
+      });
+
+      it('bind the instance of the model as `this`', () => {
+        const model = new TestModel();
+
+        expect(value).toBe(model.secret);
+        expect(hasSapi instanceof SakuraApi).toBeTruthy();
+      });
+    });
+  });
 });
