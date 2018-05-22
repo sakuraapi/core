@@ -23,6 +23,7 @@ import {
   toJson,
   toJsonString
 } from './model-operators';
+import { idSymbols } from './id';
 
 export interface IMongoDBCollation {
   locale: string;
@@ -230,11 +231,12 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
 
         const c = Reflect.construct(t, diArgs, nt);
 
-        // map _id to id
+        const idProperty = Reflect.getMetadata(idSymbols.idByPropertyName, c) || 'id';
 
+        // map _id to id
         newConstructor.prototype._id = undefined;
 
-        Reflect.defineProperty(c, 'id', {
+        Reflect.defineProperty(c, idProperty, {
           configurable: true,
           enumerable: false,
           get: () => c._id,
