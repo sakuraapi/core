@@ -4,6 +4,7 @@ import { Injectable, NonInjectableConstructorParameterError } from '../@injectab
 import { SakuraApi } from '../sakura-api';
 import { Db, Json, Model, modelSymbols } from './';
 import { SapiDbForModelNotFound } from './errors';
+import { Id } from './id';
 import { ModelNotRegistered, ModelsMustBeDecoratedWithModelError } from './model';
 import { SapiModelMixin } from './sapi-model-mixin';
 
@@ -19,10 +20,12 @@ describe('core/@Model', () => {
       expect(testModel instanceof TestModel).toBe(true);
     });
 
-    it('maps _id to id but defines id as not enumerable', () => {
+    it('maps _id to id and defines id as enumerable', () => {
 
       @Model()
       class TestModel extends SapiModelMixin() {
+        @Id()
+        id: ObjectID;
       }
 
       const testModel = new TestModel();
@@ -32,7 +35,7 @@ describe('core/@Model', () => {
       expect(testModel.id).toEqual(testModel._id);
 
       const json = JSON.parse(JSON.stringify(testModel));
-      expect(json.id).toBeUndefined();
+      expect(json.id).toBe(testModel.id.toHexString());
 
     });
 
@@ -72,6 +75,8 @@ describe('core/@Model', () => {
           }
         })
         class TestModel extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
         }
 
         const testModel = new TestModel();
@@ -94,6 +99,9 @@ describe('core/@Model', () => {
         dbConfig
       })
       class DefaultCrud extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+
         @Db({
           field: 'fn'
         })
@@ -113,6 +121,8 @@ describe('core/@Model', () => {
         }
       })
       class TestBadDb extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
       }
 
       let sapi: SakuraApi;
@@ -324,6 +334,9 @@ describe('core/@Model', () => {
 
           @Model({dbConfig: cursorDbConfig})
           class TestWithOutCollation extends SapiModelMixin() {
+            @Id() @Json({type: 'id'})
+            id: ObjectID;
+
             @Db() @Json()
             name: string;
           }
@@ -639,6 +652,9 @@ describe('core/@Model', () => {
         }
       })
       class NestedModel extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+
         @Db()
         contact: {
           firstName: string,
@@ -712,6 +728,9 @@ describe('core/@Model', () => {
           }
         })
         class ModelDateStoreAndRestoreTest extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db() @Json()
           date: Date = new Date();
         }
@@ -803,6 +822,9 @@ describe('core/@Model', () => {
           }
         })
         class ModelArrayStoreAndRestoreTest extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db() @Json()
           anArray = ['value1', 'value2'];
         }
@@ -1054,6 +1076,75 @@ describe('core/@Model', () => {
         expect(result.constructor).toEqual(TestModel.constructor);
 
         await sapi2.close();
+      });
+    });
+  });
+
+  describe('to/from json @Model cipherKey', () => {
+
+    let context;
+    let hasSapi: SakuraApi;
+    let sapi: SakuraApi;
+    let value: string;
+
+    @Model({
+      cipherKey: function () { // tslint:disable-line
+        context = this;
+        hasSapi = this.sapi;
+        value = this.secret;
+        return 'DFXkx2Vdi3FhZ;h24RE?,>O@Bm;~L7}(';
+      }
+    })
+    class TestModel extends SapiModelMixin() {
+      @Json({encrypt: true})
+      secret = 'shhh';
+    }
+
+    beforeEach(() => sapi = testSapi({models: [TestModel]}));
+
+    afterEach(async () => {
+      context = undefined;
+      hasSapi = undefined;
+      value = undefined;
+
+      await sapi.close();
+    });
+
+    describe('toJson', () => {
+
+      it('allows cipher key to be set for toJson at the model level', () => {
+        const model = new TestModel();
+        const result = model.toJson();
+
+        expect(context instanceof TestModel).toBeTruthy();
+        expect(result.secret).not.toBe(model.secret);
+        expect(result.secret.split('.').length).toBe(3);
+      });
+
+      it('bind the instance of the model as `this`', () => {
+        const model = new TestModel();
+
+        expect(value).toBe(model.secret);
+        expect(hasSapi instanceof SakuraApi).toBeTruthy();
+      });
+    });
+
+    describe('fromJson', () => {
+
+      it('allows cipher key to be set for toJson at the model level', () => {
+        const result = TestModel.fromJson({
+          secret: '2jOXzQ.ksnbd0QPST0wnpnESZW8qg.yDIs939PvvKtHz050Una4A'
+        });
+
+        expect(context instanceof TestModel).toBeTruthy();
+        expect(result.secret).not.toBe('shh');
+      });
+
+      it('bind the instance of the model as `this`', () => {
+        const model = new TestModel();
+
+        expect(value).toBe(model.secret);
+        expect(hasSapi instanceof SakuraApi).toBeTruthy();
       });
     });
   });

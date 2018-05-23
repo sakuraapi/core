@@ -3,6 +3,7 @@ import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { IContext } from '../../lib';
 import { SakuraApi } from '../../sakura-api';
 import { Db } from '../db';
+import { Id } from '../id';
 import { Json } from '../json';
 import { Model } from '../model';
 import { Private } from '../private';
@@ -19,6 +20,10 @@ describe('Model.toJson', () => {
     }
   })
   class Test extends SapiModelMixin() {
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Json('ap')
     aProperty: string = 'test';
 
@@ -41,8 +46,13 @@ describe('Model.toJson', () => {
   });
 
   it('function is injected into the prototype of the model by default', () => {
+
     @Model()
     class User extends SapiModelMixin() {
+
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       firstName = 'George';
       lastName: string;
     }
@@ -156,6 +166,10 @@ describe('Model.toJson', () => {
 
     @Model()
     class User extends SapiModelMixin() {
+
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       firstName = 'George';
       lastName: string;
       contact = new Contact();
@@ -208,6 +222,9 @@ describe('Model.toJson', () => {
       }
     })
     class User extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       @Db('fn') @Json('fName')
       firstName = 'George';
       @Db('ln') @Json('lName')
@@ -291,6 +308,9 @@ describe('Model.toJson', () => {
       }
     })
     class User extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       firstName = 'George';
       lastName: string;
       contact = new Contact();
@@ -599,7 +619,7 @@ describe('Model.toJson', () => {
       class SomeModel extends SapiModelMixin() {
 
         @Json({
-          toJson: function() { // tslint:disable-line
+          toJson: function () { // tslint:disable-line
             thisVal = this;
           }
         })
@@ -757,6 +777,9 @@ describe('Model.toJson', () => {
         @Model()
         class TestProjection extends SapiModelMixin() {
 
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           fieldA = 'a';
           fieldB = 'b';
           field1 = 1;
@@ -828,6 +851,9 @@ describe('Model.toJson', () => {
 
         @Model()
         class TestProjection extends SapiModelMixin() {
+
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
 
           fieldA = 'a';
           fieldB = 'b';
@@ -950,6 +976,9 @@ describe('Model.toJson', () => {
 
         @Model()
         class TestProjection extends SapiModelMixin() {
+
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
 
           fieldA = 'a';
           fieldB = 'b';
@@ -1192,6 +1221,66 @@ describe('Model.toJson', () => {
         expect(test1.order[1].adr.st).toBe(jsonData.order[1].adr.st);
         expect(test1.order[1].adr.state).toBe(jsonData.order[1].adr.state);
       });
+    });
+  });
+
+  describe('encrypt', () => {
+
+    const key = 'DFXkx2Vdi3FhZ;h24RE?,>O@Bm;~L7}(';
+
+    @Model()
+    class SubTestModel extends SapiModelMixin() {
+      @Json()
+      field1 = '1';
+      field2 = 2;
+    }
+
+    @Model()
+    class TestModel extends SapiModelMixin() {
+      @Json({encrypt: true, key})
+      secret = 'shhh';
+    }
+
+    @Model()
+    class TestModelWithChild extends SapiModelMixin() {
+      @Json({encrypt: true, key, model: SubTestModel})
+      subModel = new SubTestModel();
+    }
+
+    it('encrypts simple values', () => {
+      const model = new TestModel();
+      const result = model.toJson();
+
+      expect(result.secret).not.toBe(model.secret);
+      expect(result.secret.split('.').length).toBe(3);
+    });
+
+    it('encrypts simple values to different ciphertext each time', () => {
+      const model = new TestModel();
+      const result1 = model.toJson();
+      const result2 = model.toJson();
+
+      expect(result1.secret).not.toBe(model.secret);
+      expect(result2.secret).not.toBe(model.secret);
+      expect(result1.secret).not.toBe(result2.secret);
+    });
+
+    it('encrypts complex values', () => {
+      const model = new TestModelWithChild();
+      const result = model.toJson();
+
+      expect(typeof result.subModel).toBe('string');
+      expect(result.subModel.split('.').length).toBe(3);
+    });
+
+    it('encrypts complex values to different ciphertext each time', () => {
+      const model = new TestModelWithChild();
+      const result1 = model.toJson();
+      const result2 = model.toJson();
+
+      expect(typeof result1.subModel).toBe('string');
+      expect(typeof result2.subModel).toBe('string');
+      expect(result1.subModel).not.toBe(result2.subModel);
     });
   });
 });

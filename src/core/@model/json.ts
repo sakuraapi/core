@@ -41,6 +41,35 @@ export interface IJsonOptions {
   context?: string;
 
   /**
+   * Override the default decryptor logic. If provided, this will be called to perform decryption instead of
+   * the default logic. By default, `aes-256-gcm` is used.
+   *
+   * @param val the value being decrypted
+   * @param {string} key the field name being decrypted
+   * @param {string} cipherKey
+   * @param {IContext} context
+   * @returns {any}
+   */
+  decryptor?: (val: any, key?: string, cipherKey?: string, context?: IContext) => any;
+
+  /**
+   * Override the default encryptor logic. If provided, this will be called to perform encryption instead of
+   * the default logic. By default, `aes-256-gcm` is used.
+   *
+   * @param val the value being encrypted
+   * @param {string} property name being encrypted
+   * @param {string} cipherKey
+   * @param {IContext} context
+   * @returns {string}
+   */
+  encryptor?: (val: any, key?: string, cipherKey?: string, context?: IContext) => string;
+
+  /**
+   * If true, this field will be encrypted `toJson` and decrypted `fromJson`.
+   */
+  encrypt?: boolean;
+
+  /**
    * The json field name that is mapped to and from this property when marshalled to and from json with
    * [[Model]].[[toJson]] or [[Model]].[[fromJson]].
    *
@@ -59,6 +88,11 @@ export interface IJsonOptions {
    * a json object.
    */
   field?: string;
+
+  /**
+   * The key to use with encrypt / decrypt
+   */
+  key?: string;
 
   /**
    * Allows formatting a property when it's marshalled to Json from an `@`[[Model]].
@@ -109,6 +143,12 @@ export interface IJsonOptions {
    * If true, sub-documents that aren't part of a model will be mapped to the resulting object.
    */
   promiscuous?: boolean;
+
+  /**
+   * Allows casting fromJson. This might be used in the future for other types like Date,
+   * or enums.
+   */
+  type?: 'id';
 }
 
 /**
@@ -165,18 +205,17 @@ export function Json(jsonOptions?: IJsonOptions | string, context = 'default'): 
     // allow lookup by the optional field name defined by @Json({field: 'value'}) or default to the
     // property name (key).
     metaFieldPropertyMap.set(`${options.field || key}:${context}`, options);
-
-    //////////
-    function getMetaDataMap(source, symbol): Map<string, IJsonOptions> {
-
-      let map: Map<string, IJsonOptions> = Reflect.getMetadata(symbol, source);
-
-      if (!map) {
-        map = new Map<string, IJsonOptions>();
-        Reflect.defineMetadata(symbol, map, source);
-      }
-
-      return map;
-    }
   };
+}
+
+function getMetaDataMap(source, symbol): Map<string, IJsonOptions> {
+
+  let map: Map<string, IJsonOptions> = Reflect.getMetadata(symbol, source);
+
+  if (!map) {
+    map = new Map<string, IJsonOptions>();
+    Reflect.defineMetadata(symbol, map, source);
+  }
+
+  return map;
 }

@@ -1,9 +1,14 @@
+import { createCipheriv, randomBytes } from 'crypto';
+import { encode as urlBase64Encode } from 'urlsafe-base64';
 import { IContext, IProjection, shouldRecurse } from '../../lib';
 import { dbSymbols, IDbOptions } from '../db';
 import { IJsonOptions, jsonSymbols } from '../json';
+import { modelSymbols } from '../model';
 import { privateSymbols } from '../private';
 import { formatToJsonSymbols, ToJsonHandler } from '../to-json';
 import { debug } from './index';
+
+const IV_LENGTH = 16;
 
 /**
  * @instance Returns a model as JSON, respecting the various decorators like `@`[[Json]]. Supports '*' context.
@@ -63,11 +68,12 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
 
   // iterate over each property
   const keys = Object.getOwnPropertyNames(source);
+
   for (const key of keys) {
 
-    const options = jsonFieldNamesByProperty.get(`${key}:${ctx.context}`) || {};
-    const optionsStar = jsonFieldNamesByProperty.get(`${key}:*`) || {};
     const dbOptions = (dbOptionsByPropertyName) ? dbOptionsByPropertyName.get(key) || {} : {};
+    const jsonOptions = jsonFieldNamesByProperty.get(`${key}:${ctx.context}`) || {};
+    const jsonOptionsStar = jsonFieldNamesByProperty.get(`${key}:*`) || {};
 
     if (typeof source[key] === 'function') {
       continue;
@@ -88,8 +94,8 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
       continue;
     }
 
-    const model = dbOptions.model || options.model || optionsStar.model || null;
-    const newKey = keyMapper(key, source[key], options, optionsStar);
+    const model = dbOptions.model || jsonOptions.model || jsonOptionsStar.model || null;
+    const newKey = keyMapper(key, source[key], jsonOptions, jsonOptionsStar);
 
     if (skipProjection(inclusiveProjection, projection, newKey)) {
       continue;
@@ -123,11 +129,23 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
     }
 
     // check for @json({toJson})
-    if (options.toJson) {
-      value = options.toJson.call(source, value, key, ctx);
+    if (jsonOptions.toJson) {
+      value = jsonOptions.toJson.call(source, value, key, ctx);
     }
-    if (optionsStar.toJson) {
-      value = optionsStar.toJson.call(source, value, key, ctx);
+    if (jsonOptionsStar.toJson) {
+      value = jsonOptionsStar.toJson.call(source, value, key, ctx);
+    }
+
+    // check for @json({encrypt})
+    if (jsonOptions.encrypt) {
+      value = (jsonOptions.encryptor)
+        ? jsonOptions.encryptor.call(source, value, key, jsonOptions.key, ctx)
+        : encrypt(value, jsonOptions.key || source[modelSymbols.cipherKey]);
+    }
+    if (jsonOptionsStar.encrypt) {
+      value = (jsonOptionsStar.encryptor)
+        ? jsonOptionsStar.encryptor.call(source, value, key, jsonOptions.key, ctx)
+        : encrypt(value, jsonOptionsStar.key || source[modelSymbols.cipherKey]);
     }
 
     jsonObj[newKey] = value;
@@ -147,6 +165,32 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
   }
 
   return jsonObj;
+}
+
+function encrypt(value: any, cipherKey: string): string {
+  cipherKey = cipherKey || '';
+
+  const iv = randomBytes(IV_LENGTH);
+  let cipher;
+
+  try {
+    cipher = createCipheriv('aes-256-gcm', cipherKey, iv);
+
+    let v = value;
+    if (typeof value === 'object') {
+      v = JSON.stringify(v);
+    }
+
+    const buff = Buffer.concat([
+      cipher.update(v, 'utf8'),
+      cipher.final()
+    ]);
+    const hmac = cipher.getAuthTag();
+
+    return `${urlBase64Encode(buff)}.${urlBase64Encode(hmac)}.${urlBase64Encode(iv)}`;
+  } catch (err) {
+    throw new Error(`@Json error encrypting ${err}`);
+  }
 }
 
 function isInclusiveProjection(projection: IProjection) {

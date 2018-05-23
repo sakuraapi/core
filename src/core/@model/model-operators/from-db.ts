@@ -1,13 +1,7 @@
 import { ObjectID } from 'mongodb';
 import { shouldRecurse } from '../../lib';
-import {
-  dbSymbols,
-  IDbOptions
-} from '../db';
-import {
-  IFromDbOptions,
-  modelSymbols
-} from '../model';
+import { dbSymbols, IDbOptions } from '../db';
+import { IFromDbOptions, modelSymbols } from '../model';
 import { debug } from './';
 
 /**

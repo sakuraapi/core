@@ -1,5 +1,6 @@
 import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
+import { Id } from '../id';
 import { Db, Json } from '../index';
 import { IJsonOptions } from '../json';
 import { Model, modelSymbols } from '../model';
@@ -17,6 +18,10 @@ describe('@Model.fromJson', () => {
     }
   })
   class Test extends SapiModelMixin() {
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Json('ap')
     aProperty: string = 'test';
 
@@ -514,6 +519,8 @@ describe('@Model.fromJson', () => {
 
     @Model()
     class User1 extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
     }
 
     it('unmarshalls id as an ObjectID when it is a valid ObjectID', () => {
@@ -854,6 +861,9 @@ describe('@Model.fromJson', () => {
 
         @Model({dbConfig: {collection: 'users', db: 'userDb'}})
         class Test94 extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db({field: 'ad', model: Address1}) @Json()
           address = new Address1();
         }
@@ -1146,6 +1156,62 @@ describe('@Model.fromJson', () => {
 
         });
       });
+    });
+  });
+
+  describe('decrypt', () => {
+
+    const key = 'DFXkx2Vdi3FhZ;h24RE?,>O@Bm;~L7}(';
+
+    @Model()
+    class SubTestModel extends SapiModelMixin() {
+      @Json()
+      field1 = '1';
+      field2 = 2;
+    }
+
+    @Model()
+    class TestModel extends SapiModelMixin() {
+
+      @Json({encrypt: true, key, type: 'id'})
+      someId = new ObjectID();
+
+      @Json({encrypt: true, key})
+      secret = 'shhh';
+    }
+
+    @Model()
+    class TestModelWithChild extends SapiModelMixin() {
+      @Json({encrypt: true, key, model: SubTestModel})
+      subModel = new SubTestModel();
+    }
+
+    it('decrypts simple values', () => {
+      const model = new TestModel();
+      const cipherText = model.toJson();
+      const result = TestModel.fromJson(cipherText);
+
+      expect(cipherText.secret).not.toBe(model.secret);
+      expect(result.secret).toBe(model.secret);
+    });
+
+    it('decrypts complex values', () => {
+      const model = new TestModelWithChild();
+      const cipherText = model.toJson();
+      const result = TestModelWithChild.fromJson(cipherText);
+
+      expect(cipherText.subModel).not.toBe(model.subModel);
+      expect(result.subModel.field1).toBe(model.subModel.field1);
+      expect(result.subModel.field2).toBe(model.subModel.field2);
+    });
+
+    it('decrypts ObjectIDs', () => {
+      const model = new TestModel();
+      const cipherText = model.toJson();
+      const result = TestModel.fromJson(cipherText);
+
+      expect(cipherText.someId).not.toBe(model.someId);
+      expect(result.someId.toHexString()).toEqual(model.someId.toHexString());
     });
   });
 });

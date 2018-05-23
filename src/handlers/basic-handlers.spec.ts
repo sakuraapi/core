@@ -1,10 +1,16 @@
+import { ObjectID } from 'mongodb';
 import * as request from 'supertest';
 import { testSapi, testUrl } from '../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../core';
 import { Db, Json, Model, SapiModelMixin } from '../core/@model';
+import { Id } from '../core/@model/id';
 import { Routable, SapiRoutableMixin } from '../core/@routable';
 import {
-  deleteRouteHandler, getAllRouteHandler, getRouteHandler, postRouteHandler, putRouteHandler
+  deleteRouteHandler,
+  getAllRouteHandler,
+  getRouteHandler,
+  postRouteHandler,
+  putRouteHandler
 } from './basic-handlers';
 
 describe('basic-handlers', () => {
@@ -18,6 +24,9 @@ describe('basic-handlers', () => {
       }
     })
     class TestModel extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       @Db() @Json()
       firstName: string;
 

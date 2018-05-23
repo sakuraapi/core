@@ -1,5 +1,7 @@
 import { ObjectID } from 'mongodb';
 import { Db } from '../db';
+import { Id } from '../id';
+import { Json } from '../json';
 import { Model } from '../model';
 import { SapiModelMixin } from '../sapi-model-mixin';
 
@@ -34,13 +36,20 @@ describe('Model.toDb', () => {
   })
   class ChasteModelTest extends SapiModelMixin() {
 
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Db('fn')
     firstName = 'George';
+
     @Db()
     lastName = 'Washington';
+
     phone = '555-123-1234';
+
     @Db()
     order = new Order();
+
   }
 
   @Model({
@@ -51,6 +60,10 @@ describe('Model.toDb', () => {
     }
   })
   class PromiscuousModelTest {
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Db('fn')
     firstName = 'George';
     @Db()
@@ -171,6 +184,28 @@ describe('Model.toDb', () => {
         expect(test.order[1].adr.state).toBe(dbData.order[1].adr.state);
 
       });
+    });
+  });
+
+  describe('bugs', () => {
+    describe('#174 undefined:undefined being inserts', () => {
+
+      @Model()
+      class TestModel extends SapiModelMixin() {
+        prop1: string;
+      }
+
+      it('toDb', () => {
+        const model = new TestModel();
+        model.prop1 = 'test';
+        const result = model.toDb();
+
+        const keys = Object.keys(result);
+        for (const key of keys) {
+          expect(key).not.toBe('undefined');
+        }
+      });
+
     });
   });
 });

@@ -4,12 +4,16 @@ import * as request from 'supertest';
 import { testSapi, testUrl } from '../../../spec/helpers/sakuraapi';
 import { getAllRouteHandler, getRouteHandler } from '../../handlers';
 import { Db, Json, Model, SapiModelMixin } from '../@model';
+import { Id } from '../@model/id';
 import { BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK } from '../lib';
 import { AuthenticatorPlugin, AuthenticatorPluginResult, IAuthenticator, IAuthenticatorConstructor } from '../plugins';
 import { SakuraApi } from '../sakura-api';
 import { Routable, routableSymbols, Route } from './';
 import {
-  IRoutableLocals, ISakuraApiClassRoute, RoutableNotRegistered, RoutablesMustBeDecoratedWithRoutableError
+  IRoutableLocals,
+  ISakuraApiClassRoute,
+  RoutableNotRegistered,
+  RoutablesMustBeDecoratedWithRoutableError
 } from './routable';
 import { SapiRoutableMixin } from './sapi-routable-mixin';
 
@@ -301,6 +305,9 @@ describe('core/@Routable', () => {
         }
       })
       class UserBeforeAllHandlers extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+
         @Db() @Json()
         firstName = 'George';
         @Db() @Json()
@@ -406,6 +413,9 @@ describe('core/@Routable', () => {
         }
       })
       class UserAfterAllHandlers extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+
         @Db() @Json()
         firstName = 'George';
         @Db() @Json()
@@ -491,6 +501,10 @@ describe('core/@Routable', () => {
         }
       })
       class UserAfterAllHandlersBeforeAllHandlers extends SapiModelMixin() {
+
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+
         @Db() @Json()
         firstName = 'George';
         @Db() @Json()
@@ -581,6 +595,9 @@ describe('core/@Routable', () => {
           }
         })
         class BeforeAfterInjectRouteTestModel extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db() @Json()
           firstName = 'George';
 
@@ -692,6 +709,9 @@ describe('core/@Routable', () => {
           }
         })
         class BeforeAfterInjectRouteTestModel extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db() @Json()
           firstName = 'George';
 
@@ -803,6 +823,9 @@ describe('core/@Routable', () => {
       }
     })
     class User extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       @Db('fname') @Json('fn')
       firstName: string = 'George';
       @Db('lname') @Json('ln')
@@ -823,6 +846,8 @@ describe('core/@Routable', () => {
       }
     })
     class NoDocsCreated extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
     }
 
     @Routable({

@@ -2,6 +2,7 @@ import { ObjectID } from 'mongodb';
 import { Db, Json } from '../';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
+import { Id } from '../id';
 import { Model } from '../model';
 import { SapiModelMixin } from '../sapi-model-mixin';
 
@@ -19,6 +20,9 @@ describe('@Model.fromDb', () => {
 
     @Model()
     class Test extends SapiModelMixin() {
+
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
 
       @Db({field: 'ph'})
       phone: string;
@@ -73,6 +77,9 @@ describe('@Model.fromDb', () => {
       }
     })
     class User extends SapiModelMixin() {
+
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
 
       @Db('fn') @Json('f')
       firstName: string = 'George';
@@ -365,6 +372,9 @@ describe('@Model.fromDb', () => {
 
         @Model({dbConfig: {collection: 'users', db: 'userDb'}})
         class Test94 extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db({field: 'ad', model: Address}) @Json()
           address = new Address();
         }
@@ -517,6 +527,9 @@ describe('@Model.fromDb', () => {
           }
         })
         class Test1 extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db({field: 'ph'})
           phone: string;
 

@@ -1,33 +1,13 @@
-import {
-  NextFunction,
-  Request,
-  Response
-} from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { ObjectID } from 'mongodb';
 import * as request from 'supertest';
-import {
-  testSapi,
-  testUrl
-} from '../../../spec/helpers/sakuraapi';
-import {
-  Db,
-  Json,
-  Model,
-  SapiModelMixin
-} from '../@model';
+import { testSapi, testUrl } from '../../../spec/helpers/sakuraapi';
+import { Db, Json, Model, SapiModelMixin } from '../@model';
+import { Id } from '../@model/id';
 import { OK } from '../lib';
-import {
-  AuthenticatorPlugin,
-  AuthenticatorPluginResult,
-  IAuthenticator,
-  IAuthenticatorConstructor
-} from '../plugins';
+import { AuthenticatorPlugin, AuthenticatorPluginResult, IAuthenticator, IAuthenticatorConstructor } from '../plugins';
 import { SakuraApi } from '../sakura-api';
-import {
-  IRoutableLocals,
-  Routable,
-  routableSymbols,
-  Route
-} from './';
+import { IRoutableLocals, Routable, routableSymbols, Route } from './';
 import { ISakuraApiClassRoute } from './routable';
 import { validHttpMethods } from './route';
 import { SapiRoutableMixin } from './sapi-routable-mixin';
@@ -257,6 +237,9 @@ describe('core/Route', () => {
       }
     })
     class AfterHandlerTestModel extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       @Db() @Json()
       firstName = 'George';
 

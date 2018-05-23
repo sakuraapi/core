@@ -1,8 +1,5 @@
 import { shouldRecurse } from '../../lib';
-import {
-  dbSymbols,
-  IDbOptions
-} from '../db';
+import { dbSymbols, IDbOptions } from '../db';
 import { modelSymbols } from '../model';
 import { debug } from './index';
 
@@ -53,10 +50,16 @@ export function toDb(changeSet?: any): object {
 
     // iterate over each property
     const keys = Object.getOwnPropertyNames(source);
+
     for (const key of keys) {
 
       const map = keyMapper(key, source[key], dbOptionsByPropertyName) || {} as any;
       const model = map.model;
+
+      if (!map.newKey) {
+        // field is not mapped with @Db, and model is not promiscuous, skip it
+        continue;
+      }
 
       let value;
       if (model || shouldRecurse(source[key])) {
@@ -83,9 +86,7 @@ export function toDb(changeSet?: any): object {
       }
 
       result[map.newKey] = value;
-
     }
-
     if (depth > 0 && (result._id && result.id)) { // resolves #106
       delete result.id;
     }
@@ -124,5 +125,4 @@ export function toDb(changeSet?: any): object {
       newKey: fieldName
     };
   }
-
 }

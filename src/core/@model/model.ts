@@ -1,9 +1,7 @@
 import { v4 } from 'uuid';
 import { getDependencyInjections } from '../@injectable';
-import {
-  addDefaultInstanceMethods,
-  addDefaultStaticMethods
-} from '../lib';
+import { addDefaultInstanceMethods, addDefaultStaticMethods } from '../lib';
+import { idSymbols } from './id';
 import {
   create,
   fromDb,
@@ -101,6 +99,13 @@ export interface IModelOptions {
   };
 
   /**
+   * Returns the cipher key to be used by @Json decorated properties with [[IJsonOption.encrypt]] === true. Provide
+   * a function that returns the key as a string. The function will be given the context of `this` of the model
+   * from which it is being called.
+   */
+  cipherKey?: () => string;
+
+  /**
    * Prevents the injection of CRUD functions (see [[Model]] function).
    */
   suppressInjection?: string[];
@@ -110,6 +115,7 @@ export interface IModelOptions {
  * A collection of symbols used internally by [[Model]].
  */
 export const modelSymbols = {
+  cipherKey: Symbol('cipherKey'),
   constructor: Symbol('constructor'),
   dbCollation: Symbol('dbCollation'),
   dbCollection: Symbol('dbCollection'),
@@ -225,29 +231,40 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
 
         const c = Reflect.construct(t, diArgs, nt);
 
-        // map _id to id
+        const idProperty = Reflect.getMetadata(idSymbols.idByPropertyName, c);
+        if (!idProperty && modelOptions.dbConfig) {
+          throw new Error(`Model ${target.name} defines 'dbConfig' but does not have an @Id decorated properties`);
+        }
 
+        // map _id to id
         newConstructor.prototype._id = undefined;
 
-        Reflect.defineProperty(c, 'id', {
-          configurable: true,
-          enumerable: false,
-          get: () => c._id,
-          set: (v) => c._id = v
-        });
+        if (idProperty) {
+          Reflect.defineProperty(c, idProperty, {
+            configurable: true,
+            enumerable: true,
+            get: () => c._id,
+            set: (v) => c._id = v
+          });
+        }
 
         // Check to make sure that if the @Model object has dbConfig upon construction, that it actually
         // has those properties defined. Otherwise, throw an error to help the integrator know what s/he's doing
         // wrong.
         if (modelOptions.dbConfig) {
           if (!target[modelSymbols.dbName]) {
-            throw new Error(`If you define a dbConfig for a model, you must define a db. target: ${target}`);
+            throw new Error(`If you define a dbConfig for a model, you must define a db. Model: ${target.name}`);
           }
 
           if (!target[modelSymbols.dbCollection]) {
-            throw new Error(`If you define a dbConfig for a model, you must define a collection. target: ${target}`);
+            throw new Error(`If you define a dbConfig for a model, you must define a collection. Model: ${target.name}`);
           }
         }
+
+        if (modelOptions.cipherKey) {
+          c[modelSymbols.cipherKey] = modelOptions.cipherKey.call(c);
+        }
+
         return c;
       }
     });

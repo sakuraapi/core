@@ -3,6 +3,7 @@ import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
 import { BeforeSave, OnBeforeSave } from '../before-save';
 import { SapiMissingIdErr } from '../errors';
+import { Id } from '../id';
 import { Db, Json, Model } from '../index';
 import { SapiModelMixin } from '../sapi-model-mixin';
 
@@ -28,6 +29,9 @@ describe('Model.save', () => {
 
   @Model()
   class Child {
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     cVal = 'child';
 
     @Db({model: ChildChild}) @Json()
@@ -36,6 +40,10 @@ describe('Model.save', () => {
 
   @Model({dbConfig})
   class TestParent extends SapiModelMixin() {
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Db() @Json()
     pVal = 'parent';
 
@@ -50,11 +58,15 @@ describe('Model.save', () => {
     dbConfig
   })
   class TestSave extends SapiModelMixin() {
-    @Db({
-      field: 'fn'
-    })
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
+    @Db({field: 'fn'})
     firstName = 'George';
+
     lastName = 'Washington';
+
     @Db({
       field: 'pw',
       private: true
@@ -319,6 +331,10 @@ describe('Model.save', () => {
       }
     })
     class PartialUpdateTest extends SapiModelMixin() {
+
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       @Db('fn')
       firstName = 'George';
 
