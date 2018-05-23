@@ -2,9 +2,9 @@ import { ObjectID } from 'mongodb';
 import { Db, Json } from '../';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
+import { Id } from '../id';
 import { Model } from '../model';
 import { SapiModelMixin } from '../sapi-model-mixin';
-import { Id } from '../id';
 
 describe('@Model.fromDb', () => {
 

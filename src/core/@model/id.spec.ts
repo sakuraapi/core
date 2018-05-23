@@ -1,8 +1,8 @@
-import { SapiModelMixin } from './sapi-model-mixin';
-import { Model } from './model';
-import { Id, idSymbols } from './id';
 import { ObjectID } from 'mongodb';
+import { Id, idSymbols } from './id';
 import { Json } from './json';
+import { Model } from './model';
+import { SapiModelMixin } from './sapi-model-mixin';
 
 describe('@Id', () => {
 
@@ -35,7 +35,7 @@ describe('@Id', () => {
         class TestFailure {
         }
 
-        new TestFailure();
+        new TestFailure(); // tslint:disable-line
       }).toThrowError(`Model TestFailure defines 'dbConfig' but does not have an @Id decorated properties`);
     });
   });

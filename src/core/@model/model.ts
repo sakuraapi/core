@@ -1,6 +1,7 @@
 import { v4 } from 'uuid';
 import { getDependencyInjections } from '../@injectable';
 import { addDefaultInstanceMethods, addDefaultStaticMethods } from '../lib';
+import { idSymbols } from './id';
 import {
   create,
   fromDb,
@@ -23,7 +24,6 @@ import {
   toJson,
   toJsonString
 } from './model-operators';
-import { idSymbols } from './id';
 
 export interface IMongoDBCollation {
   locale: string;

@@ -1,10 +1,10 @@
+import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
 import { BeforeCreate, OnBeforeCreate } from '../before-create';
+import { Id } from '../id';
 import { Db, Json, Model } from '../index';
 import { SapiModelMixin } from '../sapi-model-mixin';
-import { Id } from '../id';
-import { ObjectID } from 'bson';
 
 describe('Model.create', () => {
 

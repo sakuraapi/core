@@ -14,7 +14,7 @@ export const jsonSymbols = {
  * Defines the valid options for `@`[[Json]].
  */
 export interface IJsonOptions {
-  
+
   /**
    * Allows for multiple field mappings when marshalling to and from JSON. Context is helpful in a scenario like
    * the following:

@@ -1,7 +1,9 @@
+import { ObjectID } from 'mongodb';
 import * as request from 'supertest';
 import { testSapi, testUrl } from '../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../core';
 import { Db, Json, Model, SapiModelMixin } from '../core/@model';
+import { Id } from '../core/@model/id';
 import { Routable, SapiRoutableMixin } from '../core/@routable';
 import {
   deleteRouteHandler,
@@ -10,8 +12,6 @@ import {
   postRouteHandler,
   putRouteHandler
 } from './basic-handlers';
-import { Id } from '../core/@model/id';
-import { ObjectID } from 'mongodb';
 
 describe('basic-handlers', () => {
 

@@ -4,6 +4,7 @@ import * as request from 'supertest';
 import { testSapi, testUrl } from '../../../spec/helpers/sakuraapi';
 import { getAllRouteHandler, getRouteHandler } from '../../handlers';
 import { Db, Json, Model, SapiModelMixin } from '../@model';
+import { Id } from '../@model/id';
 import { BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK } from '../lib';
 import { AuthenticatorPlugin, AuthenticatorPluginResult, IAuthenticator, IAuthenticatorConstructor } from '../plugins';
 import { SakuraApi } from '../sakura-api';
@@ -15,7 +16,6 @@ import {
   RoutablesMustBeDecoratedWithRoutableError
 } from './routable';
 import { SapiRoutableMixin } from './sapi-routable-mixin';
-import { Id } from '../@model/id';
 
 describe('core/@Routable', () => {
   describe('general functionality', () => {

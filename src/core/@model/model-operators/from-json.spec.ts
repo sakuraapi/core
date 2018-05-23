@@ -1,11 +1,11 @@
 import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
+import { Id } from '../id';
 import { Db, Json } from '../index';
 import { IJsonOptions } from '../json';
 import { Model, modelSymbols } from '../model';
 import { Private } from '../private';
 import { SapiModelMixin } from '../sapi-model-mixin';
-import { Id } from '../id';
 
 describe('@Model.fromJson', () => {
   let test: Test;
