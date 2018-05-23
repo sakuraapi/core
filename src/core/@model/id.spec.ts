@@ -2,15 +2,14 @@ import { SapiModelMixin } from './sapi-model-mixin';
 import { Model } from './model';
 import { Id, idSymbols } from './id';
 import { ObjectID } from 'mongodb';
+import { Json } from './json';
 
 describe('@Id', () => {
 
   @Model()
   class TestModel extends SapiModelMixin() {
-
-    @Id()
+    @Id() @Json({type: 'id'})
     tmId: ObjectID;
-
   }
 
   it('decorates a property', () => {
@@ -19,29 +18,62 @@ describe('@Id', () => {
     expect(idProperty).toBe('tmId');
   });
 
-  it('decorating two properties with @Id throws error', () => {
-    expect(() => {
-      @Model()
-      class TestModel1 extends SapiModelMixin() {
-        @Id() tmId: ObjectID;
-        @Id() tmId2: ObjectID;
-      }
-    }).toThrowError('TestModel1 is trying to use @Id on property tmId2, but it has already been defined on tmId');
+  describe('validation', () => {
+    it('decorating two properties with @Id throws error', () => {
+      expect(() => {
+        @Model()
+        class TestModel1 extends SapiModelMixin() {
+          @Id() tmId: ObjectID;
+          @Id() tmId2: ObjectID;
+        }
+      }).toThrowError('TestModel1 is trying to use @Id on property tmId2, but it has already been defined on tmId');
+    });
+
+    it('throws if dbConfig is defined without @Id decorated property', () => {
+      expect(() => {
+        @Model({dbConfig: {} as any})
+        class TestFailure {
+        }
+
+        new TestFailure();
+      }).toThrowError(`Model TestFailure defines 'dbConfig' but does not have an @Id decorated properties`);
+    });
   });
 
-  it('maps fromDb', () => {
-    const id = new ObjectID();
-    const result = TestModel.fromDb({_id: id});
+  describe('@Db', () => {
+    it('maps fromDb', () => {
+      const id = new ObjectID();
+      const result = TestModel.fromDb({_id: id});
 
-    expect(result.tmId.toHexString()).toBe(id.toHexString());
-    expect(result.id).toBeUndefined();
+      expect(result.tmId.toHexString()).toBe(id.toHexString());
+    });
+
+    it('maps toDb', () => {
+      const model = new TestModel();
+      model.tmId = new ObjectID();
+      const result = model.toDb();
+
+      expect(result._id.toHexString()).toBe(model.tmId.toHexString());
+      expect(result.tmId).toBeUndefined();
+    });
   });
 
-  it('maps toDb', () => {
-    const model = new TestModel();
-    model.tmId = new ObjectID();
-    const result = model.toDb();
+  describe('@Json', () => {
 
-    expect(result._id.toHexString()).toBe(model.tmId.toHexString());
+    it('maps fromJson', () => {
+      const id = new ObjectID();
+      const result = TestModel.fromJson({tmId: id.toHexString()});
+
+      expect(result.tmId.toHexString()).toBe(id.toHexString());
+    });
+
+    it('maps toJson', () => {
+      const model = new TestModel();
+      model.tmId = new ObjectID();
+      const result = model.toJson();
+
+      expect(result.tmId.toHexString()).toBe(model.tmId.toHexString());
+    });
+
   });
 });

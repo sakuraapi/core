@@ -4,8 +4,14 @@ import { SakuraApi } from '../core';
 import { Db, Json, Model, SapiModelMixin } from '../core/@model';
 import { Routable, SapiRoutableMixin } from '../core/@routable';
 import {
-  deleteRouteHandler, getAllRouteHandler, getRouteHandler, postRouteHandler, putRouteHandler
+  deleteRouteHandler,
+  getAllRouteHandler,
+  getRouteHandler,
+  postRouteHandler,
+  putRouteHandler
 } from './basic-handlers';
+import { Id } from '../core/@model/id';
+import { ObjectID } from 'mongodb';
 
 describe('basic-handlers', () => {
 
@@ -18,6 +24,9 @@ describe('basic-handlers', () => {
       }
     })
     class TestModel extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       @Db() @Json()
       firstName: string;
 

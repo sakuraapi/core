@@ -68,6 +68,7 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
 
   // iterate over each property
   const keys = Object.getOwnPropertyNames(source);
+
   for (const key of keys) {
 
     const dbOptions = (dbOptionsByPropertyName) ? dbOptionsByPropertyName.get(key) || {} : {};

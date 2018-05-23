@@ -8,6 +8,7 @@ import { Model } from '../model';
 import { Private } from '../private';
 import { SapiModelMixin } from '../sapi-model-mixin';
 import { ToJson } from '../to-json';
+import { Id } from '../id';
 
 describe('Model.toJson', () => {
 
@@ -19,6 +20,10 @@ describe('Model.toJson', () => {
     }
   })
   class Test extends SapiModelMixin() {
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Json('ap')
     aProperty: string = 'test';
 
@@ -41,8 +46,13 @@ describe('Model.toJson', () => {
   });
 
   it('function is injected into the prototype of the model by default', () => {
+
     @Model()
     class User extends SapiModelMixin() {
+
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       firstName = 'George';
       lastName: string;
     }
@@ -156,6 +166,10 @@ describe('Model.toJson', () => {
 
     @Model()
     class User extends SapiModelMixin() {
+
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       firstName = 'George';
       lastName: string;
       contact = new Contact();
@@ -208,6 +222,9 @@ describe('Model.toJson', () => {
       }
     })
     class User extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       @Db('fn') @Json('fName')
       firstName = 'George';
       @Db('ln') @Json('lName')
@@ -291,6 +308,9 @@ describe('Model.toJson', () => {
       }
     })
     class User extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       firstName = 'George';
       lastName: string;
       contact = new Contact();
@@ -757,6 +777,9 @@ describe('Model.toJson', () => {
         @Model()
         class TestProjection extends SapiModelMixin() {
 
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           fieldA = 'a';
           fieldB = 'b';
           field1 = 1;
@@ -828,6 +851,9 @@ describe('Model.toJson', () => {
 
         @Model()
         class TestProjection extends SapiModelMixin() {
+
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
 
           fieldA = 'a';
           fieldB = 'b';
@@ -950,6 +976,9 @@ describe('Model.toJson', () => {
 
         @Model()
         class TestProjection extends SapiModelMixin() {
+
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
 
           fieldA = 'a';
           fieldB = 'b';

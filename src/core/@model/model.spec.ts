@@ -6,6 +6,7 @@ import { Db, Json, Model, modelSymbols } from './';
 import { SapiDbForModelNotFound } from './errors';
 import { ModelNotRegistered, ModelsMustBeDecoratedWithModelError } from './model';
 import { SapiModelMixin } from './sapi-model-mixin';
+import { Id } from './id';
 
 describe('core/@Model', () => {
   describe('construction', () => {
@@ -19,10 +20,12 @@ describe('core/@Model', () => {
       expect(testModel instanceof TestModel).toBe(true);
     });
 
-    it('maps _id to id but defines id as not enumerable', () => {
+    it('maps _id to id and defines id as enumerable', () => {
 
       @Model()
       class TestModel extends SapiModelMixin() {
+        @Id()
+        id: ObjectID;
       }
 
       const testModel = new TestModel();
@@ -32,7 +35,7 @@ describe('core/@Model', () => {
       expect(testModel.id).toEqual(testModel._id);
 
       const json = JSON.parse(JSON.stringify(testModel));
-      expect(json.id).toBeUndefined();
+      expect(json.id).toBe(testModel.id.toHexString());
 
     });
 
@@ -72,6 +75,8 @@ describe('core/@Model', () => {
           }
         })
         class TestModel extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
         }
 
         const testModel = new TestModel();
@@ -94,6 +99,9 @@ describe('core/@Model', () => {
         dbConfig
       })
       class DefaultCrud extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+
         @Db({
           field: 'fn'
         })
@@ -113,6 +121,8 @@ describe('core/@Model', () => {
         }
       })
       class TestBadDb extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
       }
 
       let sapi: SakuraApi;
@@ -324,6 +334,9 @@ describe('core/@Model', () => {
 
           @Model({dbConfig: cursorDbConfig})
           class TestWithOutCollation extends SapiModelMixin() {
+            @Id() @Json({type: 'id'})
+            id: ObjectID;
+
             @Db() @Json()
             name: string;
           }
@@ -639,6 +652,9 @@ describe('core/@Model', () => {
         }
       })
       class NestedModel extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+
         @Db()
         contact: {
           firstName: string,
@@ -712,6 +728,9 @@ describe('core/@Model', () => {
           }
         })
         class ModelDateStoreAndRestoreTest extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db() @Json()
           date: Date = new Date();
         }
@@ -803,6 +822,9 @@ describe('core/@Model', () => {
           }
         })
         class ModelArrayStoreAndRestoreTest extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db() @Json()
           anArray = ['value1', 'value2'];
         }

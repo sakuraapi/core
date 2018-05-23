@@ -2,6 +2,8 @@ import { ObjectID } from 'mongodb';
 import { Db } from '../db';
 import { Model } from '../model';
 import { SapiModelMixin } from '../sapi-model-mixin';
+import { Id } from '../id';
+import { Json } from '../json';
 
 describe('Model.toDb', () => {
   class Address {
@@ -34,13 +36,20 @@ describe('Model.toDb', () => {
   })
   class ChasteModelTest extends SapiModelMixin() {
 
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Db('fn')
     firstName = 'George';
+
     @Db()
     lastName = 'Washington';
+
     phone = '555-123-1234';
+
     @Db()
     order = new Order();
+
   }
 
   @Model({
@@ -51,6 +60,10 @@ describe('Model.toDb', () => {
     }
   })
   class PromiscuousModelTest {
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Db('fn')
     firstName = 'George';
     @Db()

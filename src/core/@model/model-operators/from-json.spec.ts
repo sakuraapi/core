@@ -5,6 +5,7 @@ import { IJsonOptions } from '../json';
 import { Model, modelSymbols } from '../model';
 import { Private } from '../private';
 import { SapiModelMixin } from '../sapi-model-mixin';
+import { Id } from '../id';
 
 describe('@Model.fromJson', () => {
   let test: Test;
@@ -17,6 +18,10 @@ describe('@Model.fromJson', () => {
     }
   })
   class Test extends SapiModelMixin() {
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Json('ap')
     aProperty: string = 'test';
 
@@ -514,6 +519,8 @@ describe('@Model.fromJson', () => {
 
     @Model()
     class User1 extends SapiModelMixin() {
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
     }
 
     it('unmarshalls id as an ObjectID when it is a valid ObjectID', () => {
@@ -854,6 +861,9 @@ describe('@Model.fromJson', () => {
 
         @Model({dbConfig: {collection: 'users', db: 'userDb'}})
         class Test94 extends SapiModelMixin() {
+          @Id() @Json({type: 'id'})
+          id: ObjectID;
+
           @Db({field: 'ad', model: Address1}) @Json()
           address = new Address1();
         }

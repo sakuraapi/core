@@ -80,8 +80,6 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     static removeById: (id: ObjectID, options?: CommonOptions) => Promise<DeleteWriteOpResultObject>;
 
     _id: ObjectID;
-    id: ObjectID;
-
     dbLocale: string;
 
     create: (options?: CollectionInsertOneOptions, context?: string) => Promise<InsertOneWriteOpResult>;

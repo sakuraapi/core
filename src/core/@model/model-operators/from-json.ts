@@ -136,7 +136,7 @@ export function fromJson<T = any>(json: T, context: string | IContext = 'default
         if (newKey !== undefined) {
           value = processEncryption(jsonSource[key], target);
           const type = jsonFieldOptions.type || jsonFieldOptionsStar.type || null;
-          if (type === 'id' || ((newKey === 'id' || newKey === '_id') && ObjectID.isValid(value))) {
+          if ((type === 'id' || (newKey === 'id' || newKey === '_id')) && ObjectID.isValid(value)) {
             value = new ObjectID(value);
           }
         }
