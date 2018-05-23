@@ -4,9 +4,9 @@ import { Injectable, NonInjectableConstructorParameterError } from '../@injectab
 import { SakuraApi } from '../sakura-api';
 import { Db, Json, Model, modelSymbols } from './';
 import { SapiDbForModelNotFound } from './errors';
+import { Id } from './id';
 import { ModelNotRegistered, ModelsMustBeDecoratedWithModelError } from './model';
 import { SapiModelMixin } from './sapi-model-mixin';
-import { Id } from './id';
 
 describe('core/@Model', () => {
   describe('construction', () => {
@@ -1088,7 +1088,7 @@ describe('core/@Model', () => {
     let value: string;
 
     @Model({
-      cipherKey: function () {
+      cipherKey: function () { // tslint:disable-line
         context = this;
         hasSapi = this.sapi;
         value = this.secret;
@@ -1110,14 +1110,11 @@ describe('core/@Model', () => {
       await sapi.close();
     });
 
-
     describe('toJson', () => {
-
 
       it('allows cipher key to be set for toJson at the model level', () => {
         const model = new TestModel();
         const result = model.toJson();
-
 
         expect(context instanceof TestModel).toBeTruthy();
         expect(result.secret).not.toBe(model.secret);
@@ -1138,7 +1135,6 @@ describe('core/@Model', () => {
         const result = TestModel.fromJson({
           secret: '2jOXzQ.ksnbd0QPST0wnpnESZW8qg.yDIs939PvvKtHz050Una4A'
         });
-
 
         expect(context instanceof TestModel).toBeTruthy();
         expect(result.secret).not.toBe('shh');

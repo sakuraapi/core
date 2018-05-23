@@ -3,9 +3,9 @@ import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
 import { BeforeSave, OnBeforeSave } from '../before-save';
 import { SapiMissingIdErr } from '../errors';
+import { Id } from '../id';
 import { Db, Json, Model } from '../index';
 import { SapiModelMixin } from '../sapi-model-mixin';
-import { Id } from '../id';
 
 describe('Model.save', () => {
 

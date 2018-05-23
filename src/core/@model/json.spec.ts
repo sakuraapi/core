@@ -1,9 +1,9 @@
 import { ObjectID } from 'mongodb';
 import { Db } from './db';
+import { Id } from './id';
 import { Json } from './json';
 import { Model, modelSymbols } from './model';
 import { SapiModelMixin } from './sapi-model-mixin';
-import { Id } from './id';
 
 describe('@Json', () => {
 

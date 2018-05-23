@@ -3,12 +3,12 @@ import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { IContext } from '../../lib';
 import { SakuraApi } from '../../sakura-api';
 import { Db } from '../db';
+import { Id } from '../id';
 import { Json } from '../json';
 import { Model } from '../model';
 import { Private } from '../private';
 import { SapiModelMixin } from '../sapi-model-mixin';
 import { ToJson } from '../to-json';
-import { Id } from '../id';
 
 describe('Model.toJson', () => {
 
