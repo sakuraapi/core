@@ -3,6 +3,8 @@ import { SakuraApi } from '../../sakura-api';
 import { BeforeCreate, OnBeforeCreate } from '../before-create';
 import { Db, Json, Model } from '../index';
 import { SapiModelMixin } from '../sapi-model-mixin';
+import { Id } from '../id';
+import { ObjectID } from 'bson';
 
 describe('Model.create', () => {
 
@@ -49,6 +51,10 @@ describe('Model.create', () => {
     dbConfig
   })
   class TestCreate extends SapiModelMixin() {
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Db({
       field: 'fn'
     })
@@ -176,6 +182,10 @@ describe('Model.create', () => {
       }
     })
     class UserCreateTest extends SapiModelMixin() {
+
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
+
       @Db()
       firstName = 'George';
       @Db()

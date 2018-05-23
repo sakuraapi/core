@@ -231,14 +231,17 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
 
         const c = Reflect.construct(t, diArgs, nt);
 
-        const idProperty = Reflect.getMetadata(idSymbols.idByPropertyName, c) || 'id';
+        const idProperty = Reflect.getMetadata(idSymbols.idByPropertyName, c);
+        if (!idProperty && modelOptions.dbConfig) {
+          throw new Error(`Model ${target.name} defines 'dbConfig' but does not have an @Id decorated properties`);
+        }
 
         // map _id to id
         newConstructor.prototype._id = undefined;
 
         Reflect.defineProperty(c, idProperty, {
           configurable: true,
-          enumerable: false,
+          enumerable: true,
           get: () => c._id,
           set: (v) => c._id = v
         });
@@ -248,11 +251,11 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
         // wrong.
         if (modelOptions.dbConfig) {
           if (!target[modelSymbols.dbName]) {
-            throw new Error(`If you define a dbConfig for a model, you must define a db. target: ${target}`);
+            throw new Error(`If you define a dbConfig for a model, you must define a db. Model: ${target.name}`);
           }
 
           if (!target[modelSymbols.dbCollection]) {
-            throw new Error(`If you define a dbConfig for a model, you must define a collection. target: ${target}`);
+            throw new Error(`If you define a dbConfig for a model, you must define a collection. Model: ${target.name}`);
           }
         }
 

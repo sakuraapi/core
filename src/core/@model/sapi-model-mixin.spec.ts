@@ -1,12 +1,12 @@
 import { testSapi } from '../../../spec/helpers/sakuraapi';
-import {
-  Injectable,
-  SapiInjectableMixin
-} from '../@injectable';
+import { Injectable, SapiInjectableMixin } from '../@injectable';
 import { SakuraApi } from '../sakura-api';
 import { Db } from './db';
 import { Model } from './model';
 import { SapiModelMixin } from './sapi-model-mixin';
+import { Id } from './id';
+import { ObjectID } from 'mongodb';
+import { Json } from './json';
 
 describe('SapiModelMixin', () => {
   it('allows inheritance', async (done) => {
@@ -25,6 +25,9 @@ describe('SapiModelMixin', () => {
       }
     })
     class BaseModel extends SapiModelMixin() {
+
+      @Id() @Json({type: 'id'})
+      id: ObjectID;
 
       @Db()
       firstName = 'John';

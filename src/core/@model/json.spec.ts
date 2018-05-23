@@ -1,11 +1,9 @@
 import { ObjectID } from 'mongodb';
 import { Db } from './db';
 import { Json } from './json';
-import {
-  Model,
-  modelSymbols
-} from './model';
+import { Model, modelSymbols } from './model';
 import { SapiModelMixin } from './sapi-model-mixin';
+import { Id } from './id';
 
 describe('@Json', () => {
 
@@ -17,6 +15,10 @@ describe('@Json', () => {
     }
   })
   class Test extends SapiModelMixin() {
+
+    @Id() @Json({type: 'id'})
+    id: ObjectID;
+
     @Json('ap')
     aProperty: string = 'test';
 
