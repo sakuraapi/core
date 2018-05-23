@@ -186,4 +186,26 @@ describe('Model.toDb', () => {
       });
     });
   });
+
+  describe('bugs', () => {
+    describe('#174 undefined:undefined being inserts', () => {
+
+      @Model()
+      class TestModel extends SapiModelMixin() {
+        prop1: string;
+      }
+
+      it('toDb', () => {
+        const model = new TestModel();
+        model.prop1 = 'test';
+        const result = model.toDb();
+
+        const keys = Object.keys(result);
+        for (const key of keys) {
+          expect(key).not.toBe('undefined');
+        }
+      });
+
+    });
+  });
 });

@@ -239,12 +239,14 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
         // map _id to id
         newConstructor.prototype._id = undefined;
 
-        Reflect.defineProperty(c, idProperty, {
-          configurable: true,
-          enumerable: true,
-          get: () => c._id,
-          set: (v) => c._id = v
-        });
+        if (idProperty) {
+          Reflect.defineProperty(c, idProperty, {
+            configurable: true,
+            enumerable: true,
+            get: () => c._id,
+            set: (v) => c._id = v
+          });
+        }
 
         // Check to make sure that if the @Model object has dbConfig upon construction, that it actually
         // has those properties defined. Otherwise, throw an error to help the integrator know what s/he's doing
