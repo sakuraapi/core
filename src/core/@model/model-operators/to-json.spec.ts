@@ -1,6 +1,6 @@
 import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
-import { IContext } from '../../lib';
+import { decrypt, IContext } from '../../lib';
 import { SakuraApi } from '../../sakura-api';
 import { Db } from '../db';
 import { Id } from '../id';
@@ -1298,6 +1298,42 @@ describe('Model.toJson', () => {
       const result = model.toJson();
 
       expect(result.secret).toBe(undefined);
+    });
+
+    describe('encrypts sub document fields', () => {
+
+
+      @Model({cipherKey: () => key})
+      class ChildModel extends SapiModelMixin() {
+        @Id() @Json({encrypt: true, type: 'id'})
+        id: ObjectID;
+
+        @Json()
+        value = 1;
+      }
+
+      @Model()
+      class ParentModel extends SapiModelMixin() {
+
+        @Json({model: ChildModel})
+        childModel = new ChildModel();
+
+        @Json()
+        parent = true;
+      }
+
+      it('without parent having encryption', () => {
+        const model = new ParentModel();
+        model.childModel.id = new ObjectID();
+        const json = model.toJson();
+
+
+        expect(json.parent).toBe(true);
+        expect(json.childModel).toBeDefined();
+        expect(json.childModel.value).toBe(1);
+        expect(decrypt(json.childModel.id, key)).toBe(model.childModel.id.toHexString());
+      });
+
     });
   });
 });
