@@ -260,7 +260,7 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
             throw new Error(`If you define a dbConfig for a model, you must define a collection. Model: ${target.name}`);
           }
         }
-
+        
         if (modelOptions.cipherKey) {
           c[modelSymbols.cipherKey] = modelOptions.cipherKey.call(c);
         }
