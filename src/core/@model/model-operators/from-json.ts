@@ -1,7 +1,5 @@
-import { createDecipheriv } from 'crypto';
 import { ObjectID } from 'mongodb';
-import { decode as urlBase64Decode } from 'urlsafe-base64';
-import { IContext, shouldRecurse } from '../../lib';
+import { decrypt, IContext, shouldRecurse } from '../../lib';
 import { dbSymbols, IDbOptions } from '../db';
 import { formatFromJsonSymbols, FromJsonHandler } from '../from-json';
 import { IJsonOptions, jsonSymbols } from '../json';
@@ -171,34 +169,5 @@ export function fromJson<T = any>(json: T, context: string | IContext = 'default
     }
 
     return target;
-  }
-}
-
-function decrypt(value: string, cipherKey: string): any {
-  cipherKey = cipherKey || '';
-
-  const parts = (value && value.split) ? value.split('.') : [];
-
-  if (parts.length !== 3) {
-    throw new Error(`@Json invalid value for decryption ${value}`);
-  }
-
-  const v = urlBase64Decode(parts[0]);
-  const hmac = urlBase64Decode(parts[1]);
-  const iv = urlBase64Decode(parts[2]);
-
-  let buff: Buffer;
-  try {
-    const decipher = createDecipheriv('aes-256-gcm', cipherKey, iv);
-    decipher.setAuthTag(hmac);
-
-    buff = Buffer.concat([
-      decipher.update(v),
-      decipher.final()
-    ]);
-
-    return JSON.parse(buff.toString('utf8'));
-  } catch (err) {
-    return buff.toString('utf8');
   }
 }

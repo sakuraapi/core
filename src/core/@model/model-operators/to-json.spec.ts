@@ -1282,5 +1282,22 @@ describe('Model.toJson', () => {
       expect(typeof result2.subModel).toBe('string');
       expect(result1.subModel).not.toBe(result2.subModel);
     });
+
+    it('does not throw if value is null, #210', () => {
+      const model = new TestModel();
+      model.secret = null;
+      const result = model.toJson();
+
+      expect(result.secret).not.toBe(model.secret);
+      expect(result.secret.split('.').length).toBe(3);
+    });
+
+    it('does not throw if value is undefined, #210', () => {
+      const model = new TestModel();
+      model.secret = undefined;
+      const result = model.toJson();
+
+      expect(result.secret).toBe(undefined);
+    });
   });
 });

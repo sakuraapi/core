@@ -1213,5 +1213,25 @@ describe('@Model.fromJson', () => {
       expect(cipherText.someId).not.toBe(model.someId);
       expect(result.someId.toHexString()).toEqual(model.someId.toHexString());
     });
+
+    it('does not throw if value is null, #210', () => {
+      const model = new TestModel();
+      model.secret = null;
+      const cipherText = model.toJson();
+      const result = TestModel.fromJson(cipherText);
+
+      expect(cipherText.secret).not.toBe(model.secret);
+      expect(result.secret).toBe(model.secret);
+    });
+
+    it('does not throw if value is undefined, #210', () => {
+      const model = new TestModel();
+      model.secret = undefined;
+      const cipherText = model.toJson();
+      const result = TestModel.fromJson(cipherText);
+
+      expect(cipherText.secret).toBe(model.secret);
+      expect(result.secret).toBe(model.secret);
+    });
   });
 });
