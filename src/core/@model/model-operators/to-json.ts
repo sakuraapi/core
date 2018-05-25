@@ -6,7 +6,6 @@ import { privateSymbols } from '../private';
 import { formatToJsonSymbols, ToJsonHandler } from '../to-json';
 import { debug } from './index';
 
-
 /**
  * @instance Returns a model as JSON, respecting the various decorators like `@`[[Json]]. Supports '*' context.
  *

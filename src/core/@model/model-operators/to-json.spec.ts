@@ -1302,7 +1302,6 @@ describe('Model.toJson', () => {
 
     describe('encrypts sub document fields', () => {
 
-
       @Model({cipherKey: () => key})
       class ChildModel extends SapiModelMixin() {
         @Id() @Json({encrypt: true, type: 'id'})
@@ -1326,7 +1325,6 @@ describe('Model.toJson', () => {
         const model = new ParentModel();
         model.childModel.id = new ObjectID();
         const json = model.toJson();
-
 
         expect(json.parent).toBe(true);
         expect(json.childModel).toBeDefined();

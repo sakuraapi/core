@@ -1122,7 +1122,6 @@ describe('core/@Model', () => {
       child = new ChildDocument();
     }
 
-
     beforeEach(() => sapi = testSapi({
       models: [
         ChildDocument,
