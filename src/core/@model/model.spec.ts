@@ -1082,28 +1082,58 @@ describe('core/@Model', () => {
 
   describe('to/from json @Model cipherKey', () => {
 
-    let context;
+    let thisContext;
+    let childThis;
+    let childHasSapi;
     let hasSapi: SakuraApi;
     let sapi: SakuraApi;
     let value: string;
 
     @Model({
       cipherKey: function () { // tslint:disable-line
-        context = this;
+        thisContext = this;
         hasSapi = this.sapi;
         value = this.secret;
         return 'DFXkx2Vdi3FhZ;h24RE?,>O@Bm;~L7}(';
       }
     })
     class TestModel extends SapiModelMixin() {
+
       @Json({encrypt: true})
       secret = 'shhh';
     }
 
-    beforeEach(() => sapi = testSapi({models: [TestModel]}));
+    @Model({
+      cipherKey: function () {// tslint:disable-line
+        childThis = this;
+        childHasSapi = this.sapi;
+        return 'DFXkx2Vdi3FhZ;h24RE?,>O@Bm;~L7}(';
+      }
+    })
+    class ChildDocument extends SapiModelMixin() {
+
+      @Json({encrypt: true})
+      subSecret = 'hhhs';
+    }
+
+    @Model()
+    class ParentDocument extends SapiModelMixin() {
+      @Json({model: ChildDocument})
+      child = new ChildDocument();
+    }
+
+    beforeEach(() => sapi = testSapi({
+      models: [
+        ChildDocument,
+        ParentDocument,
+        TestModel
+      ]
+    }));
 
     afterEach(async () => {
-      context = undefined;
+      thisContext = undefined;
+      childThis = undefined;
+      childHasSapi = undefined;
       hasSapi = undefined;
       value = undefined;
 
@@ -1116,7 +1146,7 @@ describe('core/@Model', () => {
         const model = new TestModel();
         const result = model.toJson();
 
-        expect(context instanceof TestModel).toBeTruthy();
+        expect(thisContext instanceof TestModel).toBeTruthy();
         expect(result.secret).not.toBe(model.secret);
         expect(result.secret.split('.').length).toBe(3);
       });
@@ -1127,6 +1157,15 @@ describe('core/@Model', () => {
         expect(value).toBe(model.secret);
         expect(hasSapi instanceof SakuraApi).toBeTruthy();
       });
+
+      it('binds cipherKey function of sub document to its model #214', () => {
+        const model = new ParentDocument();
+        const result = model.toJson();
+
+        expect(childThis instanceof ChildDocument).toBeTruthy();
+        expect(childHasSapi instanceof SakuraApi).toBeTruthy();
+        expect(result.child.subSecret.split('.').length).toBe(3);
+      });
     });
 
     describe('fromJson', () => {
@@ -1136,7 +1175,7 @@ describe('core/@Model', () => {
           secret: '2jOXzQ.ksnbd0QPST0wnpnESZW8qg.yDIs939PvvKtHz050Una4A'
         });
 
-        expect(context instanceof TestModel).toBeTruthy();
+        expect(thisContext instanceof TestModel).toBeTruthy();
         expect(result.secret).not.toBe('shh');
       });
 
