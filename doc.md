@@ -8,3 +8,4 @@ the `develop` branch. Thanks!
 
 Copyright 2016, [License](https://github.com/sakuraapi/api/blob/develop/LICENSE)
 
+[Documentation Home](https://sakuraapi.github.io/docs-core/)
