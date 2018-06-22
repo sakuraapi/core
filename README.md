@@ -19,7 +19,7 @@ npm install @sakuraapi/core
 
 ## Docs
 
-* API Documentation: https://github.com/sakuraapi/docs-core
+* API Documentation: https://sakuraapi.github.io/docs-core/
 * Manual: https://github.com/sakuraapi/manual
 * Updates: http://blog.sakuraapi.com
 

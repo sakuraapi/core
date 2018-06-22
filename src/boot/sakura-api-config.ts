@@ -35,7 +35,7 @@ export class SakuraApiConfig {
 
     debug.normal(`Adding ${config.dbConnections.length} dbConnections.`);
     for (const conn of config.dbConnections) {
-      dbConns.addConnection(conn.name, encodeURI(conn.url), conn.mongoClientOptions);
+      dbConns.addConnection(conn.name, conn.url, conn.mongoClientOptions);
     }
 
     return dbConns;

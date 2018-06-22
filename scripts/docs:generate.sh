@@ -11,13 +11,10 @@ npx typedoc \
     --exclude "**/**/*+(spec|index).ts" \
     --excludeExternals \
     --excludePrivate \
-    --mode modules \
+    --mode file \
     --name "SakuraApi" \
     --out "${docPath}" \
     --readme doc.md \
     --target ES6 \
     --tsconfig tsconfig.json \
     src/**/**
-
-touch "${docPath}/.nojekyll"
-cp favicon.ico "${docPath}" || true
