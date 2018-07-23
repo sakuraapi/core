@@ -17,6 +17,8 @@ SakuraAPI is a NodeJS API framework that utilizes modern and emerging webs stand
 npm install @sakuraapi/core
 ```
 
+Note: at the moment the SakuraApi CLI (`sapi`), is seriously behind the current version of SakuraApi/core. Unfortunately, this renders it useless. Apologies for the inconvenience. We are accepting volunteers if anyone would like to take on maintaining the CLI :).  
+
 ## Docs
 
 * API Documentation: https://sakuraapi.github.io/docs-core/
