@@ -1234,4 +1234,17 @@ describe('@Model.fromJson', () => {
       expect(result.secret).toBe(model.secret);
     });
   });
+
+  describe('sparse', () => {
+    it('only includes resulting fields from the source json', () => {
+
+      const result = User.fromJson({
+        fn: 'bob'
+      }, null, {sparse: true});
+
+      expect(Object.keys(result).length).toBe(1);
+      expect(result.firstName).toBe('bob');
+      expect(typeof result.toJson === 'function').toBeTruthy();
+    });
+  });
 });
