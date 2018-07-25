@@ -15,6 +15,7 @@ import { Constructor, IContext } from '../lib';
 import { SakuraApi } from '../sakura-api';
 import { IDbGetParams, IFromDbOptions } from './';
 import { IMongoDBCollation } from './model';
+import { IFromJsonOptions } from './model-operators';
 
 /**
  * Integrators should extend their Models with this Mixin to get type checking.
@@ -66,7 +67,7 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
 
     static fromDb: <T>(this: { new(): T }, json: any, options?: IFromDbOptions) => T;
     static fromDbArray: <T>(this: { new(): T }, jsons: object[], options?: IFromDbOptions) => T[];
-    static fromJson: <T>(this: { new(...params): T }, json: object, context?: string) => T;
+    static fromJson: <T>(this: { new(...params): T }, json: object, context?: string, options?: IFromJsonOptions) => T;
     static fromJsonArray: <T>(this: { new(): T }, jsons: object[]) => T[];
     static fromJsonToDb: (json: any, context?: string) => any;
     static get: <T>(this: { new(): T }, params?: IDbGetParams) => Promise<T[]>;
