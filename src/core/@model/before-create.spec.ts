@@ -90,7 +90,6 @@ describe('@BeforeCreate', () => {
     let context1;
     let context2;
 
-
     beforeCreate1Hook = (model: TestCreate, context: string): Promise<void> => {
       model1 = model;
       context1 = context;
@@ -130,7 +129,6 @@ describe('@BeforeCreate', () => {
     let contextDefault;
     let contextStar;
     let contextTest;
-
 
     beforeCreate1Hook = async (model: TestCreate, context: string): Promise<void> => {
       contextDefault = true;

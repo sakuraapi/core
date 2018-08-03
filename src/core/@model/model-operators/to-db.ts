@@ -99,7 +99,6 @@ function keyMapper(key, value, dbMeta): { model: any, newKey: string } {
   const constructor = this[modelSymbols.constructor] || this;
   const modelOptions = constructor[modelSymbols.modelOptions];
 
-
   if (!dbMeta) {
     dbMeta = constructor[dbSymbols.dbByPropertyName];
   }

@@ -40,7 +40,6 @@ describe('@BeforeSave', () => {
     })
     password = '';
 
-
     @BeforeSave()
     beforeSave1(model: TestSave, context: string): Promise<void> {
       beforeSave1This = this;
