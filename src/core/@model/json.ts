@@ -136,6 +136,10 @@ export interface IJsonOptions {
    * An optional `@`[[Model]] decorated class. If provided, the property will be instantiated as a sub document
    * with its default values or the values from the json object. `@`[[Json]] will utilize this same model
    * as the one set in `@`[[Db]] if `model` is not set on this attribute.
+   *
+   * While `@Db({model: Model})` will inform `@Json` of the model, the reciprocal is not true. As a result,
+   * if you have a property that is decorated with both `@Db` and `@Json`, declare the model in the `@Db`
+   * decorator.
    */
   model?: any;
 
