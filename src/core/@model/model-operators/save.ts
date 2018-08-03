@@ -43,7 +43,7 @@ export async function save(this: InstanceType<ReturnType<typeof SapiModelMixin>>
   const dbObj = changeSet || this.toDb(this);
   delete dbObj._id;
   delete dbObj.id;
-  
+
   const result = await col.updateOne({_id: (this as any).id}, {$set: dbObj}, options);
 
   // update the current model if the update came in the form of a change set;
@@ -61,5 +61,3 @@ export async function save(this: InstanceType<ReturnType<typeof SapiModelMixin>>
 
   return result;
 }
-
-
