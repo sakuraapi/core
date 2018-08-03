@@ -77,7 +77,6 @@ describe('Model.save', () => {
     await sapi
       .dbConnections
       .connectAll();
-      
   });
 
   afterEach(async () => {
