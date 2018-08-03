@@ -4,6 +4,8 @@ import { addDefaultInstanceMethods, addDefaultStaticMethods } from '../lib';
 import { idSymbols } from './id';
 import {
   create,
+  emitBeforeCreate,
+  emitBeforeSave,
   fromDb,
   fromDbArray,
   fromJson,
@@ -382,6 +384,8 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
 
     // Inject default instance methods for CRUD if not already defined by integrator
     addDefaultInstanceMethods(newConstructor, create, modelOptions);
+    addDefaultInstanceMethods(newConstructor, emitBeforeCreate, modelOptions);
+    addDefaultInstanceMethods(newConstructor, emitBeforeSave, modelOptions);
     addDefaultInstanceMethods(newConstructor, getCollection, modelOptions);
     addDefaultInstanceMethods(newConstructor, getDb, modelOptions);
     addDefaultInstanceMethods(newConstructor, remove, modelOptions);

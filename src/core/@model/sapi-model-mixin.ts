@@ -84,6 +84,8 @@ export function SapiModelMixin<C extends Constructor<{}>>(base?: C) {
     dbLocale: string;
 
     create: (options?: CollectionInsertOneOptions, context?: string) => Promise<InsertOneWriteOpResult>;
+    emitBeforeCreate: (context?: string) => Promise<void>;
+    emitBeforeSave: (context?: string) => Promise<void>;
     getCollection: () => Collection;
     getDb: () => Db;
     toJson: (context?: string | IContext) => any;

@@ -5,6 +5,8 @@ export const idSymbols = {
 /**
  * @decorator `@Id` informs `@`[[Model]] which model property represents `_id` from MongoDB. If `@Id` is not
  * specified, a property `id` will be created for your model.
+ *
+ * Don't use this on sub documents that need an id. Instead, decorate sub documents with @Db.
  */
 export function Id(): (target: any, key: string) => void {
 

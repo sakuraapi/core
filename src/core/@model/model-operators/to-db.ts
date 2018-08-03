@@ -24,12 +24,11 @@ import { debug } from './index';
 export function toDb(changeSet?: any): object {
   const constructor = this[modelSymbols.constructor] || this;
 
-  const modelOptions = constructor[modelSymbols.modelOptions];
   debug.normal(`.toDb called, target '${(constructor || {} as any).name}'`);
 
   changeSet = changeSet || this;
 
-  const dbObj = mapModelToDb(changeSet);
+  const dbObj = mapModelToDb.call(this, changeSet);
 
   delete (dbObj as any).id;
   if (!(dbObj as any)._id && this._id) {
@@ -37,92 +36,95 @@ export function toDb(changeSet?: any): object {
   }
 
   return dbObj;
+}
 
-  //////////
-  function mapModelToDb(source, depth = 0) {
+function mapModelToDb(source, depth = 0) {
 
-    const result = {} as any;
-    if (!source) {
-      return;
+  const result = {} as any;
+  if (!source) {
+    return;
+  }
+
+  const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
+
+  // iterate over each property
+  const keys = Object.getOwnPropertyNames(source);
+
+  for (const key of keys) {
+
+    const map = keyMapper.call(this, key, source[key], dbOptionsByPropertyName) || {} as any;
+    const model = map.model;
+
+    if (!map.newKey) {
+      // field is not mapped with @Db, and model is not promiscuous, skip it
+      continue;
     }
 
-    const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
+    let value;
+    if (model || shouldRecurse(source[key])) {
 
-    // iterate over each property
-    const keys = Object.getOwnPropertyNames(source);
+      if (Array.isArray(source[key])) {
 
-    for (const key of keys) {
-
-      const map = keyMapper(key, source[key], dbOptionsByPropertyName) || {} as any;
-      const model = map.model;
-
-      if (!map.newKey) {
-        // field is not mapped with @Db, and model is not promiscuous, skip it
-        continue;
-      }
-
-      let value;
-      if (model || shouldRecurse(source[key])) {
-
-        if (Array.isArray(source[key])) {
-
-          ++depth;
-          const values = [];
-          for (const src of source[key]) {
-            values.push(mapModelToDb(src, depth));
-          }
-          value = values;
-
-        } else if (map.newKey !== undefined) {
-
-          value = mapModelToDb(source[key], ++depth);
-
+        ++depth;
+        const values = [];
+        for (const src of source[key]) {
+          values.push(mapModelToDb.call(this, src, depth));
         }
+        value = values;
 
       } else if (map.newKey !== undefined) {
 
-        value = source[key];
+        value = mapModelToDb.call(this, source[key], ++depth);
 
       }
 
-      result[map.newKey] = value;
-    }
-    if (depth > 0 && (result._id && result.id)) { // resolves #106
-      delete result.id;
+    } else if (map.newKey !== undefined) {
+
+      // if a newKey (db key) has been defined, then set the value to the source [key] so that
+      // result[map.newKey] will get source[key] - otherwise, result[map.newKey] will be undefined.
+      value = source[key];
+
     }
 
-    return result;
+    result[map.newKey] = value;
+  }
+  if (depth > 0 && (result._id && result.id)) { // resolves #106
+    delete result.id;
   }
 
-  function keyMapper(key, value, dbMeta): { model: any, newKey: string } {
+  return result;
+}
 
-    if (!dbMeta) {
-      dbMeta = constructor[dbSymbols.dbByPropertyName];
-    }
+function keyMapper(key, value, dbMeta): { model: any, newKey: string } {
+  const constructor = this[modelSymbols.constructor] || this;
+  const modelOptions = constructor[modelSymbols.modelOptions];
 
-    let fieldName: string;
-    // if there's @Db meta data on the property
-    if (dbMeta && dbMeta.get) {
-      const dbOptions = (dbMeta.get(key)) as IDbOptions;
+  if (!dbMeta) {
+    dbMeta = constructor[dbSymbols.dbByPropertyName];
+  }
 
-      if ((dbOptions || {}).field) {
-        // if there's specifically a @Db('fieldName') - i.e., there's a declared field name
-        fieldName = dbOptions.field;
-      } else if (dbOptions) {
-        // if there's at least an @Db on the property, use the property name for the field name
-        fieldName = key;
-      }
-    }
+  let fieldName: string;
+  // if there's @Db meta data on the property
+  if (dbMeta && dbMeta.get) {
+    const dbOptions = (dbMeta.get(key)) as IDbOptions;
 
-    // if the model's promiscuous use the property name for the field name if @Db wasn't found...
-    // otherwise leave the field out of the results
-    if (!fieldName && (modelOptions.dbConfig || {}).promiscuous) {
+    if ((dbOptions || {}).field) {
+      // if there's specifically a @Db('fieldName') - i.e., there's a declared field name
+      fieldName = dbOptions.field;
+    } else if (dbOptions) {
+      // if there's at least an @Db on the property, use the property name for the field name
       fieldName = key;
     }
-
-    return {
-      model: (dbMeta) ? (dbMeta.get(key) || {}).model || null : null,
-      newKey: fieldName
-    };
   }
+
+  // if the model's promiscuous use the property name for the field name if @Db wasn't found...
+  // otherwise leave the field out of the results
+  if (!fieldName && (modelOptions.dbConfig || {}).promiscuous) {
+    fieldName = key;
+  }
+
+  return {
+    model: (dbMeta) ? (dbMeta.get(key) || {}).model || null : null,
+    newKey: fieldName
+  };
 }

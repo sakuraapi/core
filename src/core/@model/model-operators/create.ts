@@ -1,14 +1,8 @@
 //////////
 // tslint:disable:max-line-length
-import {
-  CollectionInsertOneOptions,
-  InsertOneWriteOpResult
-} from 'mongodb';
-import {
-  beforeCreateSymbols,
-  OnBeforeCreate
-} from '../before-create';
+import { CollectionInsertOneOptions, InsertOneWriteOpResult } from 'mongodb';
 import { modelSymbols } from '../model';
+import { SapiModelMixin } from '../sapi-model-mixin';
 import { debug } from './index';
 
 /**
@@ -21,8 +15,11 @@ import { debug } from './index';
  * [insertOneWriteOpCallback](http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#~insertOneWriteOpCallback).
  */
 // tslint:enable:max-line-length
-export async function create(options?: CollectionInsertOneOptions, context = 'default'): Promise<InsertOneWriteOpResult> {
-  const constructor = this.constructor;
+export async function create(this: InstanceType<ReturnType<typeof SapiModelMixin>>,
+                             options?: CollectionInsertOneOptions,
+                             context = 'default'): Promise<InsertOneWriteOpResult> {
+
+  const constructor = this.constructor as ReturnType<typeof SapiModelMixin>;
 
   const col = constructor.getCollection();
 
@@ -33,19 +30,10 @@ export async function create(options?: CollectionInsertOneOptions, context = 'de
     throw new Error(`Database '${(constructor[modelSymbols.dbName] || {} as any).name}' not found`);
   }
 
-  // @BeforeCreate()
-  const beforCreateMap: Map<string, OnBeforeCreate[]> = Reflect.getMetadata(beforeCreateSymbols.functionMap, this);
-  const beforeCreateContextMap = (beforCreateMap) ? beforCreateMap.get(context) || [] : [];
-  const beforeCreateStarMap = (beforCreateMap) ? beforCreateMap.get('*') || [] : [];
-  for (const f of beforeCreateContextMap) {
-    await f.bind(this)(this, context);
-  }
-  for (const f of beforeCreateStarMap) {
-    await f.bind(this)(this, '*');
-  }
+  this.emitBeforeCreate(context);
 
   const dbObj = this.toDb();
   const result = await col.insertOne(dbObj, options);
-  this.id = result.insertedId;
+  (this as any).id = result.insertedId;
   return result;
 }
