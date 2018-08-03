@@ -51,6 +51,10 @@ export function decrypt(value: string, cipherKey: string | CipherKeyFunc): any {
 
     return JSON.parse(buff.toString('utf8'));
   } catch (err) {
+    if (!err.message.startsWith('Unexpected token')) {
+      throw err;
+    }
+
     return buff.toString('utf8');
   }
 }
