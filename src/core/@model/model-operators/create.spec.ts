@@ -1,7 +1,6 @@
 import { ObjectID } from 'mongodb';
 import { testSapi } from '../../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../../sakura-api';
-import { BeforeCreate, OnBeforeCreate } from '../before-create';
 import { Id } from '../id';
 import { Db, Json, Model } from '../index';
 import { SapiModelMixin } from '../sapi-model-mixin';
@@ -13,12 +12,6 @@ describe('Model.create', () => {
     db: 'userDb',
     promiscuous: true
   };
-  let beforeCreate1Hook: OnBeforeCreate;
-  let beforeCreate2Hook: OnBeforeCreate;
-  let beforeCreate3Hook: OnBeforeCreate;
-
-  let beforeCreate1This = null;
-  let beforeCreate2This = null;
 
   let sapi: SakuraApi;
 
@@ -66,38 +59,18 @@ describe('Model.create', () => {
     })
     password = '';
 
-    @BeforeCreate()
-    beforeCreate1(model: TestCreate, context: string): Promise<void> {
-      beforeCreate1This = this;
-      return (beforeCreate1Hook) ? beforeCreate1Hook(model, context) : Promise.resolve();
-    }
-
-    @BeforeCreate('*')
-    beforeCreate2(model: TestCreate, context: string): Promise<void> {
-      beforeCreate2This = this;
-      return (beforeCreate2Hook) ? beforeCreate2Hook(model, context) : Promise.resolve();
-    }
-
-    @BeforeCreate('test')
-    beforeCreate3(model: TestCreate, context: string): Promise<void> {
-      return (beforeCreate3Hook) ? beforeCreate3Hook(model, context) : Promise.resolve();
-    }
   }
 
-  beforeEach(async (done) => {
-    try {
-      sapi = testSapi({
-        models: [TestCreate]
-      });
+  beforeEach(async () => {
 
-      await sapi
-        .dbConnections
-        .connectAll();
+    sapi = testSapi({
+      models: [TestCreate]
+    });
 
-      done();
-    } catch (err) {
-      done.fail(err);
-    }
+    await sapi
+      .dbConnections
+      .connectAll();
+
   });
 
   afterEach(async () => {
@@ -105,12 +78,6 @@ describe('Model.create', () => {
     await sapi.close();
 
     sapi = null;
-    beforeCreate1Hook = null;
-    beforeCreate2Hook = null;
-    beforeCreate3Hook = null;
-
-    beforeCreate1This = null;
-    beforeCreate2This = null;
   });
 
   it('inserts model into db', async (done) => {
@@ -218,106 +185,5 @@ describe('Model.create', () => {
 
     await sapi2.close();
   });
-
-  describe('@BeforeCreate', () => {
-
-    it('gets called when a model is created', async (done) => {
-      let model1;
-      let model2;
-      let context1;
-      let context2;
-
-      try {
-        beforeCreate1Hook = (model: TestCreate, context: string): Promise<void> => {
-          model1 = model;
-          context1 = context;
-          return Promise.resolve();
-        };
-
-        beforeCreate2Hook = (model: TestCreate, context: string): Promise<void> => {
-          model2 = model;
-          context2 = context;
-          return Promise.resolve();
-        };
-
-        const test = TestCreate.fromJson({});
-        await test.create();
-
-        expect(model1 instanceof TestCreate).toBeTruthy();
-        expect(context1).toBe('default');
-        expect(model2 instanceof TestCreate).toBeTruthy();
-        expect(context2).toBe('*');
-
-        done();
-      } catch (err) {
-        done.fail(err);
-      }
-    });
-
-    it('modified model properties are persisted', async (done) => {
-
-      try {
-        beforeCreate1Hook = (model: TestCreate, context: string): Promise<void> => {
-          model.password = 'set-by-@BeforeSave';
-          return Promise.resolve();
-        };
-
-        const test = TestCreate.fromJson({});
-        await test.create();
-
-        expect(test.password).toBe('set-by-@BeforeSave');
-        expect((await TestCreate.getById(test.id)).password).toBe('set-by-@BeforeSave');
-
-        done();
-      } catch (err) {
-        done.fail(err);
-      }
-    });
-
-    it('obeys context', async (done) => {
-      let contextDefault;
-      let contextStar;
-      let contextTest;
-
-      try {
-        beforeCreate1Hook = async (model: TestCreate, context: string): Promise<void> => {
-          contextDefault = true;
-        };
-
-        beforeCreate2Hook = async (model: TestCreate, context: string): Promise<void> => {
-          contextStar = true;
-        };
-
-        beforeCreate3Hook = async (model: TestCreate, context: string): Promise<void> => {
-          contextTest = true;
-        };
-
-        const test = TestCreate.fromJson({});
-        await test.create(null, 'test');
-
-        expect(contextDefault).toBeFalsy('default context should not have been called');
-        expect(contextStar).toBeTruthy('start context should always be called');
-        expect(contextTest).toBeTruthy('test context should have been called');
-
-        done();
-      } catch (err) {
-        done.fail(err);
-      }
-    });
-
-    it('sets instance of this to model', async (done) => {
-      try {
-        const test = await TestCreate.fromJson({});
-        await test.create();
-
-        expect(beforeCreate1This instanceof TestCreate).toBeTruthy();
-        expect(beforeCreate2This instanceof TestCreate).toBeTruthy();
-
-        done();
-      } catch (err) {
-        done.fail(err);
-      }
-    });
-
-  });
+  
 });
