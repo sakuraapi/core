@@ -7,5 +7,6 @@ export * from './id';
 export * from './to-json';
 export * from './json';
 export * from './model';
+export * from './model-operators';
 export * from './private';
 export * from './sapi-model-mixin';

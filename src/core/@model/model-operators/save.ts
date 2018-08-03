@@ -1,13 +1,7 @@
-import {
-  ReplaceOneOptions,
-  UpdateWriteOpResult
-} from 'mongodb';
-import {
-  beforeSaveSymbols,
-  OnBeforeSave
-} from '../before-save';
+import { ReplaceOneOptions, UpdateWriteOpResult } from 'mongodb';
 import { SapiMissingIdErr } from '../errors';
 import { modelSymbols } from '../model';
+import { SapiModelMixin } from '../sapi-model-mixin';
 import { debug } from './index';
 
 /**
@@ -25,11 +19,12 @@ import { debug } from './index';
  * @param context The optional context to use for things like @BeforeSave or @BeforeCreate
  * @returns {any}
  */
-export async function save(changeSet?: { [key: string]: any } | null,
+export async function save(this: InstanceType<ReturnType<typeof SapiModelMixin>>,
+                           changeSet?: { [key: string]: any } | null,
                            options?: ReplaceOneOptions,
                            context = 'default'): Promise<UpdateWriteOpResult> {
 
-  const constructor = this.constructor;
+  const constructor = this.constructor as ReturnType<typeof SapiModelMixin>;
 
   const col = constructor.getCollection();
 
@@ -39,30 +34,21 @@ export async function save(changeSet?: { [key: string]: any } | null,
     throw new Error(`Database '${constructor[modelSymbols.dbName]}' not found`);
   }
 
-  if (!this.id) {
-    return Promise.reject(new SapiMissingIdErr('Model missing id field, cannot save. Did you mean ' +
-      'to use create?', this));
+  if (!(this as any).id) {
+    throw new SapiMissingIdErr('Model missing id field, cannot save. Did you mean to use create?', this);
   }
 
-  // @BeforeSave()
-  const beforSaveMap: Map<string, OnBeforeSave[]> = Reflect.getMetadata(beforeSaveSymbols.functionMap, this);
-  const beforeSaveContextMap = (beforSaveMap) ? beforSaveMap.get(context) || [] : [];
-  const beforeSaveStarMap = (beforSaveMap) ? beforSaveMap.get('*') || [] : [];
-  for (const f of beforeSaveContextMap) {
-    await f.bind(this)(this, context);
-  }
-  for (const f of beforeSaveStarMap) {
-    await f.bind(this)(this, '*');
-  }
+  this.emitOnBeforeSave(context);
 
   const dbObj = changeSet || this.toDb(this);
   delete dbObj._id;
   delete dbObj.id;
+  
+  const result = await col.updateOne({_id: (this as any).id}, {$set: dbObj}, options);
 
-  const result = await col.updateOne({_id: this.id}, {$set: dbObj}, options);
-
+  // update the current model if the update came in the form of a change set;
   if (changeSet) {
-    const modelMappedChangeSet = this.constructor.fromDb(changeSet, {strict: true});
+    const modelMappedChangeSet = constructor.fromDb(changeSet, {strict: true});
 
     const keys = Object.getOwnPropertyNames(modelMappedChangeSet);
     for (const key of keys) {
@@ -72,5 +58,8 @@ export async function save(changeSet?: { [key: string]: any } | null,
       this[key] = modelMappedChangeSet[key];
     }
   }
+
   return result;
 }
+
+
