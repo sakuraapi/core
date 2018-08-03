@@ -7,7 +7,7 @@ import { Id } from '../id';
 import { Model } from '../model';
 import { SapiModelMixin } from '../sapi-model-mixin';
 
-describe('emitOnBeforeSave', () => {
+describe('emitBeforeSave', () => {
 
   const dbConfig = {
     collection: 'users',

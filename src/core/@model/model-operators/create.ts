@@ -30,7 +30,7 @@ export async function create(this: InstanceType<ReturnType<typeof SapiModelMixin
     throw new Error(`Database '${(constructor[modelSymbols.dbName] || {} as any).name}' not found`);
   }
 
-  this.emitOnBeforeCreate(context);
+  this.emitBeforeCreate(context);
 
   const dbObj = this.toDb();
   const result = await col.insertOne(dbObj, options);

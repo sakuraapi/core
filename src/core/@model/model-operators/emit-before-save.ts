@@ -6,7 +6,7 @@ import { SapiModelMixin } from '../sapi-model-mixin';
  * Triggers a Model's onBeforeSave
  * @param context the save context
  */
-export async function emitOnBeforeSave(this: InstanceType<ReturnType<typeof SapiModelMixin>>, context = 'default'): Promise<void> {
+export async function emitBeforeSave(this: InstanceType<ReturnType<typeof SapiModelMixin>>, context = 'default'): Promise<void> {
 
   // call @BeforeSaves for this model
   const beforSaveMap: Map<string, OnBeforeSave[]> = Reflect.getMetadata(beforeSaveSymbols.functionMap, this);
@@ -31,14 +31,14 @@ export async function emitOnBeforeSave(this: InstanceType<ReturnType<typeof Sapi
     if (model) {
       if (Array.isArray(this[key])) {
         for (const childModel of this[key] as Array<InstanceType<ReturnType<typeof SapiModelMixin>>>) {
-          if (typeof childModel.emitOnBeforeSave === 'function') {
-            await childModel.emitOnBeforeSave(context);
+          if (typeof childModel.emitBeforeSave === 'function') {
+            await childModel.emitBeforeSave(context);
           }
         }
       } else {
         const property = this[key] as InstanceType<ReturnType<typeof SapiModelMixin>>;
-        if (typeof property.emitOnBeforeSave === 'function') {
-          await property.emitOnBeforeSave(context);
+        if (typeof property.emitBeforeSave === 'function') {
+          await property.emitBeforeSave(context);
         }
       }
     }

@@ -38,7 +38,7 @@ export async function save(this: InstanceType<ReturnType<typeof SapiModelMixin>>
     throw new SapiMissingIdErr('Model missing id field, cannot save. Did you mean to use create?', this);
   }
 
-  this.emitOnBeforeSave(context);
+  this.emitBeforeSave(context);
 
   const dbObj = changeSet || this.toDb(this);
   delete dbObj._id;
