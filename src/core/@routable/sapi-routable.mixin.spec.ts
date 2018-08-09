@@ -1,13 +1,6 @@
-import {
-  NextFunction,
-  Request,
-  Response
-} from 'express';
+import { NextFunction, Request, Response } from 'express';
 import * as request from 'supertest';
-import {
-  testSapi,
-  testUrl
-} from '../../../spec/helpers/sakuraapi';
+import { testSapi, testUrl } from '../../../spec/helpers/sakuraapi';
 import { SakuraApi } from '../sakura-api';
 import { Routable } from './routable';
 import { Route } from './route';
@@ -72,7 +65,7 @@ describe('SapiRoutableMixin', () => {
         ]
       });
 
-      sapi.listen({bootMessage: ''});
+      await sapi.listen({bootMessage: ''});
 
       const result1 = await request(sapi.app)
         .get(testUrl('baseApi'))
@@ -97,7 +90,7 @@ describe('SapiRoutableMixin', () => {
       done.fail(err);
     } finally {
       if (sapi) {
-        sapi.close();
+        await sapi.close();
       }
     }
 

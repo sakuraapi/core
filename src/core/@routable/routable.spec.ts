@@ -3,8 +3,7 @@ import { ObjectID } from 'mongodb';
 import * as request from 'supertest';
 import { testSapi, testUrl } from '../../../spec/helpers/sakuraapi';
 import { getAllRouteHandler, getRouteHandler } from '../../handlers';
-import { Db, Json, Model, SapiModelMixin } from '../@model';
-import { Id } from '../@model/id';
+import { Db, Id, Json, Model, SapiModelMixin } from '../@model';
 import { BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK } from '../lib';
 import { AuthenticatorPlugin, AuthenticatorPluginResult, IAuthenticator, IAuthenticatorConstructor } from '../plugins';
 import { SakuraApi } from '../sakura-api';
@@ -683,7 +682,7 @@ describe('core/@Routable', () => {
         it('without results', async (done) => {
 
           try {
-            BeforeAfterInjectRouteTestModel.removeAll({});
+            await BeforeAfterInjectRouteTestModel.removeAll({});
             const res = await request(sapi.app)
               .get(testUrl('/GetAllRouteHandlerBeforeAfterTest/beforeTest/get'))
               .expect(OK);
@@ -1767,7 +1766,7 @@ describe('core/@Routable', () => {
           const routableSuppressApiTrueTest = new RoutableSuppressApiTrueTest();
           expect(routableSuppressApiTrueTest[routableSymbols.routes].length).toBe(0);
 
-          sapi2.close();
+          await sapi2.close();
         });
 
         it('suppressess only generated endpoints that are not suppressed', async () => {
