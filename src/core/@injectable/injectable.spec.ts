@@ -6,7 +6,10 @@ import { IRoutableLocals, Routable, Route, SapiRoutableMixin } from '../@routabl
 import { OK } from '../lib';
 import { SakuraApi } from '../sakura-api';
 import {
-  Injectable, injectableSymbols, NonInjectableConstructorParameterError, ProviderNotRegistered,
+  Injectable,
+  injectableSymbols,
+  NonInjectableConstructorParameterError,
+  ProviderNotRegistered,
   ProvidersMustBeDecoratedWithInjectableError
 } from './injectable';
 
@@ -30,8 +33,8 @@ describe('@Injectable', () => {
       });
     });
 
-    afterEach(() => {
-      sapi.close();
+    afterEach(async () => {
+      await sapi.close();
     });
 
     it('decorates @Injectable class', () => {
