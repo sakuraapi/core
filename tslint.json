@@ -20,6 +20,7 @@
       true,
       "dev"
     ],
+    "no-floating-promises": true,
     "no-object-literal-type-assertion": false,
     "prefer-for-of": false,
     "prefer-object-spread": false,
