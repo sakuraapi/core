@@ -54,6 +54,7 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
       return source;
     }
 
+    console.log('=================='.zebra.green, JSON.stringify(target, null, 2).green);
     const dbOptionsByFieldName: Map<string, IDbOptions>
       = Reflect.getMetadata(dbSymbols.dbByFieldName, target) || new Map<string, IDbOptions>();
 
@@ -63,6 +64,7 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
 
       // convert the DB key name to the Model key name
       const mapper = map(key, source[key], dbOptionsByFieldName);
+      if (key === 'tag') console.log('================== mapper'.cyan, JSON.stringify(mapper, null, 2).cyan);
       const model = mapper.model;
 
       let nextTarget;
@@ -73,7 +75,9 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
       } catch (err) {
         throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
           + ` cannot be constructed`);
-      }
+        }
+
+      console.log('================== 111111'.zebra.green, JSON.stringify(target, null, 2).green);
 
       if (model || shouldRecurse(source[key])) {
 
@@ -87,12 +91,13 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
             const values = [];
 
             for (const src of source[key]) {
+              console.log('==================src'.cyan, src);
+              nextTarget = (model);
               values.push(Object.assign(new model(), mapDbToModel(src, nextTarget, map)));
             }
             value = values;
 
           } else {
-
             value = mapDbToModel(source[key], nextTarget, map, ++depth);
 
             if (model) {
@@ -103,20 +108,23 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
               }
             }
           }
-
+          console.log('================== >>>>>>>'.cyan, mapper.newKey);
           target[mapper.newKey] = value;
         }
 
       } else {
         // otherwise, map a property that has a primitive value or an ObjectID value
         if (mapper.newKey !== undefined) {
+          console.log('================== %%%%%%'.cyan, `assigning ${source[key]} to ${mapper.newKey}`);
           target[mapper.newKey] = (source[key] !== undefined && source[key] !== null)
             ? source[key]
             : nextTarget; // resolves issue #94
         }
       }
+      console.log('================== 222222'.zebra.green, JSON.stringify(target, null, 2).green);
     }
 
+    if (!!target.order) console.log('=================='.zebra.red, JSON.stringify(target, null, 2).red);
     return target;
   }
 
