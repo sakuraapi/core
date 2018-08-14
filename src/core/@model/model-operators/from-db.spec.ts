@@ -471,7 +471,7 @@ describe('@Model.fromDb', () => {
           expect(result.leads.length).toBe(0);
         });
 
-        fit('maps an array of sub documents from the DB to a resulting array of type model', () => {
+        it('maps an array of sub documents from the DB to a resulting array of type model', () => {
 
           const leadSubDocs = [
             {
