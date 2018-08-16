@@ -56,7 +56,7 @@ describe('@Model.fromDb', () => {
       expect(result.val).toBe(777);
     });
 
-    it('returns an object of the correct instaceOf', () => {
+    it('returns an object of the correct instanceOf', () => {
       const result = Test.fromDb({});
       expect(result instanceof Test).toBe(true);
     });
@@ -252,6 +252,9 @@ describe('@Model.fromDb', () => {
 
         @Db({field: 'addr', model: Address})
         address = new Address();
+
+        @Db()
+        tag: string;
       }
 
       @Model()
@@ -479,7 +482,8 @@ describe('@Model.fromDb', () => {
                 st: '123',
                 z: '90277'
               },
-              n: '1'
+              n: '1',
+              tag: 'abc'
             },
             {
               addr: {
@@ -513,6 +517,9 @@ describe('@Model.fromDb', () => {
           expect((result.leads[1].address || {} as any).state).toBe(leadSubDocs[1].addr.s);
           expect((result.leads[1].address || {} as any).street).toBe(leadSubDocs[1].addr.st);
           expect((result.leads[1].address || {} as any).zip).toBe(leadSubDocs[1].addr.z);
+
+          expect(result.leads[0].tag).toBe(leadSubDocs[0].tag);
+          expect(result.leads[1].tag).toBeUndefined('Undefined sub-document field should not be defined');
 
         });
       });

@@ -73,7 +73,7 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
       } catch (err) {
         throw new Error(`Model '${modelName}' has a property '${key}' that defines its model with a value that`
           + ` cannot be constructed`);
-      }
+        }
 
       if (model || shouldRecurse(source[key])) {
 
@@ -88,11 +88,13 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
 
             for (const src of source[key]) {
               values.push(Object.assign(new model(), mapDbToModel(src, nextTarget, map)));
+              nextTarget = (model)
+                  ? Object.assign(new model(), target[mapper.newKey])
+                  : target[mapper.newKey];
             }
             value = values;
 
           } else {
-
             value = mapDbToModel(source[key], nextTarget, map, ++depth);
 
             if (model) {
@@ -103,13 +105,12 @@ export function fromDb(json: any, options?: IFromDbOptions): object {
               }
             }
           }
-
           target[mapper.newKey] = value;
         }
 
       } else {
         // otherwise, map a property that has a primitive value or an ObjectID value
-        if (mapper.newKey !== undefined) {
+          if (mapper.newKey !== undefined) {
           target[mapper.newKey] = (source[key] !== undefined && source[key] !== null)
             ? source[key]
             : nextTarget; // resolves issue #94
