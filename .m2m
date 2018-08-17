@@ -2,6 +2,6 @@
   "before": [
     "npm run lint",
     "npm test",
-    "npx nsp check"
+    "npm audit"
   ]
 }
