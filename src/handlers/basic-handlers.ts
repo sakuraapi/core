@@ -1,20 +1,7 @@
-import {
-  NextFunction,
-  Request,
-  Response
-} from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { IDbGetParams } from '../core/@model';
-import {
-  IRoutableLocals,
-  routableSymbols
-} from '../core/@routable';
-import {
-  BAD_REQUEST,
-  DUPLICATE_RESOURCE,
-  NOT_FOUND,
-  OK,
-  SERVER_ERROR
-} from '../core/lib';
+import { IRoutableLocals, routableSymbols } from '../core/@routable';
+import { BAD_REQUEST, DUPLICATE_RESOURCE, NOT_FOUND, OK, SERVER_ERROR } from '../core/lib';
 import { SanitizeMongoDB as Sanitize } from '../core/security';
 
 const debug = {
@@ -175,7 +162,7 @@ export function getAllRouteHandler(req: Request, res: Response, next: NextFuncti
 
     if (req.query.skip !== undefined) {
       sanitizedUserInput(res, 'invalid_skip_parameter', () => {
-        params.skip = Number.parseInt(req.query.skip);
+        params.skip = Number.parseInt(req.query.skip, 10);
         if (Number.isNaN(params.skip)) {
           throw new SyntaxError('Unexpected token');
         }
@@ -184,7 +171,7 @@ export function getAllRouteHandler(req: Request, res: Response, next: NextFuncti
 
     if (req.query.limit !== undefined) {
       sanitizedUserInput(res, 'invalid_limit_parameter', () => {
-        params.limit = Number.parseInt(req.query.limit);
+        params.limit = Number.parseInt(req.query.limit, 10);
         if (Number.isNaN(params.limit)) {
           throw new SyntaxError('Unexpected token');
         }
