@@ -58,11 +58,13 @@
     "@types/urlsafe-base64": "^1.0.28",
     "@types/uuid": "^3.4.3",
     "body-parser": "^1.18.3",
+    "express": "^4.16.3",
     "helmet": "^3.13.0",
     "http-server": "^0.11.1",
     "istanbul": "^0.4.5",
     "jasmine": "^3.2.0",
     "jasmine-spec-reporter": "^4.2.1",
+    "mongodb": "^3.1.3",
     "nodemon": "^1.18.3",
     "source-map-support": "^0.5.8",
     "supertest": "^3.1.0",
@@ -72,14 +74,15 @@
   },
   "dependencies": {
     "bcrypt": "^3.0.0",
-    "co": "^4.6.0",
     "colors": "^1.3.1",
     "debug": "^3.1.0",
-    "express": "^4.16.3",
     "lodash": "^4.17.10",
-    "mongodb": "^3.1.3",
     "reflect-metadata": "^0.1.12",
     "urlsafe-base64": "^1.0.0",
     "uuid": "^3.3.2"
+  },
+  "peerDependencies": {
+    "express": "4.x",
+    "mongodb": "3.1.x"
   }
 }
