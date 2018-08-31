@@ -16,12 +16,12 @@ describe('Model.save', () => {
 
   let sapi: SakuraApi;
 
-  @Model()
+  @Model({promiscuous: true})
   class ChildChild {
     cVal = 'childChild';
   }
 
-  @Model()
+  @Model({promiscuous: true})
   class Child {
     @Id() @Json({type: 'id'})
     id: ObjectID;

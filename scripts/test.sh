@@ -1,13 +1,34 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
-TEST_TYPE=${1:-clearDb}
+TEST_TYPE=${1:-"clearDb"}
 
-npm run docker:compose-test
-npm run build
-npx jasmine || ((say 'fail' || echo 'fail') ; exit 1)
+COMPOSE_FILE="./docker-compose.yml"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. ${DIR}/_functions.sh
 
-if [ $TEST_TYPE != "saveDb" ]; then
-  docker-compose down
+updateStart
+
+npm run build test
+
+if [ "$1" == "webstorm-debug" ]; then
+
+  update "starting MongoDB"
+  down
+  compose up -d
+
+else
+
+  update "starting MongoDB"
+  if [ "$1" != "saveDb" ]; then
+    trap down EXIT
+  fi
+  compose up -d
+
+  update "starting jasmine"
+  npx jasmine
+
 fi
+
+updateDone

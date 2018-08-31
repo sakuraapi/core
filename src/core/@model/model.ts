@@ -96,9 +96,15 @@ export interface IModelOptions {
 
     /**
      * If true, fields without an Explicit @Db will still be written to the Db and used to rehydrate objects `fromDb`.
+     * * @deprecated use IModelOptions.promiscuous instead
      */
     promiscuous?: boolean;
   };
+
+  /**
+   * If true, fields without an Explicit @Db will still be written to the Db and used to rehydrate objects `fromDb`.
+   */
+  promiscuous?: boolean;
 
   /**
    * Returns the cipher key to be used by @Json decorated properties with [[IJsonOption.encrypt]] === true. Provide
