@@ -526,6 +526,20 @@ describe('@Model.fromDb', () => {
 
       describe('with dbOptions.promiscuous mode', () => {
 
+        @Model({promiscuous: true})
+        class PromiscuousOrder {
+          @Db()
+          orderId: string = 'a123';
+
+          @Db()
+          total: number = 100;
+
+          @Db({field: 'addr', model: Address})
+          address = new Address();
+
+          itemName = 'Cherry Tree Axe';
+        }
+
         @Model({
           dbConfig: {
             collection: 'users',
@@ -540,8 +554,8 @@ describe('@Model.fromDb', () => {
           @Db({field: 'ph'})
           phone: string;
 
-          @Db({model: Order})
-          order = new Order();
+          @Db({model: PromiscuousOrder})
+          order = new PromiscuousOrder();
         }
 
         it('promiscuously includes fields not mapped with @Db', () => {
@@ -579,6 +593,65 @@ describe('@Model.fromDb', () => {
           expect(result._id instanceof ObjectID).toBeTruthy('result._id should have been an instance of ObjectID');
         });
       });
+    });
+  });
+
+  describe('bugs', () => {
+
+    describe('issue 242', () => {
+
+      @Model()
+      class Versions extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+      }
+
+      @Model()
+      class Child extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+
+        @Db({model: Versions}) @Json()
+        versions: Versions[];
+      }
+
+      @Model()
+      class Details extends SapiModelMixin() {
+        @Id() @Json({type: 'id'})
+        id: ObjectID;
+
+        @Db({model: Child}) @Json()
+        children: Child[];
+      }
+
+      it('assigns _id in sub documents', async () => {
+
+        const dbo = {
+          _id: '5b897fb0c5d0fc0a59e2f498',
+          children: [
+            {
+              _id: '5b897fb0c5d0fc0a59e2f49a',
+              versions: [
+                {
+                  _id: '5b897fb0c5d0fc0a59e2f499'
+                }
+              ]
+            }
+          ]
+        };
+
+        const result = Details.fromDb(dbo);
+
+        const detailsId = (result._id) ? result._id.toHexString() : undefined;
+        const childId = (result.children[0]._id) ? result.children[0]._id.toHexString() : undefined;
+        const versionId = (result.children[0].versions[0]._id) ? result.children[0].versions[0]._id.toHexString() : undefined;
+
+        expect(detailsId).toBe(dbo._id);
+        expect(childId).toBe(dbo.children[0]._id);
+        expect(versionId).toBe(dbo.children[0].versions[0]._id);
+
+      });
+
     });
   });
 });

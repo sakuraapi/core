@@ -64,7 +64,6 @@ function mapModelToDb(source, depth = 0) {
     if (model || shouldRecurse(source[key])) {
 
       if (Array.isArray(source[key])) {
-
         ++depth;
         const values = [];
         for (const src of source[key]) {
@@ -119,7 +118,7 @@ function keyMapper(key, value, dbMeta): { model: any, newKey: string } {
 
   // if the model's promiscuous use the property name for the field name if @Db wasn't found...
   // otherwise leave the field out of the results
-  if (!fieldName && (modelOptions.dbConfig || {}).promiscuous) {
+  if (!fieldName && ((modelOptions.dbConfig || {}).promiscuous || (this[modelSymbols.modelOptions] || {} as any).promiscuous)) {
     fieldName = key;
   }
 
