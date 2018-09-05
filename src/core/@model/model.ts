@@ -244,10 +244,12 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
           throw new Error(`Model ${target.name} defines 'dbConfig' but does not have an @Id decorated properties`);
         }
 
-        // map _id to id
-        newConstructor.prototype._id = undefined;
-
         if (idProperty) {
+          // if @Id has a default value, move it to _id
+          if (c[idProperty]) {
+            c._id = c[idProperty];
+          }
+
           Reflect.defineProperty(c, idProperty, {
             configurable: true,
             enumerable: true,

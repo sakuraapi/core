@@ -207,5 +207,44 @@ describe('Model.toDb', () => {
       });
 
     });
+
+    describe('#243 @Id fields should map to _id in dbo', () => {
+
+      @Model()
+      class Child extends SapiModelMixin() {
+        @Id()
+        id: ObjectID = new ObjectID();
+      }
+
+      @Model({
+        dbConfig: {
+          collection: 'users',
+          db: 'userDb'
+        }
+      })
+      class Parent extends SapiModelMixin() {
+        @Id()
+        id: ObjectID = new ObjectID();
+
+        @Db({model: Child})
+        children: Child[];
+      }
+
+      it('toDb', async () => {
+
+        const parent = new Parent();
+        parent.children = [
+          new Child(),
+          new Child()
+        ];
+
+        const result = parent.toDb();
+
+        expect(ObjectID.isValid(result._id)).toBeTruthy();
+        expect(ObjectID.isValid(result.children[0]._id)).toBeTruthy();
+        expect(ObjectID.isValid(result.children[1]._id)).toBeTruthy();
+
+      });
+    });
   });
 });
