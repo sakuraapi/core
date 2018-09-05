@@ -54,8 +54,7 @@ export function fromDb<T = InstanceType<ReturnType<typeof SapiModelMixin>>>(json
 
 function mapDbToModel(this: ReturnType<typeof SapiModelMixin>,
                       json: { [key: string]: any },
-                      model: InstanceType<ReturnType<typeof SapiModelMixin>>,
-                      isChild = false) {
+                      model: InstanceType<ReturnType<typeof SapiModelMixin>>) {
 
   model = model || {} as InstanceType<ReturnType<typeof SapiModelMixin>>;
 
@@ -108,9 +107,9 @@ function mapDbToModel(this: ReturnType<typeof SapiModelMixin>,
       } else {
         if (subModel) {
           const newModel = new subModel();
-          value = Object.assign(newModel, mapDbToModel.call(newModel.constructor, json[key], nextModel, true));
+          value = Object.assign(newModel, mapDbToModel.call(newModel.constructor, json[key], nextModel));
         } else {
-          value = mapDbToModel.call(this, json[key], nextModel, true);
+          value = mapDbToModel.call(this, json[key], nextModel);
         }
       }
 
