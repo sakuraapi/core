@@ -63,13 +63,14 @@ describe('Model.toJson', () => {
   it('transforms a defined property to the designated fieldName in the output of toJson', () => {
 
     class Address {
-      @Db('st')
+      @Db('st') @Json()
       street = '1600 Pennsylvania Ave NW';
 
       @Db('c')
       @Json('cy')
       city = 'Washington';
 
+      @Json()
       state = 'DC';
 
       @Json('z')
@@ -77,24 +78,21 @@ describe('Model.toJson', () => {
     }
 
     class Contact {
-      @Db('ph')
+      @Db('ph') @Json()
       phone = '123-123-1234';
 
-      @Db({field: 'a', model: Address})
-      @Json('addr')
+      @Db({field: 'a', model: Address}) @Json('addr')
       address = new Address();
     }
 
     @Model({})
     class User extends SapiModelMixin() {
-      @Db('fn')
-      @Json('fn')
+      @Db('fn') @Json('fn')
       firstName = 'George';
-      @Db('ln')
-      @Json('ln')
+      @Db('ln') @Json('ln')
       lastName = 'Washington';
 
-      @Db({field: 'c', model: Contact})
+      @Db({field: 'c', model: Contact}) @Json()
       contact = new Contact();
     }
 
@@ -110,11 +108,11 @@ describe('Model.toJson', () => {
     };
 
     const user = User.fromDb(db);
-    const json = (user.toJson() as any);
+    const json = user.toJson();
 
     expect(json.fn).toBe(db.fn);
     expect(json.ln).toBe(db.ln);
-    expect(json.contact).toBeDefined('A property not decorated with @Json should still be marshalled to Json');
+    expect(json.contact).toBeDefined();
     expect(json.contact.phone).toBe(db.c.ph);
     expect(json.contact.addr).toBeDefined('A deeply nested property should be marshalled to Json');
     expect(json.contact.addr.street).toBe(db.c.a.st);
@@ -123,18 +121,18 @@ describe('Model.toJson', () => {
     expect(json.contact.addr.z).toBe(user.contact.address.zipCode);
   });
 
-  it('properties are marshalled when not decorated with @Json properties', () => {
+  it('properties are NOT marshalled when not decorated with @Json properties', () => {
 
     class Contact {
       static test() {
-        // methods should be marshalled to the resulting json object
+        // methods should not be marshalled to the resulting json object
       }
 
       phone = 123;
       address = '123 Main St.';
 
       test() {
-        // methods should be marshalled to the resulting json object
+        // methods should not be marshalled to the resulting json object
       }
     }
 
@@ -146,16 +144,11 @@ describe('Model.toJson', () => {
     }
 
     const user = new User();
-    const json = (user.toJson() as any);
+    const json = user.toJson();
 
-    expect(json.firstName).toBe(user.firstName);
-    expect(json.lastname).toBeUndefined('properties without assigned values and no default values do not actually' +
-      ' exist in the resulting transpiled js output, so they cannot be marshalled to json');
-    expect(json.contact).toBeDefined('A property defining a child object should be included in the resulting json');
-    expect(json.contact.phone).toBe(user.contact.phone);
-    expect(json.contact.address).toBe(user.contact.address);
-
-    expect(json.contact.test).toBeUndefined('instance methods should not be included in the resulting json');
+    expect(json.firstName).toBeUndefined();
+    expect(json.lastname).toBeUndefined();
+    expect(json.contact).toBeUndefined();
   });
 
   it('does not return _id', () => {
@@ -353,14 +346,12 @@ describe('Model.toJson', () => {
       @Db({private: true})
       state = 'DC';
 
-      @Db({private: true})
-      @Json('t')
+      @Db({private: true}) @Json('t')
       test = 'test';
     }
 
     class Contact {
-      @Db({field: 'a', model: Address})
-      @Json('addr')
+      @Db({field: 'a', model: Address}) @Json('addr')
       address = new Address();
     }
 
@@ -373,7 +364,7 @@ describe('Model.toJson', () => {
       @Json('ln')
       lastName = 'Washington';
 
-      @Db({field: 'c', model: Contact})
+      @Db({field: 'c', model: Contact}) @Json()
       contact = new Contact();
 
       @Db({private: true, model: Contact})
@@ -442,7 +433,7 @@ describe('Model.toJson', () => {
 
     });
 
-    it('falls back to using property names (no context) when an invalid context is passed in', () => {
+    it('leaves out fields when an invalid context is passed in', () => {
       @Model()
       class TestContext extends SapiModelMixin() {
         @Json('fn')
@@ -455,8 +446,8 @@ describe('Model.toJson', () => {
       const testContext = new TestContext();
       const result = testContext.toJson('non-existent');
 
-      expect(result.firstName).toBe(testContext.firstName);
-      expect(result.lastName).toBe(testContext.lastName);
+      expect(result.firstName).toBeUndefined();
+      expect(result.lastName).toBeUndefined();
     });
 
     it('supports multiple contexts', () => {
@@ -752,12 +743,12 @@ describe('Model.toJson', () => {
 
         const result1 = tcc1.toJson({test: true});
         expect(result1.aField.test).toBeTruthy();
-        expect(result1.bField).toBe('');
+        expect(result1.bField).toBeUndefined();
 
         const tcc2 = TestComplexContext.fromJson({});
 
         const result2 = tcc2.toJson({context: 'B', data: 'isB'});
-        expect(result2.aField).toBe('');
+        expect(result2.aField).toBeUndefined();
         expect(result2.bField).toBe('isB');
 
       });
@@ -780,8 +771,11 @@ describe('Model.toJson', () => {
           @Id() @Json({type: 'id'})
           id: ObjectID;
 
+          @Json()
           fieldA = 'a';
+          @Json()
           fieldB = 'b';
+          @Json()
           field1 = 1;
 
         }
@@ -843,8 +837,11 @@ describe('Model.toJson', () => {
         @Model()
         class TestSubDoc {
 
+          @Json()
           subA = 'a';
+          @Json()
           subB = 'b';
+          @Json()
           field2 = 2;
 
         }
@@ -855,11 +852,14 @@ describe('Model.toJson', () => {
           @Id() @Json({type: 'id'})
           id: ObjectID;
 
+          @Json()
           fieldA = 'a';
+          @Json()
           fieldB = 'b';
+          @Json()
           field1 = 1;
 
-          @Db({model: TestSubDoc})
+          @Db({model: TestSubDoc}) @Json()
           subDoc: TestSubDoc = new TestSubDoc();
 
         }
@@ -966,10 +966,13 @@ describe('Model.toJson', () => {
         @Model()
         class TestSubDoc {
 
+          @Json()
           subA = 'a';
+          @Json()
           subB = 'b';
+          @Json()
           field2 = 2;
-
+          @Json()
           test = ['1', '2'];
 
         }
@@ -980,11 +983,14 @@ describe('Model.toJson', () => {
           @Id() @Json({type: 'id'})
           id: ObjectID;
 
+          @Json()
           fieldA = 'a';
+          @Json()
           fieldB = 'b';
+          @Json()
           field1 = 1;
 
-          @Db({model: TestSubDoc})
+          @Db({model: TestSubDoc}) @Json()
           subDoc: TestSubDoc[] = [new TestSubDoc(), new TestSubDoc()];
 
         }
@@ -1095,6 +1101,79 @@ describe('Model.toJson', () => {
             expect(json.subDoc[1].field2).toBeUndefined();
           });
         });
+      });
+
+      it('works with context issue #241', () => {
+
+        @Model()
+        class TestProjection1 extends SapiModelMixin() {
+          @Id() @Json({type: 'id', context: '*'})
+          id: ObjectID = new ObjectID();
+
+          @Json({context: 'test'})
+          fieldA = 'a';
+
+          @Json({context: 'test2'})
+          fieldB = 'b';
+        }
+
+        const model = new TestProjection1();
+        const json = model.toJson({
+          context: 'test',
+          projection: {
+            fieldA: 1,
+            id: 1
+          }
+        });
+
+        expect(json.id).toEqual(model.id);
+        expect(json.fieldA).toBe(model.fieldA);
+        expect(json.fieldB).toBeUndefined();
+
+        const json2 = model.toJson({
+          context: 'test2',
+          projection: {
+            fieldB: 1,
+            id: 1
+          }
+        });
+
+        expect(json2.id).toEqual(model.id);
+        expect(json2.fieldA).toBeUndefined();
+        expect(json2.fieldB).toBe(model.fieldB);
+
+      });
+
+      it('projection does not override context', () => {
+
+        @Model()
+        class TestProjection1 extends SapiModelMixin() {
+          @Id() @Json({type: 'id', context: '*'})
+          id: ObjectID = new ObjectID();
+
+          @Json({context: 'test'})
+          fieldA = 'a';
+
+          @Json({context: 'test2'})
+          fieldB = 'b';
+
+          fieldC = 'c';
+        }
+
+        const model = new TestProjection1();
+        const json2 = model.toJson({
+          context: 'test2',
+          projection: {
+            fieldB: 1,
+            id: 1
+          }
+        });
+
+        expect(json2.id).toEqual(model.id);
+        expect(json2.fieldA).toBeUndefined();
+        expect(json2.fieldB).toBe(model.fieldB);
+        expect(json2.fieldC).toBeUndefined();
+
       });
     });
 
