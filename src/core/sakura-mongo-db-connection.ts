@@ -1,8 +1,4 @@
-import {
-  Db,
-  MongoClient,
-  MongoClientOptions
-} from 'mongodb';
+import { Db, MongoClient, MongoClientOptions } from 'mongodb';
 
 const debug = {
   normal: require('debug')('sapi:SakuraMongoDbConnection'),
@@ -40,6 +36,9 @@ export class SakuraMongoDbConnection {
    */
   async connect(dbName: string, uri: string, options?: MongoClientOptions): Promise<Db> {
     debug.normal(`.connect dbName: '${dbName}', uri: '${uri}', options:`, options);
+
+    options = options || {};
+    options.useNewUrlParser = true;
 
     let db: Db;
 
