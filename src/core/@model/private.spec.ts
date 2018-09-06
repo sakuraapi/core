@@ -10,6 +10,7 @@ describe('@Private', () => {
     it('simple scenario', () => {
       @Model()
       class Test extends SapiModelMixin() {
+        @Json()
         firstName = 'John';
         @Private()
         lastName = 'Adams';
@@ -25,6 +26,7 @@ describe('@Private', () => {
       @Model()
       class Test extends SapiModelMixin() {
 
+        @Json()
         firstName = 'John';
         @Private() @Json('ln')
         lastName = 'Adams';
@@ -42,6 +44,7 @@ describe('@Private', () => {
     });
 
     it('scenario with context', () => {
+
       @Model()
       class Test extends SapiModelMixin() {
 
@@ -58,13 +61,13 @@ describe('@Private', () => {
       const result1 = (new Test()).toJson();
       const result2 = (new Test()).toJson('source2');
 
-      expect(result1.firstName).toBe('John');
-      expect(result2.firstName).toBe('John');
+      expect(result1.firstName).toBeUndefined();
+      expect(result2.firstName).toBeUndefined();
 
       expect(result1.lastName).toBeUndefined();
       expect(result1.ln).toBeUndefined();
 
-      expect(result2.lastName).toBe('Adams');
+      expect(result2.lastName).toBeUndefined();
       expect(result2.ln).toBeUndefined();
 
       expect(result1.middleName).toBeUndefined();

@@ -96,9 +96,15 @@ export interface IModelOptions {
 
     /**
      * If true, fields without an Explicit @Db will still be written to the Db and used to rehydrate objects `fromDb`.
+     * * @deprecated use IModelOptions.promiscuous instead
      */
     promiscuous?: boolean;
   };
+
+  /**
+   * If true, fields without an Explicit @Db will still be written to the Db and used to rehydrate objects `fromDb`.
+   */
+  promiscuous?: boolean;
 
   /**
    * Returns the cipher key to be used by @Json decorated properties with [[IJsonOption.encrypt]] === true. Provide
@@ -238,10 +244,12 @@ export function Model(modelOptions?: IModelOptions): (object) => any {
           throw new Error(`Model ${target.name} defines 'dbConfig' but does not have an @Id decorated properties`);
         }
 
-        // map _id to id
-        newConstructor.prototype._id = undefined;
-
         if (idProperty) {
+          // if @Id has a default value, move it to _id
+          if (c[idProperty]) {
+            c._id = c[idProperty];
+          }
+
           Reflect.defineProperty(c, idProperty, {
             configurable: true,
             enumerable: true,

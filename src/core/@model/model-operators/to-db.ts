@@ -1,5 +1,6 @@
 import { shouldRecurse } from '../../lib';
 import { dbSymbols, IDbOptions } from '../db';
+import { idSymbols } from '../id';
 import { modelSymbols } from '../model';
 import { debug } from './index';
 
@@ -27,54 +28,44 @@ export function toDb(changeSet?: any): object {
   debug.normal(`.toDb called, target '${(constructor || {} as any).name}'`);
 
   changeSet = changeSet || this;
-
-  const dbObj = mapModelToDb.call(this, changeSet);
-
-  delete (dbObj as any).id;
-  if (!(dbObj as any)._id && this._id) {
-    (dbObj as any)._id = this._id;
-  }
-
-  return dbObj;
+  return mapModelToDb.call(this, changeSet);
 }
 
-function mapModelToDb(source, depth = 0) {
+function mapModelToDb(model) {
 
-  const result = {} as any;
-  if (!source) {
+  const dbo = {} as any;
+  if (!model) {
     return;
   }
 
-  const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
+  const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, model);
 
   // iterate over each property
-  const keys = Object.getOwnPropertyNames(source);
+  const keys = Object.getOwnPropertyNames(model);
 
   for (const key of keys) {
 
-    const map = keyMapper.call(this, key, source[key], dbOptionsByPropertyName) || {} as any;
-    const model = map.model;
+    const map = keyMapper.call(this, key, model[key], dbOptionsByPropertyName) || {} as any;
+    const subModel = map.model;
 
     if (!map.newKey) {
-      // field is not mapped with @Db, and model is not promiscuous, skip it
+      // field is not mapped with @Db or @Id, and model is not promiscuous, skip it
       continue;
     }
 
     let value;
-    if (model || shouldRecurse(source[key])) {
+    if (subModel || shouldRecurse(model[key])) {
 
-      if (Array.isArray(source[key])) {
-
-        ++depth;
+      if (Array.isArray(model[key])) {
         const values = [];
-        for (const src of source[key]) {
-          values.push(mapModelToDb.call(this, src, depth));
+        for (const src of model[key]) {
+          values.push(mapModelToDb.call(this, src));
         }
         value = values;
 
       } else if (map.newKey !== undefined) {
 
-        value = mapModelToDb.call(this, source[key], ++depth);
+        value = mapModelToDb.call(this, model[key]);
 
       }
 
@@ -82,17 +73,14 @@ function mapModelToDb(source, depth = 0) {
 
       // if a newKey (db key) has been defined, then set the value to the source [key] so that
       // result[map.newKey] will get source[key] - otherwise, result[map.newKey] will be undefined.
-      value = source[key];
+      value = model[key];
 
     }
 
-    result[map.newKey] = value;
-  }
-  if (depth > 0 && (result._id && result.id)) { // resolves #106
-    delete result.id;
+    dbo[map.newKey] = value;
   }
 
-  return result;
+  return dbo;
 }
 
 function keyMapper(key, value, dbMeta): { model: any, newKey: string } {
@@ -104,8 +92,13 @@ function keyMapper(key, value, dbMeta): { model: any, newKey: string } {
   }
 
   let fieldName: string;
-  // if there's @Db meta data on the property
-  if (dbMeta && dbMeta.get) {
+  const idProperty = Reflect.getMetadata(idSymbols.idByPropertyName, this);
+
+  if (idProperty && idProperty === key) { // if this is an @Id field
+
+    fieldName = '_id';
+
+  } else if (dbMeta && dbMeta.get) { // if there's @Db meta data on the property
     const dbOptions = (dbMeta.get(key)) as IDbOptions;
 
     if ((dbOptions || {}).field) {
@@ -119,7 +112,7 @@ function keyMapper(key, value, dbMeta): { model: any, newKey: string } {
 
   // if the model's promiscuous use the property name for the field name if @Db wasn't found...
   // otherwise leave the field out of the results
-  if (!fieldName && (modelOptions.dbConfig || {}).promiscuous) {
+  if (!fieldName && ((modelOptions.dbConfig || {}).promiscuous || (modelOptions || {} as any).promiscuous)) {
     fieldName = key;
   }
 

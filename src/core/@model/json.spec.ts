@@ -25,6 +25,7 @@ describe('@Json', () => {
     @Json('anp') @Json('anotherProperty')
     anotherProperty: string;
 
+    @Json()
     aThirdProperty: number = 777;
 
     aFourthProperty: string;

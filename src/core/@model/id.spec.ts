@@ -40,6 +40,19 @@ describe('@Id', () => {
     });
   });
 
+  it('allows default ID on instantiation', () => {
+
+    @Model()
+    class DefaultValue extends SapiModelMixin() {
+      @Id()
+      id: ObjectID = new ObjectID();
+    }
+
+    const result = new DefaultValue();
+    expect(result.id).toBeDefined();
+
+  });
+
   describe('@Db', () => {
     it('maps fromDb', () => {
       const id = new ObjectID();

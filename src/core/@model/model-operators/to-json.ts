@@ -44,6 +44,38 @@ export function toJson(context: string | IContext = 'default'): { [key: string]:
   return mapModelToJson(ctx, this, ctx.projection);
 }
 
+function getJsonOptions(source, key: string, ctx: IContext | string) {
+
+  const context = (typeof ctx === 'object') ? ctx.context : '*';
+  const jsonFieldNamesByProperty: Map<string, IJsonOptions> = Reflect
+    .getMetadata(jsonSymbols.jsonByPropertyName, source) || new Map<string, IJsonOptions>();
+
+  const options = jsonFieldNamesByProperty.get(`${key}:${context}`);
+  if (options) {
+    options.context = context;
+  }
+
+  return options || {};
+}
+
+function isInclusiveProjection(projection: IProjection) {
+  if (projection) {
+    const keys = Object.keys(projection);
+    for (const key of keys) {
+      if (projection[key] === true || projection[key] > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  return true;
+}
+
+function keyMapper(key, value, options: IJsonOptions, optionsStar: IJsonOptions) {
+  return options.field || optionsStar.field || key;
+}
+
 function mapModelToJson(ctx: IContext, source, projection: IProjection) {
 
   let jsonObj = {};
@@ -54,24 +86,20 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
 
   const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
 
-  const jsonFieldNamesByProperty: Map<string, IJsonOptions> = Reflect
-    .getMetadata(jsonSymbols.jsonByPropertyName, source) || new Map<string, IJsonOptions>();
-
   const privateFields: Map<string, boolean> = Reflect
     .getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, source) || new Map<string, boolean>();
 
   const inclusiveProjection = isInclusiveProjection(projection);
 
   // iterate over each property
-  const keys = Object.getOwnPropertyNames(source);
-
+  const keys = Object.keys(source);
   for (const key of keys) {
 
     const dbOptions = (dbOptionsByPropertyName) ? dbOptionsByPropertyName.get(key) || {} : {};
-    const jsonOptions = jsonFieldNamesByProperty.get(`${key}:${ctx.context}`) || {};
-    const jsonOptionsStar = jsonFieldNamesByProperty.get(`${key}:*`) || {};
+    const jsonOptions = getJsonOptions(source, key, ctx);
+    const jsonOptionsStar = getJsonOptions(source, key, '*');
 
-    if (typeof source[key] === 'function') {
+    if ((ctx.context !== jsonOptions.context) && (jsonOptionsStar.context !== '*')) {
       continue;
     }
 
@@ -161,24 +189,6 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
   }
 
   return jsonObj;
-}
-
-function isInclusiveProjection(projection: IProjection) {
-  if (projection) {
-    const keys = Object.keys(projection);
-    for (const key of keys) {
-      if (projection[key] === true || projection[key] > 0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  return true;
-}
-
-function keyMapper(key, value, options: IJsonOptions, optionsStar: IJsonOptions) {
-  return options.field || optionsStar.field || key;
 }
 
 function skipProjection(isInclusive: boolean, projection: IProjection, newKey: string): boolean {

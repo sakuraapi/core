@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Debug Server Tests" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="node" path-to-js-file="node_modules/jasmine/bin/jasmine.js" working-dir="$PROJECT_DIR$">
+    <method v="2">
+      <option name="NpmBeforeRunTask" enabled="true">
+        <package-json value="$PROJECT_DIR$/package.json" />
+        <command value="run" />
+        <scripts>
+          <script value="test" />
+        </scripts>
+        <arguments value="webstorm-debug" />
+        <node-interpreter value="node" />
+        <package-manager value="npm" />
+        <envs />
+      </option>
+    </method>
+  </configuration>
+</component>
