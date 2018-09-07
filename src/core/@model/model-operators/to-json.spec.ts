@@ -958,6 +958,111 @@ describe('Model.toJson', () => {
             expect(json.subDoc.field2).toBeUndefined();
           });
         });
+
+        describe('bugs', () => {
+          describe('issue #249', () => {
+
+            @Model()
+            class Test249 extends SapiModelMixin() {
+
+              @Id() @Json({type: 'id'})
+              id: ObjectID = new ObjectID();
+
+              @Db() @Json({model: TestSubDoc})
+              children: TestSubDoc[] = [new TestSubDoc()];
+
+            }
+
+            it('sub document includes all fields by default if parent field is projected', () => {
+              const model = new Test249();
+
+              const json = model.toJson({
+                projection: {
+                  children: 1
+                }
+              });
+
+              expect(json.id).toBeUndefined();
+              expect(json.children).toBeDefined();
+              expect(json.children.length).toBe(1);
+              expect(json.children[0].subA).toBe('a');
+
+            });
+
+            it('sub document projections are independent of parent projections', () => {
+              const model = new Test249();
+
+              const json = model.toJson({
+                projection: {
+                  children: {
+                    subA: 1
+                  },
+                  id: 0
+                }
+              });
+
+              expect(json.id).toBeUndefined();
+              expect(json.children).toBeDefined();
+              expect(json.children.length).toBe(1);
+              expect(json.children[0].subA).toBe('a');
+              expect(json.children[0].subB).toBeUndefined();
+              expect(json.children[0].field2).toBeUndefined();
+
+            });
+
+            it('sub document can be further projected (exclude)', () => {
+              const model = new Test249();
+
+              const json = model.toJson({
+                projection: {
+                  children: {
+                    subA: 0
+                  }
+                }
+              });
+
+              expect(json.id).toBeDefined();
+              expect(json.children).toBeDefined();
+              expect(json.children.length).toBe(1);
+              expect(json.children[0].subA).toBeUndefined();
+              expect(json.children[0].subB).toBe('b');
+              expect(json.children[0].field2).toBe(2);
+
+            });
+
+            it('inclusion of sub document with projection of 1 rather than {}', () => {
+              const model = new Test249();
+
+              const json = model.toJson({
+                projection: {
+                  children: 1,
+                  id: 1
+                }
+              });
+
+              expect(json.id).toBeDefined();
+              expect(json.children).toBeDefined();
+              expect(json.children.length).toBe(1);
+              expect(json.children[0].subA).toBe('a');
+              expect(json.children[0].subB).toBe('b');
+              expect(json.children[0].field2).toBe(2);
+            });
+
+            it('inclusion of sub document with projection of 0 rather than {}', () => {
+              const model = new Test249();
+
+              const json = model.toJson({
+                projection: {
+                  children: 0
+                }
+              });
+
+              expect(json.id).toBeDefined();
+              expect(json.children).toBeUndefined();
+
+            });
+          });
+        });
       });
 
       describe('array of sub documents', () => {
