@@ -3,6 +3,7 @@ import { dbSymbols, IDbOptions } from '../db';
 import { IJsonOptions, jsonSymbols } from '../json';
 import { modelSymbols } from '../model';
 import { privateSymbols } from '../private';
+import { SapiModelMixin } from '../sapi-model-mixin';
 import { formatToJsonSymbols, ToJsonHandler } from '../to-json';
 import { debug } from './index';
 
@@ -62,13 +63,14 @@ function isInclusiveProjection(projection: IProjection) {
   if (projection) {
     const keys = Object.keys(projection);
     for (const key of keys) {
-      if (projection[key] === true || projection[key] > 0) {
+      if (!Array.isArray(projection[key]) && typeof projection[key] === 'object') {
+        continue;
+      } else if (projection[key] === true || projection[key] > 0) {
         return true;
       }
     }
     return false;
   }
-
   return true;
 }
 
@@ -76,28 +78,28 @@ function keyMapper(key, value, options: IJsonOptions, optionsStar: IJsonOptions)
   return options.field || optionsStar.field || key;
 }
 
-function mapModelToJson(ctx: IContext, source, projection: IProjection) {
+function mapModelToJson(ctx: IContext, model: InstanceType<ReturnType<typeof SapiModelMixin>>, projection: IProjection) {
 
   let jsonObj = {};
 
-  if (!source) {
-    return source;
+  if (!model) {
+    return model;
   }
 
-  const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, source);
+  const dbOptionsByPropertyName: Map<string, IDbOptions> = Reflect.getMetadata(dbSymbols.dbByPropertyName, model);
 
   const privateFields: Map<string, boolean> = Reflect
-    .getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, source) || new Map<string, boolean>();
+    .getMetadata(privateSymbols.sakuraApiPrivatePropertyToFieldNames, model) || new Map<string, boolean>();
 
   const inclusiveProjection = isInclusiveProjection(projection);
 
   // iterate over each property
-  const keys = Object.keys(source);
+  const keys = Object.keys(model);
   for (const key of keys) {
 
     const dbOptions = (dbOptionsByPropertyName) ? dbOptionsByPropertyName.get(key) || {} : {};
-    const jsonOptions = getJsonOptions(source, key, ctx);
-    const jsonOptionsStar = getJsonOptions(source, key, '*');
+    const jsonOptions = getJsonOptions(model, key, ctx);
+    const jsonOptionsStar = getJsonOptions(model, key, '*');
 
     if ((ctx.context !== jsonOptions.context) && (jsonOptionsStar.context !== '*')) {
       continue;
@@ -118,58 +120,58 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
       continue;
     }
 
-    const model = dbOptions.model || jsonOptions.model || jsonOptionsStar.model || null;
-    const newKey = keyMapper(key, source[key], jsonOptions, jsonOptionsStar);
+    const subModel = dbOptions.model || jsonOptions.model || jsonOptionsStar.model || null;
+    const newKey = keyMapper(key, model[key], jsonOptions, jsonOptionsStar);
 
     if (skipProjection(inclusiveProjection, projection, newKey)) {
       continue;
     }
 
     let value;
-    if (model || shouldRecurse(source[key])) {
+    if (subModel || shouldRecurse(model[key])) {
 
       const subProjection = (projection)
         ? (typeof projection[newKey] === 'object') ? projection[newKey] as IProjection : undefined
         : undefined;
 
-      if (Array.isArray(source[key])) {
+      if (Array.isArray(model[key])) {
 
         const values = [];
-        for (const src of source[key]) {
+        for (const src of model[key]) {
           values.push(mapModelToJson(ctx, src, subProjection));
         }
         value = values;
 
       } else if (newKey !== undefined) {
 
-        value = mapModelToJson(ctx, source[key], subProjection);
+        value = mapModelToJson(ctx, model[key], subProjection);
 
       }
 
     } else if (newKey !== undefined) {
 
-      value = source[key];
+      value = model[key];
 
     }
 
     // check for @json({toJson})
     if (jsonOptions.toJson) {
-      value = jsonOptions.toJson.call(source, value, key, ctx);
+      value = jsonOptions.toJson.call(model, value, key, ctx);
     }
     if (jsonOptionsStar.toJson) {
-      value = jsonOptionsStar.toJson.call(source, value, key, ctx);
+      value = jsonOptionsStar.toJson.call(model, value, key, ctx);
     }
 
     // check for @json({encrypt})
     if (jsonOptions.encrypt) {
       value = (jsonOptions.encryptor)
-        ? jsonOptions.encryptor.call(source, value, key, jsonOptions.key, ctx)
-        : encrypt(value, jsonOptions.key || source[modelSymbols.cipherKey]);
+        ? jsonOptions.encryptor.call(model, value, key, jsonOptions.key, ctx)
+        : encrypt(value, jsonOptions.key || model[modelSymbols.cipherKey]);
     }
     if (jsonOptionsStar.encrypt) {
       value = (jsonOptionsStar.encryptor)
-        ? jsonOptionsStar.encryptor.call(source, value, key, jsonOptions.key, ctx)
-        : encrypt(value, jsonOptionsStar.key || source[modelSymbols.cipherKey]);
+        ? jsonOptionsStar.encryptor.call(model, value, key, jsonOptions.key, ctx)
+        : encrypt(value, jsonOptionsStar.key || model[modelSymbols.cipherKey]);
     }
 
     jsonObj[newKey] = value;
@@ -177,14 +179,14 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
   }
 
   // @ToJson
-  const formatToJson = Reflect.getMetadata(formatToJsonSymbols.functionMap, source);
+  const formatToJson = Reflect.getMetadata(formatToJsonSymbols.functionMap, model);
   if (formatToJson) {
     const formatters: ToJsonHandler[] = [
       ...formatToJson.get(ctx.context) || [],
       ...formatToJson.get('*') || []
     ];
     for (const formatter of formatters) {
-      jsonObj = formatter.call(source, jsonObj, source, ctx);
+      jsonObj = formatter.call(model, jsonObj, model, ctx);
     }
   }
 
@@ -193,6 +195,11 @@ function mapModelToJson(ctx: IContext, source, projection: IProjection) {
 
 function skipProjection(isInclusive: boolean, projection: IProjection, newKey: string): boolean {
   if (!projection) {
+    return false;
+  }
+
+  // is projection of sub-document
+  if (!Array.isArray(projection[newKey]) && typeof projection[newKey] === 'object') {
     return false;
   }
 

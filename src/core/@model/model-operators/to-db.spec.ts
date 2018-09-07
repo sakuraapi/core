@@ -239,7 +239,6 @@ describe('Model.toDb', () => {
         ];
 
         const result = parent.toDb();
-
         expect(ObjectID.isValid(result._id)).toBeTruthy();
         expect(ObjectID.isValid(result.children[0]._id)).toBeTruthy();
         expect(ObjectID.isValid(result.children[1]._id)).toBeTruthy();
