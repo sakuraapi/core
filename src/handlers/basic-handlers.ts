@@ -10,10 +10,10 @@ const debug = {
 
 /**
  * By default, when you provide the optional `model` property to [[IRoutableOptions]] in the [[Routable]] parameters,
- * SakuraApi creates a route for GET `{modelName}/:id` that returns an either that document as a model or null if
+ * SakuraApi creates a route for GET `{modelName}/:id` that returns either that document as a model or null if
  * nothing is found.
  *
- * You an constrain the results by providing a `fields` query string parameter.
+ * You can constrain the results by providing a `fields` query string parameter.
  *
  * `fields` follows the same rules as (MongoDB field
  * projection)[https://docs.mongodb.com/manual/reference/glossary/#term-projection]
