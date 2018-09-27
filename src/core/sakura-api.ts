@@ -213,7 +213,7 @@ export class SakuraApi {
 
   /**
    * If implemented, `onAuthenticationFatalError` will be called if during authentication there's an unexpected,
-   * and therefore fatal error. The default behavior if not implemented is for SakuraApi to return an generic 500
+   * and therefore fatal, error. The default behavior if not implemented is for SakuraApi to return an generic 500
    * { error: 'SERVER_ERROR' }.
    *
    * You can return null/void to leave the default behavior alone or return an object with `{data: any, status:number}`
