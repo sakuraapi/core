@@ -48,7 +48,7 @@ export class SakuraMongoDbConnection {
       return db;
     }
 
-    // Because the connection is asychronous, it's possible for multiple calls to connect
+    // Because the connection is asynchronous, it's possible for multiple calls to connect
     // to happen before the first call resolves and sets the entry in the dbs Map. Thus,
     // a place holder is inserted to prevent other calls to connect from trying to connect
     // with this dbName.
