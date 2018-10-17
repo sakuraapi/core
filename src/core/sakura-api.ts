@@ -2,11 +2,12 @@
 import * as colors from 'colors';
 import * as debugInit from 'debug';
 import * as express from 'express';
-import {ErrorRequestHandler, Express, Handler, NextFunction, Request, Response, Router} from 'express';
+import { ErrorRequestHandler, Express, Handler, NextFunction, Request, Response, Router } from 'express';
 import * as http from 'http';
-import {SakuraApiConfig} from '../boot';
-import {injectableSymbols, ProviderNotRegistered, ProvidersMustBeDecoratedWithInjectableError} from './';
-import {ModelNotRegistered, ModelsMustBeDecoratedWithModelError, modelSymbols} from './@model';
+import { Observable, Subject } from 'rxjs';
+import { SakuraApiConfig } from '../boot';
+import { injectableSymbols, ProviderNotRegistered, ProvidersMustBeDecoratedWithInjectableError } from './';
+import { ModelNotRegistered, ModelsMustBeDecoratedWithModelError, modelSymbols } from './@model';
 import {
   IRoutableLocals,
   ISakuraApiClassRoute,
@@ -14,7 +15,7 @@ import {
   RoutablesMustBeDecoratedWithRoutableError,
   routableSymbols
 } from './@routable';
-import {BAD_REQUEST, OK} from './lib';
+import { BAD_REQUEST, OK } from './lib';
 import {
   Anonymous,
   AuthenticatorNotRegistered,
@@ -26,7 +27,7 @@ import {
   SakuraApiPlugin,
   SakuraApiPluginResult
 } from './plugins';
-import {SakuraMongoDbConnection} from './sakura-mongo-db-connection';
+import { SakuraMongoDbConnection } from './sakura-mongo-db-connection';
 // tslint:enable:no-duplicate-imports
 
 const debug = {
@@ -213,7 +214,7 @@ export class SakuraApi {
 
   /**
    * If implemented, `onAuthenticationFatalError` will be called if during authentication there's an unexpected,
-   * and therefore fatal error. The default behavior if not implemented is for SakuraApi to return an generic 500
+   * and therefore fatal, error. The default behavior if not implemented is for SakuraApi to return an generic 500
    * { error: 'SERVER_ERROR' }.
    *
    * You can return null/void to leave the default behavior alone or return an object with `{data: any, status:number}`
@@ -233,6 +234,7 @@ export class SakuraApi {
   onAuthenticationSuccess: (req: Request, res: Response, authResult?: AuthenticatorPluginResult,
                             authenticatorName?: string) => Promise<AuthenticatorPluginResult>;
 
+
   private _address: string = '127.0.0.1';
   private _app: Express;
   private _baseUrl;
@@ -251,6 +253,10 @@ export class SakuraApi {
   private routeQueue = new Map<string, ISakuraApiClassRoute>();
   private throwDependencyAlreadyInjectedError = false;
 
+  // emitters
+  private closed$ = new Subject<void>();
+  private listening$ = new Subject<void>();
+  
   /**
    * Returns the address of the server as a string.
    */
@@ -274,6 +280,13 @@ export class SakuraApi {
   }
 
   /**
+   * Emits when [[SakuraApi.close]] is called and completed.
+   */
+  get closed(): Observable<void> {
+    return this.closed$.asObservable();
+  }
+
+  /**
    * Returns an instance of the Config that was automatically loaded during SakuraApi's instantiation using
    * [[SakuraApiConfig.load]]. You can also set the instance, but keep in mind that you should probably do this before
    * calling [[SakuraApi.listen]].
@@ -294,6 +307,13 @@ export class SakuraApi {
    */
   get dbConnections(): SakuraMongoDbConnection {
     return this._dbConnections;
+  }
+
+  /**
+   * Emits when [[SakuraApi.listen]] is called and completed.
+   */
+  get listening(): Observable<void> {
+    return this.listening$.asObservable();
   }
 
   /**
@@ -392,6 +412,7 @@ export class SakuraApi {
       await this.dbConnections.closeAll();
     } catch (err) {
       debug.normal(`.close error`, err);
+      this.closed$.next();
       return Promise.reject(err);
     }
 
@@ -399,11 +420,13 @@ export class SakuraApi {
       this.server.close((err) => {
         if (err && err.message !== 'Not running') {
           debug.normal(`.close error`, err);
+          this.closed$.next();
           reject(err);
           return;
         }
 
         debug.normal('.close done');
+        this.closed$.next();
         resolve();
       });
     });
@@ -696,10 +719,9 @@ export class SakuraApi {
     // Setup DB Connetions -------------------------------------------------------------------------------------------
     if (this.dbConnections) {
       await this.dbConnections.connectAll();
-      return listen.bind(this)();
-    } else {
-      return listen.bind(this)();
     }
+
+    return listen.bind(this)();
 
     //////////
     function authHandler(route: ISakuraApiClassRoute) {
@@ -799,6 +821,7 @@ export class SakuraApi {
             }
 
             debug.normal(`.listen server started ${this.address}:${this.port}`);
+            this.listening$.next();
             return resolve();
           });
       });

@@ -160,10 +160,10 @@ Injectables are lazy loaded singletons that can be injected into other Injectabl
 
 ## Goals
 
-* Good DX (developer experience)
-* A person coming to SakuraApi for the first time should be have a sense of familiarity if they're familiar with Angular or other frameworks that make use of DI concepts and Decorators.   
-* Built in dependency injection system to facilitate loose coupling and mocking for a better testing experience
-* Built in plugin system to allow quick addition of functionality like email based authentication system, or Facebook oAuth login, etc.
+* SakuraApi should have a good DX (developer experience).
+* A person coming to SakuraApi for the first time should have a sense of familiarity if they're familiar with Angular or other frameworks that make use of DI concepts and Decorators.   
+* SakuraApi should have a built in dependency injection system to facilitate loose coupling and mocking for a better testing experience
+* SakuraApi should have a built in plugin system to allow quick addition of functionality like email based authentication system, or Facebook oAuth login, etc.
 * SakuraApi is built using modern and emerging web standards. If a circumstance arises where a choice has to be made between new or emerging standards or backwards comparability with older versions of Node, etc., legacy loses.
 * Configuration should be kept close to the thing being configured, but there should also be a robust cascading configuration system.
 * SakuraApi should be easy to integrate into a CI/CD system via its configuration system.
@@ -171,11 +171,10 @@ Injectables are lazy loaded singletons that can be injected into other Injectabl
 * SakuraApi should facilitate interacting with MongoDB, but the developer should not be abstracted away from the database if he or she needs to dive deep into MongoDB land.
   * It is the opinion of the maintainer of this framework that many of the database abstractions in current frameworks actually make it harder to develop because you can't use you existing knowledge of MongoDB to solve non-trivial queries. Sometimes the more advanced features of a db aren't even supported yet.
   * As a result, interacting with databases will not be treated generically - this is a MEAN stack framework, where the letter M is brought to you by MongoDB. Someone familiar with the NodeJS drivers for MongoDB should feel familiar with SakuraApi if anything non-trivial needs to be accomplished.
-  * If you're looking for RDMS support (e.g., MySQL, PosgreSQL, etc.), support for some othe NoSQL database, or ______, this is likely not the API you're looking for (Jedi hand-wave).
+  * If you're looking for RDMS support (e.g., MySQL, PosgreSQL, etc.), support for some othe NoSQL database, or ______, this is likely not the API you're looking for (Jedi hand-wave👋).
 * SakuraApi should have an eco-system that simplifies common tasks. For example, there should be a suite of basic handlers that know how to CRUD models through automagically presenting a REST api for a Model.
   * Models are CRUD capable out of the box
   * Native authentication (email password) and oAuth for common platforms (like Facebook, Google, etc.), are available via plugins
-* SakuraApi should support a plugin system that allows easy addition of additional functionality that might be useful to a subset of users, but not all users
 * SakuraApi should be secure. 
 
 ## How to interact with others on this project:
@@ -188,7 +187,7 @@ This is a new tiny community, so if you don't get a response right away, it migh
 
 ## Dependencies:
 
-* TypeScript >= 2.6
+* TypeScript >= 3.0.3
 * NodeJS >= 8.0
 
 (among other things)
