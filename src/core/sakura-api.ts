@@ -418,7 +418,8 @@ export class SakuraApi {
 
     return new Promise<void>((resolve, reject) => {
       this.server.close((err) => {
-        if (err && err.message !== 'Not running') {
+        const notRunningErr = err && ((!err.code && err.message === 'Not running') || err.code === 'ERR_SERVER_NOT_RUNNING');
+        if (err && !notRunningErr) {
           debug.normal(`.close error`, err);
           this.closed$.next();
           reject(err);
