@@ -256,7 +256,7 @@ export class SakuraApi {
   // emitters
   private closed$ = new Subject<void>();
   private listening$ = new Subject<void>();
-  
+
   /**
    * Returns the address of the server as a string.
    */
@@ -337,7 +337,7 @@ export class SakuraApi {
 
     this.config = (!options.config)
       ? new SakuraApiConfig().load(options.configPath) || {}
-      : options.configPath;
+      : options.config;
 
     this._dbConnections = (options.dbConfig)
       ? this._dbConnections = options.dbConfig
