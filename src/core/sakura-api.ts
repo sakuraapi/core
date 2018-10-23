@@ -256,7 +256,7 @@ export class SakuraApi {
   // emitters
   private closed$ = new Subject<void>();
   private listening$ = new Subject<void>();
-  
+
   /**
    * Returns the address of the server as a string.
    */
@@ -337,7 +337,7 @@ export class SakuraApi {
 
     this.config = (!options.config)
       ? new SakuraApiConfig().load(options.configPath) || {}
-      : options.configPath;
+      : options.config;
 
     this._dbConnections = (options.dbConfig)
       ? this._dbConnections = options.dbConfig
@@ -418,7 +418,8 @@ export class SakuraApi {
 
     return new Promise<void>((resolve, reject) => {
       this.server.close((err) => {
-        if (err && err.message !== 'Not running') {
+        const notRunningErr = err && ((!err.code && err.message === 'Not running') || err.code === 'ERR_SERVER_NOT_RUNNING');
+        if (err && !notRunningErr) {
           debug.normal(`.close error`, err);
           this.closed$.next();
           reject(err);
