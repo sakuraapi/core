@@ -27,10 +27,7 @@ export function encrypt(value: any, cipherKey: string | CipherKeyFunc): string {
   try {
     cipher = createCipheriv('aes-256-gcm', key, iv);
 
-    let v = value;
-    if (typeof value === 'object') {
-      v = JSON.stringify(v);
-    }
+    const v = typeof value === 'object' ? JSON.stringify(value) : value.toString();
 
     const buff = Buffer.concat([
       cipher.update(v, 'utf8'),
