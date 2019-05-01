@@ -5,10 +5,11 @@ import {
   SakuraApi,
   SakuraApiPlugin
 } from '../../src/core';
+import {urljoin} from '../../src/core';
 
 const baseUri = '/testApi';
 
-export const testUrl = (endpoint: string) => path.join(baseUri, endpoint);
+export const testUrl = (endpoint: string) => urljoin([baseUri, endpoint]);
 export const testMongoDbUrl = (sapi) => `mongodb://localhost:${sapi.config.TEST_MONGO_DB_PORT}`;
 
 export interface ITestSapiOptions {
