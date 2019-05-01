@@ -1,5 +1,4 @@
 import { Handler } from 'express';
-import * as path from 'path';
 import 'reflect-metadata';
 import { v4 } from 'uuid';
 import {
@@ -11,6 +10,7 @@ import {
 } from '../../handlers';
 import { getDependencyInjections } from '../@injectable';
 import { modelSymbols } from '../@model';
+import { urljoin } from '../lib';
 import { IAuthenticatorConstructor } from '../plugins';
 
 const debug = {
@@ -369,8 +369,7 @@ export function Routable(options?: IRoutableOptions): any {
         const beforeMeta = Reflect.getMetadata(`before.${methodName}`, constructorProxy);
         const before = bindHandlers(constructorProxy, beforeMeta);
 
-        let endPoint = path
-          .join(options.baseUrl, Reflect.getMetadata(`path.${methodName}`, constructorProxy))
+        let endPoint = urljoin([options.baseUrl, Reflect.getMetadata(`path.${methodName}`, constructorProxy)])
           .replace(/\/$/, '');
 
         if (!endPoint.startsWith('/')) {

@@ -6,3 +6,4 @@ export * from './http-status';
 export * from './i-context';
 export * from './i-projection';
 export * from './should-recurse';
+export * from './url-join';
