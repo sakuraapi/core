@@ -1,6 +1,6 @@
 {
   "before": [
     "npm run lint",
-    "npm test",
+    "npm test"
   ]
 }
