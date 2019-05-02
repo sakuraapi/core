@@ -1,6 +1,6 @@
 {
   "name": "@sakuraapi/core",
-  "version": "0.21.2",
+  "version": "0.21.3",
   "description": "MongoDB and TypeScript MEAN Stack Framework for NodeJS",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -17,7 +17,7 @@
     "docs:serve": "./scripts/docs:serve.sh",
     "install": "chmod +x scripts/*.* || true",
     "lint": "./scripts/lint.sh",
-    "prepublish": "npm test && npm audit --audit-level high",
+    "prepublish": "npm test",
     "start": "nodemon --exec \"npm run build; echo build done\"",
     "test": "./scripts/test.sh",
     "test:db": "./scripts/test.sh saveDb",
