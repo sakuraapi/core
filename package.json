@@ -17,7 +17,7 @@
     "docs:serve": "./scripts/docs:serve.sh",
     "install": "chmod +x scripts/*.* || true",
     "lint": "./scripts/lint.sh",
-    "prepublish": "npm test && npm audit --audit-level high",
+    "prepublish": "npm test",
     "start": "nodemon --exec \"npm run build; echo build done\"",
     "test": "./scripts/test.sh",
     "test:db": "./scripts/test.sh saveDb",
